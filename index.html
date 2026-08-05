@@ -903,20 +903,39 @@ async function renderMyWishlist(){
     box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">登入後可以把想去用的優惠加進待辦清單，跨裝置都看得到。</div>';
     return;
   }
-  const {data}=await sb.from('wishlist').select('offer_id,done,offers(brand,offer)')
+  const {data}=await sb.from('wishlist')
+    .select('offer_id,done,offers(brand,offer,conditions,membership,timing,advance_days,value_twd,valid_until,regions,region_note)')
     .eq('user_id',me.id).order('created_at',{ascending:false});
   const list=data||[];
-  box.innerHTML = list.length ? list.map(w=>`
-    <div class="rep">
+  box.innerHTML = list.length ? list.map(w=>{
+    const o=w.offers||{};
+    return `<div class="rep" data-wl-row="${w.offer_id}">
       <label class="toggle" style="flex:1;min-width:0">
         <input type="checkbox" class="wl-done" data-id="${w.offer_id}" ${w.done?'checked':''}>
-        <span style="${w.done?'text-decoration:line-through;color:var(--ink-3)':''}">${esc(w.offers?.brand||'（已下架）')}</span>
+        <span style="${w.done?'text-decoration:line-through;color:var(--ink-3)':''}">${esc(o.brand||'（已下架）')}</span>
       </label>
+      ${o.brand?`<button class="btn sm wl-toggle" data-id="${w.offer_id}" type="button" aria-expanded="false">詳情</button>`:''}
       <button class="btn sm wl-remove" data-id="${w.offer_id}">移除</button>
-    </div>`).join('') : '<div style="color:var(--ink-3);font-size:.86rem">還沒有收藏，去「優惠」分頁點卡片上的書籤圖示加入。</div>';
+    </div>
+    ${o.brand?`<div class="sub-list hidden" id="wl-detail-${w.offer_id}">
+      <div class="sub-item"><b>優惠內容</b><span>${esc(o.offer||'—')}</span></div>
+      <div class="sub-item"><b>使用條件</b><span>${esc(o.conditions||'—')}</span></div>
+      <div class="sub-item"><b>會員取得</b><span>${esc(o.membership||'—')}</span></div>
+      <div class="sub-item"><b>適用期間</b><span>${esc(o.timing||'—')}${o.value_twd?`（約 ${nt(o.value_twd)}）`:''}</span></div>
+      <div class="sub-item"><b>提前天數</b><span>${o.advance_days==null?'未明訂':o.advance_days+' 天'}</span></div>
+      <div class="sub-item"><b>適用地區</b><span>${esc((o.regions&&o.regions.length?o.regions.join('、'):'未確認')+(o.region_note?'　'+o.region_note:''))}</span></div>
+      <div class="sub-item"><b>檔期迄日</b><span>${esc(o.valid_until||'未明訂')}</span></div>
+    </div>`:''}`;
+  }).join('') : '<div style="color:var(--ink-3);font-size:.86rem">還沒有收藏，去「優惠」分頁點卡片上的書籤圖示加入。</div>';
   $$('.wl-done').forEach(cb=>cb.onchange=async()=>{
     await sb.from('wishlist').update({done:cb.checked}).eq('user_id',me.id).eq('offer_id',cb.dataset.id);
     renderMyWishlist();
+  });
+  $$('.wl-toggle').forEach(b=>b.onclick=()=>{
+    const open=b.getAttribute('aria-expanded')!=='true';
+    b.setAttribute('aria-expanded',String(open));
+    b.textContent=open?'收合':'詳情';
+    $('#wl-detail-'+b.dataset.id).classList.toggle('hidden',!open);
   });
   $$('.wl-remove').forEach(b=>b.onclick=async()=>{
     await sb.from('wishlist').delete().eq('user_id',me.id).eq('offer_id',b.dataset.id);
@@ -1686,7 +1705,10 @@ async function loadPendingEdits(){
   if(!LIVE||!myProfile?.is_admin) return;
   const {data,error}=await sb.from('offer_edits')
     .select('id,offer_id,patch,reason,source_url,source_tier,created_at,'
-      +'offers(brand,offer,conditions,membership,timing,advance_days,value_twd,valid_until),profiles(display_name)')
+      +'offers(brand,offer,conditions,membership,timing,advance_days,value_twd,valid_until),'
+      // offer_edits 對 profiles 有兩條外鍵（proposed_by／reviewed_by），
+      // 用 !proposed_by 指定要走哪一條，不然 PostgREST 會因為模稜兩可而報錯。
+      +'profiles!proposed_by(display_name)')
     .eq('status','pending').order('created_at',{ascending:true});
   const ec=$('#editCount');
   if(error){
@@ -1738,9 +1760,10 @@ async function loadPendingEdits(){
 async function loadRejected(){
   if(!LIVE||!myProfile?.is_admin) return;
   const [{data:offs,error:e1},{data:edits,error:e2}]=await Promise.all([
-    sb.from('offers').select('id,brand,created_at,reviewed_at,review_note,submitted_by,profiles(display_name)')
+    // offers／offer_edits 對 profiles 都有兩條外鍵，一樣要指名走哪一條。
+    sb.from('offers').select('id,brand,created_at,reviewed_at,review_note,submitted_by,profiles!submitted_by(display_name)')
       .eq('status','rejected').order('reviewed_at',{ascending:false}).limit(50),
-    sb.from('offer_edits').select('id,offer_id,reason,created_at,reviewed_at,review_note,profiles(display_name),offers(brand)')
+    sb.from('offer_edits').select('id,offer_id,reason,created_at,reviewed_at,review_note,profiles!proposed_by(display_name),offers(brand)')
       .eq('status','rejected').order('reviewed_at',{ascending:false}).limit(50)
   ]);
   if(e1||e2){
