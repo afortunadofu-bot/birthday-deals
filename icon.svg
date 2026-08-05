@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" fill="#1c1a17"/>
+  <!-- 蠟燭火焰 -->
+  <path d="M256 118c14 22 26 34 26 50a26 26 0 0 1-52 0c0-16 12-28 26-50z" fill="#e8734a"/>
+  <!-- 蠟燭 -->
+  <rect x="248" y="188" width="16" height="46" rx="6" fill="#faf9f7"/>
+  <!-- 蛋糕上層 -->
+  <rect x="140" y="234" width="232" height="66" rx="20" fill="#faf9f7"/>
+  <!-- 蛋糕下層 -->
+  <rect x="112" y="300" width="288" height="86" rx="22" fill="#c9c4bb"/>
+  <!-- 盤子 -->
+  <rect x="92" y="386" width="328" height="18" rx="9" fill="#faf9f7" opacity="0.55"/>
+</svg>

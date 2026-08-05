@@ -1,0 +1,1802 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>壽星日 — 台灣生日優惠</title>
+<meta name="theme-color" content="#faf9f7">
+<meta name="description" content="台灣生日優惠整理：依縣市、會員種類、免費層級篩選，記錄用過哪些、累積省下多少。">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="壽星日">
+<style>
+  :root{
+    /* 簡約大氣：白底＋珊瑚紅主色，參考 Ocard／國泰優惠一類主流 app 的排版語彙 */
+    --bg:#f6f6f8; --surface:#fff; --line:#ececf1; --line-soft:#f4f4f7;
+    --ink:#18181f; --ink-2:#6b6b76; --ink-3:#a1a1ab;
+
+    --accent:#e8483c; --accent-dark:#c8352b; --accent-soft:#fdecea; --accent-line:#f8c9c4;
+    --free:#16a34a; --free-bg:#eefbf2; --free-line:#c9ecd6;
+    --alert:#d97706; --alert-bg:#fff7ec; --alert-line:#fbdfae;
+
+    --r:18px; --r-sm:12px; --r-xs:8px;
+    --ease:cubic-bezier(.4,0,.2,1);
+    --shadow-sm:0 1px 3px rgba(20,20,35,.06);
+    --shadow-md:0 12px 28px -10px rgba(20,20,35,.14);
+    --shadow-lg:0 24px 60px -18px rgba(20,20,35,.24);
+
+    --f: ui-sans-serif,"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+    --fs: var(--f);   /* 不用襯線字，走乾淨無襯線，維持與內文一致 */
+    --tabbar-h:64px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);
+    font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;
+    position:relative}
+  ::selection{background:var(--accent-soft);color:var(--accent-dark)}
+  ::-webkit-scrollbar{height:8px;width:8px}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+  ::-webkit-scrollbar-thumb:hover{background:var(--ink-3)}
+  a{color:var(--accent);text-underline-offset:3px}
+  button{font:inherit;color:inherit}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+  .hidden{display:none !important}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  @media(prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms !important;transition-duration:.001ms !important}
+  }
+
+  /* ---------- 頁首 ---------- */
+  header{border-bottom:1px solid var(--line);background:var(--surface)}
+  .htop{display:flex;align-items:center;gap:14px;padding:16px 0 12px}
+  .brand{font-size:1.28rem;font-weight:800;letter-spacing:-.01em;
+    margin:0;display:flex;align-items:center;gap:8px;color:var(--ink)}
+  .brand .mark{flex:none;color:var(--ink)}
+  .brand .mark .flame{fill:var(--accent)}
+  .brand span{color:var(--ink-3);font-weight:400;font-size:.78rem;
+    margin-left:2px;letter-spacing:0}
+  .auth{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .avatar{width:28px;height:28px;border-radius:50%;background:var(--line);object-fit:cover;
+    border:1px solid var(--line)}
+  .adminbadge{font-size:.68rem;font-weight:700;color:var(--accent-dark);background:var(--accent-soft);
+    border:1px solid var(--accent-line);border-radius:99px;padding:1px 7px;margin-left:2px;
+    vertical-align:1px}
+  .btn{border:1px solid var(--line);background:var(--surface);padding:9px 16px;
+    border-radius:99px;cursor:pointer;font-size:.86rem;min-height:38px;
+    transition:border-color .16s var(--ease),background .16s var(--ease),
+               color .16s var(--ease),transform .1s var(--ease),box-shadow .16s var(--ease)}
+  .btn:hover{border-color:var(--ink-3)}
+  .btn:active{transform:scale(.97)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:var(--shadow-sm)}
+  .btn.primary:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+  .btn.sm{padding:7px 13px;font-size:.79rem;min-height:32px}
+  .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  .btn:disabled:hover{border-color:var(--line)}
+
+  nav.tabs{display:flex;gap:24px;overflow-x:auto;scrollbar-width:none}
+  nav.tabs::-webkit-scrollbar{display:none}
+  .tab{background:none;border:none;padding:0 0 13px;cursor:pointer;font-size:.89rem;
+    color:var(--ink-3);border-bottom:2px solid transparent;white-space:nowrap;margin-bottom:-1px;
+    transition:color .16s var(--ease),border-color .16s var(--ease);
+    display:flex;align-items:center;gap:6px}
+  .tab:hover{color:var(--ink-2)}
+  .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:700}
+  .tab .n{font-size:.7rem;color:#fff;background:var(--accent);border-radius:99px;
+    padding:1px 6px;margin-left:2px;font-weight:600}
+  .tab-ic{display:none;flex:none}
+
+  /* ---------- 手機底部 tab bar（參考 Ocard／國泰優惠常見排版） ---------- */
+  @media(max-width:768px){
+    body{padding-bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom))}
+    nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--surface);
+      border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+      box-shadow:0 -6px 24px rgba(20,20,35,.06);gap:0;overflow:visible}
+    .tab{flex:1;flex-direction:column;gap:2px;padding:6px 2px;border-bottom:none;
+      font-size:.66rem;min-height:48px;justify-content:center;white-space:normal}
+    .tab[aria-selected="true"]{border-bottom:none;color:var(--accent)}
+    .tab-ic{display:block;width:21px;height:21px}
+    .tab .n{position:absolute;transform:translate(10px,-14px);padding:0 5px;min-width:16px;
+      text-align:center}
+  }
+
+  /* ---------- 通用區塊 ---------- */
+  .note{padding:13px 16px;border-radius:var(--r-sm);font-size:.85rem;margin:16px 0;
+    border:1px solid var(--line);background:var(--surface);color:var(--ink-2)}
+  .note b{color:var(--ink)}
+  .note.alert{border-color:var(--alert-line);background:var(--alert-bg);color:#8a4f06}
+  .note.good{border-color:var(--free-line);background:var(--free-bg);color:var(--free)}
+  .note ol,.note ul{margin:8px 0 0;padding-left:20px}
+  .note li{margin:3px 0}
+  code{background:var(--line-soft);padding:1px 5px;border-radius:4px;font-size:.87em}
+
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:22px 24px;margin:18px 0;box-shadow:var(--shadow-sm)}
+  .panel h2{margin:0 0 3px;font-size:1.05rem;font-weight:800}
+  .panel p.sub{margin:0 0 16px;color:var(--ink-3);font-size:.83rem}
+
+  /* ---------- 統計條 ---------- */
+  .stats{display:flex;gap:30px;flex-wrap:wrap;padding:20px 0}
+  .stat{animation:rise .5s var(--ease) backwards}
+  .stat .v{font-size:1.5rem;font-weight:800;letter-spacing:-.01em;
+    line-height:1.2;font-variant-numeric:tabular-nums}
+  .stat .k{font-size:.75rem;color:var(--ink-3);margin-top:2px}
+  .stat .v.free{color:var(--free)}
+
+  /* ---------- 搜尋列（永遠可見，桌機/手機皆同） ---------- */
+  .searchbar{display:flex;gap:8px;align-items:center;position:sticky;top:0;z-index:40;
+    background:var(--bg);padding:10px 0}
+  .searchbar input[type=search]{flex:1;border-radius:99px;padding:11px 16px;min-height:44px}
+  .filter-trigger{position:relative;flex:none;display:flex;align-items:center;gap:6px;min-height:44px}
+  .filter-trigger svg{width:16px;height:16px}
+  .filter-trigger.active{border-color:var(--accent);color:var(--accent-dark);background:var(--accent-soft)}
+  .filter-badge{background:var(--accent);color:#fff;border-radius:99px;font-size:.68rem;
+    font-weight:700;padding:0 6px;min-width:16px;text-align:center;line-height:1.5}
+
+  /* ---------- 篩選（桌機常駐展開／手機底部彈出） ---------- */
+  .controls{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:16px 18px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+  .sheet-handle{display:none}
+  .sheet-head{display:none}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .row+.row{margin-top:8px}
+  .filt-row{display:flex;align-items:flex-start;gap:11px;margin-top:10px;padding-top:10px;
+    border-top:1px dashed var(--line)}
+  .filt-label{flex:none;font-size:.75rem;color:var(--ink-3);font-weight:700;
+    padding-top:6px;width:34px;letter-spacing:.02em}
+  .filt-row .chipgrp{margin-top:0;flex:1;min-width:0}
+  input,select,textarea{font:inherit;font-size:.86rem;padding:9px 12px;border:1px solid var(--line);
+    border-radius:var(--r-sm);background:var(--surface);color:var(--ink);max-width:100%;
+    transition:border-color .16s var(--ease),box-shadow .16s var(--ease)}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-soft)}
+  .chip{font-size:.82rem;padding:7px 14px;border-radius:99px;cursor:pointer;min-height:36px;
+    border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
+    transition:background .14s var(--ease),border-color .14s var(--ease),color .14s var(--ease),transform .1s var(--ease)}
+  .chip:hover{border-color:var(--ink-3)}
+  .chip:active{transform:scale(.96)}
+  .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+  .chip.g[aria-pressed="true"]{background:var(--free);border-color:var(--free)}
+  .sep{width:1px;height:20px;background:var(--line);margin:0 3px}
+  .toggle{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;color:var(--ink-2);
+    cursor:pointer;min-height:36px}
+  .toggle input{accent-color:var(--accent);width:16px;height:16px}
+  .lbl{font-size:.82rem;color:var(--ink-3);display:inline-flex;align-items:center;gap:5px}
+  .count{margin-left:auto;font-size:.8rem;color:var(--ink-3);font-variant-numeric:tabular-nums}
+
+  @media(max-width:768px){
+    .controls-backdrop{display:none;position:fixed;inset:0;background:rgba(15,15,25,.4);z-index:69}
+    .controls-backdrop.open{display:block}
+    .controls{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:70;margin:0;
+      max-height:82vh;overflow-y:auto;border-radius:20px 20px 0 0;
+      transform:translateY(102%);transition:transform .28s var(--ease);
+      box-shadow:var(--shadow-lg);padding:10px 18px calc(18px + env(safe-area-inset-bottom));
+      border:none}
+    .controls.open{transform:translateY(0)}
+    .sheet-handle{display:block;width:36px;height:4px;border-radius:99px;background:var(--line);
+      margin:2px auto 12px}
+    .sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+    .sheet-head h3{margin:0;font-size:1.02rem;font-weight:800}
+    .filter-trigger{display:flex}
+  }
+  @media(min-width:769px){
+    .filter-trigger{display:none}
+  }
+
+  /* ---------- 死線 ---------- */
+  .planner{border:1px solid var(--accent-line);border-radius:var(--r);background:var(--accent-soft);
+    padding:17px 19px;margin:0 0 14px;display:none}
+  .planner.on{display:block}
+  .planner h2{margin:0 0 3px;font-size:1rem;font-weight:800;color:var(--accent-dark)}
+  .planner p{margin:0 0 10px;font-size:.82rem;color:var(--ink-2)}
+  .dl{display:flex;justify-content:space-between;gap:12px;padding:7px 0;
+    border-top:1px solid var(--accent-line);font-size:.84rem}
+  .dl b{white-space:nowrap;font-weight:700;font-variant-numeric:tabular-nums}
+  .dl.past{color:var(--ink-3)}
+  .dl.past b{text-decoration:line-through;font-weight:400}
+
+  /* ---------- 卡片：獨立圓角卡＋陰影，不用格線接縫 ---------- */
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+    margin:6px 0 40px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:17px 18px;display:flex;flex-direction:column;gap:8px;
+    position:relative;z-index:0;transition:box-shadow .18s var(--ease),transform .18s var(--ease);
+    animation:cardIn .4s var(--ease) backwards;
+    animation-delay:calc(min(var(--i,0),24) * 10ms)}
+  .card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);z-index:1}
+  @keyframes cardIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+  .chead{display:flex;align-items:baseline;gap:8px}
+  .card h3{margin:0;font-size:1.03rem;font-weight:800;line-height:1.4;flex:1}
+  .val{font-size:.82rem;color:var(--accent-dark);white-space:nowrap;font-variant-numeric:tabular-nums;
+    font-weight:700}
+  .wish{flex:none;border:none;background:none;cursor:pointer;color:var(--ink-3);padding:2px;
+    min-width:32px;min-height:32px;display:flex;align-items:center;justify-content:center;
+    border-radius:99px;transition:color .15s var(--ease),transform .1s var(--ease)}
+  .wish:hover{color:var(--accent)}
+  .wish:active{transform:scale(.88)}
+  .wish[aria-pressed="true"]{color:var(--accent)}
+  .wish[aria-pressed="true"] svg{fill:var(--accent)}
+  .meta{display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-size:.75rem;color:var(--ink-3)}
+  .meta span{white-space:nowrap}
+  .meta span::after{content:'·';margin-left:5px;color:var(--line)}
+  .meta span:last-child::after{content:''}
+  .catdot{display:inline-block;width:7px;height:7px;border-radius:50%;
+    background:var(--c,var(--ink-3));margin-right:1px;vertical-align:1px}
+  .flag{display:inline-block;font-size:.72rem;padding:2px 9px;border-radius:99px;
+    border:1px solid var(--line);color:var(--ink-2);white-space:nowrap;font-weight:600}
+  .flag.free{background:var(--free-bg);border-color:var(--free-line);color:var(--free)}
+  .flag.today{background:var(--accent);border-color:var(--accent);color:#fff}
+  .flag.alert{border-color:var(--alert-line);background:var(--alert-bg);color:var(--alert)}
+  .offer{margin:0;font-size:.92rem}
+
+  /* ---------- 集團／多品牌合併卡片：展開看各子品牌各自的優惠 ---------- */
+  .sub-toggle{align-self:flex-start;background:none;border:none;padding:0;cursor:pointer;
+    font-size:.79rem;color:var(--accent-dark);font-weight:700;display:flex;align-items:center;gap:4px}
+  .sub-toggle svg{width:12px;height:12px;transition:transform .16s var(--ease)}
+  .sub-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
+  .sub-list{display:grid;gap:0;margin:0;border-radius:var(--r-xs);overflow:hidden;
+    border:1px solid var(--line-soft)}
+  .sub-list.hidden{display:none}
+  .sub-item{display:flex;gap:10px;align-items:baseline;padding:7px 10px;font-size:.8rem;
+    background:var(--line-soft)}
+  .sub-item:nth-child(even){background:var(--surface)}
+  .sub-item b{flex:none;width:76px;color:var(--ink);font-weight:700;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .sub-item span{color:var(--ink-2)}
+
+  .kv{margin:2px 0 0;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.82rem}
+  .kv dt{color:var(--ink-3)}
+  .kv dd{margin:0}
+  .line{font-size:.82rem;color:var(--ink-2);padding:8px 0;border-top:1px dashed var(--line)}
+  .line.warn{color:var(--alert)}
+  .cfoot{margin-top:auto;padding-top:11px;border-top:1px solid var(--line-soft);
+    display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .cfoot .btn{min-height:36px}
+  .cfoot .btn svg{display:inline-block}
+  .src{font-size:.74rem;color:var(--ink-3);margin-left:auto;text-align:right}
+  .src a{color:var(--ink-3)}
+
+  /* 手機版卡片精簡：優惠內容最多兩行，減少次要資訊的視覺份量 */
+  @media(max-width:768px){
+    .card{padding:15px 16px}
+    .offer{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .kv,.card .meta+.line,.card .line+.meta{display:none}
+  }
+
+  .thread{border-top:1px solid var(--line-soft);padding-top:10px;font-size:.83rem}
+  .cmt{padding:7px 0;border-bottom:1px solid var(--line-soft)}
+  .cmt .who{font-size:.75rem;color:var(--ink-3);display:flex;align-items:center;gap:6px}
+  .cmt .body{white-space:pre-wrap}
+  .cmt.hidden-cmt{opacity:.55}
+  .cmt.hidden-cmt .body{text-decoration:line-through;text-decoration-color:var(--alert-line)}
+  .rep{display:flex;gap:9px;align-items:baseline;font-size:.81rem;padding:6px 0;
+    border-bottom:1px solid var(--line-soft)}
+  .rep.rep-click{cursor:pointer;border-radius:var(--r-xs);margin:0 -6px;padding:6px}
+  .rep.rep-click:hover{background:var(--line-soft)}
+  .ok{color:var(--free);font-weight:700}
+  .partial{color:#8a6a1f;font-weight:700}
+  .fail{color:var(--alert);font-weight:700}
+
+  /* ---------- 排行榜 ---------- */
+  table.lb{width:100%;border-collapse:collapse;font-size:.86rem}
+  table.lb th{text-align:left;font-weight:500;color:var(--ink-3);font-size:.78rem;
+    padding:0 0 9px;border-bottom:1px solid var(--line)}
+  table.lb td{padding:10px 0;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+  table.lb tr:hover td{background:var(--accent-soft)}
+  table.lb .lb-row{cursor:pointer}
+  table.lb .lb-chev{display:inline-block;margin-left:5px;font-size:.7rem;color:var(--ink-3);
+    transition:transform .16s var(--ease)}
+  table.lb .lb-row.open .lb-chev{transform:rotate(180deg);color:var(--accent)}
+  table.lb .lb-detail td{padding:2px 0 12px;border-bottom:1px solid var(--line-soft)}
+  table.lb .lb-detail .chip{font-size:.76rem;padding:3px 10px}
+  table.lb .rk{width:34px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  table.lb .rk.top{font-weight:800;font-size:1.05rem}
+  table.lb tr:nth-child(2) .rk.top{color:#c99a1f}
+  table.lb tr:nth-child(3) .rk.top{color:#9a9aa5}
+  table.lb tr:nth-child(4) .rk.top{color:#c67a3f}
+  table.lb .amt{text-align:right;font-variant-numeric:tabular-nums;font-weight:800;
+    color:var(--accent-dark)}
+  table.lb .who{display:flex;align-items:center;gap:9px}
+  .initial{width:28px;height:28px;border-radius:50%;background:var(--accent-soft);
+    color:var(--accent-dark);display:inline-flex;align-items:center;justify-content:center;
+    font-size:.75rem;font-weight:700;flex:none}
+  .bigstat{display:flex;gap:34px;flex-wrap:wrap;margin-bottom:18px}
+  .bigstat .v{font-size:2rem;font-weight:800;letter-spacing:-.02em;
+    line-height:1.1;font-variant-numeric:tabular-nums}
+  .bigstat .k{font-size:.78rem;color:var(--ink-3);margin-top:3px}
+
+  /* ---------- 表單 / 對話框 ---------- */
+  dialog{border:none;border-radius:var(--r);padding:0;max-width:520px;
+    width:calc(100% - 32px);box-shadow:var(--shadow-lg)}
+  dialog::backdrop{background:rgba(15,15,25,.45);backdrop-filter:blur(2px)}
+  #dlgDetail{max-width:600px;max-height:min(680px,84vh);overflow-y:auto}
+  .dlg{padding:22px 24px}
+  .dlg h2{margin:0 0 3px;font-size:1.08rem;font-weight:800}
+  .dlg p.sub{margin:0 0 15px;color:var(--ink-3);font-size:.83rem}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:.81rem;color:var(--ink-2);margin-bottom:4px;font-weight:600}
+  .field input,.field select,.field textarea{width:100%}
+  .field textarea{min-height:70px;resize:vertical}
+  .hint{font-size:.75rem;color:var(--ink-3);margin-top:3px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .foot{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+  .foot .btn{min-height:44px;padding:9px 18px}
+  .regchips{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+  .regchips .chip{font-size:.78rem;padding:5px 11px;min-height:30px}
+
+  .empty{text-align:center;color:var(--ink-3);padding:64px 0;font-size:.88rem}
+  .empty svg{color:var(--line);margin-bottom:12px}
+  .empty .e-title{font-size:1.02rem;color:var(--ink-2);margin:0 0 4px;font-weight:800}
+  .empty .e-sub{margin:0;font-size:.82rem}
+  footer{border-top:1px solid var(--line);padding:24px 0 44px;font-size:.79rem;color:var(--ink-3)}
+  footer p{margin:5px 0}
+  @media(max-width:768px){
+    footer{padding-bottom:calc(44px + var(--tabbar-h) + env(safe-area-inset-bottom))}
+  }
+  @media(max-width:600px){
+    body{font-size:14px}
+    .grid{grid-template-columns:1fr}
+    .count{width:100%;margin:2px 0 0}
+    .two{grid-template-columns:1fr}
+    .stats{gap:18px}
+    .bigstat{gap:22px}
+    dialog{width:calc(100% - 24px)}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="htop">
+      <h1 class="brand"><svg class="mark" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+          <ellipse class="flame" cx="12" cy="4.4" rx="1.7" ry="2.3"/>
+          <rect x="11" y="7.5" width="2" height="3" fill="currentColor" opacity=".45"/>
+          <rect x="4" y="10.5" width="16" height="4.5" rx="1.4" fill="currentColor"/>
+          <rect x="3" y="15" width="18" height="6" rx="1.8" fill="currentColor" opacity=".16"/>
+        </svg>壽星日<span>台灣生日優惠</span></h1>
+      <div class="auth">
+        <button class="btn sm hidden" id="btnInstall">加到桌面</button>
+        <img id="uAvatar" class="avatar hidden" alt="">
+        <span id="uName" style="font-size:.84rem"></span>
+        <button class="btn" id="btnLogin">Google 登入</button>
+        <button class="btn hidden" id="btnLogout">登出</button>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="browse" aria-selected="true">
+        <svg class="tab-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.25H4a1 1 0 0 0-1 1v5.59a2 2 0 0 0 .58 1.41l9.6 9.59a2 2 0 0 0 2.82 0l4.6-4.6a2 2 0 0 0 0-2.83Z"/><circle cx="7.5" cy="7.5" r="1"/></svg>優惠</button>
+      <button class="tab" role="tab" data-tab="board" aria-selected="false">
+        <svg class="tab-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>排行榜</button>
+      <button class="tab" role="tab" data-tab="submit" aria-selected="false">
+        <svg class="tab-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>新增</button>
+      <button class="tab" role="tab" data-tab="mine" aria-selected="false">
+        <svg class="tab-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>我的</button>
+      <button class="tab hidden" role="tab" data-tab="admin" aria-selected="false">
+        <svg class="tab-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
+        審核<span class="n hidden" id="pendCount"></span></button>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap" id="modeBanner"></div>
+
+<!-- ==================== 優惠 ==================== -->
+<section id="tab-browse">
+  <div class="wrap">
+    <div class="stats" id="siteStats"></div>
+
+    <div class="searchbar">
+      <input type="search" id="q" placeholder="搜尋品牌或優惠">
+      <button class="btn sm filter-trigger" id="btnOpenFilter" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        篩選<span class="filter-badge hidden" id="filterBadge">0</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="controls-backdrop" id="filterBackdrop"></div>
+  <div class="controls" id="filterSheet">
+    <div class="wrap">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head"><h3>篩選</h3><button class="btn sm" type="button" id="btnCloseFilter">完成</button></div>
+      <div class="row">
+        <label class="lbl">地區<select id="region"><option value="">全部</option></select></label>
+        <label class="lbl">會員<select id="memType"><option value="">不限</option></select></label>
+        <label class="lbl">生日
+          <select id="bmonth"><option value="">月</option></select>
+          <select id="bday"><option value="">日</option></select>
+        </label>
+      </div>
+      <div class="filt-row"><span class="filt-label">期間</span><div class="row chipgrp" id="timingChips"></div></div>
+      <div class="filt-row"><span class="filt-label">類型</span><div class="row chipgrp" id="freeChips"></div></div>
+      <div class="filt-row"><span class="filt-label">分類</span><div class="row chipgrp" id="cats"></div></div>
+      <div class="row">
+        <label class="toggle"><input type="checkbox" id="fVerified"> 已查證</label>
+        <label class="toggle"><input type="checkbox" id="fLive" checked> 隱藏過期</label>
+        <label class="toggle"><input type="checkbox" id="fReported"> 近 90 天有人用</label>
+        <label class="toggle"><input type="checkbox" id="fHasComments"> 有留言</label>
+        <button class="btn sm hidden" id="btnClearFilters" type="button">清除篩選</button>
+        <span class="sep"></span>
+        <label class="lbl">排序<select id="sort">
+          <option value="value">依省最多</option>
+          <option value="days">依提前天數</option>
+          <option value="trending">最近最多人使用</option>
+          <option value="fresh">依最新回報</option>
+          <option value="expiry">依到期日</option>
+          <option value="trust">依可信度</option>
+          <option value="brand">依品牌</option>
+          <option value="comments">依留言數</option>
+          <option value="reports">依回報次數</option>
+        </select></label>
+        <span class="count" id="count"></span>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <section class="planner" id="planner">
+      <h2>註冊死線</h2>
+      <p id="plannerSub"></p>
+      <div id="deadlines"></div>
+    </section>
+    <div class="grid" id="grid"></div>
+    <div class="empty hidden" id="empty">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+        stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/>
+        <path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/>
+        <path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8"/><path d="M16.5 8a2.5 2.5 0 0 0 0-5C13 3 12 8 12 8"/>
+      </svg>
+      <p class="e-title">沒有符合條件的優惠</p>
+      <p class="e-sub">試試看調整篩選條件，或換個關鍵字搜尋</p>
+    </div>
+  </main>
+</section>
+
+<!-- ==================== 排行榜 ==================== -->
+<section id="tab-board" class="hidden">
+  <main class="wrap">
+    <div class="panel">
+      <h2>省錢排行榜</h2>
+      <p class="sub">依近一年回報成功的累積金額排序。要上榜需自己在「我的」分頁打開，預設不公開。</p>
+      <div id="lbBody"></div>
+    </div>
+    <div class="panel">
+      <h2>大家都在用什麼</h2>
+      <p class="sub">近一年被回報最多次的優惠。</p>
+      <div id="popBody"></div>
+    </div>
+  </main>
+</section>
+
+<!-- ==================== 新增 ==================== -->
+<section id="tab-submit" class="hidden">
+  <main class="wrap">
+    <div class="panel">
+      <h2 id="submitTitle">新增一筆優惠</h2>
+      <p class="sub" id="submitSub">送出後進入待審，管理員核可才會公開。每人每天上限 10 筆。</p>
+      <div id="submitGate"></div>
+      <form id="submitForm">
+        <div class="two">
+          <div class="field"><label>品牌名稱 *</label><input name="brand" required maxlength="120"></div>
+          <div class="field"><label>類別 *</label><select name="category" id="fCategory" required></select></div>
+        </div>
+        <div class="field"><label>優惠內容 *</label><textarea name="offer" required maxlength="1000"></textarea></div>
+        <div class="two">
+          <div class="field"><label>適用期間 *</label><select name="timing" id="fTiming" required></select>
+            <div class="hint">當日 = 只有生日當天能用，最容易錯過</div></div>
+          <div class="field"><label>優惠價值（元）</label><input type="number" name="value_twd" min="0" max="100000">
+            <div class="hint">用來統計省下多少，不確定就留空</div></div>
+        </div>
+        <div class="two">
+          <div class="field"><label>會員種類 *</label><select name="membership_type" id="fMemType" required></select></div>
+          <div class="field"><label>免費層級 *</label><select name="free_tier" id="fFreeTier" required></select>
+            <div class="hint">東西免費但要先點餐 → 選「免費・需消費」</div></div>
+        </div>
+        <div class="two">
+          <div class="field"><label>需提前幾天註冊／預約</label><input type="number" name="advance_days" min="0" max="400">
+            <div class="hint">0 = 當下就能用；留空 = 未明訂</div></div>
+          <div class="field"><label>會員取得方式</label>
+            <input name="membership" maxlength="200" placeholder="例如：Ocard APP 會員" list="membershipPresets">
+            <datalist id="membershipPresets">
+              <option value="Ocard APP 會員"><option value="品牌官方 APP 會員">
+              <option value="LINE 官方帳號好友"><option value="官網會員"><option value="門市登記會員">
+              <option value="免會員"><option value="信用卡會員">
+            </datalist></div>
+        </div>
+        <div class="field hidden" id="fEditReasonField"><label>修改原因 *</label>
+          <textarea name="edit_reason" id="fEditReason" maxlength="300"
+            placeholder="例如：優惠已經改成 88 折、官網公告的期限不一樣了"></textarea>
+          <div class="hint">會附在建議旁邊給管理員參考，審核通過才會真的套用到頁面上。</div></div>
+        <div class="field"><label>適用縣市</label><div class="regchips" id="fRegions"></div>
+          <div class="hint">全國連鎖只選「全台」；不確定就都不選</div></div>
+        <div class="field"><label>使用條件</label>
+          <textarea name="conditions" maxlength="600" placeholder="低消、訂位人數、需出示證件等"></textarea></div>
+        <div class="two">
+          <div class="field"><label>檔期起日</label><input type="date" name="valid_from"></div>
+          <div class="field"><label>檔期迄日</label><input type="date" name="valid_until"></div>
+        </div>
+        <div class="two">
+          <div class="field"><label>資料來源網址 *</label><input type="url" name="source_url" id="fSourceUrl" required
+            placeholder="https://…"></div>
+          <div class="field"><label>來源類型</label><select name="source_tier" id="fSourceTier">
+            <option value="1">品牌官方</option><option value="2">新聞媒體</option>
+            <option value="3" selected>部落格懶人包</option><option value="4">社群貼文</option>
+          </select></div>
+        </div>
+        <div class="hint" style="margin:-6px 0 4px">請盡量附上來源連結（品牌官網、官方 APP 截圖、新聞等），方便管理員查證，沒有來源的投稿比較容易被退回。</div>
+        <div class="foot">
+          <button type="button" class="btn hidden" id="btnCancelEdit">取消編輯</button>
+          <button type="button" class="btn" id="btnReset">清空</button>
+          <button type="submit" class="btn primary" id="btnSubmitOffer">送出待審</button>
+        </div>
+      </form>
+      <div id="submitMsg"></div>
+    </div>
+  </main>
+</section>
+
+<!-- ==================== 我的 ==================== -->
+<section id="tab-mine" class="hidden">
+  <main class="wrap">
+    <div class="panel">
+      <h2>我省下多少</h2>
+      <p class="sub">只計算回報「成功」的紀錄。</p>
+      <div class="bigstat" id="mySavings"></div>
+      <label class="toggle"><input type="checkbox" id="optLeaderboard"> 讓我出現在公開排行榜（顯示暱稱與金額）</label>
+    </div>
+    <div class="panel"><h2>待辦清單</h2>
+      <p class="sub">點卡片上的星號收藏，勾起來代表用過了。</p>
+      <div id="myWishlist"></div>
+    </div>
+    <div class="panel"><h2>我的使用回報</h2><p class="sub">點一筆可以看詳情、編輯或刪除。</p><div id="myReports"></div></div>
+    <div class="panel"><h2>我的投稿</h2><div id="myOffers"></div></div>
+    <div class="panel hidden" id="myDebug">
+      <h2>帳號與權限</h2>
+      <p class="sub">管理員權限沒生效時，把這裡的資訊貼給我們排查。</p>
+      <dl class="kv" id="myDebugBody"></dl>
+    </div>
+  </main>
+</section>
+
+<!-- ==================== 審核 ==================== -->
+<section id="tab-admin" class="hidden">
+  <main class="wrap"><div class="panel">
+    <h2>待審佇列</h2>
+    <p class="sub">勾「已查證」代表你向品牌官方確認過。核可後才會出現在公開的「優惠」分頁。</p>
+    <div class="note" style="margin:0 0 16px">
+      <b>這裡只會出現公開投稿</b>——一開始用 <code>seed.py</code> 匯入的
+      113 筆是直接標記已上架，不會出現在待審清單。想試試審核流程，
+      可以先到「新增」分頁投稿一筆測試資料，再回這裡核可或退回。
+    </div>
+    <div id="pendMsg"></div>
+    <div id="pendingList"></div>
+  </div>
+  <div class="panel">
+    <h2>修改建議待審<span class="n hidden" id="editCount"></span></h2>
+    <p class="sub">民眾對已上架優惠提出的修改建議，核可後才會真的改到 offers 上，並列出新舊對照。</p>
+    <div id="editMsg"></div>
+    <div id="editPendingList"></div>
+  </div>
+  <div class="panel">
+    <h2>已退回清單</h2>
+    <p class="sub">被退回的投稿與修改建議，記錄投稿日期跟退回日期，方便回溯。</p>
+    <div id="rejectedList"></div>
+  </div>
+  <div class="panel">
+    <h2>管理員設定</h2>
+    <p class="sub">用 email 新增管理員——對方要先自己登入過網站一次，系統才查得到帳號。</p>
+    <div id="adminMsg"></div>
+    <div class="row">
+      <input type="email" id="adminEmail" placeholder="要設為管理員的 email" style="flex:1;min-width:200px">
+      <button class="btn primary sm" id="btnAddAdmin" type="button">設為管理員</button>
+    </div>
+    <div id="adminList" style="margin-top:14px"></div>
+  </div></main>
+</section>
+
+<footer class="wrap">
+  <p>優惠隨時可能調整，出發前請以品牌官方公告為準。標「未查證」代表尚未向品牌確認。</p>
+  <p id="footMode"></p>
+</footer>
+
+<dialog id="dlgReport"><form method="dialog" class="dlg">
+  <h2 id="repTitle">回報使用狀況</h2>
+  <p class="sub" id="repBrand"></p>
+  <p class="hint hidden" id="repMeta"></p>
+  <div class="two">
+    <div class="field"><label>使用日期 *</label><input type="date" id="repDate" required></div>
+    <div class="field"><label>結果 *</label><select id="repResult">
+      <option value="success">成功用到了</option>
+      <option value="partial">有用到但條件不同</option>
+      <option value="failed">失敗／店家說沒有了</option>
+    </select></div>
+  </div>
+  <div class="two">
+    <div class="field"><label>省下金額（元）</label><input type="number" id="repSaved" min="0" max="100000">
+      <div class="hint" id="repSavedHint"></div></div>
+    <div class="field"><label>門市</label><input id="repStore" maxlength="80"></div>
+  </div>
+  <div class="field"><label>補充說明</label><textarea id="repNote" maxlength="300"
+    placeholder="例如：店員說要提前三天，我當天去被拒絕"></textarea></div>
+  <div class="foot">
+    <button type="button" class="btn hidden" id="btnDeleteReport"
+      style="border-color:var(--alert-line);color:var(--alert);margin-right:auto">刪除這筆</button>
+    <button class="btn" value="cancel">取消</button>
+    <button class="btn primary" id="btnSaveReport" value="ok">送出</button>
+  </div>
+</form></dialog>
+
+<!-- 留言／使用回報獨立視窗——不在列表上直接顯示，點「留言」才打開 -->
+<dialog id="dlgDetail"><div class="dlg">
+  <h2 id="dtlBrand"></h2>
+  <p class="sub" id="dtlOffer"></p>
+  <div id="dtlBody"></div>
+  <div class="foot"><button type="button" class="btn" id="btnDtlClose">關閉</button></div>
+</div></dialog>
+
+<script src="config.js" onerror="window.__noConfig=true"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"
+        onerror="window.__noSdk=true"></script>
+<script>
+/* ===================================================================== */
+const SEED = {"meta":{"version":"4.0","lastBuild":"2026-08-04","note":"優惠內容以各品牌官方公告為準。本資料由公開懶人包與品牌官網彙整，欄位 verified 標示是否經人工複查。"},"offers":[{"brand":"麥當勞","category":"速食","offer":"生日券三選一（隨機發送）：10塊麥克雞塊+中飲$110／大麥克或勁辣雞腿堡+小薯$85／大麥克或勁辣雞腿堡+中飲$79","membership":"麥當勞 APP 會員","advanceDays":30,"advanceNote":"建議生日前一個月完成註冊，生日月才會發券","window":"當月","conditions":"每券限兌換一次","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"app","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":60,"subOffers":[]},{"brand":"摩斯漢堡","category":"速食","offer":"冰紅茶(L)買一送一$40／指定早餐漢堡3選1套餐$99／摩斯咖啡6折$36／超級大麥燒肉珍珠堡套餐$135","membership":"摩斯 APP 會員","advanceDays":3,"advanceNote":"新會員需於生日前 3 天完成註冊，優惠券於生日前一天發送","window":"當月","conditions":"無低消","validity":"生日當日起 60 天內","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"app","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":40,"subOffers":[]},{"brand":"PK雙饗卡（肯德基 × 必勝客）","category":"速食","offer":"肯德基 $50 折價券 + 必勝客 $50 折價券","membership":"雙饗卡 APP 會員","advanceDays":30,"advanceNote":"建議提前一個月加入，部分用戶回報券面額有分眾差異（$40/$50）","window":"當月","conditions":"低消 $79；部分門市不適用（必勝客南港/信陽、肯德基桃園台茂/新竹湖口/內湖金龍/屏東潮州）","validity":"生日當日起 60 天內","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"app","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":100,"subOffers":[]},{"brand":"三商集團（三商巧福／巧福PLUS／鮮五丼／品川蘭／福勝亭／三商炸雞／拿坡里）","category":"速食","offer":"8 品牌優惠券：買套餐送主餐、雪花牛肉麵買一送一、炸雞柳定食買一送一、重乳酪蛋糕外帶$250 等","membership":"三商i美食 APP 會員","advanceDays":30,"advanceNote":"需提前加入 APP 並完成會員註冊","window":"當月","conditions":"依各品牌指定套餐組合","validity":"生日該月份至隔月月底","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"app","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":165,"subOffers":[{"brand":"三商巧福","offer":"買「原汁牛肉麵＋燙青菜＋杯裝飲料」送原汁牛肉麵一份"},{"brand":"巧福PLUS","offer":"買「紅燒牛肉麵＋時蔬肉燥＋經典紅茶」送紅燒牛肉麵一份"},{"brand":"鮮五丼","offer":"買「招牌牛丼＋蒜香時蔬＋杯裝飲料」送招牌牛丼一份"},{"brand":"品川蘭","offer":"雪花牛肉麵買一送一"},{"brand":"福勝亭","offer":"炸雞柳定食買一送一"},{"brand":"三商炸雞","offer":"買唐揚雞腿送原味胡椒脆雞塊"},{"brand":"拿坡里","offer":"重乳酪蛋糕外帶 $250"}]},{"brand":"德克士","category":"速食","offer":"炸雞桶 5 折優惠券 2 張（5 塊雞原味/辣味，$188，原價 $375）","membership":"Ocard APP 會員","advanceDays":7,"advanceNote":"須於生日當月前七個工作日完成加入綁定","window":"當月","conditions":"—","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":187,"subOffers":[]},{"brand":"Popeyes","category":"速食","offer":"生日禮「私房秘製比司吉」；新會員另可領「香炸布朗尼」","membership":"Ocard APP 會員","advanceDays":30,"advanceNote":"建議提前入會，新客券注意使用期限","window":"當月","conditions":"—","validity":"依券面標示","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_no_min","timing":"當月","valueTwd":45,"subOffers":[]},{"brand":"樂漢堡","category":"速食","offer":"幾歲送幾塊卡滋炸雞","membership":"無需會員，需預約","advanceDays":null,"advanceNote":"須提前預約，4 人同行","window":"當月","conditions":"每人低消 NT$350；國小以下兒童不列入 4 人計算。限板橋、新莊、台北大安、高雄三多店","validity":"—","verified":true,"lastChecked":"2026-08-04","regions":["新北市","台北市","高雄市"],"regionNote":"限板橋店、新莊店、台北大安店、高雄三多店","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":300,"subOffers":[]},{"brand":"丸亀製麵","category":"速食","offer":"買炸物即享中碗豆皮烏龍麵買 1 碗送 1 碗（素食可換中碗素湯烏龍麵 $74 買一送一）","membership":"Ocard APP 會員","advanceDays":30,"advanceNote":"建議提前一個月入會","window":"當月","conditions":"需出示身分證明、需先買炸物","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":74,"subOffers":[]},{"brand":"爭鮮集團（爭鮮／爭鮮PLUS／爭鮮gogo／定食8／MAGIC TOUCH）","category":"速食","offer":"爭鮮送鮭魚三味、gogo 送多多君、定食8 送黃金脆薯、PLUS 送香酥鮭魚邊鰭、MAGIC TOUCH 送海洋茶碗蒸","membership":"Ocard APP 會員","advanceDays":30,"advanceNote":"需先加入爭鮮 APP 成為會員","window":"當月","conditions":"不限消費金額，僅限內用/外帶，不適用外送平台","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":60,"subOffers":[{"brand":"爭鮮","offer":"送鮭魚三味"},{"brand":"爭鮮PLUS","offer":"送香酥鮭魚邊鰭"},{"brand":"爭鮮gogo","offer":"送多多君"},{"brand":"定食8","offer":"送黃金脆薯"},{"brand":"MAGIC TOUCH","offer":"送海洋茶碗蒸"}]},{"brand":"31冰淇淋 Baskin-Robbins","category":"速食","offer":"免費標準單球兌換券 1 張，口味任選","membership":"Ocard APP 會員","advanceDays":30,"advanceNote":"建議生日前一個月完成註冊","window":"當月","conditions":"須現場出示會員條碼核銷，恕不接受截圖；須出示含照片之有效身分證件核對生日","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_no_min","timing":"當月","valueTwd":95,"subOffers":[]},{"brand":"王品集團（原燒／王品牛排／藝奇／夏慕尼／西堤／陶板屋／品田牧場／莆田／青花驕／享鴨／丰禾／和牛涮／肉次方／尬鍋／阪前／就饗／金咕）","category":"連鎖餐廳","offer":"各品牌 88～9 折或指定贈菜；西堤單客經典套餐 9 折、夏慕尼 88 折、陶板屋 9 折、青花驕贈青花椒冰淇淋等","membership":"瘋美食 APP 會員","advanceDays":0,"advanceNote":"生日月前一個月月底自動派券至「我的票匣」；當月新註冊會員即時發送","window":"當月＋當日","conditions":"需憑券、原價 10% 服務費另計、每桌每次限兌換乙張","validity":"派券日至生日當月月底","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"fixed","validFrom":"2026-07-25","validUntil":"2026-08-31","sources":[{"url":"https://wowfms.com/content/202607birthdaygift","title":"王品瘋美食 8月壽星專屬生日禮","tier":1,"tierLabel":"品牌官方","checked":"2026-08-04"},{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://wowfms.com/content/202607birthdaygift","title":"王品瘋美食 8月壽星專屬生日禮","tier":1,"tierLabel":"品牌官方","checked":"2026-08-04"},"membershipType":"app","membershipCost":"free","freeTier":"discount","timing":"當月＋當日","valueTwd":300,"subOffers":[{"brand":"原燒","offer":"生日當天憑券內用消費1客多人套餐（雙人／三人）85折；非生日當天贈「松阪豬玫瑰花」乙份"},{"brand":"王品牛排","offer":"憑券（內用／外帶）消費單客個人饗宴套餐 9 折"},{"brand":"藝奇","offer":"憑券內用消費享單客套餐 9 折（主餐升級加價亦適用）"},{"brand":"夏慕尼","offer":"憑券內用消費單客套餐 88 折"},{"brand":"西堤","offer":"憑券內用消費獨享單客經典套餐 9 折"},{"brand":"陶板屋","offer":"憑券內用消費享單客和風洋食套餐 9 折（主餐升級亦適用）"},{"brand":"品田牧場","offer":"憑券內用消費享任一套餐 88 折"},{"brand":"莆田","offer":"憑券消費滿 $500 即贈「手作瑪德蓮花束」乙份"},{"brand":"青花驕","offer":"消費憑券贈「青花椒冰淇淋」乙份"},{"brand":"享鴨","offer":"憑券消費即贈「冰糖醬香鴨翅」乙份"},{"brand":"丰禾","offer":"憑券消費滿 $500 元即贈「豬腳麵線」乙份"},{"brand":"和牛涮","offer":"內用消費憑券頂級和牛套餐享單客 9 折"},{"brand":"肉次方","offer":"憑券內用消費享指定套餐單客 9 折"},{"brand":"尬鍋","offer":"憑券內用消費即贈「現蒸壽桃」乙份"},{"brand":"阪前","offer":"憑券內用消費 $1,880 套餐乙客即贈「水果寶石生乳捲」乙份"},{"brand":"就饗","offer":"依王品瘋美食 APP 當月公告的壽星禮為準（未查到獨立條款）"},{"brand":"金咕","offer":"依王品瘋美食 APP 當月公告的壽星禮為準（未查到獨立條款）"}]},{"brand":"築間幸福鍋物","category":"火鍋燒肉","offer":"肉與海鮮 5 選 1 兌換券（美國牛五花／梅花豚／特選羊肉／鮮蝦／蛤蜊大份擇一）","membership":"築間會員","advanceDays":30,"advanceNote":"建議提前一個月入會","window":"當月","conditions":"乙份套餐限兌換乙次票券","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"brand","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":180,"subOffers":[]},{"brand":"肉多多","category":"火鍋燒肉","offer":"生日肉蛋糕一顆","membership":"樂多多 APP 會員","advanceDays":30,"advanceNote":"需先加入樂多多 APP 會員","window":"當月","conditions":"限內用","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"app","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":150,"subOffers":[]},{"brand":"泰滾 Rolling Thai","category":"火鍋燒肉","offer":"今年幾歲，送你幾隻蝦","membership":"無需會員","advanceDays":null,"advanceNote":"建議提前訂位","window":"當月","conditions":"壽星本人到場並攜帶證件；單點消費滿 $2,000（不含加價費用）","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":400,"subOffers":[]},{"brand":"薄多義 BoDeGi","category":"連鎖餐廳","offer":"幾歲送幾隻雞翅","membership":"無需會員，需電話或門市預約","advanceDays":3,"advanceNote":"只接受電話或至門市預約，需提前 3 天完成","window":"當月","conditions":"訂位需 4 人以上（或點滿 4 人低消），每人低消 $500 含服務費；每桌限兌換乙次；訂位時需提供壽星生日及歲數，現場不可更改","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":350,"subOffers":[]},{"brand":"鍋泰暖","category":"火鍋燒肉","offer":"幾歲送幾片肉","membership":"無需會員","advanceDays":null,"advanceNote":"建議提前訂位","window":"當月","conditions":"出示證件並點選一份套餐；每鍋限一位壽星。限員林／台中崇德／大里／豐原／中壢／土城店","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["彰化縣","台中市","桃園市","新北市"],"regionNote":"限員林／台中崇德／大里／豐原／中壢／土城店","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":200,"subOffers":[]},{"brand":"蔬鍋藝","category":"火鍋燒肉","offer":"當週壽星：每多一歲送一隻白蝦或蛤蠣（或每兩歲送一顆帶殼盤鮑）／每歲送 25g 梅花豬或雞腿；當月壽星：小蛋糕乙份","membership":"無需會員","advanceDays":null,"advanceNote":"建議提前訂位","window":"當週","conditions":"四人以下（含 4 人）消費金額需滿 $1,799","validity":"—","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"free_min","timing":"當週","valueTwd":250,"subOffers":[]},{"brand":"五鮮級","category":"火鍋燒肉","offer":"小海拼或小蔬拼二擇一，天天來天天送","membership":"無需會員","advanceDays":null,"advanceNote":"—","window":"當月","conditions":"限內用，無金額限制，不限兌換次數","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":150,"subOffers":[]},{"brand":"京都勝牛","category":"連鎖餐廳","offer":"全單 8 折乙次；兩人以上同行任選 2 客主餐再贈「四格甜點」乙份（依此類推）","membership":"京都勝牛 APP 會員","advanceDays":2,"advanceNote":"新會員完成註冊後 2 個工作天發送電子生日券至 APP 票券夾","window":"當月","conditions":"需出示 APP 生日券","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"app","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":200,"subOffers":[]},{"brand":"小時厚牛排","category":"連鎖餐廳","offer":"當月：排餐 10 選 1；當日：招待 $40 輕食小點乙份","membership":"小時厚會員","advanceDays":null,"advanceNote":"需在生日之前加入會員，且帳戶需有消費紀錄","window":"當月＋當日","conditions":"會員生日禮需搭配低消 $100；當日禮需出示身分證明","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"brand","membershipCost":"spend","freeTier":"free_min","timing":"當月＋當日","valueTwd":300,"subOffers":[]},{"brand":"鬥牛士二鍋","category":"火鍋燒肉","offer":"當日壽星本人 5 折","membership":"無需會員","advanceDays":null,"advanceNote":"建議提前訂位","window":"當日","conditions":"出示有效證件","validity":"生日當日","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"discount","timing":"當日","valueTwd":400,"subOffers":[]},{"brand":"聚 北海道昆布鍋","category":"火鍋燒肉","offer":"當月單人套餐 88 折（10% 服務費另計）；當日贈富士肉肉山","membership":"王品瘋美食 APP","advanceDays":0,"advanceNote":"生日月自動派券","window":"當月＋當日","conditions":"須出示身分證件","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"app","membershipCost":"free","freeTier":"discount","timing":"當月＋當日","valueTwd":150,"subOffers":[]},{"brand":"木村堂燒肉","category":"火鍋燒肉","offer":"當日壽星 5 折","membership":"無需會員","advanceDays":null,"advanceNote":"建議提前訂位","window":"當日","conditions":"出示證件","validity":"生日當日","verified":true,"lastChecked":"2026-08-04","regions":[],"regionNote":"門市分布未確認","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"discount","timing":"當日","valueTwd":500,"subOffers":[]},{"brand":"傑克兄弟牛排","category":"連鎖餐廳","offer":"帳單上最高價單點餐點 69 折（2026 年由半價調整）","membership":"無需會員","advanceDays":null,"advanceNote":"建議提前訂位","window":"前後3天","conditions":"出示身分證；桌低消實際消費 $600；服務費依原價 10% 計","validity":"生日前後 3 天","verified":true,"lastChecked":"2026-08-04","regions":["台中市"],"regionNote":"門市分布以官網為準，資料來源為台中在地部落格","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"discount","timing":"前後3天","valueTwd":300,"subOffers":[]},{"brand":"瓦庫燒肉","category":"火鍋燒肉","offer":"用餐 8 折優惠；當月壽星另送壽桃一顆","membership":"無需會員","advanceDays":null,"advanceNote":"建議提前訂位","window":"前後3天","conditions":"憑證件用餐","validity":"生日前後 3 天","verified":true,"lastChecked":"2026-08-04","regions":["台中市"],"regionNote":"台中在地品牌","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"discount","timing":"前後3天","valueTwd":200,"subOffers":[]},{"brand":"玉豆腐","category":"連鎖餐廳","offer":"壽星贈蝦活動（最多 50 隻）","membership":"無需會員","advanceDays":null,"advanceNote":"建議提前訂位確認","window":"當日","conditions":"詳細低消請洽門市","validity":"—","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"free_min","timing":"當日","valueTwd":300,"subOffers":[]},{"brand":"春囍打邊爐","category":"火鍋燒肉","offer":"壽星贈 50 隻蝦 + 蛋糕","membership":"無需會員","advanceDays":null,"advanceNote":"建議提前訂位確認","window":"當日","conditions":"詳細低消請洽門市","validity":"—","verified":false,"lastChecked":"2026-08-04","regions":["台北市","台中市","高雄市"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"free_min","timing":"當日","valueTwd":600,"subOffers":[]},{"brand":"養鍋 Yang Guo","category":"火鍋燒肉","offer":"壽星任選主鍋 66 折","membership":"無需會員","advanceDays":null,"advanceNote":"建議提前訂位確認","window":"當日","conditions":"詳細條件請洽門市","validity":"—","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"discount","timing":"當日","valueTwd":250,"subOffers":[]},{"brand":"TGI FRIDAYS","category":"連鎖餐廳","offer":"內用消費滿 $1,200 贈「田納西威士忌雙拼組合」乙份","membership":"開展餐飲集團會員","advanceDays":30,"advanceNote":"建議提前入會取得電子優惠券","window":"當月","conditions":"僅限內用；點餐前先出示電子券；限會員本人、單桌單筆限用乙張；贈品需加收原價 10% 服務費","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"brand","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":400,"subOffers":[]},{"brand":"大師兄銷魂麵舖","category":"連鎖餐廳","offer":"$298 內套餐買一送一 + 免費送一包乾拌麵","membership":"Ocard 會員","advanceDays":1,"advanceNote":"領券後需隔天才能使用，建議前往前先加好會員","window":"當月","conditions":"限內用","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":298,"subOffers":[]},{"brand":"法大炸雞","category":"速食","offer":"個人飽足餐（$279）買一送一券","membership":"Ocard 會員","advanceDays":0,"advanceNote":"當月加入即可獲得","window":"當月","conditions":"—","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["台中市"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":279,"subOffers":[]},{"brand":"IKEA 宜家家居","category":"連鎖餐廳","offer":"$100 優惠券（滿 $200 可抵用）+ 瑞典餐廳主餐第二件 5 折；卡友新增寶貝資料另有兒童肉丸套餐","membership":"IKEA Family 宜家卡 / LINE@","advanceDays":30,"advanceNote":"建議提前加入宜家卡並串聯 LINE；生日券需於生日當月底前領取","window":"當月","conditions":"主餐需 $120 以上；第二份以價低者計 5 折","validity":"生日當月月底止","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"card","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":150,"subOffers":[]},{"brand":"鮮茶道","category":"飲料","offer":"免費琥珀紅茶一杯（現場自取）","membership":"Ocard APP 會員","advanceDays":30,"advanceNote":"建議提前一個月加入 LINE 官方帳號會員","window":"當月","conditions":"不限消費金額","validity":"生日當月使用完畢","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_no_min","timing":"當月","valueTwd":45,"subOffers":[]},{"brand":"UG TEA","category":"飲料","offer":"三窨十五茉 UG 奶茶(L) 第二杯 0 元券（每月指定飲品可能不同）","membership":"UG TEA LINE@ 會員","advanceDays":30,"advanceNote":"建議提前一個月加入","window":"當月","conditions":"需點 2 杯同品項；甜度冰塊需相同","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["台北市","新北市","台中市"],"regionNote":"分店分布以官網為準","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"line","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":65,"subOffers":[]},{"brand":"天仁茗茶","category":"飲料","offer":"大杯相同茶飲買一送一券乙張","membership":"Ocard APP 會員","advanceDays":30,"advanceNote":"建議提前下載 APP 註冊","window":"當月","conditions":"同品項且冷/熱需相同，甜度冰塊可自由調整","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":65,"subOffers":[]},{"brand":"茶聚","category":"飲料","offer":"指定飲品買一送一（每月指定品項不同）","membership":"茶聚 LINE 會員","advanceDays":30,"advanceNote":"從 LINE 加入會員，建議提前一個月","window":"當月","conditions":"憑電子票券兌換","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"line","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":60,"subOffers":[]},{"brand":"珍煮丹","category":"飲料","offer":"同品項買一送一","membership":"Ocard 會員","advanceDays":0,"advanceNote":"領券當下即可使用","window":"當月","conditions":"需同品項，僅限線下點餐；加料需另加錢","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":65,"subOffers":[]},{"brand":"季緣","category":"飲料","offer":"同品項買一送一","membership":"Ocard 會員","advanceDays":0,"advanceNote":"領券當下即可使用","window":"當月","conditions":"需同品項；來店、外送皆適用","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["台中市","高雄市"],"regionNote":"南部起家，近年北擴，分店以官網為準","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":60,"subOffers":[]},{"brand":"吳家紅茶冰","category":"飲料","offer":"$30 飲品折抵券一張","membership":"Ocard 會員","advanceDays":30,"advanceNote":"每月 1 日自動發放，建議提前一個月入會","window":"當月","conditions":"—","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_no_min","timing":"當月","valueTwd":30,"subOffers":[]},{"brand":"顏太煮","category":"飲料","offer":"買任一飲品即送一杯太煮厚奶茶","membership":"Ocard 會員","advanceDays":0,"advanceNote":"領券即可使用","window":"當月","conditions":"贈品加料需另加錢","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["台中市"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":60,"subOffers":[]},{"brand":"再睡5分鐘","category":"飲料","offer":"飲品買一送一券","membership":"Ocard 會員","advanceDays":10,"advanceNote":"生日禮於生日前 10 天發送，需在此之前完成註冊","window":"當月","conditions":"品項需相同","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":65,"subOffers":[]},{"brand":"星巴克 Starbucks","category":"飲料","offer":"點購中杯以上飲料贈切片蛋糕乙片；指定商品 85 折一次；行動預點專屬好友分享回饋一張","membership":"星巴克「綠星級」以上會員","advanceDays":30,"advanceNote":"需先達綠星級門檻，建議提前累積星星","window":"當月","conditions":"需綠星級以上等級；蛋糕需搭配中杯以上飲料","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://dailyview.tw/popular/detail/33231","title":"dailyview.tw","tier":2,"tierLabel":"新聞媒體","checked":"2026-08-04"}],"bestSource":{"url":"https://dailyview.tw/popular/detail/33231","title":"dailyview.tw","tier":2,"tierLabel":"新聞媒體","checked":"2026-08-04"},"membershipType":"tier","membershipCost":"tier","freeTier":"free_min","timing":"當月","valueTwd":120,"subOffers":[]},{"brand":"Lady M","category":"甜點烘焙","offer":"當月：一片蛋糕 + 一杯飲料 85 折；當日：消費點數 2 倍計算","membership":"Lady M 會員（當日禮）／當月禮持身分證即可","advanceDays":null,"advanceNote":"當月優惠僅需持身分證，無需提前入會","window":"當月＋當日","conditions":"每次消費限購乙組，當月不限次數。限台北旗艦店、遠百信義店、台中 LaLaport 店、台中誠品 480 店","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["台北市","台中市"],"regionNote":"限台北旗艦店、遠百信義店、台中 LaLaport 店、台中誠品 480 店","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"discount","timing":"當月＋當日","valueTwd":100,"subOffers":[]},{"brand":"好丘 Good Cho's","category":"甜點烘焙","offer":"免費兌換任選貝果或司康乙顆","membership":"好丘 LINE 會員卡","advanceDays":60,"advanceNote":"須於生日月份「前 2 個月」加入會員；並須於生日月前 18 個月至前一個月 15 號止，於門市或官網完成任一筆消費","window":"當月","conditions":"門市出示 LINE 會員卡生日優惠券條碼","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["台北市","新北市","台中市","高雄市"],"regionNote":"主要門市：台北信義／內湖、新北、台中、高雄，出發前請確認分店","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"line","membershipCost":"spend","freeTier":"free_no_min","timing":"當月","valueTwd":65,"subOffers":[]},{"brand":"PAUL","category":"甜點烘焙","offer":"單筆消費滿 $500，憑生日禮物券免費獲得甜點乙份","membership":"PAUL 會員","advanceDays":30,"advanceNote":"建議提前一個月入會","window":"當月","conditions":"不包含現做甜點；當月每天可兌換乙次","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"brand","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":150,"subOffers":[]},{"brand":"bread's papa","category":"甜點烘焙","offer":"泡芙類商品買二送一（送的口味不限）","membership":"Ocard 會員","advanceDays":0,"advanceNote":"領券即可使用","window":"當月","conditions":"限每日 12:00–19:00 使用","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["台北市","新北市","台中市"],"regionNote":"分店分布以官網為準","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://rachel.tw/birthday/","title":"rachel.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":60,"subOffers":[]},{"brand":"順成蛋糕","category":"甜點烘焙","offer":"生日當月消費滿 $399 贈水果核桃（8 月限定）","membership":"順成會員","advanceDays":3,"advanceNote":"需 3 天前預訂，於指定日期至門市領取（8 月最後預定日 8/28）","window":"當月","conditions":"每位會員限領一次；忠一、南港 Lalaport、士林、信義、忠誠、雙連、永和門市不參加","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["台北市","新北市"],"regionNote":"忠一、南港 Lalaport、士林、信義、忠誠、雙連、永和門市不參加","validityType":"fixed","validFrom":"2026-08-01","validUntil":"2026-08-28","sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"brand","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":200,"subOffers":[]},{"brand":"自己做 Zi Ji Zuo","category":"甜點烘焙","offer":"免費 4 吋生日蛋糕","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 當月加入多半即可領券，部分品牌需隔天才能使用","window":"當日","conditions":"詳細條件請洽門市","validity":"—","verified":false,"lastChecked":"2026-08-04","regions":["台北市","新北市","台中市","高雄市"],"regionNote":"烘焙教室，各分店規則可能不同","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_no_min","timing":"當日","valueTwd":350,"subOffers":[]},{"brand":"阿仁牛軋糖","category":"甜點烘焙","offer":"超值包買一送一（乙組），贈品限常規口味","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"完成新會員註冊（資料完整填寫）即可領取","window":"當月","conditions":"限本人攜帶身分證或健保卡；限直營門市現場領取（快閃櫃不開放）；不與入會禮、刮刮卡併用","validity":"生日當月領取完畢","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":150,"subOffers":[]},{"brand":"山崎咖啡所","category":"甜點烘焙","offer":"來店用餐贈招牌手工司康一顆，當月不限次數","membership":"無需會員","advanceDays":null,"advanceNote":"—","window":"當月","conditions":"需來店用餐。地址：新北市板橋區長江路二段 126 號","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["新北市"],"regionNote":"單店：新北市板橋區長江路二段 126 號","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":70,"subOffers":[]},{"brand":"屈臣氏 Watsons","category":"零售美妝","offer":"生日當月 9 折電子折價券（單筆最高折抵 $300）","membership":"寵i會員","advanceDays":30,"advanceNote":"建議提前一個月成為寵i會員，券發至 APP 電子錢包","window":"當月","conditions":"折抵上限 $300；部分商品可能排除","validity":"生日當月","verified":true,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://dailyview.tw/popular/detail/33231","title":"dailyview.tw","tier":2,"tierLabel":"新聞媒體","checked":"2026-08-04"}],"bestSource":{"url":"https://dailyview.tw/popular/detail/33231","title":"dailyview.tw","tier":2,"tierLabel":"新聞媒體","checked":"2026-08-04"},"membershipType":"app","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":300,"subOffers":[]},{"brand":"劍湖山世界","category":"娛樂樂園","offer":"當日壽星入園 $100","membership":"無需會員","advanceDays":null,"advanceNote":"現場出示證件","window":"當日","conditions":"需出示身分證件核對生日","validity":"生日當日","verified":true,"lastChecked":"2026-08-04","regions":["雲林縣"],"regionNote":"雲林縣古坑鄉","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"discount","timing":"當日","valueTwd":899,"subOffers":[]},{"brand":"六福村主題遊樂園","category":"娛樂樂園","offer":"指定月份壽星免費入園（隨月活動變動）；生日為 5/15/25 日者可 $555 入園；同行親友每人 $799（最多 4 位）","membership":"無需會員","advanceDays":null,"advanceNote":"活動逐月公告，出發前務必確認當月是否適用","window":"當月","conditions":"需出示身分證件；優惠內容每月不同","validity":"依當月活動公告","verified":false,"lastChecked":"2026-08-04","regions":["新竹縣"],"regionNote":"新竹縣關西鎮","validityType":"fixed","validFrom":null,"validUntil":null,"sources":[{"url":"https://dailyview.tw/popular/detail/33321","title":"dailyview.tw","tier":2,"tierLabel":"新聞媒體","checked":"2026-08-04"}],"bestSource":{"url":"https://dailyview.tw/popular/detail/33321","title":"dailyview.tw","tier":2,"tierLabel":"新聞媒體","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"free_no_min","timing":"當月","valueTwd":999,"subOffers":[]},{"brand":"Pizza Rock","category":"連鎖餐廳","offer":"當日壽星消費 $100 贈 8 吋披薩","membership":"無需會員","advanceDays":null,"advanceNote":"建議提前訂位確認","window":"當日","conditions":"消費滿 $100","validity":"生日當日","verified":false,"lastChecked":"2026-08-04","regions":["台中市"],"regionNote":"分店分布以官網為準","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"free_min","timing":"當日","valueTwd":300,"subOffers":[]},{"brand":"阿薄郎薄皮餃子","category":"連鎖餐廳","offer":"幾歲送幾顆餃子（2026 年改為會員領券模式）","membership":"Ocard APP 會員","advanceDays":30,"advanceNote":"2026 年改為會員領券制，建議提前入會","window":"當日","conditions":"詳細條件依官方公告","validity":"—","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當日","valueTwd":150,"subOffers":[]},{"brand":"22:02","category":"火鍋燒肉","offer":"壽星幾歲切幾片肉","membership":"無需會員","advanceDays":null,"advanceNote":"建議提前訂位確認","window":"當日","conditions":"詳細低消請洽門市","validity":"—","verified":false,"lastChecked":"2026-08-04","regions":[],"regionNote":"門市分布未確認","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"free_min","timing":"當日","valueTwd":300,"subOffers":[]},{"brand":"久違石頭火鍋","category":"火鍋燒肉","offer":"幾歲生日送幾片肉","membership":"無需會員","advanceDays":null,"advanceNote":"建議提前訂位確認","window":"當日","conditions":"詳細低消請洽門市","validity":"—","verified":false,"lastChecked":"2026-08-04","regions":[],"regionNote":"門市分布未確認","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"free_min","timing":"當日","valueTwd":250,"subOffers":[]},{"brand":"微兜 Vino Vino","category":"連鎖餐廳","offer":"蛋糕 3 選 1","membership":"無需會員","advanceDays":null,"advanceNote":"建議提前訂位確認","window":"當日","conditions":"詳細條件請洽門市","validity":"—","verified":false,"lastChecked":"2026-08-04","regions":["台北市","台中市"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"}],"bestSource":{"url":"https://info.talk.tw/2026birthday/2/","title":"info.talk.tw","tier":3,"tierLabel":"部落格懶人包","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"free_min","timing":"當日","valueTwd":180,"subOffers":[]},{"brand":"gonna EAT","category":"飲料","offer":"gonnaEAT 與 gonnaPLUS 可各兌換咖啡一杯（美式／拿鐵）","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"直接送，無低消","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_no_min","timing":"當月","valueTwd":60,"subOffers":[]},{"brand":"HABIBI Pâtisserie","category":"甜點烘焙","offer":"馬卡龍一入","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"無低消","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["台北市"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_no_min","timing":"當月","valueTwd":90,"subOffers":[]},{"brand":"忠泰樂 Lè Cafe","category":"甜點烘焙","offer":"免費下午茶一份","membership":"品牌會員（管道未明）","advanceDays":null,"advanceNote":"建議提前一個月準備","window":"當月","conditions":"無低消","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["台北市"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"brand","membershipCost":"free","freeTier":"free_no_min","timing":"當月","valueTwd":null,"subOffers":[]},{"brand":"橡木桶洋酒","category":"零售美妝","offer":"小紅酒一瓶","membership":"品牌會員（管道未明）","advanceDays":null,"advanceNote":"建議提前一個月準備","window":"當月","conditions":"無低消，需年滿 18 歲","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"brand","membershipCost":"free","freeTier":"free_no_min","timing":"當月","valueTwd":null,"subOffers":[]},{"brand":"天成飯店集團","category":"甜點烘焙","offer":"單片蛋糕一份","membership":"品牌會員（管道未明）","advanceDays":null,"advanceNote":"建議提前一個月準備","window":"當月","conditions":"無低消","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["台北市"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"brand","membershipCost":"free","freeTier":"free_no_min","timing":"當月","valueTwd":150,"subOffers":[]},{"brand":"洪瑞珍","category":"甜點烘焙","offer":"三明治一份（入會禮可一併兌換）","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"無低消","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_no_min","timing":"當月","valueTwd":45,"subOffers":[]},{"brand":"聖娜 Semeur","category":"飲料","offer":"大杯冰美式咖啡一杯；另有壽星滿百折 50","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"咖啡券無低消；折抵券需滿 $100","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_no_min","timing":"當月","valueTwd":60,"subOffers":[]},{"brand":"椰糖","category":"飲料","offer":"泰奶冰酥乙份（入會禮可一併兌換）","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"低消 $150／人","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["台北市"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":120,"subOffers":[]},{"brand":"粥大福 CONGEE BOSS","category":"連鎖餐廳","offer":"粥品買一送一","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"需購買同等或較高價粥品","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":null,"subOffers":[]},{"brand":"一幻拉麵 ICHIGEN","category":"連鎖餐廳","offer":"蝦湯拉麵買一送一","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"橘焱集團會員；需點兩碗","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":280,"subOffers":[]},{"brand":"這味泰泰","category":"連鎖餐廳","offer":"指定餐點買一送一","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"需點兩份","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":null,"subOffers":[]},{"brand":"本格燒肉","category":"火鍋燒肉","offer":"用餐 88 折","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"服務費另計","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":null,"subOffers":[]},{"brand":"GLÖ FROYO","category":"甜點烘焙","offer":"優格冰乙份","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"需完成 2 次消費才可兌換","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["台北市"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":31,"subOffers":[]},{"brand":"莫凡彼 Mövenpick","category":"甜點烘焙","offer":"飲品半價 + 生日餐盤","membership":"品牌會員（管道未明）","advanceDays":null,"advanceNote":"建議提前一個月準備","window":"當月","conditions":"需內用","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"brand","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":84,"subOffers":[]},{"brand":"Gelato Pique Cafe","category":"甜點烘焙","offer":"整單 7 折","membership":"品牌會員（管道未明）","advanceDays":null,"advanceNote":"建議提前一個月準備","window":"當月","conditions":"需內用","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["台北市"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"brand","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":null,"subOffers":[]},{"brand":"裕珍馨","category":"甜點烘焙","offer":"生日禮 $100 抵用金","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"可折抵奶油酥餅等商品","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":100,"subOffers":[]},{"brand":"硬咖啡","category":"飲料","offer":"香草霜淇淋購買折 $50","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"需購買 2 支","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["台北市"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":50,"subOffers":[]},{"brand":"大茗","category":"飲料","offer":"買一杯送一杯","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"需先消費 1 杯","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":40,"subOffers":[]},{"brand":"御前上茶","category":"飲料","offer":"買飲品送抹茶生乳捲","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"需購買任一飲品","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":65,"subOffers":[]},{"brand":"Global Mall 環球購物中心","category":"零售美妝","offer":"$100 抵用金","membership":"品牌會員（管道未明）","advanceDays":null,"advanceNote":"建議提前一個月準備","window":"當月","conditions":"依櫃位規定使用","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["台北市","新北市","桃園市","屏東縣"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"brand","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":100,"subOffers":[]},{"brand":"天母盛鑫餐廳","category":"連鎖餐廳","offer":"當日壽星 5 折，同行 9 折（附沙拉吧）","membership":"免加入會員","advanceDays":null,"advanceNote":"建議提前一個月準備","window":"當日","conditions":"折後客單價約 $395 起；建議提前訂位","validity":"生日當日","verified":false,"lastChecked":"2026-08-04","regions":["台北市"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"discount","timing":"當日","valueTwd":395,"subOffers":[]},{"brand":"Mr. May 牛排館","category":"連鎖餐廳","offer":"當日壽星 5 折","membership":"免加入會員","advanceDays":null,"advanceNote":"建議提前一個月準備","window":"當日","conditions":"折後客單價約 $249 起；建議提前訂位","validity":"生日當日","verified":false,"lastChecked":"2026-08-04","regions":["台北市"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"網友實際使用心得（脆貼文）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"discount","timing":"當日","valueTwd":249,"subOffers":[]},{"brand":"繼光香香雞 J&G","category":"速食","offer":"全品項 8 折","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"—","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":null,"subOffers":[]},{"brand":"茶湯會 TP TEA","category":"飲料","offer":"單杯 85 折／單杯折 $10／免費加料 1 份","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"三選一","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":20,"subOffers":[]},{"brand":"Bolo Pan 菠蘿包專門店","category":"甜點烘焙","offer":"冰火菠蘿油 1 個","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"低消 $50","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["台北市"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":65,"subOffers":[]},{"brand":"波記 BO KEE","category":"甜點烘焙","offer":"楊枝甘露 1 份","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"—","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["台北市"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_no_min","timing":"當月","valueTwd":100,"subOffers":[]},{"brand":"唐吉訶德 DON DON DONKI","category":"零售美妝","offer":"單筆消費滿 $500 折 $100","membership":"品牌會員（管道未明）","advanceDays":null,"advanceNote":"建議提前一個月準備","window":"當月","conditions":"滿 $500","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["台北市","新北市","台中市","高雄市"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"brand","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":100,"subOffers":[]},{"brand":"8% ice","category":"甜點烘焙","offer":"內用符合低消可兌換 $180 蛋糕","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"需達內用低消","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":180,"subOffers":[]},{"brand":"漢來美食","category":"連鎖餐廳","offer":"當日壽星平日 8 折、假日 85 折","membership":"品牌會員（管道未明）","advanceDays":null,"advanceNote":"建議提前一個月準備","window":"當日","conditions":"需出示證件；服務費另計","validity":"生日當日","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"brand","membershipCost":"free","freeTier":"discount","timing":"當日","valueTwd":null,"subOffers":[]},{"brand":"雞湯大叔","category":"連鎖餐廳","offer":"全單 9 折","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"—","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":null,"subOffers":[]},{"brand":"老子鍋","category":"火鍋燒肉","offer":"指定套餐 88 折","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"—","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":null,"subOffers":[]},{"brand":"門牛十二鍋","category":"火鍋燒肉","offer":"當日壽星半價","membership":"免加入會員","advanceDays":null,"advanceNote":"建議提前一個月準備","window":"當日","conditions":"需出示證件；建議提前訂位","validity":"生日當日","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"none","membershipCost":"free","freeTier":"discount","timing":"當日","valueTwd":null,"subOffers":[]},{"brand":"吉野家","category":"速食","offer":"單筆消費 9 折","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"—","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":null,"subOffers":[]},{"brand":"喜多酸菜魚","category":"連鎖餐廳","offer":"95 折；入會另送黑糖豆花 1 碗","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"—","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":null,"subOffers":[]},{"brand":"添好運 Tim Ho Wan","category":"連鎖餐廳","offer":"$100 抵用金 + 甜心紅豆包","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"—","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":100,"subOffers":[]},{"brand":"長田本庄軒","category":"連鎖餐廳","offer":"豚骨叉燒炒麵買一送一","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"需點兩份","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":null,"subOffers":[]},{"brand":"燒肉 LIKE","category":"火鍋燒肉","offer":"100g 肉盤免費送（牛五花／豬五花／雞腿肉擇一）","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"需點餐","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":120,"subOffers":[]},{"brand":"萬客什鍋","category":"火鍋燒肉","offer":"套餐肉品六選一（極上板腱牛／雪紋梅花豬／特選五花羊等）","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"需點套餐","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":150,"subOffers":[]},{"brand":"涓豆腐 DUBU HOUSE","category":"連鎖餐廳","offer":"原味韓式炸雞免費送","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"需點餐","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":200,"subOffers":[]},{"brand":"大河屋","category":"連鎖餐廳","offer":"點套餐送唐揚雞","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"需點套餐","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":120,"subOffers":[]},{"brand":"森森燒肉","category":"火鍋燒肉","offer":"永森花肉免費送","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"需點餐","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":150,"subOffers":[]},{"brand":"錢都日式涮涮鍋","category":"火鍋燒肉","offer":"肉品三選一（牛／豬／雞擇一）免費送","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"需點餐","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":100,"subOffers":[]},{"brand":"Cafe!N","category":"飲料","offer":"$50 折價券","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"—","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":50,"subOffers":[]},{"brand":"貳樓 Second Floor Cafe","category":"甜點烘焙","offer":"蛋糕 1 份","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"需內用消費","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":180,"subOffers":[]},{"brand":"喬義思 Choice","category":"甜點烘焙","offer":"生日蛋糕 1 個","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"需內用消費","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["台北市"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":300,"subOffers":[]},{"brand":"beard papa's","category":"甜點烘焙","offer":"泡芙買 2 送 1","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"需購買 2 顆","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":60,"subOffers":[]},{"brand":"SUNMERRY 聖瑪莉","category":"甜點烘焙","offer":"指定商品買 1 送 1；生日蛋糕 85 折","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"—","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":null,"subOffers":[]},{"brand":"善菓屋 ARTISAN BAKERY","category":"甜點烘焙","offer":"焦糖達克瓦茲 1 個","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"—","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_no_min","timing":"當月","valueTwd":80,"subOffers":[]},{"brand":"玖仰 JIUYANG","category":"甜點烘焙","offer":"焦糖布丁 1 個","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"—","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["台北市"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_no_min","timing":"當月","valueTwd":90,"subOffers":[]},{"brand":"老乾杯 KANPAI CLASSIC","category":"火鍋燒肉","offer":"特製甜點 1 份","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"需內用消費","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當月","valueTwd":200,"subOffers":[]},{"brand":"TSUJIRI 辻利茶舖","category":"甜點烘焙","offer":"買 $160 切片蛋糕送 $160 飲品","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"需購買指定蛋糕","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":160,"subOffers":[]},{"brand":"金色三麥","category":"連鎖餐廳","offer":"當日壽星送 6 吋蛋糕；當月壽星送切片蛋糕","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當日","conditions":"需提前預約；需內用消費","validity":"生日當日","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當日","valueTwd":500,"subOffers":[]},{"brand":"遠傳 FET 心生活","category":"零售美妝","offer":"$100 購物金","membership":"品牌 APP","advanceDays":null,"advanceNote":"建議提前一個月準備","window":"當月","conditions":"遠傳心生活 APP 會員","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"app","membershipCost":"free","freeTier":"discount","timing":"當月","valueTwd":100,"subOffers":[]},{"brand":"蛋金固烘焙坊","category":"甜點烘焙","offer":"古早味現烤蛋糕整條","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當月","conditions":"—","validity":"生日當月","verified":false,"lastChecked":"2026-08-04","regions":["全台"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_no_min","timing":"當月","valueTwd":200,"subOffers":[]},{"brand":"J.S. Foodies Tokyo","category":"甜點烘焙","offer":"鬆餅乙份","membership":"Ocard APP 會員","advanceDays":0,"advanceNote":"Ocard 多數品牌當月加入即可領券，但部分品牌需隔天才能使用，建議提前幾天加入","window":"當日","conditions":"需內用消費","validity":"生日當日","verified":false,"lastChecked":"2026-08-04","regions":["台北市"],"regionNote":"","validityType":"rolling","validFrom":null,"validUntil":null,"sources":[{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"}],"bestSource":{"url":"https://www.threads.com/","title":"7月壽星優惠整理圖卡（社群流傳）","tier":4,"tierLabel":"社群貼文","checked":"2026-08-04"},"membershipType":"ocard","membershipCost":"free","freeTier":"free_min","timing":"當日","valueTwd":280,"subOffers":[]}]};
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+const ISO = d => d.toISOString().slice(0,10);
+
+const CFG = window.SUPABASE_CONFIG;
+const HAS_CFG = !!(CFG && CFG.url && CFG.anonKey && !String(CFG.url).includes('你的專案代號'));
+const HAS_SDK = !!window.supabase;
+const IS_FILE = location.protocol === 'file:';
+const LIVE = HAS_CFG && HAS_SDK && !IS_FILE;
+
+let sb=null, me=null, myProfile=null, OFFERS=[];
+let activeCat=new Set(), activeFree=new Set(), activeTiming=new Set();   // 篩選改多選：可以同時勾「當月」+「當週」
+let deferredInstall = null;
+let WISH=new Set();          // 待辦清單（收藏的優惠 id，字串形式）
+let MY_REPORTS=[];           // 「我的使用回報」目前這批資料，點列表時查回原始物件用
+
+// 篩選狀態存 localStorage：PWA 每天用，記住上次篩選比較有感
+const FKEY='sxr_filters_v1';
+function saveFilters(){
+  try{ localStorage.setItem(FKEY, JSON.stringify({
+    q:$('#q').value, region:$('#region').value, memType:$('#memType').value,
+    cat:[...activeCat], free:[...activeFree], timing:[...activeTiming],
+    fVerified:$('#fVerified').checked, fLive:$('#fLive').checked,
+    fReported:$('#fReported').checked, fHasComments:$('#fHasComments').checked,
+    sort:$('#sort').value
+  })); }catch{}
+}
+let SAVED_REGION='', SAVED_MEMTYPE='';   // #region/#memType 的選項是動態產生的，要等 buildControls() 建完才能回填
+function loadFilters(){
+  let s; try{ s=JSON.parse(localStorage.getItem(FKEY)||'null'); }catch{ s=null; }
+  if(!s) return;
+  $('#q').value=s.q||'';
+  SAVED_REGION=s.region||''; SAVED_MEMTYPE=s.memType||'';
+  (s.cat||[]).forEach(v=>activeCat.add(v)); (s.free||[]).forEach(v=>activeFree.add(v));
+  (s.timing||[]).forEach(v=>activeTiming.add(v));
+  $('#fVerified').checked=!!s.fVerified; $('#fLive').checked=s.fLive!==false;
+  $('#fReported').checked=!!s.fReported; $('#fHasComments').checked=!!s.fHasComments;
+  if(s.sort) $('#sort').value=s.sort;
+}
+
+const FREE_LABEL={free_no_min:'免費・無低消',free_min:'免費・需消費',discount:'折扣／買一送一',unknown:'待確認'};
+const MEM_LABEL={none:'免會員',app:'品牌 APP',line:'LINE',ocard:'Ocard',
+                 card:'會員卡',tier:'需達等級',brand:'品牌會員'};
+const TIER_LABEL={1:'品牌官方',2:'新聞媒體',3:'部落格',4:'社群貼文'};
+const TIMINGS=['當日','當月','當週','當月＋當日','前後3天','前後7天'];
+const CATEGORIES=['速食','連鎖餐廳','火鍋燒肉','飲料','甜點烘焙','零售美妝','娛樂樂園'];
+const COUNTIES=['全台','基隆市','台北市','新北市','桃園市','新竹市','新竹縣','苗栗縣','台中市',
+ '彰化縣','南投縣','雲林縣','嘉義市','嘉義縣','台南市','高雄市','屏東縣','宜蘭縣','花蓮縣',
+ '台東縣','澎湖縣','金門縣','連江縣'];
+
+// 卡片類別小圓點顏色（低調的可掃描性提示，避免用整條色邊造成視覺過重）
+const CAT_COLOR={'速食':'#c9852c','連鎖餐廳':'#8f5216','火鍋燒肉':'#a63d24','飲料':'#3d7a63',
+  '甜點烘焙':'#b5658a','零售美妝':'#5b6f94','娛樂樂園':'#6a8f3d'};
+const ICONS={
+  check:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+  chat:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
+  chevron:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>',
+};
+
+const esc = s => String(s ?? '').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const nt  = n => (n==null?'—':'$'+Number(n).toLocaleString('en-US'));
+const note=(el,cls,html)=>{el.innerHTML=`<div class="note ${cls}">${html}</div>`};
+
+function fromRow(r){return{
+  id:r.id, brand:r.brand, category:r.category, regions:r.regions||[], regionNote:r.region_note||'',
+  offer:r.offer, membership:r.membership||'', membershipType:r.membership_type||'brand',
+  membershipCost:r.membership_cost||'free', freeTier:r.free_tier||'discount',
+  advanceDays:r.advance_days, advanceNote:r.advance_note||'',
+  timing:r.timing||r.offer_window||'當月', valueTwd:r.value_twd,
+  conditions:r.conditions||'', validity:r.validity||'', validityType:r.validity_type||'rolling',
+  validFrom:r.valid_from, validUntil:r.valid_until,
+  sources:r.sources||[], bestSource:(r.sources||[])[0]||null,
+  verified:r.verified, lastChecked:r.last_checked, status:r.status,
+  submittedBy:r.submitted_by, reviewNote:r.review_note||'',
+  reportCount:r.report_count||0, lastUsedOn:r.last_used_on,
+  successRate:r.success_rate, commentCount:r.comment_count||0,
+  subOffers:r.sub_offers||[]};}
+
+/* ===================================================================== */
+async function init(){
+  const mb=$('#modeBanner');
+  if(!LIVE){
+    OFFERS = SEED.offers.map((o,i)=>({...o, id:'seed'+i, status:'approved',
+      reportCount:0,lastUsedOn:null,successRate:null,commentCount:0}));
+    renderDiagnostics(mb);
+    // 刻意「不」用 disabled——按下去要有回饋，告訴使用者卡在哪，
+    // 而不是變成一顆按了沒反應的灰按鈕。
+    $('#btnLogin').textContent = 'Google 登入（尚未啟用）';
+    $('#btnLogin').style.opacity = '.55';
+    paintSubmitGate();
+    $('#footMode').textContent = '離線示範模式：資料為內建種子，無法登入或回報。';
+  } else {
+    sb = window.supabase.createClient(CFG.url, CFG.anonKey);
+    // Supabase 免費方案偶爾要等個幾秒才回應，先給一個明確的「載入中」畫面，
+    // 不要讓使用者看到空白的卡片區以為網站壞了；超過 3 秒再多提醒一次。
+    $('#grid').innerHTML = `<div class="note" style="grid-column:1/-1">
+      <b>資料載入中…</b> Supabase 資料庫有時候要幾秒鐘才會回應，請稍候。</div>`;
+    const slowTimer=setTimeout(()=>{
+      note(mb,'alert','<b>資料庫回應比較慢</b>——不是網站壞了，Supabase 免費方案偶爾會延遲幾秒，請再等一下下。');
+    },3000);
+    try{
+      sb.auth.onAuthStateChange((_e,s)=>onSession(s));
+      const {data:{session}} = await sb.auth.getSession();
+      await onSession(session);
+      await loadOffers();
+      clearTimeout(slowTimer);
+      if(!showOAuthError() && !PROFILE_ERROR) mb.innerHTML='';
+      $('#footMode').textContent = '資料存於 Supabase，未登入也能瀏覽；回報與投稿需登入。';
+    }catch(e){
+      clearTimeout(slowTimer);
+      // Supabase 連不上時，至少讓網站用內建資料撐住，不要整頁空白
+      OFFERS = SEED.offers.map((o,i)=>({...o,id:'seed'+i,status:'approved',
+        reportCount:0,lastUsedOn:null,successRate:null,commentCount:0}));
+      note(mb,'alert',
+        `<b>連不上 Supabase</b>（${esc(e.message||e)}）——先用內建資料顯示。<br>
+         常見原因：免費專案閒置 7 天被自動暫停，到 Supabase Dashboard 按
+         <b>Restore project</b> 即可；或 config.js 裡的網址／金鑰有誤。`);
+    }
+  }
+  loadFilters();
+  buildControls();
+  $('#region').value=SAVED_REGION; $('#memType').value=SAVED_MEMTYPE;
+  WISH = new Set(JSON.parse(localStorage.getItem('sxr_wishlist')||'[]'));
+  render(); loadSiteStats(); registerSW();
+}
+
+/* ---- 離線／登入失敗診斷：直接告訴使用者卡在哪 ---- */
+function renderDiagnostics(mb){
+  const rows = [
+    [!IS_FILE, '用 http 開啟網站',
+     '你現在是用 <code>file://</code> 直接雙擊開檔。<b>Google 登入不接受 file:// 來源</b>，' +
+     '這就是登入按鈕沒反應的原因。<br>解法：在這個資料夾執行 <code>python serve.py</code>，' +
+     '改從 <code>http://localhost:5173</code> 開啟；或部署到 Cloudflare Pages 後從網址開啟。'],
+    [HAS_CFG, '找到 config.js 並已填入金鑰',
+     '沒讀到 <code>config.js</code>，或裡面還是範例值。<br>' +
+     '解法：把 <code>config.example.js</code> 複製成 <code>config.js</code>，' +
+     '填入 Supabase 的 Project URL 與 anon key。' +
+     '<b>部署到 Cloudflare Pages 時，config.js 也要一起上傳</b>——只傳 index.html 會變成這樣。'],
+    [HAS_SDK, '載入 Supabase SDK',
+     '從 CDN 載入 SDK 失敗，可能是沒網路或被防火牆擋住。'],
+  ];
+  const bad = rows.filter(r=>!r[0]);
+  mb.innerHTML = `<div class="note ${bad.length?'alert':''}">
+    <b>目前是離線示範模式</b>——顯示 ${SEED.offers.length} 筆內建資料，可以瀏覽與篩選，
+    但無法登入、投稿或回報。<br><br>
+    ${rows.map(([ok,title,fix])=>
+      `<div style="margin:6px 0">${ok?'✓':'✗'} <b>${title}</b>${ok?'':'<br><span style="margin-left:16px;display:inline-block">'+fix+'</span>'}</div>`
+    ).join('')}
+  </div>`;
+}
+
+let PROFILE_ERROR=false;
+async function onSession(s){
+  me = s?.user || null;
+  PROFILE_ERROR=false;
+  if(me){
+    const {data,error} = await sb.from('profiles').select('*').eq('id',me.id).single();
+    if(error || !data){
+      // profiles 沒查到列，最常見原因是這個帳號在 schema.sql 的自動建檔 trigger
+      // 安裝之前就登入過，導致 profiles 表根本沒有這一列。
+      // 不要靜默失敗——把 user id 直接秀出來，讓使用者能貼去 SQL 裡查。
+      myProfile = null; PROFILE_ERROR=true;
+      note($('#modeBanner'),'alert',
+        `<b>讀不到你的個人檔案</b>（${esc(error?.message||'查無資料')}）。<br>
+         你的帳號 id：<code>${esc(me.id)}</code>　信箱：<code>${esc(me.email||'—')}</code><br>
+         請到 Supabase SQL Editor 執行 <code>schema_v9_admin.sql</code>，
+         它會自動補建缺漏的個人檔案。「我的」分頁下方也有同樣的資訊可以複製。`);
+    } else {
+      myProfile = data;
+    }
+  } else myProfile = null;
+  paintAuth();
+  renderMyDebug();
+  if(me){ loadMyStuff(); loadWishlist(); }
+  if(myProfile?.is_admin){ loadPending(); loadPendingEdits(); loadRejected(); loadAdminSettings(); }
+}
+
+/* ---- P0：管理員權限診斷區。永遠顯示（登入後），出問題時使用者能直接複製這裡的資訊。 ---- */
+function renderMyDebug(){
+  const box=$('#myDebug'), body=$('#myDebugBody');
+  const admin = myProfile?.is_admin;
+  // 這區塊是給「管理員權限出問題」時排查用的，一般民眾平常用不到，
+  // 不要每個登入的人都看到自己的帳號 id／權限狀態這種偏內部的資訊。
+  if(!me || !(admin || PROFILE_ERROR)){ box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+  body.innerHTML=`
+    <dt>登入信箱</dt><dd>${esc(me.email||'—')}</dd>
+    <dt>帳號 id</dt><dd style="word-break:break-all">
+      <code id="myUid">${esc(me.id)}</code>
+      <button class="btn sm" id="btnCopyUid" type="button" style="margin-left:6px;padding:2px 9px">複製</button></dd>
+    <dt>個人檔案</dt><dd>${myProfile?'已建立':'<span style="color:var(--alert)">找不到（需要跑 schema_v9_admin.sql）</span>'}</dd>
+    <dt>管理員權限</dt><dd>${admin
+      ? '<b style="color:var(--free)">是</b>'
+      : '<span style="color:var(--ink-3)">否——如果剛設定過，請登出重新登入一次讓網站重讀權限</span>'}</dd>`;
+  const cp=$('#btnCopyUid');
+  if(cp) cp.onclick=()=>{
+    navigator.clipboard?.writeText(me.id).then(()=>{ cp.textContent='已複製'; setTimeout(()=>cp.textContent='複製',1500); });
+  };
+}
+
+function paintAuth(){
+  const on=!!me;
+  $('#btnLogin').classList.toggle('hidden',on);
+  $('#btnLogout').classList.toggle('hidden',!on);
+  $('#uAvatar').classList.toggle('hidden',!on||!myProfile?.avatar_url);
+  $('#uName').innerHTML = on
+    ? esc(myProfile?.display_name||'壽星') + (myProfile?.is_admin?' <span class="adminbadge">管理員</span>':'')
+    : '';
+  if(on&&myProfile?.avatar_url) $('#uAvatar').src=myProfile.avatar_url;
+  $$('.tab[data-tab="admin"]').forEach(t=>t.classList.toggle('hidden',!myProfile?.is_admin));
+  if(myProfile) $('#optLeaderboard').checked = !!myProfile.show_on_leaderboard;
+  paintSubmitGate();
+}
+
+async function loadOffers(){
+  const {data,error} = await sb.from('offers_public').select('*').limit(3000);
+  if(error){ note($('#modeBanner'),'alert','讀取失敗：'+esc(error.message)); return; }
+  OFFERS = data.map(fromRow);
+}
+
+/* ---- 待辦清單：未登入先存 localStorage，登入後自動合併上傳 ---- */
+async function loadWishlist(){
+  if(!LIVE||!me) return;
+  const localIds=[...WISH];
+  if(localIds.length){
+    await sb.from('wishlist').upsert(
+      localIds.map(id=>({user_id:me.id, offer_id:Number(id)})),
+      {onConflict:'user_id,offer_id', ignoreDuplicates:true});
+    localStorage.removeItem('sxr_wishlist');
+  }
+  const {data}=await sb.from('wishlist').select('offer_id').eq('user_id',me.id);
+  WISH=new Set((data||[]).map(r=>String(r.offer_id)));
+  render();
+}
+async function toggleWish(id, btn){
+  const has=WISH.has(String(id));
+  has?WISH.delete(String(id)):WISH.add(String(id));
+  btn.setAttribute('aria-pressed', String(!has));
+  if(LIVE&&me){
+    const {error}= has
+      ? await sb.from('wishlist').delete().eq('user_id',me.id).eq('offer_id',Number(id))
+      : await sb.from('wishlist').upsert({user_id:me.id, offer_id:Number(id)},{onConflict:'user_id,offer_id'});
+    if(error){ has?WISH.add(String(id)):WISH.delete(String(id));
+      btn.setAttribute('aria-pressed', String(has));
+      const hint=/relation|does not exist|wishlist/i.test(error.message)
+        ? '\n（這通常是 Supabase 資料庫還沒建立「待辦清單」的資料表，請管理員到 SQL Editor 執行 schema_v8.sql。）' : '';
+      alert('收藏失敗：'+error.message+hint); return; }
+  } else {
+    localStorage.setItem('sxr_wishlist', JSON.stringify([...WISH]));
+  }
+  if(!$('#tab-mine').classList.contains('hidden')) renderMyWishlist();
+}
+async function renderMyWishlist(){
+  const box=$('#myWishlist');
+  if(!LIVE||!me){
+    box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">登入後可以把想去用的優惠加進待辦清單，跨裝置都看得到。</div>';
+    return;
+  }
+  const {data}=await sb.from('wishlist').select('offer_id,done,offers(brand,offer)')
+    .eq('user_id',me.id).order('created_at',{ascending:false});
+  const list=data||[];
+  box.innerHTML = list.length ? list.map(w=>`
+    <div class="rep">
+      <label class="toggle" style="flex:1;min-width:0">
+        <input type="checkbox" class="wl-done" data-id="${w.offer_id}" ${w.done?'checked':''}>
+        <span style="${w.done?'text-decoration:line-through;color:var(--ink-3)':''}">${esc(w.offers?.brand||'（已下架）')}</span>
+      </label>
+      <button class="btn sm wl-remove" data-id="${w.offer_id}">移除</button>
+    </div>`).join('') : '<div style="color:var(--ink-3);font-size:.86rem">還沒有收藏，去「優惠」分頁點卡片上的書籤圖示加入。</div>';
+  $$('.wl-done').forEach(cb=>cb.onchange=async()=>{
+    await sb.from('wishlist').update({done:cb.checked}).eq('user_id',me.id).eq('offer_id',cb.dataset.id);
+    renderMyWishlist();
+  });
+  $$('.wl-remove').forEach(b=>b.onclick=async()=>{
+    await sb.from('wishlist').delete().eq('user_id',me.id).eq('offer_id',b.dataset.id);
+    WISH.delete(String(b.dataset.id));
+    renderMyWishlist(); render();
+  });
+}
+
+async function loadSiteStats(){
+  let s;
+  if(LIVE){ const {data}=await sb.from('site_stats').select('*').single(); s=data; }
+  if(!s){
+    const v=OFFERS.filter(o=>o.valueTwd).reduce((a,o)=>a+o.valueTwd,0);
+    s={offer_count:OFFERS.length, free_count:OFFERS.filter(o=>o.freeTier==='free_no_min').length,
+       total_value:v, saved_total:0, report_count:0};
+  }
+  $('#siteStats').innerHTML=`
+    <div class="stat"><div class="v">${s.offer_count}</div><div class="k">筆優惠</div></div>
+    <div class="stat"><div class="v free">${s.free_count}</div><div class="k">完全免費</div></div>
+    <div class="stat"><div class="v">${nt(s.total_value)}</div><div class="k">全部用完可省</div></div>
+    ${s.report_count?`<div class="stat"><div class="v">${nt(s.saved_total)}</div>
+      <div class="k">大家已省下（${s.report_count} 次回報）</div></div>`:''}`;
+}
+
+/* ---- 登入 ----
+   redirectTo 一律正規化成「目錄」而不是 .../index.html。
+   Supabase 的 Redirect URLs 是逐字比對，大家通常只會把網域填進去，
+   如果這裡送出 https://xxx.pages.dev/index.html 就會對不上而靜默失敗。 */
+function redirectTarget(){
+  return location.origin + location.pathname.replace(/\/?index\.html$/, '/');
+}
+
+$('#btnLogin').onclick = async()=>{
+  if(!LIVE){
+    // 不要沉默。直接把診斷結果推到使用者眼前。
+    $$('.tab').forEach(x=>x.setAttribute('aria-selected', x.dataset.tab==='browse'));
+    ['browse','board','submit','mine','admin'].forEach(n=>
+      $('#tab-'+n).classList.toggle('hidden', n!=='browse'));
+    const mb=$('#modeBanner');
+    mb.scrollIntoView({behavior:'smooth', block:'center'});
+    const box=mb.querySelector('.note');
+    if(box){ box.style.transition='box-shadow .3s';
+      box.style.boxShadow='0 0 0 3px rgba(166,61,36,.25)';
+      setTimeout(()=>box.style.boxShadow='', 1600); }
+    return;
+  }
+  try{
+    const {error} = await sb.auth.signInWithOAuth({provider:'google',
+      options:{redirectTo: redirectTarget()}});
+    if(error) throw error;
+  }catch(e){
+    alert('登入失敗：' + (e.message||e) +
+      '\n\nSupabase → Authentication → URL Configuration 的 Redirect URLs 要包含：\n' +
+      redirectTarget() +
+      '\n\n另外確認 Google provider 已啟用，且你的 Gmail 在 Google Cloud 的測試使用者名單內。');
+  }
+};
+$('#btnLogout').onclick = async()=>{ await sb.auth.signOut(); location.reload(); };
+
+/* OAuth 失敗時 Supabase 會把原因塞在網址的 # 後面帶回來。
+   不主動讀出來的話，使用者只會看到「按了沒反應、回到首頁」。 */
+function showOAuthError(){
+  const h = new URLSearchParams(location.hash.slice(1));
+  const err = h.get('error_description') || h.get('error');
+  if(!err) return false;
+  const raw = decodeURIComponent(err).replace(/\+/g,' ');
+  let hint = '';
+  if(/redirect|url|path|invalid/i.test(raw))
+    hint = `<br>多半是 Redirect URLs 沒設好。到 Supabase → Authentication → URL Configuration，
+            把 <code>${esc(redirectTarget())}</code> 加進去。`;
+  else if(/access_denied|consent|test/i.test(raw))
+    hint = `<br>Google 那邊拒絕了。若 OAuth 同意畫面還在「測試中」，
+            要把你的 Gmail 加進 Google Cloud 的測試使用者名單。`;
+  else if(/provider|disabled/i.test(raw))
+    hint = `<br>Supabase 的 Google provider 可能沒啟用，或 Client ID／Secret 沒填。`;
+  note($('#modeBanner'),'alert', `<b>Google 登入沒有成功</b><br>${esc(raw)}${hint}`);
+  history.replaceState(null,'',location.pathname+location.search);
+  return true;
+}
+
+/* ---- PWA ---- */
+function registerSW(){
+  if('serviceWorker' in navigator && !IS_FILE)
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault(); deferredInstall=e; $('#btnInstall').classList.remove('hidden');
+});
+$('#btnInstall').onclick = async()=>{
+  if(!deferredInstall) return;
+  deferredInstall.prompt(); await deferredInstall.userChoice;
+  deferredInstall=null; $('#btnInstall').classList.add('hidden');
+};
+
+/* ---- 分頁 ---- */
+$$('.tab').forEach(t=>t.onclick=()=>{
+  $$('.tab').forEach(x=>x.setAttribute('aria-selected', x===t));
+  ['browse','board','submit','mine','admin'].forEach(n=>
+    $('#tab-'+n).classList.toggle('hidden', n!==t.dataset.tab));
+  if(t.dataset.tab==='board') loadBoard();
+});
+
+/* ===================================================================== */
+function buildControls(){
+  const bm=$('#bmonth'), bd=$('#bday');
+  if(!bm.dataset.done){
+    for(let m=1;m<=12;m++) bm.add(new Option(m+' 月',m));
+    for(let d=1;d<=31;d++) bd.add(new Option(d+' 日',d));
+    bm.dataset.done=1;
+  }
+  const rs=$('#region'); rs.length=1;
+  const present=new Set(OFFERS.flatMap(o=>o.regions).filter(r=>r!=='全台'));
+  COUNTIES.filter(r=>r!=='全台'&&present.has(r)).forEach(r=>rs.add(new Option(r,r)));
+
+  const ms=$('#memType'); ms.length=1;
+  Object.entries(MEM_LABEL).forEach(([k,v])=>{
+    const n=OFFERS.filter(o=>o.membershipType===k).length;
+    if(n) ms.add(new Option(`${v}（${n}）`,k));
+  });
+
+  // 多選 chip 群組：點個別選項可複選（例如同時選「當月」+「當週」），
+  // 點「全部」清空選取；一個都沒選時視同「全部」，chip 上會顯示「全部」被按下。
+  const mkMulti=(box,items,activeSet,cls='')=>{
+    box.innerHTML='';
+    const paint=()=>box.querySelectorAll('.chip').forEach(x=>{
+      const v=x.dataset.v;
+      x.setAttribute('aria-pressed', v===''?activeSet.size===0:activeSet.has(v));
+    });
+    items.forEach(([label,val])=>{
+      const b=document.createElement('button');
+      b.className='chip '+cls; b.dataset.v=val; b.textContent=label;
+      b.onclick=()=>{
+        if(val===''){ activeSet.clear(); }
+        else{ activeSet.has(val)?activeSet.delete(val):activeSet.add(val); }
+        paint(); render();
+      };
+      box.appendChild(b);
+    });
+    paint();
+  };
+  const cnt=(f,v)=>OFFERS.filter(o=>o[f]===v).length;
+  mkMulti($('#timingChips'),
+    [['全部期間','']].concat(TIMINGS.filter(t=>cnt('timing',t)).map(t=>[`${t}（${cnt('timing',t)}）`,t])),
+    activeTiming);
+  mkMulti($('#freeChips'),
+    [['全部',''],[`免費・無低消（${cnt('freeTier','free_no_min')}）`,'free_no_min'],
+     [`免費・需消費（${cnt('freeTier','free_min')}）`,'free_min'],
+     [`折扣類（${cnt('freeTier','discount')}）`,'discount']],
+    activeFree, 'g');
+  mkMulti($('#cats'),
+    [['全部類別','']].concat([...new Set(OFFERS.map(o=>o.category))].map(c=>[c,c])),
+    activeCat);
+
+  const fill=(sel,ents)=>{ if(sel.length) return; ents.forEach(([k,v])=>sel.add(new Option(v,k))); };
+  fill($('#fCategory'),CATEGORIES.map(c=>[c,c]));
+  fill($('#fTiming'),TIMINGS.map(t=>[t,t]));
+  fill($('#fMemType'),Object.entries(MEM_LABEL));
+  fill($('#fFreeTier'),Object.entries(FREE_LABEL).filter(([k])=>k!=='unknown'));
+  const fr=$('#fRegions');
+  if(!fr.children.length) COUNTIES.forEach(r=>{
+    const b=document.createElement('button'); b.type='button'; b.className='chip';
+    b.textContent=r; b.dataset.r=r; b.setAttribute('aria-pressed','false');
+    b.onclick=()=>b.setAttribute('aria-pressed', b.getAttribute('aria-pressed')!=='true');
+    fr.appendChild(b);
+  });
+}
+
+/* ===================================================================== */
+const daysOf=o=>o.advanceDays==null?999:o.advanceDays;
+const trustOf=o=>o.bestSource?o.bestSource.tier:9;
+const dUntil=i=>i?Math.round((new Date(i+'T00:00:00')-TODAY)/864e5):null;
+const dSince=i=>i?Math.round((TODAY-new Date(i+'T00:00:00'))/864e5):null;
+const matchRegion=(o,r)=>!r?true:(!o.regions.length?false:o.regions.includes('全台')||o.regions.includes(r));
+
+function advText(o){
+  if(o.advanceDays==null) return '提前期限未明訂，建議提早一個月準備';
+  if(o.advanceDays===0)   return '領券當下即可使用';
+  return `需提前 ${o.advanceDays} 天完成註冊或預約`;
+}
+function expText(o){
+  if(o.validityType==='rolling') return null;
+  if(o.validUntil==null) return '限期活動，起訖日未公布';
+  const l=dUntil(o.validUntil);
+  const r=(o.validFrom?o.validFrom+' – ':'至 ')+o.validUntil;
+  if(l<0) return `已結束（${r}）`;
+  if(l<=14) return `剩 ${l} 天　${r}`;
+  return `檔期 ${r}`;
+}
+function pulseText(o){
+  if(!o.reportCount) return null;
+  const a=dSince(o.lastUsedOn);
+  const w=a===0?'今天':a===1?'昨天':`${a} 天前`;
+  return `最近有人用：${w}　成功率 ${o.successRate??'—'}%（${o.reportCount} 次）`;
+}
+
+function render(){
+  const q=$('#q').value.trim().toLowerCase(), region=$('#region').value, mt=$('#memType').value;
+  const onlyV=$('#fVerified').checked, hideX=$('#fLive').checked, onlyR=$('#fReported').checked;
+  const onlyC=$('#fHasComments').checked;
+  const sortBy=$('#sort').value;
+
+  const activeCount = (q?1:0)+(region?1:0)+(mt?1:0)+activeCat.size+activeFree.size+activeTiming.size
+    +(onlyV?1:0)+(!hideX?1:0)+(onlyR?1:0)+(onlyC?1:0);
+  $('#btnClearFilters').classList.toggle('hidden',!activeCount);
+  $('#filterBadge').textContent=activeCount;
+  $('#filterBadge').classList.toggle('hidden',!activeCount);
+  $('#btnOpenFilter').classList.toggle('active',!!activeCount);
+
+  let list=OFFERS.filter(o=>{
+    if(activeCat.size&&!activeCat.has(o.category)) return false;
+    if(activeFree.size&&!activeFree.has(o.freeTier)) return false;
+    if(activeTiming.size&&!activeTiming.has(o.timing)) return false;
+    if(mt&&o.membershipType!==mt) return false;
+    if(!matchRegion(o,region)) return false;
+    if(onlyV&&!o.verified) return false;
+    if(hideX&&o.validUntil&&dUntil(o.validUntil)<0) return false;
+    if(onlyR&&!(o.lastUsedOn&&dSince(o.lastUsedOn)<=90)) return false;
+    if(onlyC&&!o.commentCount) return false;
+    if(q){const h=[o.brand,o.offer,o.membership,o.conditions,o.category,o.regions.join(' '),o.regionNote]
+      .join(' ').toLowerCase(); if(!h.includes(q)) return false;}
+    return true;
+  });
+
+  const bn=(a,b)=>a.brand.localeCompare(b.brand,'zh-Hant');
+  list.sort((a,b)=>{
+    if(sortBy==='brand') return bn(a,b);
+    if(sortBy==='trust') return trustOf(a)-trustOf(b)||bn(a,b);
+    if(sortBy==='value') return (b.valueTwd||0)-(a.valueTwd||0)||bn(a,b);
+    if(sortBy==='comments') return (b.commentCount||0)-(a.commentCount||0)||bn(a,b);
+    if(sortBy==='reports') return (b.reportCount||0)-(a.reportCount||0)||bn(a,b);
+    if(sortBy==='trending'){
+      // 「最近最多人使用」：近 90 天有人回報的優先，同樣是近期的再比總回報次數；
+      // 這樣熱門但很久沒人回報的優惠不會一直卡在最上面。
+      const rA=a.lastUsedOn&&dSince(a.lastUsedOn)<=90, rB=b.lastUsedOn&&dSince(b.lastUsedOn)<=90;
+      if(rA&&!rB) return -1; if(!rA&&rB) return 1;
+      if(rA&&rB) return (b.reportCount||0)-(a.reportCount||0)
+        || (new Date(b.lastUsedOn)-new Date(a.lastUsedOn)) || bn(a,b);
+      return bn(a,b);
+    }
+    if(sortBy==='fresh'){ if(!a.lastUsedOn&&!b.lastUsedOn) return bn(a,b);
+      if(!a.lastUsedOn) return 1; if(!b.lastUsedOn) return -1;
+      return new Date(b.lastUsedOn)-new Date(a.lastUsedOn); }
+    if(sortBy==='expiry'){ const A=dUntil(a.validUntil),B=dUntil(b.validUntil);
+      if(A==null&&B==null) return bn(a,b); if(A==null) return 1; if(B==null) return -1; return A-B; }
+    return daysOf(b)-daysOf(a)||bn(a,b);
+  });
+
+  const sum=list.filter(o=>o.valueTwd).reduce((a,o)=>a+o.valueTwd,0);
+  $('#count').textContent=`${list.length} / ${OFFERS.length} 筆`
+    +(region?`　${region}含全台`:'')+(sum?`　合計約 ${nt(sum)}`:'');
+  $('#empty').classList.toggle('hidden',list.length>0);
+
+  const isAdmin=!!myProfile?.is_admin;
+  $('#grid').innerHTML=list.map((o,idx)=>{
+    const ex=expText(o), pu=pulseText(o);
+    const cost=o.membershipCost==='spend'?'．需消費紀錄':o.membershipCost==='tier'?'．需達等級':'';
+    const wished=WISH.has(String(o.id));
+    return `<article class="card" data-id="${esc(o.id)}" style="--i:${idx}">
+      <div class="chead"><h3>${esc(o.brand)}</h3>
+        ${o.valueTwd?`<span class="val">約 ${nt(o.valueTwd)}</span>`:''}
+        <button class="wish" data-id="${esc(o.id)}" aria-pressed="${wished}" title="加入待辦清單" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/></svg>
+        </button></div>
+      <div class="row" style="gap:5px">
+        ${o.timing.includes('當日')?`<span class="flag today">${esc(o.timing)}</span>`
+          :`<span class="flag">${esc(o.timing)}</span>`}
+        ${o.freeTier==='free_no_min'?'<span class="flag free">免費・無低消</span>':
+          o.freeTier==='free_min'?'<span class="flag">免費・需消費</span>':''}
+        <span class="flag">${esc(MEM_LABEL[o.membershipType]||'會員')}${cost}</span>
+        ${!o.verified?'<span class="flag alert">未查證</span>':''}
+      </div>
+      <p class="offer">${esc(o.offer)}</p>
+      ${o.subOffers?.length?`
+      <button type="button" class="sub-toggle act-subtoggle" data-id="${esc(o.id)}" aria-expanded="false">
+        查看 ${o.subOffers.length} 個品牌各別優惠 ${ICONS.chevron}</button>
+      <div class="sub-list hidden" id="sub-${esc(o.id)}">
+        ${o.subOffers.map(s=>`<div class="sub-item"><b>${esc(s.brand)}</b><span>${esc(s.offer)}</span></div>`).join('')}
+      </div>`:''}
+      <div class="meta">
+        <span>${o.regions.length?esc(o.regions.join('、')):'地區未確認'}</span>
+        <span><i class="catdot" style="--c:${CAT_COLOR[o.category]||'var(--ink-3)'}"></i>${esc(o.category)}</span>
+      </div>
+      <div class="line${o.advanceDays==null?' warn':''}">${advText(o)}</div>
+      ${o.advanceNote?`<div class="meta">${esc(o.advanceNote)}</div>`:''}
+      ${ex?`<div class="line${ex.startsWith('剩')||ex.startsWith('已結束')?' warn':''}">${esc(ex)}</div>`:''}
+      ${pu?`<div class="line">${esc(pu)}</div>`:''}
+      <dl class="kv">
+        <dt>條件</dt><dd>${esc(o.conditions||'—')}</dd>
+        <dt>期限</dt><dd>${esc(o.validity||'—')}</dd>
+        ${o.regionNote?`<dt>門市</dt><dd>${esc(o.regionNote)}</dd>`:''}
+      </dl>
+      <div class="cfoot">
+        <button class="btn sm act-report" data-id="${esc(o.id)}">${ICONS.check}我用過了</button>
+        <button class="btn sm act-thread" data-id="${esc(o.id)}">${ICONS.chat}留言${o.commentCount?`（${o.commentCount}）`:''}</button>
+        ${isAdmin?`<button class="btn sm act-adminedit" data-id="${esc(o.id)}">編輯</button>`
+          :(me?`<button class="btn sm act-suggest" data-id="${esc(o.id)}">建議修改</button>`:'')}
+        ${o.bestSource?`<span class="src">${esc(o.bestSource.tierLabel||TIER_LABEL[o.bestSource.tier])}
+          <a href="${esc(o.bestSource.url)}" target="_blank" rel="noopener nofollow">來源↗</a></span>`:''}
+      </div>
+      </article>`;
+  }).join('');
+
+  $$('.act-report').forEach(b=>b.onclick=()=>openReport(b.dataset.id));
+  $$('.act-thread').forEach(b=>b.onclick=()=>openDetail(b.dataset.id));
+  $$('.act-adminedit').forEach(b=>b.onclick=()=>startEditOffer(b.dataset.id,true));
+  $$('.act-suggest').forEach(b=>b.onclick=()=>startEditOffer(b.dataset.id,false,true));
+  $$('.wish').forEach(b=>b.onclick=e=>{ e.stopPropagation(); toggleWish(b.dataset.id,b); });
+  $$('.act-subtoggle').forEach(b=>b.onclick=()=>{
+    const open=b.getAttribute('aria-expanded')!=='true';
+    b.setAttribute('aria-expanded',String(open));
+    $('#sub-'+b.dataset.id).classList.toggle('hidden',!open);
+  });
+  renderPlanner(region);
+  saveFilters();
+}
+
+function renderPlanner(region){
+  const m=+$('#bmonth').value, d=+$('#bday').value, box=$('#planner');
+  if(!m){ box.classList.remove('on'); return; }
+  box.classList.add('on');
+  const t=new Date(TODAY.getFullYear(),m-1,d||1);
+  if(t<TODAY) t.setFullYear(TODAY.getFullYear()+1);
+  const f=x=>`${x.getMonth()+1}/${x.getDate()}`;
+  const left=Math.round((t-TODAY)/864e5);
+  // 「當日」= 只有生日當天能用；「當月＋當日」整月都能用，只是當天更優惠，不算進去
+  const todayOnly=OFFERS.filter(o=>o.timing==='當日'&&matchRegion(o,region)).length;
+  $('#plannerSub').textContent=
+    `生日 ${f(t)}${d?'':'（未選日期，以該月 1 日估算）'}　還有 ${left} 天`
+    +(region?`　${region}`:'')+`　其中 ${todayOnly} 筆只有生日當天能用，錯過就沒了`;
+  const w=OFFERS.filter(o=>typeof o.advanceDays==='number'&&o.advanceDays>0&&matchRegion(o,region))
+    .sort((a,b)=>b.advanceDays-a.advanceDays);
+  $('#deadlines').innerHTML=w.map(o=>{
+    const dl=new Date(t); dl.setDate(dl.getDate()-o.advanceDays);
+    const past=dl<TODAY;
+    return `<div class="dl${past?' past':''}"><span>${esc(o.brand)}　提前 ${o.advanceDays} 天</span>
+      <b>${f(dl)} 前</b></div>`;
+  }).join('')+`<div class="dl"><span>其餘未明訂</span><b>建議 ${
+    (()=>{const x=new Date(t);x.setDate(x.getDate()-30);return f(x);})()} 前入會</b></div>`;
+}
+
+['#q','#region','#memType','#fVerified','#fLive','#fReported','#fHasComments','#sort','#bmonth','#bday']
+  .forEach(s=>$(s).addEventListener('input',render));
+
+$('#btnClearFilters').onclick=()=>{
+  $('#q').value=''; $('#region').value=''; $('#memType').value='';
+  $('#fVerified').checked=false; $('#fLive').checked=true; $('#fReported').checked=false;
+  $('#fHasComments').checked=false;
+  activeCat.clear(); activeFree.clear(); activeTiming.clear();
+  $$('#timingChips .chip, #freeChips .chip, #cats .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.v===''));
+  render();
+};
+
+/* ---- 手機篩選底部彈出視窗 ---- */
+function openFilterSheet(){
+  $('#filterSheet').classList.add('open'); $('#filterBackdrop').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeFilterSheet(){
+  $('#filterSheet').classList.remove('open'); $('#filterBackdrop').classList.remove('open');
+  document.body.style.overflow='';
+}
+$('#btnOpenFilter').onclick=openFilterSheet;
+$('#btnCloseFilter').onclick=closeFilterSheet;
+$('#filterBackdrop').onclick=closeFilterSheet;
+
+/* ===================================================================== */
+const CMT_SHOW=8;   // 留言超過這個數量先收合，避免討論串把視窗拉得太長
+let dtlId=null;
+// 留言／使用回報只在點「留言」按鈕打開的獨立視窗裡看得到，
+// 主列表卡片上完全不顯示留言內容，只有一個帶數字的按鈕。
+async function openDetail(id){
+  if(!LIVE){ alert('離線模式無法讀取留言，請先用 python serve.py 啟動並設定 config.js。'); return; }
+  dtlId=id;
+  const o=OFFERS.find(x=>String(x.id)===String(id));
+  $('#dtlBrand').textContent=o?.brand||'';
+  $('#dtlOffer').textContent=o?.offer||'';
+  const body=$('#dtlBody');
+  body.innerHTML='<div class="thread">載入中…</div>';
+  $('#dlgDetail').showModal();
+  const isAdmin=!!myProfile?.is_admin;
+  const [{data:c},{data:r}]=await Promise.all([
+    sb.from('comments').select('id,body,created_at,is_hidden,user_id,profiles(display_name)')
+      .eq('offer_id',id).order('created_at',{ascending:false}).limit(50),
+    sb.from('usage_reports').select('id,used_on,result,store,note,saved_twd,profiles(display_name)')
+      .eq('offer_id',id).order('used_on',{ascending:false}).limit(30)]);
+  if(dtlId!==id) return;   // 使用者手快，已經切到別筆了，這批結果就不用了
+  const R={success:['成功','ok'],partial:['部分','partial'],failed:['失敗','fail']};
+  const cmts=c||[];
+  const cmtHtml=x=>{
+    const mine = me && x.user_id===me.id;
+    return `<div class="cmt${x.is_hidden?' hidden-cmt':''}" data-cid="${x.id}">
+      <div class="who">${esc(x.profiles?.display_name||'匿名')}　${esc(x.created_at.slice(0,10))}
+        ${x.is_hidden?'<span class="flag alert" style="margin-left:6px">已隱藏</span>':''}
+        <span style="margin-left:auto;display:flex;gap:4px">
+        ${isAdmin?`<button class="btn sm cm-hide" data-cid="${x.id}" data-hide="${x.is_hidden?'0':'1'}"
+          style="padding:2px 8px;font-size:.72rem">${x.is_hidden?'取消隱藏':'隱藏'}</button>`:''}
+        ${(mine||isAdmin)?`<button class="btn sm cm-del" data-cid="${x.id}"
+          style="padding:2px 8px;font-size:.72rem;border-color:var(--alert-line);color:var(--alert)">刪除</button>`:''}
+        </span>
+      </div>
+      <div class="body">${esc(x.body)}</div></div>`;
+  };
+  const shown=cmts.slice(0,CMT_SHOW), rest=cmts.slice(CMT_SHOW);
+  body.innerHTML=`<div class="thread">
+    ${(r||[]).map(x=>`<div class="rep"><span>${esc(x.used_on)}</span>
+      <span class="${R[x.result][1]}">${R[x.result][0]}</span>
+      ${x.saved_twd?`<span>省 ${nt(x.saved_twd)}</span>`:''}
+      ${x.store?`<span style="color:var(--ink-3)">${esc(x.store)}</span>`:''}
+      <span style="flex:1">${esc(x.note||'')}</span>
+      <span style="color:var(--ink-3);font-size:.75rem">${esc(x.profiles?.display_name||'匿名')}</span>
+    </div>`).join('')||'<div style="color:var(--ink-3);padding:5px 0">還沒有使用回報</div>'}
+    <div class="cmt-list">${shown.map(cmtHtml).join('')}</div>
+    ${rest.length?`<div class="cmt-rest hidden">${rest.map(cmtHtml).join('')}</div>
+      <button class="btn sm cm-more" style="margin:4px 0">顯示全部 ${cmts.length} 則留言</button>`:''}
+    ${!cmts.length?'<div style="color:var(--ink-3);padding:5px 0;font-size:.83rem">還沒有留言，第一個分享使用經驗吧</div>':''}
+    ${me?`<div class="field" style="margin-top:9px">
+      <textarea class="ci" maxlength="800" placeholder="分享使用經驗"></textarea>
+      <button class="btn sm primary cs" data-id="${esc(id)}" style="margin-top:5px">送出留言</button></div>`
+     :'<div style="color:var(--ink-3);padding:6px 0">登入後可留言</div>'}</div>`;
+  const more=body.querySelector('.cm-more');
+  if(more) more.onclick=()=>{ body.querySelector('.cmt-rest').classList.remove('hidden'); more.remove(); };
+  [...body.querySelectorAll('.cm-hide')].forEach(b=>b.onclick=async()=>{
+    b.disabled=true;
+    const {error}=await sb.from('comments').update({is_hidden:b.dataset.hide==='1'}).eq('id',b.dataset.cid);
+    if(error){ alert('操作失敗：'+error.message); b.disabled=false; return; }
+    openDetail(id);
+  });
+  [...body.querySelectorAll('.cm-del')].forEach(b=>b.onclick=async()=>{
+    if(!confirm('確定刪除這則留言？')) return;
+    b.disabled=true;
+    const {error}=await sb.from('comments').delete().eq('id',b.dataset.cid);
+    if(error){ alert('刪除失敗：'+error.message); b.disabled=false; return; }
+    openDetail(id);
+    loadOffers().then(render);
+  });
+  const s=body.querySelector('.cs');
+  if(s) s.onclick=async()=>{
+    const ta=body.querySelector('.ci'), val=ta.value.trim();
+    if(!val) return; s.disabled=true;
+    const {error}=await sb.from('comments').insert({offer_id:Number(id),user_id:me.id,body:val});
+    s.disabled=false;
+    if(error){ alert('留言失敗：'+error.message); return; }
+    openDetail(id);
+    loadOffers().then(render);   // 背景同步卡片上的留言數徽章
+  };
+}
+$('#btnDtlClose').onclick=()=>$('#dlgDetail').close();
+
+/* ---- 回報 ----
+   同一個 dialog 兩用：openReport(offerId) 是新增，openReport(offerId, existing) 是點
+   「我的使用回報」列表進來的編輯／看細項模式，帶第二個參數就代表在編輯。 */
+let repId=null, editingReportId=null;
+function openReport(id, existing=null){
+  if(!LIVE){ alert('離線模式無法回報。請先用 python serve.py 啟動並設定 config.js。'); return; }
+  if(!me){ alert('請先用 Google 登入才能回報。'); return; }
+  repId=id; editingReportId=existing?.id||null;
+  const o=OFFERS.find(x=>String(x.id)===String(id));
+  const brand=existing?.offers?.brand||o?.brand||'';
+  const offerText=existing?.offers?.offer||o?.offer||'';
+  $('#repTitle').textContent=editingReportId?'編輯使用回報':'回報使用狀況';
+  $('#repBrand').textContent=brand?`${brand}${offerText?' — '+offerText.slice(0,50):''}`:'';
+  const metaEl=$('#repMeta');
+  if(existing){ metaEl.textContent=`建立於 ${esc(existing.created_at.slice(0,10))}`; metaEl.classList.remove('hidden'); }
+  else metaEl.classList.add('hidden');
+  $('#repDate').value = existing?.used_on || ISO(new Date()); $('#repDate').max=ISO(new Date());
+  $('#repResult').value = existing?.result || 'success';
+  const defVal = existing ? (existing.saved_twd??'') : (o?.valueTwd ?? '');
+  $('#repSaved').value = defVal;
+  $('#repSavedHint').textContent = (!existing&&o?.valueTwd)
+    ? `預設帶入估算值 ${nt(o.valueTwd)}，可依實際情況修改` : '不確定就留空';
+  $('#repStore').value=existing?.store||''; $('#repNote').value=existing?.note||'';
+  $('#btnDeleteReport').classList.toggle('hidden',!editingReportId);
+  $('#btnSaveReport').textContent=editingReportId?'更新':'送出';
+  $('#dlgReport').showModal();
+}
+$('#btnSaveReport').onclick=async e=>{
+  e.preventDefault();
+  const sv=$('#repSaved').value;
+  const p={used_on:$('#repDate').value, result:$('#repResult').value,
+    saved_twd: sv===''?null:Number(sv), store:$('#repStore').value.trim(), note:$('#repNote').value.trim()};
+  if(!p.used_on){ alert('請選擇使用日期'); return; }
+  let error;
+  if(editingReportId){
+    ({error}=await sb.from('usage_reports').update(p).eq('id',editingReportId).eq('user_id',me.id));
+  }else{
+    ({error}=await sb.from('usage_reports').insert({...p, offer_id:Number(repId), user_id:me.id}));
+  }
+  if(error){ alert(error.code==='23505'?'你今天已經回報過這筆優惠了。':'回報失敗：'+error.message); return; }
+  $('#dlgReport').close();
+  await loadOffers(); render(); loadMyStuff(); loadSiteStats();
+};
+$('#btnDeleteReport').onclick=async()=>{
+  if(!editingReportId) return;
+  if(!confirm('確定刪除這筆回報？')) return;
+  const {error}=await sb.from('usage_reports').delete().eq('id',editingReportId).eq('user_id',me.id);
+  if(error){ alert('刪除失敗：'+error.message); return; }
+  $('#dlgReport').close();
+  await loadOffers(); render(); loadMyStuff(); loadSiteStats();
+};
+
+/* ===================================================================== */
+function paintSubmitGate(){
+  const g=$('#submitGate'), f=$('#submitForm');
+  const lock=m=>{ note(g,'alert',m); f.classList.add('hidden'); };
+  if(!LIVE) return lock('離線示範模式無法投稿。請先解決上方列出的問題。');
+  if(!me) return lock('請先用右上角的 <b>Google 登入</b>。');
+  if(myProfile?.is_banned) return lock('你的帳號已被停用。');
+  g.innerHTML=''; f.classList.remove('hidden');
+}
+function guessTier(u){ let h='';
+  try{h=new URL(u).hostname.replace(/^www\./,'').toLowerCase();}catch{return 3;}
+  if(/threads\.(net|com)|instagram\.com|facebook\.com|x\.com/.test(h)) return 4;
+  if(/businesstoday\.com\.tw|dailyview\.tw|udn\.com|ettoday\.net|ltn\.com\.tw|chinatimes\.com/.test(h)) return 2;
+  return 3; }
+$('#fSourceUrl').addEventListener('input',e=>{
+  const v=e.target.value.trim(); if(v) $('#fSourceTier').value=String(guessTier(v)); });
+
+let editingOfferId=null, editingAsAdmin=false, editingAsSuggestion=false, origOfferForDiff=null;
+function resetSubmitForm(){
+  $('#submitForm').reset();
+  $$('#fRegions .chip').forEach(c=>c.setAttribute('aria-pressed','false'));
+  $('#submitMsg').innerHTML='';
+  editingOfferId=null; editingAsAdmin=false; editingAsSuggestion=false; origOfferForDiff=null;
+  $('#fEditReasonField').classList.add('hidden');
+  $('#fEditReason').required=false;
+  $('#submitTitle').textContent='新增一筆優惠';
+  $('#submitSub').textContent='送出後進入待審，管理員核可才會公開。每人每天上限 10 筆。';
+  $('#btnSubmitOffer').textContent='送出待審';
+  $('#btnCancelEdit').classList.add('hidden');
+}
+$('#btnReset').onclick=resetSubmitForm;
+$('#btnCancelEdit').onclick=resetSubmitForm;
+
+// 「我的投稿」待審項目點「編輯」、管理員在卡片上點「編輯」、或一般人點「建議修改」，
+// 都呼叫這個：帶著原始資料切到「新增」分頁，表單照樣填好，送出時走不同路徑：
+//   asAdmin=true      → 管理員直接改已上架的優惠，不檢查 status、update 也不限定 submitted_by
+//   asSuggestion=true → 一般人對「已上架」優惠提修改建議，送出後進 offer_edits 等審核，
+//                        不會直接動到 offers 本身
+//   都不是            → 自己編輯自己還在待審的投稿
+async function startEditOffer(id, asAdmin=false, asSuggestion=false){
+  if(!LIVE) return;
+  const {data:o,error}=await sb.from('offers').select('*').eq('id',id).single();
+  if(error||!o){ alert('讀取失敗：'+(error?.message||'找不到這筆投稿')); return; }
+  if(!asAdmin && !asSuggestion && o.status!=='pending'){ alert('已經審核過的投稿不能再編輯，如果想改，請用「建議修改」。'); return; }
+  $('.tab[data-tab="submit"]').click();
+  editingOfferId=id; editingAsAdmin=asAdmin; editingAsSuggestion=asSuggestion;
+  origOfferForDiff=asSuggestion?o:null;
+  $('#submitTitle').textContent = asAdmin?`編輯優惠（管理員）— ${esc(o.brand)}`
+    :asSuggestion?`建議修改 — ${esc(o.brand)}`:'編輯投稿';
+  $('#submitSub').textContent = asAdmin?'直接更新已上架的內容，不會變回待審。'
+    :asSuggestion?'這是已經上架的優惠，改好的地方會送給管理員審核，通過才會真的套用到頁面上。'
+    :'修改後重新送出，一樣要等管理員審核。';
+  $('#btnSubmitOffer').textContent = asSuggestion?'送出建議':'更新';
+  $('#btnCancelEdit').classList.remove('hidden');
+  $('#fEditReasonField').classList.toggle('hidden',!asSuggestion);
+  $('#fEditReason').required=asSuggestion;
+  const f=$('#submitForm').elements;
+  f.brand.value=o.brand||''; f.category.value=o.category||''; f.offer.value=o.offer||'';
+  f.timing.value=o.timing||o.offer_window||'當月'; f.value_twd.value=o.value_twd??'';
+  f.membership_type.value=o.membership_type||''; f.free_tier.value=o.free_tier||'';
+  f.advance_days.value=o.advance_days??''; f.membership.value=o.membership||'';
+  f.conditions.value=o.conditions||''; f.valid_from.value=o.valid_from||''; f.valid_until.value=o.valid_until||'';
+  const src=(o.sources||[])[0];
+  $('#fSourceUrl').value=src?.url||''; $('#fSourceTier').value=String(src?.tier||3);
+  const regs=new Set(o.regions||[]);
+  $$('#fRegions .chip').forEach(c=>c.setAttribute('aria-pressed',String(regs.has(c.dataset.r))));
+  $('#submitMsg').innerHTML='';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+$('#submitForm').onsubmit=async e=>{
+  e.preventDefault();
+  const b=$('#btnSubmitOffer'); b.disabled=true;
+  const fd=new FormData(e.target);
+  const regions=$$('#fRegions .chip').filter(c=>c.getAttribute('aria-pressed')==='true').map(c=>c.dataset.r);
+  const url=(fd.get('source_url')||'').trim(), tier=Number(fd.get('source_tier')||3);
+  const ad=fd.get('advance_days'), vt=fd.get('value_twd'), tm=fd.get('timing')||'當月';
+  const row={
+    brand:fd.get('brand').trim(), category:fd.get('category'), regions,
+    offer:fd.get('offer').trim(), membership:(fd.get('membership')||'').trim(),
+    membership_type:fd.get('membership_type'), free_tier:fd.get('free_tier'),
+    advance_days: ad===''?null:Number(ad), value_twd: vt===''?null:Number(vt),
+    timing: tm, offer_window: tm,
+    conditions:(fd.get('conditions')||'').trim(),
+    valid_from:fd.get('valid_from')||null, valid_until:fd.get('valid_until')||null,
+    validity_type: fd.get('valid_until')?'fixed':'rolling',
+    sources: url?[{url, title:(()=>{try{return new URL(url).hostname.replace(/^www\./,'');}
+      catch{return url.slice(0,60);}})(), tier, tierLabel:TIER_LABEL[tier], checked:ISO(new Date())}]:[]};
+  const editing=editingOfferId, asAdmin=editingAsAdmin, asSuggestion=editingAsSuggestion;
+  let error;
+  if(editing&&asSuggestion){
+    const reason=(fd.get('edit_reason')||'').trim();
+    if(!reason){ b.disabled=false; note($('#submitMsg'),'alert','請填修改原因，讓管理員知道為什麼要改。'); return; }
+    if(!url){ b.disabled=false; note($('#submitMsg'),'alert','請附上資料來源網址。'); return; }
+    const orig=origOfferForDiff||{};
+    const cmp={brand:row.brand, offer:row.offer, conditions:row.conditions, membership:row.membership,
+      timing:row.timing, advance_days:row.advance_days, value_twd:row.value_twd, valid_until:row.valid_until};
+    const origVal={brand:orig.brand, offer:orig.offer, conditions:orig.conditions, membership:orig.membership,
+      timing:orig.timing||orig.offer_window, advance_days:orig.advance_days??null,
+      value_twd:orig.value_twd??null, valid_until:orig.valid_until??null};
+    const patch={};
+    Object.entries(cmp).forEach(([k,v])=>{ if(v!==origVal[k]) patch[k]=v; });
+    if(!Object.keys(patch).length){ b.disabled=false; note($('#submitMsg'),'alert','沒有偵測到任何欄位變動，改點內容再送出。'); return; }
+    ({error}=await sb.from('offer_edits').insert({
+      offer_id:Number(editing), proposed_by:me.id, patch, reason, source_url:url, source_tier:tier}));
+  }else if(editing&&asAdmin){
+    ({error}=await sb.from('offers').update(row).eq('id',editing));
+  }else if(editing){
+    ({error}=await sb.from('offers').update(row).eq('id',editing).eq('submitted_by',me.id));
+  }else{
+    ({error}=await sb.from('offers').insert({...row, status:'pending', verified:false, submitted_by:me.id}));
+  }
+  b.disabled=false;
+  if(error){ const hint=/relation|does not exist|offer_edits/i.test(error.message)
+      ? '（Supabase 可能還沒跑 schema_v11_edits.sql）' : '';
+    note($('#submitMsg'),'alert', error.message.includes('row-level security')
+      ?(asSuggestion?'送出被擋下，可能帳號被停用了。':editing?'更新被擋下，這筆可能已經審核過了。':'送出被擋下。可能今天已投滿 10 筆，或帳號被停用。')
+      :'送出失敗：'+esc(error.message)+hint); return; }
+  resetSubmitForm();
+  note($('#submitMsg'),'good', asSuggestion?'已送出修改建議，等待管理員審核，通過才會真的改到頁面上。'
+    :editing?(asAdmin?'已更新。':'已更新，等待審核。'):'已送出，等待審核。可到「我的」查看狀態。');
+  if(asAdmin){ await loadOffers(); render(); } else if(!asSuggestion){ loadMyStuff(); }
+};
+
+/* ===================================================================== */
+$('#optLeaderboard').onchange=async e=>{
+  if(!LIVE||!me) return;
+  const {error}=await sb.from('profiles').update({show_on_leaderboard:e.target.checked}).eq('id',me.id);
+  if(error){ alert('設定失敗：'+error.message); e.target.checked=!e.target.checked; }
+};
+
+async function loadMyStuff(){
+  if(!LIVE||!me) return;
+  const {data:sv}=await sb.from('my_savings').select('*').eq('user_id',me.id).maybeSingle();
+  $('#mySavings').innerHTML = sv ? `
+    <div><div class="v">${nt(sv.saved_total)}</div><div class="k">累積省下</div></div>
+    <div><div class="v">${nt(sv.saved_this_year)}</div><div class="k">今年省下</div></div>
+    <div><div class="v">${sv.success_count}</div><div class="k">成功次數</div></div>
+    <div><div class="v">${sv.brands_used}</div><div class="k">用過品牌</div></div>`
+    : '<div style="color:var(--ink-3);font-size:.86rem">還沒有回報紀錄。到「優惠」分頁按「我用過了」開始記錄。</div>';
+
+  const R={success:['成功','ok'],partial:['部分','partial'],failed:['失敗','fail']};
+  const {data:reps}=await sb.from('usage_reports')
+    .select('id,used_on,result,saved_twd,store,note,created_at,offer_id,offers(id,brand,offer,timing,value_twd)')
+    .eq('user_id',me.id).order('used_on',{ascending:false});
+  MY_REPORTS=reps||[];
+  $('#myReports').innerHTML=MY_REPORTS.map(r=>`<div class="rep rep-click" data-id="${r.id}">
+    <span>${esc(r.used_on)}</span><b style="flex:1">${esc(r.offers?.brand||'（已下架）')}</b>
+    <span class="${R[r.result][1]}">${R[r.result][0]}</span>
+    <span>${nt(r.saved_twd)}</span></div>`).join('')
+    ||'<div style="color:var(--ink-3);font-size:.86rem">還沒有回報紀錄。</div>';
+  $$('.rep-click').forEach(row=>row.onclick=()=>{
+    const r=MY_REPORTS.find(x=>String(x.id)===row.dataset.id);
+    if(r) openReport(r.offer_id, r);
+  });
+
+  renderMyWishlist();
+
+  const S={pending:'待審核',approved:'已核可',rejected:'未採用',archived:'已下架'};
+  const {data:mine}=await sb.from('offers').select('id,brand,status,review_note,created_at')
+    .eq('submitted_by',me.id).order('created_at',{ascending:false});
+  $('#myOffers').innerHTML=(mine||[]).map(o=>`<div class="rep">
+    <span>${esc(o.created_at.slice(0,10))}</span><b style="flex:1">${esc(o.brand)}</b>
+    <span class="${o.status==='pending'?'partial':o.status==='approved'?'ok':o.status==='rejected'?'fail':''}">${S[o.status]||o.status}</span>
+    ${o.review_note?`<span style="color:var(--ink-3)">${esc(o.review_note)}</span>`:''}
+    ${o.status==='pending'?`<button class="btn sm eo" data-id="${o.id}">編輯</button>`:''}</div>`).join('')
+    ||'<div style="color:var(--ink-3);font-size:.86rem">還沒有投稿紀錄。</div>';
+  $$('.eo').forEach(b=>b.onclick=()=>startEditOffer(b.dataset.id));
+}
+
+async function loadBoard(){
+  if(!LIVE){
+    $('#lbBody').innerHTML='<div style="color:var(--ink-3);font-size:.86rem">排行榜需要連線 Supabase。</div>';
+    $('#popBody').innerHTML=''; return;
+  }
+  const [{data:lb},{data:pop}]=await Promise.all([
+    sb.from('leaderboard').select('*'),
+    sb.from('popular_offers').select('*').limit(20)]);
+  $('#lbBody').innerHTML=(lb&&lb.length)?`<table class="lb">
+    <tr><th class="rk">#</th><th>使用者</th><th>品牌數</th><th class="amt">累積省下</th></tr>
+    ${lb.map((r,i)=>`<tr class="lb-row" data-lb="${i}"><td class="rk ${r.rank<=3?'top':''}">${r.rank}</td>
+      <td><div class="who">${r.avatar_url?`<img class="avatar" src="${esc(r.avatar_url)}" alt="">`
+        :`<span class="initial">${esc((r.display_name||'壽')[0])}</span>`}
+        ${esc(r.display_name||'壽星')}</div></td>
+      <td>${r.brands_used}<span class="lb-chev">▾</span></td><td class="amt">${nt(r.saved_total)}</td></tr>
+      <tr class="lb-detail hidden" data-lbd="${i}"><td colspan="4">
+        ${(r.brands&&r.brands.length)?`<div class="regchips">${
+          r.brands.map(b=>`<span class="chip" style="cursor:default">${esc(b)}</span>`).join('')}</div>`
+          :'<span style="color:var(--ink-3);font-size:.82rem">還沒有成功回報的店家</span>'}
+      </td></tr>`).join('')}
+    </table>`
+    :'<div style="color:var(--ink-3);font-size:.86rem">還沒有人上榜。到「我的」分頁打開公開選項就會出現。</div>';
+  $$('.lb-row').forEach(row=>row.onclick=()=>{
+    const det=document.querySelector(`.lb-detail[data-lbd="${row.dataset.lb}"]`);
+    det.classList.toggle('hidden'); row.classList.toggle('open',!det.classList.contains('hidden'));
+  });
+  $('#popBody').innerHTML=(pop&&pop.length)?`<table class="lb">
+    <tr><th class="rk">#</th><th>品牌</th><th>成功／回報</th><th class="amt">已省下</th></tr>
+    ${pop.map((r,i)=>`<tr><td class="rk ${i<3?'top':''}">${i+1}</td>
+      <td>${esc(r.brand)}<span style="color:var(--ink-3);font-size:.78rem">　${esc(r.timing)}</span></td>
+      <td>${r.success_count}／${r.report_count}</td>
+      <td class="amt">${nt(r.saved_total)}</td></tr>`).join('')}</table>`
+    :'<div style="color:var(--ink-3);font-size:.86rem">還沒有回報資料。</div>';
+}
+
+/* ===================================================================== */
+async function loadPending(){
+  if(!LIVE||!myProfile?.is_admin) return;
+  const {data}=await sb.from('offers').select('*').eq('status','pending')
+    .order('created_at',{ascending:true});
+  const list=(data||[]).map(fromRow), pc=$('#pendCount');
+  pc.textContent=list.length; pc.classList.toggle('hidden',!list.length);
+  $('#pendingList').innerHTML=list.map(o=>`
+    <div class="pend-row" data-row="${o.id}" style="border-top:1px solid var(--line);padding:14px 0">
+      <div class="chead"><h3 style="font-size:.95rem">${esc(o.brand)}</h3>
+        ${o.valueTwd?`<span class="val">約 ${nt(o.valueTwd)}</span>`:''}</div>
+      <div class="row" style="gap:5px;margin:5px 0">
+        <span class="flag">${esc(o.timing)}</span>
+        <span class="flag">${esc(FREE_LABEL[o.freeTier])}</span>
+        <span class="flag">${esc(MEM_LABEL[o.membershipType])}</span>
+        <span class="flag">${o.regions.length?esc(o.regions.join('、')):'未填地區'}</span>
+      </div>
+      <p class="offer">${esc(o.offer)}</p>
+      <dl class="kv"><dt>提前</dt><dd>${o.advanceDays??'未填'} 天</dd>
+        <dt>條件</dt><dd>${esc(o.conditions||'未填')}</dd>
+        <dt>來源</dt><dd>${o.bestSource?`${esc(o.bestSource.tierLabel)} <a href="${
+          esc(o.bestSource.url)}" target="_blank" rel="noopener nofollow">連結↗</a>`:'未填'}</dd></dl>
+      <div class="row" style="margin-top:9px">
+        <label class="toggle"><input type="checkbox" class="cv" data-id="${o.id}"> 已查證</label>
+        <input class="rn" data-id="${o.id}" placeholder="審核備註" style="flex:1;min-width:140px">
+        <button class="btn primary sm ap" data-id="${o.id}">核可</button>
+        <button class="btn sm rj" data-id="${o.id}">退回</button>
+      </div></div>`).join('')
+    ||'<div style="color:var(--ink-3);font-size:.86rem;padding:8px 0">目前沒有待審項目——公開投稿送出後才會出現在這裡。</div>';
+  const act=async(id,st,brand)=>{
+    const v=document.querySelector(`.cv[data-id="${id}"]`)?.checked||false;
+    const n=document.querySelector(`.rn[data-id="${id}"]`)?.value||'';
+    const row=document.querySelector(`.pend-row[data-row="${id}"]`);
+    const btns=row?.querySelectorAll('button'); btns?.forEach(b=>b.disabled=true);
+    const {error}=await sb.rpc('review_offer',{p_offer_id:Number(id),p_status:st,p_verified:v,p_note:n});
+    if(error){
+      btns?.forEach(b=>b.disabled=false);
+      const hint=/管理員|admin/i.test(error.message)
+        ? '（如果你剛把自己設成管理員，要先登出再重新登入一次，網站才會讀到新權限）' : '';
+      note($('#pendMsg'),'alert',`審核失敗：${esc(error.message)} ${hint}`);
+      return;
+    }
+    note($('#pendMsg'),'good',`✓ 已${st==='approved'?'核可':'退回'}「${esc(brand)}」`);
+    if(row){ row.style.transition='opacity .25s var(--ease)'; row.style.opacity='0';
+      setTimeout(()=>row.remove(),250); }
+    await loadOffers(); render(); loadSiteStats();
+    const {data:fresh}=await sb.from('offers').select('id').eq('status','pending');
+    const pc2=$('#pendCount'); pc2.textContent=(fresh||[]).length;
+    pc2.classList.toggle('hidden',!(fresh||[]).length);
+  };
+  $$('.ap').forEach(b=>b.onclick=()=>act(b.dataset.id,'approved',
+    list.find(o=>String(o.id)===String(b.dataset.id))?.brand||''));
+  $$('.rj').forEach(b=>b.onclick=()=>act(b.dataset.id,'rejected',
+    list.find(o=>String(o.id)===String(b.dataset.id))?.brand||''));
+}
+
+/* ---- 修改建議待審：民眾對已上架優惠提的修改建議，新舊對照 + 核可／退回 ---- */
+const EDIT_FIELD_LABEL={brand:'品牌名稱',offer:'優惠內容',conditions:'使用條件',membership:'會員取得方式',
+  timing:'適用期間',advance_days:'提前天數',value_twd:'優惠價值',valid_until:'檔期迄日'};
+async function loadPendingEdits(){
+  if(!LIVE||!myProfile?.is_admin) return;
+  const {data,error}=await sb.from('offer_edits')
+    .select('id,offer_id,patch,reason,source_url,source_tier,created_at,'
+      +'offers(brand,offer,conditions,membership,timing,advance_days,value_twd,valid_until),profiles(display_name)')
+    .eq('status','pending').order('created_at',{ascending:true});
+  const ec=$('#editCount');
+  if(error){
+    const hint=/relation|does not exist|offer_edits/i.test(error.message)?'（Supabase 可能還沒跑 schema_v11_edits.sql）':'';
+    $('#editPendingList').innerHTML=`<div class="note alert">讀取失敗：${esc(error.message)}${hint}</div>`;
+    ec.classList.add('hidden'); return;
+  }
+  const list=data||[];
+  ec.textContent=list.length; ec.classList.toggle('hidden',!list.length);
+  $('#editPendingList').innerHTML = list.length ? list.map(e=>{
+    const o=e.offers||{};
+    const rows=Object.entries(e.patch||{}).map(([k,v])=>`
+      <div class="row" style="gap:6px;align-items:flex-start;margin-top:6px">
+        <span class="filt-label" style="width:64px">${esc(EDIT_FIELD_LABEL[k]||k)}</span>
+        <div style="flex:1;min-width:0;font-size:.82rem">
+          <div style="color:var(--ink-3);text-decoration:line-through">${esc(String(o[k]??'—'))}</div>
+          <div style="color:var(--free);font-weight:700">${esc(String(v??'—'))}</div>
+        </div>
+      </div>`).join('');
+    return `<div class="pend-row" data-edit-row="${e.id}" style="border-top:1px solid var(--line);padding:14px 0">
+      <div class="chead"><h3 style="font-size:.95rem">${esc(o.brand||'（優惠已刪除）')}</h3></div>
+      <div class="meta"><span>提議者：${esc(e.profiles?.display_name||'匿名')}</span>
+        <span>${esc((e.created_at||'').slice(0,10))}</span></div>
+      <p class="offer" style="margin-top:6px">原因：${esc(e.reason||'—')}</p>
+      ${e.source_url?`<div class="meta"><span>來源：<a href="${esc(e.source_url)}" target="_blank" rel="noopener nofollow">${esc(e.source_url)}</a></span></div>`:''}
+      ${rows||'<div class="hint" style="margin-top:6px">（沒有偵測到欄位差異）</div>'}
+      <div class="row" style="margin-top:10px">
+        <input class="en" data-id="${e.id}" placeholder="審核備註" style="flex:1;min-width:140px">
+        <button class="btn primary sm eap" data-id="${e.id}">核可</button>
+        <button class="btn sm erj" data-id="${e.id}">退回</button>
+      </div></div>`;
+  }).join('') : '<div style="color:var(--ink-3);font-size:.86rem;padding:8px 0">目前沒有待審的修改建議。</div>';
+  const act=async(id,st)=>{
+    const n=document.querySelector(`.en[data-id="${id}"]`)?.value||'';
+    const row=document.querySelector(`[data-edit-row="${id}"]`);
+    const btns=row?.querySelectorAll('button'); btns?.forEach(b=>b.disabled=true);
+    const {error}=await sb.rpc('review_offer_edit',{p_edit_id:Number(id),p_status:st,p_note:n});
+    if(error){ btns?.forEach(b=>b.disabled=false); note($('#editMsg'),'alert',`審核失敗：${esc(error.message)}`); return; }
+    note($('#editMsg'),'good',`✓ 已${st==='approved'?'核可':'退回'}這筆修改建議`);
+    if(row){ row.style.transition='opacity .25s var(--ease)'; row.style.opacity='0'; setTimeout(()=>row.remove(),250); }
+    if(st==='approved'){ await loadOffers(); render(); }
+    loadPendingEdits(); loadRejected();
+  };
+  $$('.eap').forEach(b=>b.onclick=()=>act(b.dataset.id,'approved'));
+  $$('.erj').forEach(b=>b.onclick=()=>act(b.dataset.id,'rejected'));
+}
+
+/* ---- 已退回清單：被退回的投稿 + 被退回的修改建議，記錄投稿日期跟退回日期 ---- */
+async function loadRejected(){
+  if(!LIVE||!myProfile?.is_admin) return;
+  const [{data:offs,error:e1},{data:edits,error:e2}]=await Promise.all([
+    sb.from('offers').select('id,brand,created_at,reviewed_at,review_note,submitted_by,profiles(display_name)')
+      .eq('status','rejected').order('reviewed_at',{ascending:false}).limit(50),
+    sb.from('offer_edits').select('id,offer_id,reason,created_at,reviewed_at,review_note,profiles(display_name),offers(brand)')
+      .eq('status','rejected').order('reviewed_at',{ascending:false}).limit(50)
+  ]);
+  if(e1||e2){
+    const hint=/relation|does not exist|offer_edits/i.test((e2&&e2.message)||'')?'（Supabase 可能還沒跑 schema_v11_edits.sql）':'';
+    $('#rejectedList').innerHTML=`<div class="note alert">讀取失敗：${esc((e1||e2).message)}${hint}</div>`; return;
+  }
+  const items=[
+    ...(offs||[]).map(o=>({type:'投稿',brand:o.brand,by:o.profiles?.display_name,
+      created:o.created_at,reviewed:o.reviewed_at,note:o.review_note})),
+    ...(edits||[]).map(e=>({type:'修改建議',brand:e.offers?.brand||'（優惠已刪除）',by:e.profiles?.display_name,
+      created:e.created_at,reviewed:e.reviewed_at,note:e.review_note||e.reason})),
+  ].sort((a,b)=>new Date(b.reviewed||b.created)-new Date(a.reviewed||a.created));
+  $('#rejectedList').innerHTML = items.length ? `<table class="lb" style="width:100%"><thead><tr>
+      <th>類型</th><th>品牌</th><th>提出者</th><th>投稿日期</th><th>退回日期</th><th>備註</th></tr></thead><tbody>
+      ${items.map(x=>`<tr><td>${esc(x.type)}</td><td>${esc(x.brand||'—')}</td><td>${esc(x.by||'匿名')}</td>
+        <td>${esc((x.created||'').slice(0,10))}</td><td>${esc((x.reviewed||'').slice(0,10)||'—')}</td>
+        <td style="max-width:220px">${esc(x.note||'—')}</td></tr>`).join('')}
+      </tbody></table>` : '<div style="color:var(--ink-3);font-size:.86rem">目前沒有被退回的紀錄。</div>';
+}
+
+/* ---- 管理員設定：用 email 直接在網站上新增／移除管理員，不用回去跑 SQL ---- */
+async function loadAdminSettings(){
+  if(!LIVE||!myProfile?.is_admin) return;
+  const {data,error}=await sb.from('profiles').select('id,display_name,is_admin')
+    .eq('is_admin',true).order('display_name');
+  if(error){ $('#adminList').innerHTML=`<div class="note alert">讀取管理員清單失敗：${esc(error.message)}</div>`; return; }
+  const list=data||[];
+  $('#adminList').innerHTML = list.length
+    ? list.map(p=>`
+      <div class="row" data-admin-row="${esc(p.id)}" style="justify-content:space-between;padding:8px 0;border-top:1px solid var(--line)">
+        <span>${esc(p.display_name||'（未命名）')}${p.id===me?.id?'　<span class="lbl">（你自己）</span>':''}</span>
+        ${p.id===me?.id?'':`<button class="btn sm rm-admin" type="button" data-id="${esc(p.id)}">移除</button>`}
+      </div>`).join('')
+    : '<div style="color:var(--ink-3);font-size:.86rem">目前沒有管理員資料。</div>';
+  $$('.rm-admin').forEach(b=>b.onclick=async()=>{
+    if(!confirm('確定要移除這位的管理員權限？')) return;
+    b.disabled=true;
+    const {error}=await sb.rpc('admin_set_admin',{p_target_id:b.dataset.id,p_make_admin:false});
+    if(error){ note($('#adminMsg'),'alert',`移除失敗：${esc(error.message)}`); b.disabled=false; return; }
+    note($('#adminMsg'),'good','✓ 已移除管理員權限。');
+    loadAdminSettings();
+  });
+}
+$('#btnAddAdmin').onclick=async()=>{
+  const email=$('#adminEmail').value.trim();
+  if(!email){ note($('#adminMsg'),'alert','請先填 email。'); return; }
+  const btn=$('#btnAddAdmin'); btn.disabled=true;
+  const {error}=await sb.rpc('admin_set_admin',{p_email:email,p_make_admin:true});
+  btn.disabled=false;
+  if(error){ note($('#adminMsg'),'alert',`設定失敗：${esc(error.message)}`); return; }
+  note($('#adminMsg'),'good',`✓ 已把 ${esc(email)} 設為管理員。`);
+  $('#adminEmail').value='';
+  loadAdminSettings();
+};
+
+init();
+</script>
+</body>
+</html>
