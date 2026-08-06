@@ -105,6 +105,7 @@
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:var(--shadow-sm)}
   .btn.primary:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
   .btn.sm{padding:7px 13px;font-size:.79rem;min-height:32px}
+  #btnClearFilters{border-color:var(--accent);color:var(--accent-dark);background:var(--accent-soft);font-weight:700}
   .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
   .btn:disabled:hover{border-color:var(--line)}
 
@@ -119,6 +120,9 @@
   .tab .n{font-size:.7rem;color:#fff;background:var(--accent);border-radius:99px;
     padding:1px 6px;margin-left:2px;font-weight:600}
   .tab-ic{display:none;flex:none}
+  .icon-btn{padding:8px;min-width:38px;display:inline-flex;align-items:center;justify-content:center}
+  #notifCount{font-size:.64rem;line-height:1;color:#fff;background:var(--alert);border-radius:99px;
+    padding:2px 5px;font-weight:700;min-width:15px;text-align:center}
 
   /* ---------- 手機底部 tab bar（參考 Ocard／國泰優惠常見排版） ---------- */
   @media(max-width:768px){
@@ -164,6 +168,10 @@
   .searchbar{display:flex;gap:8px;align-items:center;position:sticky;top:0;z-index:40;
     background:var(--bg);padding:10px 0}
   .searchbar input[type=search]{flex:1;border-radius:99px;padding:11px 16px;min-height:44px}
+  .sort-top{flex:none;min-height:44px;border-radius:99px;padding:0 30px 0 14px;font-size:.82rem;
+    font-weight:600;color:var(--ink-2);border:1px solid var(--line);background:var(--surface);
+    max-width:132px}
+  @media(max-width:480px){ .sort-top{max-width:104px;font-size:.78rem;padding:0 26px 0 10px} }
   .filter-trigger{position:relative;flex:none;display:flex;align-items:center;gap:6px;min-height:44px}
   .filter-trigger svg{width:16px;height:16px}
   .filter-trigger.active{border-color:var(--accent);color:var(--accent-dark);background:var(--accent-soft)}
@@ -429,6 +437,13 @@
   .toast-actions{display:flex;gap:8px;margin-left:auto}
   @keyframes toast-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   @media(min-width:769px){ .toast{left:auto;right:22px;bottom:22px;max-width:360px} }
+  #btnToTop{position:fixed;right:16px;bottom:calc(16px + var(--tabbar-h) + env(safe-area-inset-bottom));
+    z-index:55;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);
+    background:var(--surface);color:var(--ink-2);font-size:1.1rem;line-height:1;cursor:pointer;
+    box-shadow:0 6px 18px rgba(20,20,35,.14);opacity:0;transform:translateY(8px);
+    transition:opacity .18s var(--ease),transform .18s var(--ease);pointer-events:none}
+  #btnToTop.show{opacity:1;transform:none;pointer-events:auto}
+  #btnToTop:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -443,6 +458,12 @@
           <rect x="3" y="15" width="18" height="6" rx="1.8" fill="currentColor" opacity=".16"/>
         </svg>壽星日<span>台灣生日優惠</span></h1>
       <div class="auth">
+        <button class="btn icon-btn hidden" id="btnNotif" type="button" aria-label="通知" style="position:relative">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="n hidden" id="notifCount" style="position:absolute;top:-4px;right:-4px"></span>
+        </button>
         <img id="uAvatar" class="avatar hidden" alt="">
         <span id="uName" style="font-size:.84rem"></span>
         <button class="btn" id="btnLogin">Google 登入</button>
@@ -474,6 +495,20 @@
 
     <div class="searchbar">
       <input type="search" id="q" placeholder="搜尋品牌或優惠">
+      <select id="sort" class="sort-top" aria-label="排序方式" title="排序方式">
+          <option value="value">依省最多</option>
+          <option value="days">依提前天數</option>
+          <option value="trending">最近最多人使用</option>
+          <option value="usage">依使用次數</option>
+          <option value="newest">最新上架</option>
+          <option value="rating">依評分</option>
+          <option value="wished">依收藏人數</option>
+          <option value="fresh">依最新回報</option>
+          <option value="expiry">依到期日</option>
+          <option value="trust">依可信度</option>
+          <option value="brand">依品牌</option>
+          <option value="comments">依留言數</option>
+      </select>
       <button class="btn sm filter-trigger" id="btnOpenFilter" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
         篩選<span class="filter-badge hidden" id="filterBadge">0</span>
@@ -487,14 +522,8 @@
     <div class="wrap">
       <div class="sheet-handle"></div>
       <div class="sheet-head"><h3>篩選</h3><button class="btn sm" type="button" id="btnCloseFilter">完成</button></div>
-      <div class="row">
-        <label class="lbl">地區<select id="region"><option value="">全部</option></select></label>
-        <label class="lbl">會員<select id="memType"><option value="">不限</option></select></label>
-        <label class="lbl">生日
-          <select id="bmonth"><option value="">月</option></select>
-          <select id="bday"><option value="">日</option></select>
-        </label>
-      </div>
+      <div class="filt-row"><span class="filt-label">地區</span><div class="row chipgrp" id="regionChips"></div></div>
+      <div class="filt-row"><span class="filt-label">會員</span><div class="row chipgrp" id="memChips"></div></div>
       <div class="filt-row"><span class="filt-label">期間</span><div class="row chipgrp" id="timingChips"></div></div>
       <div class="filt-row"><span class="filt-label">類型</span><div class="row chipgrp" id="freeChips"></div></div>
       <div class="filt-row"><span class="filt-label">分類</span><div class="row chipgrp" id="cats"></div></div>
@@ -503,31 +532,13 @@
         <label class="toggle"><input type="checkbox" id="fLive" checked> 隱藏過期</label>
         <label class="toggle"><input type="checkbox" id="fReported"> 近 90 天有人用</label>
         <label class="toggle"><input type="checkbox" id="fHasComments"> 有留言</label>
+        <label class="toggle"><input type="checkbox" id="fNoCompanion"> 一人也能用（不含需同行）</label>
         <button class="btn sm hidden" id="btnClearFilters" type="button">清除篩選</button>
-        <span class="sep"></span>
-        <label class="lbl">排序<select id="sort">
-          <option value="value">依省最多</option>
-          <option value="days">依提前天數</option>
-          <option value="trending">最近最多人使用</option>
-          <option value="rating">依評分</option>
-          <option value="wished">依收藏人數</option>
-          <option value="fresh">依最新回報</option>
-          <option value="expiry">依到期日</option>
-          <option value="trust">依可信度</option>
-          <option value="brand">依品牌</option>
-          <option value="comments">依留言數</option>
-          <option value="reports">依回報次數</option>
-        </select></label>
       </div>
     </div>
   </div>
 
   <main class="wrap">
-    <section class="planner" id="planner">
-      <h2>註冊死線</h2>
-      <p id="plannerSub"></p>
-      <div id="deadlines"></div>
-    </section>
     <div class="grid" id="grid"></div>
     <div class="empty hidden" id="empty">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
@@ -550,16 +561,9 @@
       <div class="bigstat" id="boardStats"></div>
     </div>
     <div class="panel">
-      <h2>省錢排行榜</h2>
-      <p class="sub">依回報成功的累積金額排序。要上榜需自己在「我的」分頁打開，預設不公開。</p>
-      <div class="row" style="margin-bottom:10px">
-        <label class="lbl">期間<select id="lbPeriod">
-          <option value="all">總累積</option>
-          <option value="month">本月</option>
-        </select></label>
-        <label class="lbl hidden" id="lbMonthWrap">月份<input type="month" id="lbMonth"></label>
-      </div>
-      <div id="lbBody"></div>
+      <h2>最近動態</h2>
+      <p class="sub">大家最近用了什麼、留了什麼言。想不顯示暱稱可以到「我的」分頁關掉。</p>
+      <div id="recentActivity"></div>
     </div>
     <div class="panel">
       <h2>大家都在用什麼</h2>
@@ -570,6 +574,19 @@
       <h2>最多人收藏</h2>
       <p class="sub">被加進待辦清單最多次的優惠——大家想用但還沒用的。</p>
       <div id="wishBody"></div>
+    </div>
+    <div class="panel">
+      <h2>省錢排行榜</h2>
+      <p class="sub">依回報成功的累積金額排序。每個人只要有成功回報就會上榜，暱稱要不要公開可以自己到「我的」分頁調整。</p>
+      <div class="row" style="margin-bottom:10px;flex-wrap:wrap">
+        <label class="lbl">期間<select id="lbPeriod">
+          <option value="all">總累積</option>
+          <option value="month">本月</option>
+        </select></label>
+        <label class="lbl hidden" id="lbMonthWrap">月份<input type="month" id="lbMonth"></label>
+        <label class="toggle"><input type="checkbox" id="lbHideAnon"> 隱藏匿名使用者</label>
+      </div>
+      <div id="lbBody"></div>
     </div>
   </main>
 </section>
@@ -629,6 +646,8 @@
             <div class="field"><label>檔期起日</label><input type="date" name="valid_from"></div>
             <div class="field"><label>檔期迄日</label><input type="date" name="valid_until"></div>
           </div>
+          <label class="toggle"><input type="checkbox" name="requires_companion" id="fRequiresCompanion">
+            需要同行者才能用（例如買一送一，一個人用不了）</label>
         </div>
         <div class="foot">
           <button type="button" class="btn hidden" id="btnCancelEdit">取消編輯</button>
@@ -637,6 +656,11 @@
         </div>
       </form>
       <div id="submitMsg"></div>
+    </div>
+    <div class="panel" id="mySubmitHistoryPanel" style="display:none">
+      <h2>我之前投稿過的<span class="n hidden" id="mySubmitCount"></span></h2>
+      <p class="sub">送出前可以先看一下，避免投到重複的品牌。</p>
+      <div id="mySubmitHistory"></div>
     </div>
     <div class="panel" id="pendPreviewPanel">
       <h2>大家最近投稿了什麼<span class="n hidden" id="pendPrevCount"></span></h2>
@@ -656,13 +680,29 @@
         <div class="field"><label>暱稱</label><input id="fNickname" maxlength="30" placeholder="顯示給其他人看的名字"></div>
         <div class="field" style="align-self:flex-end"><button class="btn primary" id="btnSaveNickname" type="button">儲存暱稱</button></div>
       </div>
+      <p class="sub" style="margin-top:2px">這是會出現在排行榜上的暱稱，其他人也看得到。</p>
       <div id="nicknameMsg"></div>
+      <div class="two" style="margin-top:10px">
+        <label class="lbl">生日
+          <select id="bmonth"><option value="">月</option></select>
+          <select id="bday"><option value="">日</option></select>
+        </label>
+        <div class="field" style="align-self:flex-end"><button class="btn primary" id="btnSaveBirthday" type="button">儲存生日</button></div>
+      </div>
+      <p class="sub" style="margin-top:2px">填了生日，篩選會自動預設抓你的生日月份，下面的「註冊死線」提醒也會跟著算。</p>
+      <div id="birthdayMsg"></div>
     </div>
+    <section class="planner" id="planner">
+      <h2>註冊死線</h2>
+      <p id="plannerSub"></p>
+      <div id="deadlines"></div>
+    </section>
     <div class="panel">
       <h2>我省下多少</h2>
       <p class="sub">只計算回報「成功」的紀錄。</p>
       <div class="bigstat" id="mySavings"></div>
-      <label class="toggle"><input type="checkbox" id="optLeaderboard"> 讓我出現在公開排行榜（顯示暱稱與金額）</label>
+      <label class="toggle"><input type="checkbox" id="optLeaderboard"> 在排行榜顯示我的暱稱與頭像</label>
+      <p class="sub" style="margin-top:4px">省下金額本來就會計入排行榜；這個選項只決定要不要顯示你的暱稱跟頭像——關掉的話還是會上榜，但顯示成「匿名使用者」。</p>
     </div>
     <div class="panel"><h2>待辦清單</h2>
       <p class="sub">點卡片上的星號收藏，勾起來代表用過了。</p>
@@ -683,7 +723,16 @@
   <main class="wrap">
   <div class="panel">
     <h2>站台儀表板</h2>
-    <p class="sub">網站瀏覽與使用狀況，數字只算跑過 schema_v14_misc.sql 之後累積的資料。</p>
+    <p class="sub">網站瀏覽與使用狀況，數字只算跑過 schema_v14_misc.sql 之後累積的資料。走勢圖可以按住拖曳看每天的數字。</p>
+    <div class="row" style="gap:8px;align-items:center;margin-bottom:8px">
+      <label for="dashRange" style="font-size:.82rem;color:var(--ink-3)">走勢圖區間</label>
+      <select id="dashRange" style="width:auto">
+        <option value="7">近 7 天</option>
+        <option value="14" selected>近 14 天</option>
+        <option value="30">近 30 天</option>
+        <option value="90">近 90 天</option>
+      </select>
+    </div>
     <div id="dashBody"><div style="color:var(--ink-3);font-size:.86rem">載入中…</div></div>
   </div>
   <div class="panel">
@@ -714,6 +763,21 @@
     <div id="approvedList"></div>
   </div>
   <div class="panel">
+    <h2>使用回報<span class="n hidden" id="urCount"></span></h2>
+    <p class="sub">大家回報「我用過了」的紀錄。成功回報多但還沒查證的可以一鍵標記；
+      失敗／部分成功的也列出來，方便抓可能過期或條件變了的優惠。</p>
+    <div class="row" style="margin:0 0 10px">
+      <label class="toggle"><input type="checkbox" id="urOnlyFail"> 只看失敗／部分成功</label>
+    </div>
+    <div id="urMsg"></div>
+    <div id="usageReportList"></div>
+  </div>
+  <div class="panel">
+    <h2>最近留言<span class="n hidden" id="cmCount"></span></h2>
+    <p class="sub">全站最新的留言，方便看有沒有需要處理的內容（檢舉、不當發言等）。</p>
+    <div id="adminCommentList"></div>
+  </div>
+  <div class="panel">
     <h2>問題回報<span class="n hidden" id="fbCount"></span></h2>
     <p class="sub">大家用「回報網站問題」送出的內容，訪客不用登入也能送。</p>
     <div id="fbMsg2"></div>
@@ -738,6 +802,8 @@
     　<button type="button" class="btn sm" id="btnFeedback" style="margin-left:6px">回報網站問題</button></p>
 </footer>
 
+<button type="button" id="btnToTop" aria-label="回到最上方">↑</button>
+
 <dialog id="dlgFeedback"><form method="dialog" class="dlg">
   <h2>回報網站問題</h2>
   <p class="sub">網站本身跑不動、跑版、按鈕沒反應等問題回報這裡；優惠內容有誤請用卡片上的「建議修改」。</p>
@@ -749,6 +815,15 @@
   <div class="foot">
     <button type="button" class="btn" id="btnFbCancel">取消</button>
     <button type="button" class="btn primary" id="btnFbSubmit">送出</button>
+  </div>
+</form></dialog>
+
+<dialog id="dlgNotif"><form method="dialog" class="dlg">
+  <h2>通知</h2>
+  <p class="sub">收藏的店家有新留言時，會在這裡通知你。</p>
+  <div id="notifList"><div style="color:var(--ink-3);font-size:.86rem">載入中…</div></div>
+  <div class="foot">
+    <button class="btn" value="cancel">關閉</button>
   </div>
 </form></dialog>
 
@@ -819,6 +894,7 @@ let LIVE = false;
 
 let sb=null, me=null, myProfile=null, OFFERS=[];
 let activeCat=new Set(), activeFree=new Set(), activeTiming=new Set();   // 篩選改多選：可以同時勾「當月」+「當週」
+let activeRegion=new Set(), activeMemType=new Set();   // 地區／會員也改多選，跟上面那組共用同一套 mkMulti chip 邏輯
 let deferredInstall = null;
 let WISH=new Set();          // 待辦清單（收藏的優惠 id，字串形式）
 let MY_REPORTS=[];           // 「我的使用回報」目前這批資料，點列表時查回原始物件用
@@ -827,31 +903,32 @@ let MY_REPORTS=[];           // 「我的使用回報」目前這批資料，點
 const FKEY='sxr_filters_v1';
 function saveFilters(){
   try{ localStorage.setItem(FKEY, JSON.stringify({
-    q:$('#q').value, region:$('#region').value, memType:$('#memType').value,
+    q:$('#q').value, region:[...activeRegion], memType:[...activeMemType],
     cat:[...activeCat], free:[...activeFree], timing:[...activeTiming],
     fVerified:$('#fVerified').checked, fLive:$('#fLive').checked,
     fReported:$('#fReported').checked, fHasComments:$('#fHasComments').checked,
+    fNoCompanion:$('#fNoCompanion').checked,
     sort:$('#sort').value
   })); }catch{}
 }
-let SAVED_REGION='', SAVED_MEMTYPE='';   // #region/#memType 的選項是動態產生的，要等 buildControls() 建完才能回填
 function loadFilters(){
   let s; try{ s=JSON.parse(localStorage.getItem(FKEY)||'null'); }catch{ s=null; }
   if(!s) return;
   $('#q').value=s.q||'';
-  SAVED_REGION=s.region||''; SAVED_MEMTYPE=s.memType||'';
+  (s.region||[]).forEach(v=>activeRegion.add(v)); (s.memType||[]).forEach(v=>activeMemType.add(v));
   (s.cat||[]).forEach(v=>activeCat.add(v)); (s.free||[]).forEach(v=>activeFree.add(v));
   (s.timing||[]).forEach(v=>activeTiming.add(v));
+  $('#fNoCompanion').checked=!!s.fNoCompanion;
   $('#fVerified').checked=!!s.fVerified; $('#fLive').checked=s.fLive!==false;
   $('#fReported').checked=!!s.fReported; $('#fHasComments').checked=!!s.fHasComments;
   if(s.sort) $('#sort').value=s.sort;
 }
 
-const FREE_LABEL={free_no_min:'免費・無低消',free_min:'免費・需消費',discount:'折扣／買一送一',unknown:'待確認'};
+const FREE_LABEL={free_no_min:'免費・無低消',free_min:'免費・需消費',discount:'折扣／買一送一',unknown:'其他／待確認'};
 const MEM_LABEL={none:'免會員',app:'品牌 APP',line:'LINE',ocard:'Ocard',
-                 card:'會員卡',tier:'需達等級',brand:'品牌會員'};
+                 card:'會員卡',tier:'需達等級',brand:'品牌會員',other:'其他'};
 const TIER_LABEL={1:'品牌官方',2:'新聞媒體',3:'部落格',4:'社群貼文',5:'其他'};
-const TIMINGS=['當日','當月','當週','當月＋當日','前後3天','前後7天'];
+const TIMINGS=['當日','當月','當週','當月＋當日','前後3天','前後7天','其他'];
 const CATEGORIES=['速食','連鎖餐廳','火鍋燒肉','飲料','甜點烘焙','零售美妝','娛樂樂園','其他'];
 const COUNTIES=['全台','基隆市','台北市','新北市','桃園市','新竹市','新竹縣','苗栗縣','台中市',
  '彰化縣','南投縣','雲林縣','嘉義市','嘉義縣','台南市','高雄市','屏東縣','宜蘭縣','花蓮縣',
@@ -886,7 +963,8 @@ function fromRow(r){return{
   groupName:r.group_name||'',
   ratingAvg:r.rating_avg==null?null:Number(r.rating_avg),
   ratingCount:r.rating_count||0, wishCount:r.wish_count||0,
-  createdAt:r.created_at, reviewedAt:r.reviewed_at, reviewedBy:r.reviewed_by};}
+  createdAt:r.created_at, reviewedAt:r.reviewed_at, reviewedBy:r.reviewed_by,
+  adminEditDiff:r.admin_edit_diff||null, requiresCompanion:!!r.requires_companion};}
 
 /* ===================================================================== */
 // 種子資料（build.py 打包進 SEED 常數的內建優惠）用來立刻畫出第一版畫面。
@@ -899,7 +977,6 @@ const seedOffers=()=>SEED.offers.map((o,i)=>({...o, id:'seed'+i, status:'approve
   reportCount:0,lastUsedOn:null,successRate:null,commentCount:0}));
 function paintOffers(){
   buildControls();
-  $('#region').value=SAVED_REGION; $('#memType').value=SAVED_MEMTYPE;
   render();
 }
 // 第一階段：完全不碰網路，用內建種子資料立刻畫出畫面。
@@ -1038,10 +1115,11 @@ async function onSession(s){
   } else myProfile = null;
   paintAuth();
   renderMyDebug();
-  if(me){ loadMyStuff(); loadWishlist(); flushPendingReport(); loadPendingPreview(); }
-  else $('#pendPreviewPanel').classList.add('hidden');
+  if(me){ loadMyStuff(); loadWishlist(); flushPendingReport(); loadPendingPreview(); loadNotifCount(); }
+  else { $('#pendPreviewPanel').classList.add('hidden'); $('#btnNotif').classList.add('hidden'); }
   if(myProfile?.is_admin){ loadPending(); loadPendingEdits(); loadRejected(); loadApproved();
-    loadAdminSettings(); loadAdminDashboard(); loadFeedbackList(); }
+    loadAdminSettings(); loadAdminDashboard(); loadFeedbackList(); loadUsageReportsAdmin();
+    loadAdminCommentList(); }
 }
 
 /* ---- P0：管理員權限診斷區。永遠顯示（登入後），出問題時使用者能直接複製這裡的資訊。 ---- */
@@ -1077,7 +1155,15 @@ function paintAuth(){
     : '';
   if(on&&myProfile?.avatar_url) $('#uAvatar').src=myProfile.avatar_url;
   $$('.tab[data-tab="admin"]').forEach(t=>t.classList.toggle('hidden',!myProfile?.is_admin));
-  if(myProfile) $('#optLeaderboard').checked = !!myProfile.show_on_leaderboard;
+  if(myProfile){
+    $('#optLeaderboard').checked = !!myProfile.show_on_leaderboard;
+    // 生日存在個人資料裡，登入/資料回來後直接帶入，不用每次都重選。
+    if(myProfile.birth_month){
+      $('#bmonth').value=String(myProfile.birth_month);
+      $('#bday').value=myProfile.birth_day?String(myProfile.birth_day):'';
+      renderPlanner();
+    }
+  }
   paintSubmitGate();
 }
 
@@ -1120,6 +1206,53 @@ async function flushPendingReport(){
   note($('#modeBanner'),'good','✓ 已幫你把登入前填的使用回報送出了。');
   await loadOffers(); render(); loadMyStuff(); loadSiteStats();
 }
+
+/* ---- 收藏留言通知：收藏的店家有新留言時提醒你 ---- */
+async function fetchNotifCount(){
+  if(!LIVE||!me) return 0;
+  // 用 read_at 欄位在前端算未讀數，不用 .is() 這種比較冷門的 filter 寫法，
+  // 相容性比較好（有些精簡版 REST 介面/測試環境沒實作 .is()）。
+  const {data,error}=await sb.from('notifications').select('read_at').limit(200);
+  if(error) return 0;   // 舊版資料庫還沒跑 schema_v20，安靜失敗，不用整頁報錯打擾使用者
+  return (data||[]).filter(r=>!r.read_at).length;
+}
+async function loadNotifCount(){
+  if(!LIVE||!me){ $('#btnNotif').classList.add('hidden'); return; }
+  $('#btnNotif').classList.remove('hidden');
+  const n=await fetchNotifCount();
+  $('#notifCount').classList.toggle('hidden', n===0);
+  $('#notifCount').textContent = n>99?'99+':String(n);
+}
+const refreshNotifBadge = loadNotifCount;
+async function openNotifDialog(){
+  if(!LIVE||!me) return;
+  $('#dlgNotif').showModal(); pushDlgHistory();
+  const box=$('#notifList');
+  box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">載入中…</div>';
+  const {data,error}=await sb.from('notifications').select('*').order('created_at',{ascending:false}).limit(30);
+  if(error){
+    const hint=/relation|does not exist/i.test(error.message)?'（Supabase 可能還沒跑 schema_v20_notifications.sql）':'';
+    box.innerHTML=`<div class="note alert">讀取失敗：${esc(error.message)}${hint}</div>`; return;
+  }
+  const rows=data||[];
+  box.innerHTML = rows.length ? rows.map(n=>`
+    <div class="sub-item notif-row" data-offer="${esc(n.offer_id)}" style="cursor:pointer;${n.read_at?'':'background:var(--accent-soft)'}">
+      <b>${esc(n.brand||'一則優惠')}</b>
+      <span>${esc(n.actor_name||'一位使用者')} 留言：${esc(n.body_preview||'')}
+        <br><span style="color:var(--ink-3);font-size:.74rem">${esc((n.created_at||'').slice(0,16).replace('T',' '))}</span></span>
+    </div>`).join('')
+    : '<div style="color:var(--ink-3);font-size:.86rem">目前沒有通知。收藏的店家有新留言時會出現在這裡。</div>';
+  $$('.notif-row').forEach(row=>row.onclick=()=>{
+    $('#dlgNotif').close();
+    const id=row.dataset.offer;
+    if(id) openDetail(id);
+  });
+  if(rows.some(n=>!n.read_at)){
+    await sb.rpc('mark_notifications_read');
+    refreshNotifBadge();
+  }
+}
+$('#btnNotif').onclick=openNotifDialog;
 
 /* ---- 管理員一鍵標記已查證，不用進編輯表單 ---- */
 async function setVerified(id, v){
@@ -1221,6 +1354,7 @@ async function loadSiteStats(){
     `<p class="statline">共 <b>${s.offer_count}</b> 筆優惠，其中 <b class="free">${s.free_count}</b> 筆完全免費，`
     + `全部用完最多可省 <b>${nt(s.total_value)}</b>`
     + (s.report_count?`　·　大家已省下 <b>${nt(s.saved_total)}</b>（${s.report_count} 次回報）`:'')
+    + (s.pageview_count?`　·　累計瀏覽 <b>${nt(s.pageview_count)}</b> 次（${nt(s.visitor_count||0)} 位訪客）`:'')
     + `</p>`;
 }
 
@@ -1305,12 +1439,24 @@ $('#btnInstallNo').onclick = ()=>{
 };
 
 /* ---- 分頁 ---- */
+let ACTIVE_TAB='browse';
 $$('.tab').forEach(t=>t.onclick=()=>{
+  const already = t.dataset.tab===ACTIVE_TAB;
   $$('.tab').forEach(x=>x.setAttribute('aria-selected', x===t));
   ['browse','board','submit','mine','admin'].forEach(n=>
     $('#tab-'+n).classList.toggle('hidden', n!==t.dataset.tab));
   if(t.dataset.tab==='board') loadBoard();
+  // 點的是目前已經在看的那個分頁（點兩下）就滑回最上方，方便滑很長的清單時快速歸零。
+  if(already) window.scrollTo({top:0, behavior:'smooth'});
+  ACTIVE_TAB=t.dataset.tab;
 });
+
+/* ---- 回到最上方按鈕：往下滑超過一個畫面高度才出現 ---- */
+const btnToTop=$('#btnToTop');
+window.addEventListener('scroll', ()=>{
+  btnToTop.classList.toggle('show', window.scrollY>window.innerHeight*0.6);
+}, {passive:true});
+btnToTop.onclick=()=>window.scrollTo({top:0, behavior:'smooth'});
 
 /* ===================================================================== */
 function buildControls(){
@@ -1320,16 +1466,6 @@ function buildControls(){
     for(let d=1;d<=31;d++) bd.add(new Option(d+' 日',d));
     bm.dataset.done=1;
   }
-  const rs=$('#region'); rs.length=1;
-  const present=new Set(OFFERS.flatMap(o=>o.regions).filter(r=>r!=='全台'));
-  COUNTIES.filter(r=>r!=='全台'&&present.has(r)).forEach(r=>rs.add(new Option(r,r)));
-
-  const ms=$('#memType'); ms.length=1;
-  Object.entries(MEM_LABEL).forEach(([k,v])=>{
-    const n=OFFERS.filter(o=>o.membershipType===k).length;
-    if(n) ms.add(new Option(`${v}（${n}）`,k));
-  });
-
   // 多選 chip 群組：點個別選項可複選（例如同時選「當月」+「當週」），
   // 點「全部」清空選取；一個都沒選時視同「全部」，chip 上會顯示「全部」被按下。
   const mkMulti=(box,items,activeSet,cls='')=>{
@@ -1362,12 +1498,25 @@ function buildControls(){
   mkMulti($('#cats'),
     [['全部類別','']].concat([...new Set(OFFERS.map(o=>o.category))].map(c=>[c,c])),
     activeCat);
+  // 地區固定列出全部 22 個縣市（不像上面幾組只列「目前資料裡有出現的」），
+  // 這樣「全台」的比對邏輯才不會因為某個縣市剛好目前沒有優惠資料就選不到；
+  // 另外加一個「未輸入」給還沒填地區的優惠用。
+  const regionCount=r=>OFFERS.filter(o=>o.regions.includes('全台')||o.regions.includes(r)).length;
+  const noRegionCount=OFFERS.filter(o=>!o.regions.length).length;
+  mkMulti($('#regionChips'),
+    [['全部地區','']]
+      .concat(COUNTIES.filter(r=>r!=='全台').map(r=>[`${r}（${regionCount(r)}）`,r]))
+      .concat(noRegionCount?[[`未輸入（${noRegionCount}）`,'__none__']]:[]),
+    activeRegion);
+  mkMulti($('#memChips'),
+    [['不限會員','']].concat(Object.entries(MEM_LABEL).filter(([k])=>cnt('membershipType',k)).map(([k,v])=>[`${v}（${cnt('membershipType',k)}）`,k])),
+    activeMemType);
 
   const fill=(sel,ents)=>{ if(sel.length) return; ents.forEach(([k,v])=>sel.add(new Option(v,k))); };
   fill($('#fCategory'),CATEGORIES.map(c=>[c,c]));
   fill($('#fTiming'),TIMINGS.map(t=>[t,t]));
   fill($('#fMemType'),Object.entries(MEM_LABEL));
-  fill($('#fFreeTier'),Object.entries(FREE_LABEL).filter(([k])=>k!=='unknown'));
+  fill($('#fFreeTier'),Object.entries(FREE_LABEL));
   if(!$('#sourcesList').children.length) addSourceRow('',3);
   const fr=$('#fRegions');
   if(!fr.children.length) COUNTIES.forEach(r=>{
@@ -1407,13 +1556,13 @@ function pulseText(o){
 }
 
 function render(){
-  const q=$('#q').value.trim().toLowerCase(), region=$('#region').value, mt=$('#memType').value;
+  const q=$('#q').value.trim().toLowerCase();
   const onlyV=$('#fVerified').checked, hideX=$('#fLive').checked, onlyR=$('#fReported').checked;
-  const onlyC=$('#fHasComments').checked;
+  const onlyC=$('#fHasComments').checked, noCompanion=$('#fNoCompanion').checked;
   const sortBy=$('#sort').value;
 
-  const activeCount = (q?1:0)+(region?1:0)+(mt?1:0)+activeCat.size+activeFree.size+activeTiming.size
-    +(onlyV?1:0)+(!hideX?1:0)+(onlyR?1:0)+(onlyC?1:0);
+  const activeCount = (q?1:0)+activeRegion.size+activeMemType.size+activeCat.size+activeFree.size+activeTiming.size
+    +(onlyV?1:0)+(!hideX?1:0)+(onlyR?1:0)+(onlyC?1:0)+(noCompanion?1:0);
   $('#btnClearFilters').classList.toggle('hidden',!activeCount);
   $('#filterBadge').textContent=activeCount;
   $('#filterBadge').classList.toggle('hidden',!activeCount);
@@ -1423,8 +1572,14 @@ function render(){
     if(activeCat.size&&!activeCat.has(o.category)) return false;
     if(activeFree.size&&!activeFree.has(o.freeTier)) return false;
     if(activeTiming.size&&!activeTiming.has(o.timing)) return false;
-    if(mt&&o.membershipType!==mt) return false;
-    if(!matchRegion(o,region)) return false;
+    if(activeMemType.size&&!activeMemType.has(o.membershipType)) return false;
+    if(noCompanion&&o.requiresCompanion) return false;
+    if(activeRegion.size){
+      const ok=[...activeRegion].some(r=>r==='__none__'
+        ? !o.regions.length
+        : matchRegion(o,r));
+      if(!ok) return false;
+    }
     if(onlyV&&!o.verified) return false;
     if(hideX&&o.validUntil&&dUntil(o.validUntil)<0) return false;
     if(onlyR&&!(o.lastUsedOn&&dSince(o.lastUsedOn)<=90)) return false;
@@ -1441,7 +1596,8 @@ function render(){
     if(sortBy==='trust') return trustOf(a)-trustOf(b)||bn(a,b);
     if(sortBy==='value') return (b.valueTwd||0)-(a.valueTwd||0)||bn(a,b);
     if(sortBy==='comments') return (b.commentCount||0)-(a.commentCount||0)||bn(a,b);
-    if(sortBy==='reports') return (b.reportCount||0)-(a.reportCount||0)||bn(a,b);
+    if(sortBy==='usage') return (b.reportCount||0)-(a.reportCount||0)||bn(a,b);
+    if(sortBy==='newest') return new Date(b.createdAt||0)-new Date(a.createdAt||0)||bn(a,b);
     // 沒人評分的排最後，不要讓 null 混在高分裡面
     if(sortBy==='rating'){ const A=a.ratingCount?a.ratingAvg:-1, B=b.ratingCount?b.ratingAvg:-1;
       return B-A||(b.ratingCount||0)-(a.ratingCount||0)||bn(a,b); }
@@ -1465,7 +1621,7 @@ function render(){
 
   const sum=list.filter(o=>o.valueTwd).reduce((a,o)=>a+o.valueTwd,0);
   $('#count').textContent=`${list.length} / ${OFFERS.length} 筆`
-    +(region?`　${region}含全台`:'')+(sum?`　合計約 ${nt(sum)}`:'');
+    +(activeRegion.size?`　${[...activeRegion].filter(r=>r!=='__none__').join('、')}含全台`:'')+(sum?`　合計約 ${nt(sum)}`:'');
   $('#empty').classList.toggle('hidden',list.length>0);
 
   const isAdmin=!!myProfile?.is_admin;
@@ -1488,6 +1644,8 @@ function render(){
         <span class="flag">${esc(MEM_LABEL[o.membershipType]||'會員')}${cost}</span>
         ${o.verified?'<span class="flag ok-flag">已查證</span>':'<span class="flag alert">未查證</span>'}
         ${o.ratingCount?`<span class="flag star">★ ${o.ratingAvg}（${o.ratingCount}）</span>`:''}
+        ${o.reportCount?`<span class="flag">已用 ${o.reportCount} 次</span>`:''}
+        ${o.requiresCompanion?'<span class="flag alert">需同行</span>':''}
       </div>
       <p class="offer">${esc(o.offer)}</p>
       <div class="meta">
@@ -1525,11 +1683,14 @@ function render(){
   $$('.wish').forEach(b=>b.onclick=e=>{ e.stopPropagation(); toggleWish(b.dataset.id,b); });
   // 整張卡片都可以點開詳情——按鈕的 click 都有 stopPropagation，不會互相打架
   $$('#grid .card').forEach(c=>c.onclick=()=>openDetail(c.dataset.id));
-  renderPlanner(region);
+  renderPlanner();
   saveFilters();
 }
 
-function renderPlanner(region){
+// 「註冊死線」現在移到「我的」分頁，用個人資料存的生日算，不再跟著瀏覽頁的
+// 地區篩選變動——這樣才不會因為使用者在「優惠」分頁換了地區，回「我的」看
+// 死線時數字莫名其妙變來變去。
+function renderPlanner(){
   const m=+$('#bmonth').value, d=+$('#bday').value, box=$('#planner');
   if(!m){ box.classList.remove('on'); return; }
   box.classList.add('on');
@@ -1538,11 +1699,11 @@ function renderPlanner(region){
   const f=x=>`${x.getMonth()+1}/${x.getDate()}`;
   const left=Math.round((t-TODAY)/864e5);
   // 「當日」= 只有生日當天能用；「當月＋當日」整月都能用，只是當天更優惠，不算進去
-  const todayOnly=OFFERS.filter(o=>o.timing==='當日'&&matchRegion(o,region)).length;
+  const todayOnly=OFFERS.filter(o=>o.timing==='當日').length;
   $('#plannerSub').textContent=
     `生日 ${f(t)}${d?'':'（未選日期，以該月 1 日估算）'}　還有 ${left} 天`
-    +(region?`　${region}`:'')+`　其中 ${todayOnly} 筆只有生日當天能用，錯過就沒了`;
-  const w=OFFERS.filter(o=>typeof o.advanceDays==='number'&&o.advanceDays>0&&matchRegion(o,region))
+    +`　其中 ${todayOnly} 筆只有生日當天能用，錯過就沒了`;
+  const w=OFFERS.filter(o=>typeof o.advanceDays==='number'&&o.advanceDays>0)
     .sort((a,b)=>b.advanceDays-a.advanceDays);
   // 30 天那批幾乎都是「建議提前一個月入會」的通則性猜測，不是品牌白紙黑字的規定。
   // 把它們跟真正有明訂天數的死線分開，硬死線才醒目列出，其餘收合成一句，
@@ -1573,15 +1734,16 @@ function renderPlanner(region){
   };
 }
 
-['#q','#region','#memType','#fVerified','#fLive','#fReported','#fHasComments','#sort','#bmonth','#bday']
+['#q','#fVerified','#fLive','#fReported','#fHasComments','#fNoCompanion','#sort']
   .forEach(s=>$(s).addEventListener('input',render));
 
 $('#btnClearFilters').onclick=()=>{
-  $('#q').value=''; $('#region').value=''; $('#memType').value='';
+  $('#q').value='';
   $('#fVerified').checked=false; $('#fLive').checked=true; $('#fReported').checked=false;
-  $('#fHasComments').checked=false;
-  activeCat.clear(); activeFree.clear(); activeTiming.clear();
-  $$('#timingChips .chip, #freeChips .chip, #cats .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.v===''));
+  $('#fHasComments').checked=false; $('#fNoCompanion').checked=false;
+  activeCat.clear(); activeFree.clear(); activeTiming.clear(); activeRegion.clear(); activeMemType.clear();
+  $$('#timingChips .chip, #freeChips .chip, #cats .chip, #regionChips .chip, #memChips .chip')
+    .forEach(c=>c.setAttribute('aria-pressed',c.dataset.v===''));
   render();
 };
 
@@ -1619,6 +1781,21 @@ let dtlId=null;
 // 主列表卡片上完全不顯示留言內容，只有一個帶數字的按鈕。
 /* 卡片點任一處都會開這個視窗：上半部是這筆優惠的完整內容（手機電腦一致，
    不像卡片上會被截斷），下半部才是使用回報與留言。 */
+// 管理員審核前直接改過投稿內容的話，投稿人自己（或管理員）看細節時要能看到
+// 「被改了哪」，欄位名稱對照沿用跟「修改建議」新舊對照一樣的 EDIT_FIELD_LABEL。
+function adminEditDiffHtml(o){
+  if(!o.adminEditDiff) return '';
+  const canSee = myProfile?.is_admin || (me && o.submittedBy===me.id);
+  if(!canSee) return '';
+  const label=k=>(typeof EDIT_FIELD_LABEL!=='undefined'&&EDIT_FIELD_LABEL[k])||k;
+  const rows=Object.entries(o.adminEditDiff).map(([k,v])=>
+    `<div class="sub-item"><b>${esc(label(k))}</b><span>
+       <span style="color:var(--ink-3);text-decoration:line-through">${esc(String(v.from??'—'))}</span>
+       　→　<span style="color:var(--free);font-weight:700">${esc(String(v.to??'—'))}</span></span></div>`).join('');
+  return `<div class="sub-list" style="margin-top:8px">
+    <div class="dl-head">管理員審核時調整了以下欄位</div>${rows}
+  </div>`;
+}
 function offerFactsHtml(o){
   if(!o) return '';
   const ex=expText(o), pu=pulseText(o);
@@ -1632,9 +1809,11 @@ function offerFactsHtml(o){
       <span class="flag">${esc(MEM_LABEL[o.membershipType]||'會員')}</span>
       ${o.verified?'<span class="flag ok-flag">已查證</span>':'<span class="flag alert">未查證</span>'}
       ${o.valueTwd?`<span class="flag">約 ${nt(o.valueTwd)}</span>`:''}
+      ${o.requiresCompanion?'<span class="flag alert">需同行</span>':''}
     </div>
     <div class="sub-list">
       ${kv('優惠內容',o.offer)}
+      ${kv('同行需求',o.requiresCompanion?'需要同行者才能用（例如買一送一）':'一個人也能用')}
       ${kv('使用條件',o.conditions||'—')}
       ${kv('期限',o.validity||'—')}
       ${kv('會員取得',o.membership||'—')}
@@ -1647,6 +1826,7 @@ function offerFactsHtml(o){
       ${o.status&&o.status!=='approved'?kv('狀態',({pending:'待審核',rejected:'未採用',archived:'已下架'})[o.status]||o.status):''}
       ${o.reviewNote?kv('審核備註',o.reviewNote):''}
     </div>
+    ${adminEditDiffHtml(o)}
     ${(o.sources&&o.sources.length)?`<div class="meta" style="margin-top:8px">
       ${o.sources.map(s=>`<span>${esc(s.tierLabel||TIER_LABEL[s.tier]||'來源')}
         <a href="${esc(s.url)}" target="_blank" rel="noopener nofollow">連結↗</a></span>`).join('')}
@@ -1794,10 +1974,30 @@ function pushDlgHistory(){
 function consumeDlgHistory(){
   if(DLG_HISTORY_PUSHED){ DLG_HISTORY_PUSHED=false; history.back(); }
 }
+/* ---- 沒有彈出視窗要關的時候，按返回鍵不要直接把整個 App／頁面關掉，
+   要連續按兩次才真的離開——跟對話框那組歷史紀錄共用同一個 popstate
+   事件，用 DLG_HISTORY_PUSHED 判斷這次返回是不是對話框的。 ---- */
+let EXIT_ARMED=false, exitArmTimer=null;
+history.pushState({sxrBase:true},'');
+function showExitHint(){
+  const t=document.createElement('div');
+  t.className='toast'; t.textContent='再按一次返回鍵可以離開';
+  t.style.justifyContent='center'; t.style.textAlign='center';
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),1600);
+}
 window.addEventListener('popstate', ()=>{
-  if(!DLG_HISTORY_PUSHED) return;
-  DLG_HISTORY_PUSHED=false;
-  [$('#dlgDetail'),$('#dlgReport'),$('#dlgFeedback')].forEach(d=>{ if(d.open) d.close(); });
+  if(DLG_HISTORY_PUSHED){
+    DLG_HISTORY_PUSHED=false;
+    [$('#dlgDetail'),$('#dlgReport'),$('#dlgFeedback'),$('#dlgNotif')].forEach(d=>{ if(d.open) d.close(); });
+    return;
+  }
+  if(EXIT_ARMED){ EXIT_ARMED=false; clearTimeout(exitArmTimer); return; } // 兩秒內第二次按，放行讓它真的離開
+  EXIT_ARMED=true;
+  history.pushState({sxrBase:true},'');
+  showExitHint();
+  clearTimeout(exitArmTimer);
+  exitArmTimer=setTimeout(()=>{ EXIT_ARMED=false; },2000);
 });
 $('#dlgDetail').addEventListener('close', consumeDlgHistory);
 $('#dlgReport').addEventListener('close', consumeDlgHistory);
@@ -1986,7 +2186,7 @@ async function startEditOffer(id, asAdmin=false, asSuggestion=false){
   $('.tab[data-tab="submit"]').click();
   editingOfferId=id; editingAsAdmin=asAdmin; editingAsSuggestion=asSuggestion;
   editingWasPending = asAdmin && o.status==='pending';
-  origOfferForDiff=asSuggestion?o:null;
+  origOfferForDiff=(asSuggestion||editingWasPending)?o:null;
   $('#submitTitle').textContent = asAdmin?`編輯優惠（管理員）— ${esc(o.brand)}`
     :asSuggestion?`建議修改 — ${esc(o.brand)}`:'編輯投稿';
   $('#submitSub').textContent = editingWasPending?'改完存檔後這筆還是「待審核」，回到「審核」分頁核可即可。'
@@ -2003,6 +2203,7 @@ async function startEditOffer(id, asAdmin=false, asSuggestion=false){
   f.membership_type.value=o.membership_type||''; f.free_tier.value=o.free_tier||'';
   f.advance_days.value=o.advance_days??''; f.membership.value=o.membership||'';
   f.conditions.value=o.conditions||''; f.valid_from.value=o.valid_from||''; f.valid_until.value=o.valid_until||'';
+  $('#fRequiresCompanion').checked=!!o.requires_companion;
   fillSourceRows(o.sources||[]);
   const regs=new Set(o.regions||[]);
   $$('#fRegions .chip').forEach(c=>c.setAttribute('aria-pressed',String(regs.has(c.dataset.r))));
@@ -2029,8 +2230,24 @@ $('#submitForm').onsubmit=async e=>{
     conditions:(fd.get('conditions')||'').trim(),
     valid_from:fd.get('valid_from')||null, valid_until:fd.get('valid_until')||null,
     validity_type: fd.get('valid_until')?'fixed':'rolling',
+    requires_companion: fd.get('requires_companion')==='on',
     sources};
   const editing=editingOfferId, asAdmin=editingAsAdmin, asSuggestion=editingAsSuggestion, wasPending=editingWasPending;
+  // 全新投稿（不是編輯/建議修改）才檢查重複：品牌名跟現有已上架的優惠很像，
+  // 大概率是同一家店，提醒對方改成對既有那筆提修改建議，比另外開一筆乾淨。
+  if(!editing){
+    const norm=s=>(s||'').toLowerCase().replace(/[\s（）()／/、,.．]/g,'');
+    const bn=norm(row.brand);
+    const similar=bn.length>=2 && OFFERS.find(o=>{
+      const on=norm(o.brand); if(!on) return false;
+      return on===bn || on.includes(bn) || bn.includes(on);
+    });
+    if(similar){
+      const goEdit=confirm(`已經有「${similar.brand}」這筆優惠了，是不是同一家店？\n\n`
+        +`按「確定」會改成對現有的「${similar.brand}」提出修改建議；按「取消」則照原本這樣新增一筆投稿。`);
+      if(goEdit){ b.disabled=false; startEditOffer(similar.id, false, true); return; }
+    }
+  }
   let error;
   if(editing&&asSuggestion){
     const reason=(fd.get('edit_reason')||'').trim();
@@ -2048,6 +2265,19 @@ $('#submitForm').onsubmit=async e=>{
     ({error}=await sb.from('offer_edits').insert({
       offer_id:Number(editing), proposed_by:me.id, patch, reason, source_url:url, source_tier:tier}));
   }else if(editing&&asAdmin){
+    // 管理員在核可前直接改了投稿人原本填的內容——把改了哪裡記下來，
+    // 這樣投稿人自己在「我的投稿」點開細節時看得到「被改了哪」，不會一頭霧水。
+    if(wasPending&&origOfferForDiff){
+      const orig=origOfferForDiff;
+      const cmp={brand:row.brand, offer:row.offer, conditions:row.conditions, membership:row.membership,
+        timing:row.timing, advance_days:row.advance_days, value_twd:row.value_twd, valid_until:row.valid_until};
+      const origVal={brand:orig.brand, offer:orig.offer, conditions:orig.conditions, membership:orig.membership,
+        timing:orig.timing||orig.offer_window, advance_days:orig.advance_days??null,
+        value_twd:orig.value_twd??null, valid_until:orig.valid_until??null};
+      const diff={};
+      Object.entries(cmp).forEach(([k,v])=>{ if(v!==origVal[k]) diff[k]={from:origVal[k],to:v}; });
+      row.admin_edit_diff = Object.keys(diff).length ? diff : null;
+    }
     ({error}=await sb.from('offers').update(row).eq('id',editing));
   }else if(editing){
     ({error}=await sb.from('offers').update(row).eq('id',editing).eq('submitted_by',me.id));
@@ -2091,6 +2321,22 @@ $('#btnSaveNickname').onclick=async()=>{
   paintAuth(); renderMyDebug();
 };
 
+/* ---- 生日：存到 profiles，用來預設帶入「註冊死線」計算，不用每次都重選 ---- */
+$('#btnSaveBirthday').onclick=async()=>{
+  if(!LIVE||!me) return;
+  const m=$('#bmonth').value?Number($('#bmonth').value):null;
+  const d=$('#bday').value?Number($('#bday').value):null;
+  const btn=$('#btnSaveBirthday'); btn.disabled=true;
+  const {error}=await sb.from('profiles').update({birth_month:m, birth_day:d}).eq('id',me.id);
+  btn.disabled=false;
+  if(error){
+    const hint=/relation|does not exist|column/i.test(error.message)?'（Supabase 可能還沒跑 schema_v18_misc.sql）':'';
+    note($('#birthdayMsg'),'alert','儲存失敗：'+esc(error.message)+hint); return; }
+  myProfile = myProfile ? {...myProfile, birth_month:m, birth_day:d} : myProfile;
+  note($('#birthdayMsg'),'good','✓ 生日已更新。');
+  renderPlanner();
+};
+
 async function loadMyStuff(){
   if(!LIVE||!me) return;
   if($('#fNickname')&&document.activeElement!==$('#fNickname')) $('#fNickname').value=myProfile?.display_name||'';
@@ -2132,6 +2378,8 @@ async function loadMyStuff(){
         <button class="btn sm mo-detail" type="button" data-id="${o.id}">細節</button>
         ${o.status==='pending'?`<button class="btn sm eo" data-id="${o.id}">編輯</button>
           <button class="btn sm mo-cancel" data-id="${o.id}">取消投稿</button>`:''}
+        ${o.status==='rejected'?`<button class="btn sm mo-delete" data-id="${o.id}"
+          style="border-color:var(--alert-line);color:var(--alert)">刪除</button>`:''}
       </div>
       ${o.reviewNote?`<div style="font-size:.8rem;color:var(--ink-3);margin-top:3px">審核備註：${esc(o.reviewNote)}</div>`:''}
     </div>`).join('')
@@ -2150,8 +2398,39 @@ async function loadMyStuff(){
       alert('取消失敗：'+error.message+hint); return; }
     loadMyStuff();
   });
+  $$('.mo-delete').forEach(b=>b.onclick=async()=>{
+    if(!confirm('確定要刪除這筆被退回的投稿紀錄嗎？刪掉就沒了。')) return;
+    b.disabled=true;
+    const {error}=await sb.from('offers').delete().eq('id',b.dataset.id).eq('submitted_by',me.id).eq('status','rejected');
+    if(error){ b.disabled=false;
+      const hint=/relation|does not exist|policy/i.test(error.message)?'（Supabase 可能還沒跑 schema_v17_misc.sql）':'';
+      alert('刪除失敗：'+error.message+hint); return; }
+    loadMyStuff();
+  });
+  renderMySubmitHistory();
 }
 let MY_OFFERS=[];
+
+/* ---- 「新增」分頁：先讓人看一下自己之前投過什麼，避免重複投稿 ---- */
+function renderMySubmitHistory(){
+  const panel=$('#mySubmitHistoryPanel');
+  if(!MY_OFFERS.length){ panel.style.display='none'; return; }
+  panel.style.display='';
+  const S={pending:'待審核',approved:'已核可',rejected:'未採用',archived:'已下架'};
+  const VISIBLE=5;
+  const rowHtml=o=>`<div class="rep" style="padding:6px 0">
+    <span>${esc((o.createdAt||'').slice(0,10))}</span><b style="flex:1;min-width:0">${esc(o.brand)}</b>
+    <span class="${o.status==='pending'?'partial':o.status==='approved'?'ok':o.status==='rejected'?'fail':''}">${S[o.status]||o.status}</span>
+  </div>`;
+  const shown=MY_OFFERS.slice(0,VISIBLE).map(rowHtml).join('');
+  const rest=MY_OFFERS.slice(VISIBLE);
+  $('#mySubmitCount').textContent=MY_OFFERS.length; $('#mySubmitCount').classList.remove('hidden');
+  $('#mySubmitHistory').innerHTML = shown
+    + (rest.length?`<div class="hidden" id="mySubmitRest">${rest.map(rowHtml).join('')}</div>
+       <button class="btn sm lb-showmore" type="button" data-target="mySubmitRest" aria-expanded="false">顯示全部 ${MY_OFFERS.length} 筆（還有 ${rest.length} 筆）</button>`:'');
+  const moreBtn=$('#mySubmitHistory .lb-showmore');
+  if(moreBtn) wireToggleButton(moreBtn);
+}
 
 /* ---- 清單過長時只先顯示前幾筆，其餘收在「顯示全部」按鈕後面 ---- */
 function renderCollapsibleTable(el, theadRow, entries, visible, moreId, emptyMsg){
@@ -2206,8 +2485,28 @@ async function loadBoard(){
   renderBoardStats(lb||[], pop||[]);
   // 月排行沒有 rank 欄位，這裡自己補上名次
   if(monthly && lb) lb.forEach((r,i)=>r.rank=i+1);
-  if(monthly && lbErr) return;
-  const lbEntries=(lb||[]).map((r,i)=>`<tr class="lb-row" data-lb="${i}"><td class="rk ${r.rank<=3?'top':''}">${r.rank}</td>
+  LB_ROWS=lb||[]; LB_MONTHLY=monthly; LB_YM=ym;
+  if(!(monthly && lbErr)) renderLbBody();
+
+  const popEntries=(pop||[]).map((r,i)=>`<tr class="lb-click" data-oid="${r.offer_id}"><td class="rk ${i<3?'top':''}">${i+1}</td>
+      <td>${esc(r.brand)}<span style="color:var(--ink-3);font-size:.78rem">　${esc(r.timing)}</span></td>
+      <td>${r.success_count}／${r.report_count}</td>
+      <td class="amt">${nt(r.saved_total)}</td></tr>`);
+  renderCollapsibleTable($('#popBody'), '<th class="rk">#</th><th>品牌</th><th>成功／回報</th><th class="amt">已省下</th>',
+    popEntries, 10, 'pop-more-rows',
+    '<div style="color:var(--ink-3);font-size:.86rem">還沒有回報資料。</div>');
+  wireShowMore($('#popBody'));
+  $$('#popBody .lb-click').forEach(row=>row.onclick=()=>openDetail(row.dataset.oid));
+  loadRecentActivity();
+}
+
+/* ---- 省錢排行榜的列表渲染獨立出來：勾選「隱藏匿名使用者」時不用重新打 API，
+   直接拿已經抓回來的資料在前端過濾重畫就好。 ---- */
+let LB_ROWS=[], LB_MONTHLY=false, LB_YM='';
+function renderLbBody(){
+  const hideAnon=$('#lbHideAnon').checked;
+  const rows=hideAnon ? LB_ROWS.filter(r=>!String(r.display_name||'').startsWith('匿名使用者')) : LB_ROWS;
+  const lbEntries=rows.map((r,i)=>`<tr class="lb-row" data-lb="${i}"><td class="rk ${r.rank<=3?'top':''}">${r.rank}</td>
       <td><div class="who">${r.avatar_url?`<img class="avatar" src="${esc(r.avatar_url)}" alt="">`
         :`<span class="initial">${esc((r.display_name||'壽')[0])}</span>`}
         ${esc(r.display_name||'壽星')}</div></td>
@@ -2217,23 +2516,44 @@ async function loadBoard(){
       </td></tr>`);
   renderCollapsibleTable($('#lbBody'), '<th class="rk">#</th><th>使用者</th><th>品牌數</th><th class="amt">累積省下</th>',
     lbEntries, 10, 'lb-more-rows',
-    `<div style="color:var(--ink-3);font-size:.86rem">${monthly?`${esc(ym)} 這個月還沒有人上榜。`:'還沒有人上榜。到「我的」分頁打開公開選項就會出現。'}</div>`);
+    `<div style="color:var(--ink-3);font-size:.86rem">${hideAnon&&LB_ROWS.length?'隱藏匿名使用者後這裡暫時空的，取消勾選可以看全部。':
+      LB_MONTHLY?`${esc(LB_YM)} 這個月還沒有人上榜。`:'還沒有人上榜。回報「我用過了」並填成功，就會出現在這裡。'}</div>`);
   wireShowMore($('#lbBody'));
   $$('.lb-row').forEach(row=>row.onclick=()=>{
     const det=document.querySelector(`.lb-detail[data-lbd="${row.dataset.lb}"]`);
     det.classList.toggle('hidden'); row.classList.toggle('open',!det.classList.contains('hidden'));
   });
   $$('.brand-showmore').forEach(wireToggleButton);
+}
+$('#lbHideAnon').onchange=renderLbBody;
 
-  const popEntries=(pop||[]).map((r,i)=>`<tr class="lb-click" data-oid="${r.offer_id}"><td class="rk ${i<3?'top':''}">${i+1}</td>
-      <td>${esc(r.brand)}<span style="color:var(--ink-3);font-size:.78rem">　${esc(r.timing)}</span></td>
-      <td>${r.success_count}／${r.report_count}</td>
-      <td class="amt">${nt(r.saved_total)}</td></tr>`);
-  renderCollapsibleTable($('#popBody'), '<th class="rk">#</th><th>品牌</th><th>成功／回報</th><th class="amt">已省下</th>',
-    popEntries, 8, 'pop-more-rows',
-    '<div style="color:var(--ink-3);font-size:.86rem">還沒有回報資料。</div>');
-  wireShowMore($('#popBody'));
-  $$('#popBody .lb-click').forEach(row=>row.onclick=()=>openDetail(row.dataset.oid));
+/* ---- 排行榜上方「最近動態」：混合最近的成功回報與留言，讓排行榜不只是冷冰冰的數字 ---- */
+async function loadRecentActivity(){
+  const box=$('#recentActivity');
+  if(!LIVE){ box.innerHTML=''; return; }
+  const {data,error}=await sb.from('recent_activity').select('*').limit(20);
+  if(error){
+    const hint=/relation|does not exist/i.test(error.message)?'（Supabase 可能還沒跑 schema_v20_notifications.sql）':'';
+    box.innerHTML=`<div class="note alert">讀取失敗：${esc(error.message)}${hint}</div>`; return;
+  }
+  const list=data||[];
+  if(!list.length){ box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">還沒有動態，去用一次優惠或留個言吧。</div>'; return; }
+  const VISIBLE=10;
+  const rowHtml=r=>`<div class="sub-item ra-row" data-oid="${esc(r.offer_id)}" style="cursor:pointer">
+    <b>${esc(r.brand||'')}</b>
+    <span>${esc(r.display_name||'匿名使用者')}${r.kind==='usage'?' 剛剛回報用成功了':`留言：${esc(r.body||'')}`}
+      <br><span style="color:var(--ink-3);font-size:.74rem">${esc((r.created_at||'').slice(0,16).replace('T',' '))}</span></span>
+  </div>`;
+  const shown=list.slice(0,VISIBLE).map(rowHtml).join('');
+  const rest=list.slice(VISIBLE);
+  box.innerHTML = shown
+    + (rest.length?`<div class="hidden" id="raRest">${rest.map(rowHtml).join('')}</div>
+       <button class="btn sm lb-showmore" type="button" data-target="raRest" aria-expanded="false">顯示全部 ${list.length} 筆（還有 ${rest.length} 筆）</button>`:'');
+  wireShowMore(box);
+  $$('.ra-row').forEach(row=>row.onclick=()=>{
+    const id=row.dataset.oid;
+    if(id) openDetail(id);
+  });
 }
 
 /* 品牌明細 chip 清單也可能很長（用過很多店家的重度使用者），一樣先收起來 */
@@ -2495,6 +2815,8 @@ async function loadRejected(){
         <b style="flex:1;min-width:0">${esc(x.brand||'—')}</b>
         <button class="btn sm rej-detail" type="button" data-k="${x.kind}-${x.id}" aria-expanded="false">細節</button>
         <button class="btn sm rej-restore" type="button" data-kind="${x.kind}" data-id="${x.id}">救回重審</button>
+        <button class="btn sm rej-delete" type="button" data-kind="${x.kind}" data-id="${x.id}"
+          style="border-color:var(--alert-line);color:var(--alert)">刪除</button>
       </div>
       <div class="meta" style="margin-top:4px">
         <span>提出者：${esc(x.by||'匿名')}</span>
@@ -2524,6 +2846,17 @@ async function loadRejected(){
     note($('#pendMsg'),'good','✓ 已救回，這筆回到待審佇列了。');
     loadPending(); loadPendingEdits(); loadRejected();
   });
+  $$('.rej-delete').forEach(b=>b.onclick=async()=>{
+    if(!confirm('永久刪除這筆退回的紀錄嗎？刪掉就救不回來了。')) return;
+    b.disabled=true;
+    const table=b.dataset.kind==='offer'?'offers':'offer_edits';
+    const {error}=await sb.from(table).delete().eq('id',b.dataset.id);
+    if(error){ b.disabled=false;
+      const hint=/relation|does not exist|policy/i.test(error.message)?'（Supabase 可能還沒跑 schema_v17_misc.sql）':'';
+      note($('#pendMsg'),'alert',`刪除失敗：${esc(error.message)}${hint}`); return; }
+    note($('#pendMsg'),'good','✓ 已永久刪除。');
+    loadRejected();
+  });
 }
 
 /* ---- 已通過清單：核可上架的投稿，點列可看完整細節，也可以直接下架 ---- */
@@ -2552,6 +2885,68 @@ async function loadApproved(){
     const {error}=await sb.rpc('review_offer',{p_offer_id:Number(b.dataset.id),p_status:'archived'});
     if(error){ b.disabled=false; alert('下架失敗：'+error.message); return; }
     loadApproved(); loadOffers().then(render);
+  });
+}
+
+/* ---- 使用回報清單：讓管理員看到大家「我用過了」的成功/失敗回報 ---- */
+async function loadUsageReportsAdmin(){
+  if(!LIVE||!myProfile?.is_admin) return;
+  const onlyFail=$('#urOnlyFail').checked;
+  const {data,error}=await sb.from('usage_reports')
+    .select('id,used_on,result,store,note,saved_twd,created_at,offer_id,'
+      +'offers(brand,verified,status),profiles(display_name)')
+    .order('created_at',{ascending:false}).limit(100);
+  if(error){
+    $('#usageReportList').innerHTML=`<div class="note alert">讀取失敗：${esc(error.message)}</div>`;
+    $('#urCount').classList.add('hidden'); return;
+  }
+  const R={success:['成功','ok'],partial:['部分成功','partial'],failed:['失敗','fail']};
+  let list=data||[];
+  const failCount=list.filter(r=>r.result!=='success').length;
+  $('#urCount').textContent=failCount; $('#urCount').classList.toggle('hidden',!failCount);
+  if(onlyFail) list=list.filter(r=>r.result!=='success');
+  $('#usageReportList').innerHTML=list.length?list.map(r=>{
+    const o=r.offers;
+    const canSuggestVerify = r.result==='success' && o && o.status==='approved' && !o.verified;
+    return `<div class="rep" style="align-items:flex-start">
+      <span style="width:78px;flex:none">${esc(r.used_on)}</span>
+      <b style="flex:1;min-width:0">${esc(o?.brand||'（已刪除）')}</b>
+      <span class="${R[r.result][1]}">${R[r.result][0]}</span>
+      ${r.saved_twd?`<span>${nt(r.saved_twd)}</span>`:''}
+      ${r.note?`<span style="color:var(--ink-3);font-size:.78rem;max-width:220px">${esc(r.note)}</span>`:''}
+      <span style="color:var(--ink-3);font-size:.75rem">${esc(r.profiles?.display_name||'匿名')}</span>
+      ${canSuggestVerify?`<button class="btn sm ur-verify" data-id="${r.offer_id}">建議標記已查證</button>`:''}
+    </div>`;
+  }).join('') : `<div style="color:var(--ink-3);font-size:.86rem">${onlyFail?'目前沒有失敗／部分成功的回報。':'目前沒有使用回報。'}</div>`;
+  $$('.ur-verify').forEach(b=>b.onclick=async()=>{
+    b.disabled=true;
+    await setVerified(b.dataset.id, true);
+    b.textContent='已標記';
+  });
+}
+$('#urOnlyFail').onchange=loadUsageReportsAdmin;
+
+/* ---- 管理員留言通知：全站最新留言一覽，方便抓不當內容 ---- */
+async function loadAdminCommentList(){
+  if(!LIVE||!myProfile?.is_admin) return;
+  const {data,error}=await sb.from('comments')
+    .select('id,body,created_at,is_hidden,offer_id,offers(brand),profiles(display_name)')
+    .order('created_at',{ascending:false}).limit(30);
+  if(error){
+    $('#adminCommentList').innerHTML=`<div class="note alert">讀取失敗：${esc(error.message)}</div>`;
+    $('#cmCount').classList.add('hidden'); return;
+  }
+  const list=data||[];
+  $('#cmCount').textContent=list.length; $('#cmCount').classList.toggle('hidden',!list.length);
+  $('#adminCommentList').innerHTML=list.length?list.map(c=>`
+    <div class="sub-item admin-cm-row" data-offer="${esc(c.offer_id)}" style="cursor:pointer">
+      <b>${esc(c.offers?.brand||'（已刪除）')}${c.is_hidden?' <span class="lbl" style="color:var(--alert)">已隱藏</span>':''}</b>
+      <span>${esc(c.profiles?.display_name||'匿名')}：${esc(c.body)}
+        <br><span style="color:var(--ink-3);font-size:.74rem">${esc((c.created_at||'').slice(0,16).replace('T',' '))}</span></span>
+    </div>`).join('') : '<div style="color:var(--ink-3);font-size:.86rem">目前沒有留言。</div>';
+  $$('.admin-cm-row').forEach(row=>row.onclick=()=>{
+    const id=row.dataset.offer;
+    if(id) openDetail(id);
   });
 }
 
@@ -2588,12 +2983,15 @@ async function loadFeedbackList(){
 }
 
 /* ---- 站台儀表板 ---- */
-async function loadAdminDashboard(){
+async function loadAdminDashboard(days){
   if(!LIVE||!myProfile?.is_admin) return;
+  days = Number(days) || Number($('#dashRange')?.value) || 14;
   const box=$('#dashBody');
-  const [{data,error},{data:series,error:e2}]=await Promise.all([
+  DASH_CHARTS=[];
+  const [{data,error},{data:series,error:e2},{data:bmonth,error:e3}]=await Promise.all([
     sb.rpc('admin_dashboard_stats'),
-    sb.rpc('admin_dashboard_series',{p_days:14})
+    sb.rpc('admin_dashboard_series',{p_days:days}),
+    sb.rpc('admin_birthday_distribution')
   ]);
   if(error){
     const hint=/function|does not exist/i.test(error.message)?'（Supabase 可能還沒跑 schema_v14_misc.sql）':'';
@@ -2610,15 +3008,35 @@ async function loadAdminDashboard(){
     chartsHtml=`<div class="dash-charts">`
       + svgLineChart(rows,[{key:'pageviews',label:'瀏覽數',color:'var(--accent)'},
                             {key:'visitors',label:'不重複訪客',color:'var(--free)'}],
-                     {title:'近 14 天瀏覽數／訪客走勢'})
+                     {title:`近 ${days} 天瀏覽數／訪客走勢`})
       + svgLineChart(rows,[{key:'new_users',label:'新會員',color:'var(--accent)'}],
-                     {title:'近 14 天每日新會員'})
+                     {title:`近 ${days} 天每日新會員`})
       + svgLineChart(rows,[{key:'use_reports',label:'使用回報',color:'var(--free)'}],
-                     {title:'近 14 天每日使用回報數'})
+                     {title:`近 ${days} 天每日使用回報數`})
       + svgLineChart(rows,[{key:'submitted',label:'投稿',color:'var(--accent)'},
                             {key:'reviewed',label:'審核（核可＋退回）',color:'var(--alert)'}],
-                     {title:'近 14 天投稿／審核量'})
+                     {title:`近 ${days} 天投稿／審核量`})
       + `</div>`;
+  }
+  let bmonthHtml='';
+  if(e3){
+    const hint=/function|does not exist/i.test(e3.message)?'（Supabase 可能還沒跑 schema_v18_misc.sql）':'';
+    bmonthHtml=`<div class="note alert" style="margin-top:10px">生日分布讀取失敗：${esc(e3.message)}${hint}</div>`;
+  } else {
+    const rows=bmonth||[];
+    const max=Math.max(1,...rows.map(r=>r.count));
+    bmonthHtml=`<div class="dash-chart" style="margin-top:16px">
+      <b style="font-size:.85rem">會員生日月份分布</b>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+        ${rows.map(r=>`<div style="display:flex;align-items:center;gap:8px;font-size:.78rem">
+          <span style="width:34px;color:var(--ink-3)">${r.month} 月</span>
+          <div style="flex:1;background:var(--line);border-radius:4px;height:14px;overflow:hidden">
+            <div style="width:${r.count?Math.max(4,r.count/max*100):0}%;height:100%;background:var(--accent)"></div>
+          </div>
+          <span style="width:28px;text-align:right">${r.count}</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
   }
   box.innerHTML=`<div class="bigstat">
     ${cell(d.pageviews_7d??0,'近 7 天瀏覽數')}
@@ -2632,11 +3050,15 @@ async function loadAdminDashboard(){
   </div>
   <p class="statline" style="margin-top:8px">累積瀏覽 ${nt2(d.pageviews_total)}　·　近 30 天訪客 ${nt2(d.visitors_30d)}
     　·　累積使用回報 ${nt2(d.total_use_reports)}　·　待處理問題回報 ${nt2(d.open_feedback)}</p>
-  ${chartsHtml}`;
+  ${chartsHtml}
+  ${bmonthHtml}`;
+  wireChartTooltips(box);
 }
 function nt2(v){ return v==null?'0':Number(v).toLocaleString('zh-Hant'); }
+$('#dashRange')?.addEventListener('change', ()=>loadAdminDashboard($('#dashRange').value));
 
 /* ---- 極簡折線圖：純 SVG，不依賴外部圖表庫（避免又扯出 CDN 阻塞的問題） ---- */
+let DASH_CHARTS=[];
 function svgLineChart(rows, series, opts={}){
   const w=560, h=140, padL=30, padR=8, padT=12, padB=20;
   const innerW=w-padL-padR, innerH=h-padT-padB;
@@ -2657,17 +3079,67 @@ function svgLineChart(rows, series, opts={}){
     ?`<text x="${x(i)}" y="${h-5}" font-size="9" fill="var(--ink-3)" text-anchor="middle">${esc(r.date)}</text>`:'').join('');
   const legend=series.map(s=>`<span style="display:inline-flex;align-items:center;gap:4px;margin-right:12px">
     <span style="width:8px;height:8px;border-radius:50%;background:${s.color};display:inline-block"></span>${esc(s.label)}</span>`).join('');
+  const chartIdx=DASH_CHARTS.length;
+  DASH_CHARTS.push({rows,series,w,h,padL,padR,padT,padB,innerW,innerH,max});
   return `<div class="dash-chart">
     ${opts.title?`<div style="font-size:.82rem;font-weight:700;margin-bottom:2px">${esc(opts.title)}</div>`:''}
-    <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;display:block">
-      <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+innerH}" stroke="var(--line)"/>
-      <line x1="${padL}" y1="${padT+innerH}" x2="${w-padR}" y2="${padT+innerH}" stroke="var(--line)"/>
-      <text x="2" y="${padT+4}" font-size="9" fill="var(--ink-3)">${max}</text>
-      <text x="2" y="${padT+innerH}" font-size="9" fill="var(--ink-3)">0</text>
-      ${paths}${xLabels}
-    </svg>
+    <div class="chart-wrap" style="position:relative">
+      <svg data-chart-idx="${chartIdx}" viewBox="0 0 ${w} ${h}"
+        style="width:100%;height:auto;display:block;touch-action:pan-y;cursor:crosshair">
+        <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+innerH}" stroke="var(--line)"/>
+        <line x1="${padL}" y1="${padT+innerH}" x2="${w-padR}" y2="${padT+innerH}" stroke="var(--line)"/>
+        <text x="2" y="${padT+4}" font-size="9" fill="var(--ink-3)">${max}</text>
+        <text x="2" y="${padT+innerH}" font-size="9" fill="var(--ink-3)">0</text>
+        ${paths}${xLabels}
+        <line class="tip-line" x1="0" y1="${padT}" x2="0" y2="${padT+innerH}"
+          stroke="var(--ink-3)" stroke-dasharray="3,3" style="display:none"/>
+      </svg>
+      <div class="chart-tip" style="display:none;position:absolute;top:4px;background:var(--card,#fff);
+        border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:.72rem;line-height:1.5;
+        pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.15);white-space:nowrap;z-index:5"></div>
+    </div>
     <div style="font-size:.74rem;color:var(--ink-3);margin-top:2px">${legend}</div>
   </div>`;
+}
+/* 長按／滑過走勢圖可以看到當天的實際數字（滑鼠 hover 或觸控按住拖曳都吃得到） */
+function wireChartTooltips(root){
+  root.querySelectorAll('svg[data-chart-idx]').forEach(svg=>{
+    const info=DASH_CHARTS[Number(svg.dataset.chartIdx)];
+    if(!info) return;
+    const wrap=svg.closest('.chart-wrap');
+    const tip=wrap.querySelector('.chart-tip');
+    const tipLine=svg.querySelector('.tip-line');
+    const {rows,series,padL,innerW,w:chartW,padT,innerH}=info;
+    const n=rows.length||1;
+    const idxAt=clientX=>{
+      const rect=svg.getBoundingClientRect();
+      if(!rect.width) return 0;
+      const scale=chartW/rect.width;
+      const svgX=(clientX-rect.left)*scale;
+      const rel=(svgX-padL)/(innerW||1);
+      return Math.max(0,Math.min(n-1,Math.round(rel*(n-1))));
+    };
+    const show=clientX=>{
+      if(!n||!rows[0]) return;
+      const i=idxAt(clientX);
+      const r=rows[i]; if(!r) return;
+      const px=padL+(n<=1?innerW/2:innerW*i/(n-1));
+      tipLine.setAttribute('x1',px); tipLine.setAttribute('x2',px); tipLine.style.display='';
+      tip.innerHTML=`<b>${esc(r.date||'')}</b><br>`
+        +series.map(s=>`${esc(s.label)}：${esc(String(r[s.key]??0))}`).join('<br>');
+      tip.style.display='block';
+      const leftPct=px/chartW*100;
+      if(leftPct>55){ tip.style.right=`${100-leftPct+2}%`; tip.style.left='auto'; }
+      else{ tip.style.left=`${leftPct+2}%`; tip.style.right='auto'; }
+    };
+    const hide=()=>{ tip.style.display='none'; tipLine.style.display='none'; };
+    let touching=false;
+    svg.addEventListener('pointerdown', e=>{ touching=true; show(e.clientX); });
+    svg.addEventListener('pointermove', e=>{ if(touching||e.pointerType==='mouse') show(e.clientX); });
+    svg.addEventListener('pointerup', ()=>{ touching=false; setTimeout(hide,1200); });
+    svg.addEventListener('pointerleave', ()=>{ if(!touching) hide(); });
+    svg.addEventListener('pointercancel', ()=>{ touching=false; hide(); });
+  });
 }
 
 /* ---- 管理員設定：用 email 直接在網站上新增／移除管理員，不用回去跑 SQL ---- */
