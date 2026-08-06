@@ -2,20 +2,40 @@
   "name": "壽星日 — 台灣生日優惠",
   "short_name": "壽星日",
   "description": "台灣生日優惠整理：依縣市、會員種類、免費層級篩選，記錄用過哪些、累積省下多少。",
-  "start_url": "./index.html",
+  "id": "./",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
-  "background_color": "#faf9f7",
-  "theme_color": "#faf9f7",
+  "background_color": "#f6f6f8",
+  "theme_color": "#ffffff",
   "lang": "zh-Hant",
   "categories": ["food", "lifestyle", "shopping"],
   "icons": [
     {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
       "src": "icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }

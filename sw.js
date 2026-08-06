@@ -7,8 +7,9 @@
    - Supabase API：完全不攔截。優惠資料必須是最新的，
      快取住反而會給人過期的優惠資訊，那比開不了還糟。
 */
-const CACHE = 'shouxing-v4';
-const ASSETS = ['./', './index.html', './manifest.json', './icon.svg'];
+const CACHE = 'shouxing-v5';
+const ASSETS = ['./', './index.html', './manifest.json', './icon.svg',
+                './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
