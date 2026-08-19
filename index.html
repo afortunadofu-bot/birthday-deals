@@ -14,12 +14,15 @@
 <meta property="og:title" content="壽星日 — 台灣生日優惠整理">
 <meta property="og:description" content="依縣市、會員種類、免費層級篩選台灣各品牌生日優惠，記錄用過哪些、累積省下多少。">
 <meta property="og:url" content="https://birthdaydeals.celine-fu-work.workers.dev/">
-<meta property="og:image" content="https://birthdaydeals.celine-fu-work.workers.dev/icon-512.png">
+<meta property="og:image" content="https://birthdaydeals.celine-fu-work.workers.dev/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="壽星日——台灣生日優惠整理">
 <meta property="og:locale" content="zh_TW">
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="壽星日 — 台灣生日優惠整理">
 <meta name="twitter:description" content="依縣市、會員種類、免費層級篩選台灣各品牌生日優惠，記錄用過哪些、累積省下多少。">
-<meta name="twitter:image" content="https://birthdaydeals.celine-fu-work.workers.dev/icon-512.png">
+<meta name="twitter:image" content="https://birthdaydeals.celine-fu-work.workers.dev/og-image.png">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -193,6 +196,16 @@
   .new-banner #btnOnlyNew.active{background:var(--accent-dark);border-color:var(--accent-dark);color:#fff}
   .btn.plain{background:none;border:none;padding:2px 4px;color:var(--ink-3);font-size:1rem;line-height:1}
   .btn.plain:hover{color:var(--ink)}
+  /* 成就徽章：達成的彩色實框，還沒達成的灰階＋略透明，門檻寫在下面小字提示怎麼解鎖 */
+  .badge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+  .badge{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;
+    padding:10px 6px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface)}
+  .badge .b-icon{font-size:1.5rem;line-height:1}
+  .badge .b-label{font-size:.74rem;color:var(--ink-2);font-weight:600}
+  .badge .b-hint{font-size:.66rem;color:var(--ink-3)}
+  .badge.earned{border-color:var(--accent);background:var(--accent-soft)}
+  .badge.earned .b-label{color:var(--accent-dark)}
+  .badge.locked{opacity:.45;filter:grayscale(1)}
   /* 卡片右上角的 NEW 角標：符合「本週新上架／自上次來訪新增」條件的優惠，
      逛列表捲過去時就能順手看到，不用特地去點橫幅上的「只看新的」。 */
   .card{position:relative}
@@ -717,6 +730,9 @@
         </select></label>
         <label class="toggle"><input type="checkbox" id="lbHideAnon"> 隱藏匿名使用者</label>
       </div>
+      <div id="myRankShareWrap" class="hidden" style="margin-bottom:10px">
+        <button type="button" class="btn sm" id="btnShareRank">📤 分享我的排名</button>
+      </div>
       <div id="lbBody"></div>
     </div>
   </main>
@@ -829,6 +845,10 @@
       <p class="sub">用來預設篩選你的生日月份，也會拿去算下面的註冊死線。</p>
       <div id="birthdayMsg"></div>
     </div>
+    <div class="panel hidden" id="remindersPanel">
+      <h2>提醒</h2>
+      <div id="remindersBody"></div>
+    </div>
     <div class="panel"><h2>待辦清單</h2>
       <p class="sub">點卡片上的星號收藏，勾起來代表用過了。</p>
       <div id="myWishlist"></div>
@@ -845,9 +865,16 @@
     <div class="panel">
       <h2>我省下多少</h2>
       <p class="sub">只計算回報「成功」的紀錄。</p>
+      <div id="savingsSinceVisit" class="hidden"></div>
       <div class="bigstat" id="mySavings"></div>
+      <button type="button" class="btn sm hidden" id="btnShareSavings" style="margin-top:8px">📤 分享我的省錢成果</button>
       <label class="toggle"><input type="checkbox" id="optLeaderboard"> 在排行榜顯示我的暱稱與頭像</label>
       <p class="sub" style="margin-top:4px">省下金額本來就會計入排行榜；這個選項只決定要不要顯示你的暱稱跟頭像——關掉的話還是會上榜，但顯示成「匿名使用者」。</p>
+    </div>
+    <div class="panel hidden" id="badgesPanel">
+      <h2>成就徽章</h2>
+      <p class="sub">用回報紀錄自動累積，達成門檻就會亮起來。</p>
+      <div id="badgesBody" class="badge-grid"></div>
     </div>
     <div class="panel"><h2>我的使用回報</h2><p class="sub">點一筆可以看詳情、編輯或刪除。</p><div id="myReports"></div></div>
     <div class="panel"><h2>我的投稿</h2><div id="myOffers"></div></div>
@@ -864,14 +891,15 @@
   <main class="wrap">
   <div class="panel">
     <h2>站台儀表板</h2>
-    <p class="sub">網站瀏覽與使用狀況，數字只算跑過 schema_v14_misc.sql 之後累積的資料。走勢圖可以按住拖曳看每天的數字。</p>
+    <p class="sub">網站瀏覽與使用狀況，數字只算跑過 schema_v14_misc.sql 之後累積的資料。下面這排數字跟時段分布圖都會跟著這個區間變動；走勢圖選「全部時間」時最多還是只畫近 90 天（逐日畫點，太長會密到看不出東西），累積類的數字（累積會員數、上架優惠數等）本來就跟區間無關，不受影響。走勢圖可以按住拖曳看每天的數字。</p>
     <div class="row" style="gap:8px;align-items:center;margin-bottom:8px">
-      <label for="dashRange" style="font-size:.82rem;color:var(--ink-3)">走勢圖區間</label>
+      <label for="dashRange" style="font-size:.82rem;color:var(--ink-3)">統計區間</label>
       <select id="dashRange" style="width:auto">
         <option value="7">近 7 天</option>
         <option value="14" selected>近 14 天</option>
         <option value="30">近 30 天</option>
         <option value="90">近 90 天</option>
+        <option value="0">全部時間</option>
       </select>
     </div>
     <div id="dashBody"><div style="color:var(--ink-3);font-size:.86rem">載入中…</div></div>
@@ -906,7 +934,7 @@
   </div>
   <div class="panel">
     <h2>修改建議待審<span class="n hidden" id="editCount"></span></h2>
-    <p class="sub">民眾對已上架優惠提出的修改建議，核可後才會真的改到 offers 上，並列出新舊對照。</p>
+    <p class="sub">民眾對已上架優惠提出的修改建議，核可後才會真的改到 offers 上，並列出新舊對照。新的內容直接可以編輯——覺得哪裡不太對可以先調整再核可，不用整筆退回讓對方重投。</p>
     <div id="editMsg"></div>
     <div id="editPendingList"></div>
   </div>
@@ -1120,6 +1148,7 @@ let LIVE = false;
 
 let sb=null, me=null, myProfile=null, OFFERS=[];
 let NEW_OFFER_IDS=new Set(), onlyNewActive=false;   // 「本週新上架／自上次來訪」入口用的狀態
+let PREV_SEEN_AT=null;   // checkNewOffers() 覆蓋 last_seen_at 之前的舊值，留給「自上次來訪省了多少」用
 let activeCat=new Set(), activeFree=new Set(), activeTiming=new Set();   // 篩選改多選：可以同時勾「當月」+「當週」
 let activeRegion=new Set(), activeMemType=new Set();   // 地區／會員也改多選，跟上面那組共用同一套 mkMulti chip 邏輯
 let deferredInstall = null;
@@ -1234,7 +1263,7 @@ function paintOffers(){
 // 登入的人用 profiles.last_seen_at 記上次來訪時間；訪客沒有帳號存這個，
 // 退而求其次存在 localStorage。無論哪一種，看過一次之後就把時間更新成現在，
 // 下次來訪才會是「新的」。
-function renderNewOffersBanner(weekCount, sinceCount){
+function renderNewOffersBanner(weekCount, sinceCount, shownIds){
   const box=$('#newOffersBanner'), txt=$('#newOffersText');
   if(!box) return;
   // 「自上次來訪」比「本週新上架」更貼身，有得選就優先講這個；沒有上次
@@ -1243,7 +1272,18 @@ function renderNewOffersBanner(weekCount, sinceCount){
   if(sinceCount!=null && sinceCount>0) msg = `自從你上次來訪後，新增了 <b>${sinceCount}</b> 筆優惠`;
   else if(weekCount>0) msg = `本週新上架 <b>${weekCount}</b> 筆優惠`;
   if(!msg){ box.classList.add('hidden'); return; }
-  txt.innerHTML = msg;   // msg 只由自己算出來的整數組成，不含使用者輸入，這裡用 innerHTML 安全
+  // 新上架裡有沒有跟你收藏過的類別重疊——收藏過飲料類的人，這種「跟你有關」
+  // 的新優惠比單純的總數更容易吸引人點進去看，順便帶出收藏功能。
+  const wishCats = new Set(OFFERS.filter(o=>WISH.has(String(o.id))).map(o=>o.category).filter(Boolean));
+  if(wishCats.size){
+    const matches=(shownIds||[]).map(id=>OFFERS.find(o=>String(o.id)===String(id)))
+      .filter(o=>o && wishCats.has(o.category));
+    if(matches.length){
+      const cats=[...new Set(matches.map(o=>o.category))];
+      msg += `<br><span style="font-size:.8rem;opacity:.9">其中 <b>${matches.length}</b> 筆是你收藏過的類別（${esc(cats.join('、'))}），別錯過</span>`;
+    }
+  }
+  txt.innerHTML = msg;   // msg 只由自己算出來的整數與 esc() 過的類別名組成，這裡用 innerHTML 安全
   box.classList.remove('hidden');
   onlyNewActive=false;
   const btn=$('#btnOnlyNew');
@@ -1252,11 +1292,12 @@ function renderNewOffersBanner(weekCount, sinceCount){
 async function checkNewOffers(){
   const live=OFFERS.filter(o=>o.status==='approved' || !o.status);   // offers_public 本來就只有已通過的
   const prevSeen = me ? (myProfile?.last_seen_at||null) : (localStorage.getItem('sxr_last_seen')||null);
+  PREV_SEEN_AT = prevSeen;
   const weekIds = live.filter(o=>{ const d=daysSinceIso(o.createdAt); return d!=null && d<7; }).map(o=>o.id);
   const sinceIds = prevSeen ? live.filter(o=>o.createdAt && o.createdAt>prevSeen).map(o=>o.id) : [];
   const shown = (prevSeen && sinceIds.length) ? sinceIds : weekIds;
   NEW_OFFER_IDS = new Set(shown);
-  renderNewOffersBanner(weekIds.length, prevSeen ? sinceIds.length : null);
+  renderNewOffersBanner(weekIds.length, prevSeen ? sinceIds.length : null, shown);
   // 更新「上次來訪」時間戳，留到下次來訪才會覺得這批是新的。
   const nowIso = new Date().toISOString();
   try{
@@ -1340,6 +1381,7 @@ async function connectLive(){
     await onSession(session);
     await loadOffers();
     await checkNewOffers();
+    renderSavingsSinceVisit();
     openDeepLinkedOffer();
     clearTimeout(slowTimer);
     if(!showOAuthError() && !PROFILE_ERROR) mb.innerHTML='';
@@ -1468,6 +1510,7 @@ function paintAuth(){
       $('#bmonth').value=String(myProfile.birth_month);
       $('#bday').value=myProfile.birth_day?String(myProfile.birth_day):'';
       renderPlanner();
+      renderReminders();
     }
   }
   paintSubmitGate();
@@ -1640,6 +1683,7 @@ async function toggleWish(id, btn){
   }
   if(!has) logEvent('wish', {offer_id:id});
   if(!$('#tab-mine').classList.contains('hidden')) renderMyWishlist();
+  renderReminders();
 }
 async function renderMyWishlist(){
   const box=$('#myWishlist');
@@ -2074,6 +2118,7 @@ function render(){
   // 整張卡片都可以點開詳情——按鈕的 click 都有 stopPropagation，不會互相打架
   $$('#grid .card').forEach(c=>c.onclick=()=>openDetail(c.dataset.id));
   renderPlanner();
+  renderReminders();
   saveFilters();
   updateSortTriggerLabel();
 }
@@ -2146,6 +2191,59 @@ function renderPlanner(){
   $$('#planner .dl-click').forEach(row=>row.onclick=()=>{
     const id=row.dataset.oid;
     if(id) openDetail(id);
+  });
+}
+
+/* ---- 「我的」分頁的提醒區塊：生日快到了 + 收藏的優惠快過期了 ----
+   兩個都是「拉回訪」用的提醒，跟上面「註冊死線」的死線提醒不同──死線
+   是「你可能來不及入會」，這裡是「你已經收藏／快生日了，別忘了用」。
+   生日提醒每個生日週期只提醒一次（關掉就記住，下一年生日才會再跳出來），
+   收藏到期提醒沒有關閉按鈕，因為每筆優惠到期日不同，關一次沒意義。 ---- */
+function renderReminders(){
+  const box=$('#remindersPanel'), body=$('#remindersBody');
+  if(!box||!body) return;
+  let html='';
+  const m=+($('#bmonth')?.value||0), d=+($('#bday')?.value||0);
+  if(m){
+    const t=new Date(TODAY.getFullYear(),m-1,d||1);
+    if(t<TODAY) t.setFullYear(TODAY.getFullYear()+1);
+    const left=Math.round((t-TODAY)/864e5);
+    if(left<=14){
+      const dismissKey=`sxr_bday_soon_dismissed_${t.getFullYear()}-${m}-${d||1}`;
+      if(!localStorage.getItem(dismissKey)){
+        const wishCount=[...WISH].filter(id=>OFFERS.some(o=>String(o.id)===id)).length;
+        html+=`<div class="new-banner" id="bdaySoonBanner" style="margin-bottom:10px">
+          <span class="nb-icon" aria-hidden="true">🎂</span>
+          <div style="flex:1">生日還有 <b>${left}</b> 天！${wishCount?`收藏清單裡還有 ${wishCount} 筆優惠沒用，`:''}趁現在安排一下吧。</div>
+          <button type="button" class="btn plain" id="btnDismissBdaySoon">知道了</button>
+        </div>`;
+      }
+    }
+  }
+  const expiring = OFFERS.filter(o=>WISH.has(String(o.id)) && o.validUntil)
+    .map(o=>({...o, daysLeft: Math.round((new Date(o.validUntil+'T00:00:00')-TODAY)/864e5)}))
+    .filter(o=>o.daysLeft>=0 && o.daysLeft<=14)
+    .sort((a,b)=>a.daysLeft-b.daysLeft);
+  if(expiring.length){
+    html+=`<div class="sub-list">
+      <div class="dl-head">收藏中即將到期的優惠（${expiring.length}）</div>
+      ${expiring.map(o=>`<div class="sub-item dl-click" data-oid="${esc(o.id)}" style="cursor:pointer">
+        <b>${esc(o.brand)}</b><span>還剩 ${o.daysLeft} 天　${esc(o.validUntil)} 到期</span></div>`).join('')}
+    </div>`;
+  }
+  body.innerHTML=html;
+  box.classList.toggle('hidden', !html);
+  const dw=$('#btnDismissBdaySoon');
+  if(dw) dw.onclick=()=>{
+    const m2=+($('#bmonth')?.value||0), d2=+($('#bday')?.value||0);
+    if(!m2) return;
+    const t2=new Date(TODAY.getFullYear(),m2-1,d2||1);
+    if(t2<TODAY) t2.setFullYear(TODAY.getFullYear()+1);
+    localStorage.setItem(`sxr_bday_soon_dismissed_${t2.getFullYear()}-${m2}-${d2||1}`,'1');
+    renderReminders();
+  };
+  $$('#remindersPanel .dl-click').forEach(row=>row.onclick=()=>{
+    const id=row.dataset.oid; if(id) openDetail(id);
   });
 }
 
@@ -2918,7 +3016,141 @@ $('#btnSaveBirthday').onclick=async()=>{
   myProfile = myProfile ? {...myProfile, birth_month:m, birth_day:d} : myProfile;
   note($('#birthdayMsg'),'good','✓ 生日已更新。');
   renderPlanner();
+  renderReminders();
 };
+
+/* ---- 通用「成果圖卡」產生器：畫一張直式圖卡（品牌識別 + 標題 + 幾行數字），
+   有 Web Share API（手機瀏覽器多半支援、電腦版 Chrome 大多不支援）就直接叫
+   出系統分享面板；不支援就退回下載圖片，使用者自己存起來分享。刻意做成
+   通用函式，「省錢成果」跟「排行榜名次」共用同一套畫圖邏輯，只是傳入的
+   標題／數字不同。 ---- */
+async function shareStatsCard(opts){
+  // opts: {emoji, title, lines:[{label,value}], footer, filename}
+  const W=760, H=980, scale=2;
+  const canvas=document.createElement('canvas');
+  canvas.width=W*scale; canvas.height=H*scale;
+  const ctx=canvas.getContext('2d');
+  ctx.scale(scale,scale);
+
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#1d0a0c'); grad.addColorStop(1,'#0e1512');
+  ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+
+  ctx.fillStyle='#e8483c';
+  ctx.globalAlpha=.12;
+  ctx.beginPath(); ctx.arc(W-60,80,180,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(40,H-100,220,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=1;
+
+  ctx.textAlign='center';
+  ctx.fillStyle='#fff';
+  ctx.font='600 26px system-ui,-apple-system,"Noto Sans TC",sans-serif';
+  ctx.fillText('🎂 壽星日 Birthday Deals', W/2, 90);
+
+  ctx.font='72px system-ui,-apple-system,"Noto Sans TC",sans-serif';
+  ctx.fillText(opts.emoji||'🎉', W/2, 210);
+
+  ctx.font='700 42px system-ui,-apple-system,"Noto Sans TC",sans-serif';
+  ctx.fillStyle='#fff';
+  wrapCenterText(ctx, opts.title||'', W/2, 280, W-120, 52);
+
+  let y=390;
+  (opts.lines||[]).forEach(line=>{
+    ctx.font='500 22px system-ui,-apple-system,"Noto Sans TC",sans-serif';
+    ctx.fillStyle='#c9b8b6';
+    ctx.fillText(line.label, W/2, y);
+    ctx.font='700 54px system-ui,-apple-system,"Noto Sans TC",sans-serif';
+    ctx.fillStyle='#e8483c';
+    ctx.fillText(line.value, W/2, y+64);
+    y+=140;
+  });
+
+  ctx.font='500 20px system-ui,-apple-system,"Noto Sans TC",sans-serif';
+  ctx.fillStyle='#8f8482';
+  ctx.fillText(opts.footer||'一起找生日優惠，去 birthdaydeals.celine-fu-work.workers.dev', W/2, H-50);
+
+  await new Promise(resolve=>canvas.toBlob(async blob=>{
+    if(!blob){ resolve(); return; }
+    const filename=(opts.filename||'card')+'.png';
+    const file = typeof File!=='undefined' ? new File([blob], filename, {type:'image/png'}) : null;
+    if(file && navigator.canShare && navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file], title:opts.title, text:opts.footer}); resolve(); return; }
+      catch(e){ if(e && e.name==='AbortError'){ resolve(); return; } }
+    }
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+    resolve();
+  }, 'image/png'));
+}
+function wrapCenterText(ctx, text, cx, y, maxW, lh){
+  const chars=String(text).split('');
+  let line='', lines=[];
+  for(const ch of chars){
+    const test=line+ch;
+    if(ctx.measureText(test).width>maxW && line){ lines.push(line); line=ch; }
+    else line=test;
+  }
+  if(line) lines.push(line);
+  lines=lines.slice(0,2);
+  lines.forEach((l,i)=>ctx.fillText(l, cx, y+i*lh));
+}
+
+/* ---- 「自上次來訪省了多少」——用 PREV_SEEN_AT（checkNewOffers() 覆蓋掉
+   last_seen_at 之前留下的舊值）當分界，只算這段期間新增的成功回報。
+   沒有上次來訪紀錄（新用戶/第一次登入）或這段期間沒有成功回報就不顯示，
+   避免對新用戶顯示一個沒意義的「$0」。
+   獨立成函式、進出兩個地方都會呼叫：loadMyStuff() 抓到 MY_REPORTS 時呼叫一次，
+   boot() 裡 checkNewOffers() 跑完、PREV_SEEN_AT 才真的有值時再呼叫一次——
+   兩支是各自獨立的非同步流程，先跑完的那個當下 PREV_SEEN_AT 不一定就緒，
+   單靠 loadMyStuff() 裡呼叫一次會漏掉「PREV_SEEN_AT 比 MY_REPORTS 晚到」的情況。 ---- */
+function renderSavingsSinceVisit(){
+  const sinceBox=$('#savingsSinceVisit');
+  if(!sinceBox) return;
+  let html='';
+  if(PREV_SEEN_AT){
+    const since=MY_REPORTS.filter(r=>r.result==='success' && r.created_at && r.created_at>PREV_SEEN_AT);
+    const sum=since.reduce((a,r)=>a+(r.saved_twd||0),0);
+    if(since.length && sum>0){
+      html=`<div class="new-banner" style="margin-bottom:10px">
+        <span class="nb-icon" aria-hidden="true">💰</span>
+        <div style="flex:1">距離上次來訪，你又省下了 <b>${nt(sum)}</b>（${since.length} 筆成功回報）！</div>
+      </div>`;
+    }
+  }
+  sinceBox.innerHTML=html;
+  sinceBox.classList.toggle('hidden', !html);
+}
+
+/* ---- 成就徽章：純粹用 my_savings 這個 view 已經有的欄位算門檻，不用多開表。
+   故意分兩軸（用過幾次 / 省了多少 / 用過幾個品牌），達成感比單一門檻豐富，
+   也讓「還沒省很多但常回報」的人也有東西可以解鎖，不是只有金額大戶才有徽章。 ---- */
+const BADGE_DEFS=[
+  {icon:'🎉',label:'初體驗',hint:'首次成功回報',check:sv=>(sv.success_count||0)>=1},
+  {icon:'🔥',label:'常客',hint:'成功回報滿 10 次',check:sv=>(sv.success_count||0)>=10},
+  {icon:'👑',label:'老饕',hint:'成功回報滿 30 次',check:sv=>(sv.success_count||0)>=30},
+  {icon:'💵',label:'小資達人',hint:'累積省下滿 $500',check:sv=>(sv.saved_total||0)>=500},
+  {icon:'💰',label:'省錢高手',hint:'累積省下滿 $2,000',check:sv=>(sv.saved_total||0)>=2000},
+  {icon:'🏆',label:'省錢大戶',hint:'累積省下滿 $5,000',check:sv=>(sv.saved_total||0)>=5000},
+  {icon:'🗺️',label:'跑遍各家',hint:'用過 5 個不同品牌',check:sv=>(sv.brands_used||0)>=5},
+  {icon:'🌟',label:'品牌收藏家',hint:'用過 10 個不同品牌',check:sv=>(sv.brands_used||0)>=10},
+];
+function renderBadges(sv){
+  const panel=$('#badgesPanel'), body=$('#badgesBody');
+  if(!panel||!body) return;
+  if(!sv){ panel.classList.add('hidden'); return; }
+  const earned=BADGE_DEFS.filter(b=>b.check(sv));
+  panel.classList.toggle('hidden', earned.length===0 && (sv.success_count||0)===0);
+  body.innerHTML=BADGE_DEFS.map(b=>{
+    const got=b.check(sv);
+    return `<div class="badge ${got?'earned':'locked'}">
+      <span class="b-icon" aria-hidden="true">${b.icon}</span>
+      <span class="b-label">${esc(b.label)}</span>
+      <span class="b-hint">${got?'已解鎖':esc(b.hint)}</span>
+    </div>`;
+  }).join('');
+}
 
 async function loadMyStuff(){
   if(!LIVE||!me) return;
@@ -2930,6 +3162,16 @@ async function loadMyStuff(){
     <div><div class="v">${sv.success_count}</div><div class="k">成功次數</div></div>
     <div><div class="v">${sv.brands_used}</div><div class="k">用過品牌</div></div>`
     : '<div style="color:var(--ink-3);font-size:.86rem">還沒有回報紀錄。到「優惠」分頁按「我用過了」開始記錄。</div>';
+  renderBadges(sv);
+  const shareBtn=$('#btnShareSavings');
+  if(shareBtn){
+    shareBtn.classList.toggle('hidden', !sv || !sv.saved_total);
+    shareBtn.onclick=()=>shareStatsCard({
+      emoji:'💰', title:'我靠生日優惠省下了',
+      lines:[{label:'累積省下', value:nt(sv.saved_total)}, {label:'成功使用次數', value:String(sv.success_count)+' 次'}],
+      footer:'一起找生日優惠，去壽星日看看吧', filename:'我的省錢成果'
+    });
+  }
 
   const R={success:['成功','ok'],partial:['部分','partial'],failed:['失敗','fail']};
   const {data:reps}=await sb.from('usage_reports')
@@ -2945,6 +3187,8 @@ async function loadMyStuff(){
     const r=MY_REPORTS.find(x=>String(x.id)===row.dataset.id);
     if(r) openReport(r.offer_id, r);
   });
+
+  renderSavingsSinceVisit();
 
   renderMyWishlist();
 
@@ -3131,6 +3375,28 @@ function renderLbBody(){
     det.classList.toggle('hidden'); row.classList.toggle('open',!det.classList.contains('hidden'));
   });
   $$('.brand-showmore').forEach(wireToggleButton);
+
+  // 「分享我的排名」——排行榜視圖本身不回傳 user_id，只能靠暱稱比對，
+  // 所以刻意收斂在「有公開顯示暱稱、暱稱在榜上唯一一筆」才給分享按鈕，
+  // 避免同名或匿名時分享到別人的名次。
+  const shareWrap=$('#myRankShareWrap'), shareBtn=$('#btnShareRank');
+  if(shareWrap && shareBtn){
+    const myName=myProfile?.display_name;
+    const matches = (myName && myProfile?.show_on_leaderboard)
+      ? rows.filter(r=>r.display_name===myName) : [];
+    if(LIVE && me && matches.length===1){
+      const r=matches[0];
+      shareWrap.classList.remove('hidden');
+      shareBtn.onclick=()=>shareStatsCard({
+        emoji:r.rank<=3?'🏆':'🎉',
+        title:(sortByCount?'成功使用次數':'省錢排行榜')+' 第 '+r.rank+' 名',
+        lines:[{label:'累積省下', value:nt(r.saved_total)}, {label:'成功次數', value:String(r.success_count)+' 次'}],
+        footer:'一起找生日優惠，去壽星日看看吧', filename:'我的排名'
+      });
+    } else {
+      shareWrap.classList.add('hidden');
+    }
+  }
 }
 $('#lbHideAnon').onchange=renderLbBody;
 $('#lbSortBy').onchange=renderLbBody;
@@ -3539,10 +3805,27 @@ async function loadReviewInsights(){
   </div>`;
 }
 
-/* ---- 修改建議待審：民眾對已上架優惠提的修改建議，新舊對照 + 核可／退回 ---- */
+/* ---- 修改建議待審：民眾對已上架優惠提的修改建議，新舊對照 + 可編輯 + 核可／退回 ----
+   「新的內容」那一格直接是輸入框，不是純文字——管理員核可前可以先調整
+   （例如民眾打錯字、日期抓錯），核可時送出的是「輸入框當下的值」，不是
+   民眾原本送出的那份。offer_edits.patch 本身不會被覆蓋，民眾原始送出的
+   內容還留著；只有「實際套用到 offers 的值」跟歷史紀錄的措辭會反映
+   管理員是否調整過（見 schema_v42／schema_v40）。 ---- */
 const EDIT_FIELD_LABEL={brand:'品牌名稱',offer:'優惠內容',conditions:'使用條件',membership:'會員取得方式',
   timing:'適用期間',advance_days:'提前天數',value_twd:'優惠價值',valid_until:'檔期迄日',
   category:'類別',requires_companion:'需同行',regions:'適用地區'};
+let EDIT_ORIG_PATCH={};   // edit id -> 民眾原始送出的 patch，核可時拿來比對輸入框有沒有被改過
+function patchFieldInputHtml(editId, field, value){
+  const v = value==null ? '' : String(value);
+  const common = `class="edit-patch-field" data-edit="${esc(String(editId))}" data-field="${esc(field)}"`;
+  if(field==='advance_days'||field==='value_twd')
+    return `<input type="number" ${common} value="${esc(v)}" style="width:100%;margin-top:2px">`;
+  if(field==='valid_until')
+    return `<input type="date" ${common} value="${esc(v)}" style="width:100%;margin-top:2px">`;
+  if(field==='offer'||field==='conditions'||field==='membership')
+    return `<textarea ${common} style="width:100%;margin-top:2px;min-height:52px">${esc(v)}</textarea>`;
+  return `<input type="text" ${common} value="${esc(v)}" style="width:100%;margin-top:2px">`;
+}
 async function loadPendingEdits(){
   if(!LIVE||!myProfile?.is_admin) return;
   const {data,error}=await sb.from('offer_edits')
@@ -3560,14 +3843,16 @@ async function loadPendingEdits(){
   }
   const list=data||[];
   ec.textContent=list.length; ec.classList.toggle('hidden',!list.length);
+  EDIT_ORIG_PATCH={};
   $('#editPendingList').innerHTML = list.length ? list.map(e=>{
     const o=e.offers||{};
+    EDIT_ORIG_PATCH[e.id]=e.patch||{};
     const rows=Object.entries(e.patch||{}).map(([k,v])=>`
       <div class="row" style="gap:6px;align-items:flex-start;margin-top:6px">
-        <span class="filt-label" style="width:64px">${esc(EDIT_FIELD_LABEL[k]||k)}</span>
+        <span class="filt-label" style="width:64px;flex-shrink:0">${esc(EDIT_FIELD_LABEL[k]||k)}</span>
         <div style="flex:1;min-width:0;font-size:.82rem">
           <div style="color:var(--ink-3);text-decoration:line-through">${esc(String(o[k]??'—'))}</div>
-          <div style="color:var(--free);font-weight:700">${esc(String(v??'—'))}</div>
+          ${patchFieldInputHtml(e.id,k,v)}
         </div>
       </div>`).join('');
     return `<div class="pend-row" data-edit-row="${e.id}" style="border-top:1px solid var(--line);padding:14px 0">
@@ -3587,9 +3872,26 @@ async function loadPendingEdits(){
     const n=document.querySelector(`.en[data-id="${id}"]`)?.value||'';
     const row=document.querySelector(`[data-edit-row="${id}"]`);
     const btns=row?.querySelectorAll('button'); btns?.forEach(b=>b.disabled=true);
-    const {error}=await sb.rpc('review_offer_edit',{p_edit_id:Number(id),p_status:st,p_note:n});
+    // 核可時把輸入框當下的值收集起來，跟民眾原始送出的 patch 比對——
+    // 有被管理員改過才傳 override，沒改過就傳 null，讓 RPC 照民眾原本
+    // 送出的內容套用（措辭跟歷史紀錄才會準確反映「有沒有被調整過」）。
+    let overridePatch=null;
+    if(st==='approved'){
+      const orig=EDIT_ORIG_PATCH[id]||{};
+      const finalPatch={}; let changed=false;
+      $$(`.edit-patch-field[data-edit="${id}"]`).forEach(inp=>{
+        const field=inp.dataset.field;
+        let val=inp.value;
+        if(field==='advance_days'||field==='value_twd') val = val===''?null:Number(val);
+        else if(field==='valid_until') val = val || null;
+        finalPatch[field]=val;
+        if(orig[field]!==val) changed=true;
+      });
+      if(changed) overridePatch=finalPatch;
+    }
+    const {error}=await sb.rpc('review_offer_edit',{p_edit_id:Number(id),p_status:st,p_note:n,p_override_patch:overridePatch});
     if(error){ btns?.forEach(b=>b.disabled=false); note($('#editMsg'),'alert',`審核失敗：${esc(error.message)}`); return; }
-    note($('#editMsg'),'good',`✓ 已${st==='approved'?'核可':'退回'}這筆修改建議`);
+    note($('#editMsg'),'good',`✓ 已${st==='approved'?(overridePatch?'調整後核可':'核可'):'退回'}這筆修改建議`);
     if(row){ row.style.transition='opacity .25s var(--ease)'; row.style.opacity='0'; setTimeout(()=>row.remove(),250); }
     if(st==='approved'){ await loadOffers(); render(); }
     loadPendingEdits(); loadRejected(); loadPendingEditsPreview();
@@ -3890,18 +4192,26 @@ $('#fbTypeFilter').onchange=renderFbList;
 /* ---- 站台儀表板 ---- */
 async function loadAdminDashboard(days){
   if(!LIVE||!myProfile?.is_admin) return;
-  days = Number(days) || Number($('#dashRange')?.value) || 14;
+  // dashRange 選單傳「0」代表「全部時間」——注意不能用 `Number(days)||...`
+  // 判斷有沒有傳值，0 在 JS 是 falsy，會被誤判成「沒傳，用預設值」，
+  // 選了「全部時間」反而變成套用預設的 14 天，剛好選錯成看起來像沒選一樣。
+  const raw = days!==undefined ? Number(days) : Number($('#dashRange')?.value);
+  const rangeDays = Number.isFinite(raw) ? raw : 14;
+  const isAllTime = rangeDays === 0;
+  const statsDays = isAllTime ? null : rangeDays;       // 給大數字／時段分布：null = 不設下限
+  const seriesDays = isAllTime ? 90 : Math.min(rangeDays, 90); // 給走勢圖：逐日畫點，上限 90 天
+  const rangeLabel = isAllTime ? '全部時間' : `近 ${rangeDays} 天`;
   const box=$('#dashBody');
   DASH_CHARTS=[];
   const [{data,error},{data:series,error:e2},{data:bmonth,error:e3},{data:hours,error:e4},{data:online,error:e5}]=await Promise.all([
-    sb.rpc('admin_dashboard_stats'),
-    sb.rpc('admin_dashboard_series',{p_days:days}),
+    sb.rpc('admin_dashboard_stats',{p_days:statsDays}),
+    sb.rpc('admin_dashboard_series',{p_days:seriesDays}),
     sb.rpc('admin_birthday_distribution'),
-    sb.rpc('admin_usage_hour_distribution',{p_days:days}),
+    sb.rpc('admin_usage_hour_distribution',{p_days:statsDays}),
     sb.rpc('admin_online_now')
   ]);
   if(error){
-    const hint=/function|does not exist/i.test(error.message)?'（Supabase 可能還沒跑 schema_v14_misc.sql）':'';
+    const hint=/function|does not exist/i.test(error.message)?'（Supabase 可能還沒跑 schema_v41_dashboard_range.sql）':'';
     box.innerHTML=`<div class="note alert">讀取失敗：${esc(error.message)}${hint}</div>`; return;
   }
   const d=data||{};
@@ -3915,14 +4225,14 @@ async function loadAdminDashboard(days){
     chartsHtml=`<div class="dash-charts">`
       + svgLineChart(rows,[{key:'pageviews',label:'瀏覽數',color:'var(--accent)'},
                             {key:'visitors',label:'不重複訪客',color:'var(--free)'}],
-                     {title:`近 ${days} 天瀏覽數／訪客走勢`})
+                     {title:`近 ${seriesDays} 天瀏覽數／訪客走勢`})
       + svgLineChart(rows,[{key:'new_users',label:'新會員',color:'var(--accent)'}],
-                     {title:`近 ${days} 天每日新會員`})
+                     {title:`近 ${seriesDays} 天每日新會員`})
       + svgLineChart(rows,[{key:'use_reports',label:'使用回報',color:'var(--free)'}],
-                     {title:`近 ${days} 天每日使用回報數`})
+                     {title:`近 ${seriesDays} 天每日使用回報數`})
       + svgLineChart(rows,[{key:'submitted',label:'投稿',color:'var(--accent)'},
                             {key:'reviewed',label:'審核（核可＋退回）',color:'var(--alert)'}],
-                     {title:`近 ${days} 天投稿／審核量`})
+                     {title:`近 ${seriesDays} 天投稿／審核量`})
       + `</div>`;
   }
   let bmonthHtml='';
@@ -3954,7 +4264,7 @@ async function loadAdminDashboard(days){
     const hmax=Math.max(1,...hrows.map(r=>r.count));
     const peak=hrows.length?hrows.slice().sort((a,b)=>b.count-a.count)[0]:null;
     hoursHtml=`<div class="dash-chart" style="margin-top:16px">
-      <b style="font-size:.85rem">近 ${days} 天使用時段分布（台灣時間，依瀏覽次數）</b>
+      <b style="font-size:.85rem">${rangeLabel}使用時段分布（台灣時間，依瀏覽次數）</b>
       <div style="margin-top:10px;display:flex;align-items:flex-end;gap:2px;height:80px">
         ${hrows.map(r=>`<div style="flex:1;height:100%;display:flex;align-items:flex-end" title="${r.hour}時：${r.count} 次">
           <div style="width:100%;background:${peak&&r.hour===peak.hour?'var(--accent)':'var(--line)'};
@@ -3968,18 +4278,18 @@ async function loadAdminDashboard(days){
     </div>`;
   }
   box.innerHTML=`<div class="bigstat">
-    ${cell(d.pageviews_7d??0,'近 7 天瀏覽數')}
-    ${cell(d.visitors_7d??0,'近 7 天不重複訪客')}
+    ${cell(d.pageviews_range??0,rangeLabel+'瀏覽數')}
+    ${cell(d.visitors_range??0,rangeLabel+'不重複訪客')}
+    ${cell(d.new_users_range??0,rangeLabel+'新會員')}
+    ${cell(d.active_users_range??0,rangeLabel+'活躍會員')}
+    ${cell(d.use_reports_range??0,rangeLabel+'使用回報')}
     ${cell(d.total_users??0,'累積會員數')}
-    ${cell(d.new_users_7d??0,'近 7 天新會員')}
-    ${cell(d.active_users_7d??0,'近 7 天活躍會員')}
     ${cell(d.total_offers??0,'上架優惠數')}
     ${cell(d.pending_offers??0,'待審投稿')}
-    ${cell(d.use_reports_7d??0,'近 7 天使用回報')}
     <div><div class="v" id="dashOnlineNow">${e5?'—':(online??0)}</div><div class="k">即時在線（5 分鐘內）</div></div>
   </div>
-  <p class="statline" style="margin-top:8px">累積瀏覽 ${nt2(d.pageviews_total)}　·　近 30 天訪客 ${nt2(d.visitors_30d)}
-    　·　累積使用回報 ${nt2(d.total_use_reports)}　·　待處理問題回報 ${nt2(d.open_feedback)}</p>
+  <p class="statline" style="margin-top:8px">累積瀏覽 ${nt2(d.pageviews_total)}　·　累積使用回報 ${nt2(d.total_use_reports)}
+    　·　待處理問題回報 ${nt2(d.open_feedback)}</p>
   ${chartsHtml}
   ${hoursHtml}
   ${bmonthHtml}`;
