@@ -499,23 +499,29 @@
   /* ---------- 排行榜 ---------- */
   table.lb{width:100%;border-collapse:collapse;font-size:.86rem}
   table.lb th{text-align:left;font-weight:500;color:var(--ink-3);font-size:.78rem;
-    padding:0 0 9px;border-bottom:1px solid var(--line)}
-  table.lb td{padding:10px 0;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+    padding:0 6px 9px 0;border-bottom:1px solid var(--line)}
+  table.lb th:last-child,table.lb td:last-child{padding-right:0}
+  table.lb td{padding:10px 6px 10px 0;border-bottom:1px solid var(--line-soft);vertical-align:middle}
   table.lb tr:hover td{background:var(--accent-soft)}
   table.lb .lb-row{cursor:pointer}
   table.lb .lb-click{cursor:pointer}
-  table.lb .lb-chev{display:inline-block;margin-left:5px;font-size:.7rem;color:var(--ink-3);
+  table.lb .lb-chev{display:inline-block;margin-left:3px;font-size:.68rem;color:var(--ink-3);
     transition:transform .16s var(--ease)}
   table.lb .lb-row.open .lb-chev{transform:rotate(180deg);color:var(--accent)}
   table.lb .lb-detail td{padding:2px 0 12px;border-bottom:1px solid var(--line-soft)}
   table.lb .lb-detail .chip{font-size:.76rem;padding:3px 10px}
   table.lb .rk{width:34px;color:var(--ink-3);font-variant-numeric:tabular-nums}
   table.lb .rk.top{font-weight:800;font-size:1.05rem}
-  .rk-delta{font-size:.66rem;font-weight:600;font-variant-numeric:tabular-nums}
-  .rk-delta.up{color:#16a34a}
-  .rk-delta.down{color:#dc2626}
-  .rk-delta.same{color:var(--ink-3)}
-  .rk-delta.new{color:var(--accent)}
+  /* 名次升降原本是裸露文字直接疊在名次數字下面，在窄螢幕（那格只有 34px
+     寬）看起來很擠、很陽春。改成小圓角色塊（像個迷你徽章），色彩不變
+     （綠漲/紅跌/灰平/主色NEW），只是多包一層背景色，看起來更精緻，
+     也讓它跟上面的名次數字有點視覺區隔，不會像是同一串數字被切斷。 */
+  .rk-delta{display:inline-block;margin-top:2px;padding:1px 5px;border-radius:8px;
+    font-size:.62rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.3}
+  .rk-delta.up{background:#dcfce7;color:#15803d}
+  .rk-delta.down{background:#fee2e2;color:#b91c1c}
+  .rk-delta.same{background:var(--line-soft);color:var(--ink-3)}
+  .rk-delta.new{background:var(--accent-soft);color:var(--accent-dark)}
   table.lb tr:nth-child(2) .rk.top{color:#c99a1f}
   table.lb tr:nth-child(3) .rk.top{color:#9a9aa5}
   table.lb tr:nth-child(4) .rk.top{color:#c67a3f}
@@ -523,6 +529,14 @@
     color:var(--ink-2)}
   table.lb .amt.lb-primary{color:var(--accent-dark)}
   table.lb .who{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  /* 頭貼＋暱稱這組原本跟 email（長按才顯示的那行）是同一層 flex 子項，
+     暱稱太長（尤其匿名使用者的自動編號名字）沒地方縮，就整組被擠到
+     下一行，跟同一列其他欄位對不齊，看起來歪歪的。拆成內層 .who-main
+     （頭貼＋暱稱，不換行，暱稱擠不下就用刪節號縮掉）跟外層 .who 兩層——
+     外層維持會換行，讓 email 那行還是能自己獨立換到下面（不受這次改動
+     影響），內層負責讓暱稱不要撐爆整列。 */
+  table.lb .who-main{display:flex;align-items:center;gap:9px;flex-wrap:nowrap;min-width:0;flex:1 1 auto}
+  table.lb .who-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
   .initial{width:28px;height:28px;border-radius:50%;background:var(--accent-soft);
     color:var(--accent-dark);display:inline-flex;align-items:center;justify-content:center;
     font-size:.75rem;font-weight:700;flex:none}
@@ -3921,7 +3935,10 @@ function wireShowMore(root){
 // 展開/收合。
 function wireEmailLongPress(root){
   root.querySelectorAll('.who-avatar[data-email]').forEach(el=>{
-    const emailSpan=el.parentElement?.querySelector('.who-email');
+    // 頭貼現在包在 .who-main 裡面（跟暱稱同一層，方便暱稱單獨縮寫），
+    // email 那個 span 是外層 .who 的子項、跟 .who-main 平級，
+    // 所以要往上找到 .who 再找 email，不能只看 el 自己的 parentElement。
+    const emailSpan=el.closest('.who')?.querySelector('.who-email');
     if(!emailSpan) return;
     let timer=null, longPressed=false;
     const start=()=>{
@@ -4123,9 +4140,9 @@ function renderLbBody(){
     rows=rows.map((r,i)=>({...r, rank:i+1}));
   }
   const lbEntries=rows.map((r,i)=>`<tr class="lb-row" data-lb="${i}"><td class="rk ${r.rank<=3?'top':''}">${r.rank}${LB_HAS_PREV?`<br>${rankChangeHtml(r)}`:''}</td>
-      <td><div class="who">${r.avatar_url?`<img class="avatar who-avatar" ${r.email?'data-email="1"':''} src="${esc(r.avatar_url)}" alt="">`
+      <td><div class="who"><div class="who-main">${r.avatar_url?`<img class="avatar who-avatar" ${r.email?'data-email="1"':''} src="${esc(r.avatar_url)}" alt="">`
         :`<span class="initial who-avatar" ${r.email?'data-email="1"':''}>${esc((r.display_name||'壽')[0])}</span>`}
-        ${esc(r.display_name||'壽星')}${r.email?`<span class="who-email hidden">（${esc(r.email)}）</span>`:''}</div></td>
+        <span class="who-name">${esc(r.display_name||'壽星')}</span></div>${r.email?`<span class="who-email hidden">（${esc(r.email)}）</span>`:''}</div></td>
       <td class="amt${sortByCount?' lb-primary':''}">${r.success_count} 次</td>
       <td>${r.brands_used}<span class="lb-chev">▾</span></td>
       <td class="amt${sortByCount?'':' lb-primary'}">${nt(r.saved_total)}</td></tr>
@@ -4236,9 +4253,9 @@ async function loadContribBoard(){
 function renderContribBody(){
   const rows=CONTRIB_ROWS;
   const entries=rows.map(r=>`<tr><td class="rk ${r.rank<=3?'top':''}">${r.rank}${CONTRIB_HAS_PREV?`<br>${rankDeltaHtml(CONTRIB_HAS_PREV,r.prevRank,r.rank)}`:''}</td>
-      <td><div class="who">${r.avatar_url?`<img class="avatar who-avatar" ${r.email?'data-email="1"':''} src="${esc(r.avatar_url)}" alt="">`
+      <td><div class="who"><div class="who-main">${r.avatar_url?`<img class="avatar who-avatar" ${r.email?'data-email="1"':''} src="${esc(r.avatar_url)}" alt="">`
         :`<span class="initial who-avatar" ${r.email?'data-email="1"':''}>${esc((r.display_name||'壽')[0])}</span>`}
-        ${esc(r.display_name||'壽星')}${r.email?`<span class="who-email hidden">（${esc(r.email)}）</span>`:''}</div></td>
+        <span class="who-name">${esc(r.display_name||'壽星')}</span></div>${r.email?`<span class="who-email hidden">（${esc(r.email)}）</span>`:''}</div></td>
       <td class="amt">${r.submitted_count}</td>
       <td class="amt">${r.edit_count}</td>
       <td class="amt lb-primary">${r.total_count}</td></tr>`);
