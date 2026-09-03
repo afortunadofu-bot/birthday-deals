@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://birthdaydeals.celine-fu-work.workers.dev/sitemap.xml

@@ -1,0 +1,54 @@
+{
+  "scrapedAt": "2026-08-04",
+  "count": 2,
+  "items": [
+    {
+      "brand": "瓦庫燒肉",
+      "isNewBrand": false,
+      "allBrands": [
+        "瓦庫燒肉",
+        "山崎咖啡所"
+      ],
+      "multiBrand": true,
+      "regions": [
+        "新北市",
+        "台中市"
+      ],
+      "membership": "LINE 會員",
+      "advanceDays": 3,
+      "advanceNote": "。另外板橋的山崎咖啡所當月壽星送司康，需提前 3 天預約，加入LINE會員才有券",
+      "validFrom": null,
+      "validUntil": "2026-08-31",
+      "validityRaw": "至 8/31 止",
+      "text": "台中壽星必收！瓦庫燒肉生日前後3天憑證件8折，活動至 8/31 止。另外板橋的山崎咖啡所當月壽星送司康，需提前 3 天預約，加入LINE會員才有券",
+      "mediaType": "IMAGE",
+      "username": "deal_hunter_tw",
+      "permalink": "https://www.threads.net/@deal_hunter_tw/post/SAMPLE",
+      "postedAt": "2026-08-01",
+      "sourceTier": 4,
+      "tierLabel": "社群貼文",
+      "confidence": 100
+    },
+    {
+      "brand": null,
+      "isNewBrand": true,
+      "allBrands": [],
+      "multiBrand": false,
+      "regions": [],
+      "membership": "需確認",
+      "advanceDays": null,
+      "advanceNote": null,
+      "validFrom": null,
+      "validUntil": null,
+      "validityRaw": null,
+      "text": "生日快樂🎂",
+      "mediaType": "IMAGE",
+      "username": "randomuser",
+      "permalink": "https://www.threads.net/@randomuser/post/SAMPLE2",
+      "postedAt": "2026-08-02",
+      "sourceTier": 4,
+      "tierLabel": "社群貼文",
+      "confidence": 20
+    }
+  ]
+}

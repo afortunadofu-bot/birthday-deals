@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+*.bak
+diff_report.md
+threads_report.md
