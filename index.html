@@ -205,7 +205,10 @@
   /* 成就徽章：達成的彩色實框，還沒達成的灰階＋略透明，門檻寫在下面小字提示怎麼解鎖 */
   .badge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
   .badge{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;
-    padding:10px 6px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface)}
+    padding:10px 6px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--surface);
+    cursor:pointer}
+  .badge:hover{border-color:var(--accent)}
+  .badge:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
   .badge .b-icon{font-size:1.5rem;line-height:1}
   .badge .b-label{font-size:.74rem;color:var(--ink-2);font-weight:600}
   .badge .b-hint{font-size:.66rem;color:var(--ink-3)}
@@ -672,43 +675,6 @@
 
 <!-- ==================== 優惠 ==================== -->
 <section id="tab-browse">
-  <div class="wrap">
-    <div class="stats" id="siteStats"></div>
-
-    <div class="searchbar">
-      <input type="search" id="q" placeholder="搜尋品牌或優惠">
-      <select id="sort" class="sort-top" aria-label="排序方式" title="排序方式">
-          <option value="value">依省最多</option>
-          <option value="days">依提前天數</option>
-          <option value="trending">最近最多人使用</option>
-          <option value="usage">依使用次數</option>
-          <option value="newest">最新上架</option>
-          <option value="rating">依評分</option>
-          <option value="wished">依收藏人數</option>
-          <option value="fresh">依最新回報</option>
-          <option value="expiry">依到期日</option>
-          <option value="trust">依可信度</option>
-          <option value="brand">依品牌</option>
-          <option value="comments">依留言數</option>
-      </select>
-      <button class="btn sm sort-trigger" id="btnOpenSort" type="button" aria-label="排序方式">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
-        <span id="sortTriggerLabel">排序</span>
-      </button>
-      <button class="btn sm filter-trigger" id="btnOpenFilter" type="button">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
-        篩選<span class="filter-badge hidden" id="filterBadge">0</span>
-      </button>
-    </div>
-    <div class="new-banner hidden" id="newOffersBanner">
-      <span class="nb-icon" aria-hidden="true">🎂</span>
-      <span id="newOffersText"></span>
-      <button class="btn sm" id="btnOnlyNew" type="button">只看新的</button>
-      <button class="btn sm plain" id="btnDismissNew" type="button" aria-label="關閉">✕</button>
-    </div>
-    <p class="count" id="count"></p>
-  </div>
-
   <div class="controls-backdrop" id="filterBackdrop"></div>
   <div class="controls" id="filterSheet">
     <div class="wrap">
@@ -743,7 +709,51 @@
     </div>
   </div>
 
+  <!-- 嵐回饋：往上滑到一半（還沒滑回最頂端）搜尋鍵按不到。根因是 .searchbar
+       原本包在跟 <main class="wrap"> 分開的另一個矮 <div class="wrap">（只有
+       stats+searchbar+count 那麼高，約 230px）裡——position:sticky 元素只能
+       在「自己所在容器」的高度範圍內黏住，容器一結束、捲動超過那 230px，
+       .searchbar 就整個跟著捲走、不會再黏回來，要滑到接近最頂端（容器重新
+       進入畫面）才會再出現。把 stats／searchbar／new-banner／count 都移進
+       跟優惠卡片網格（#grid）同一個 <main class="wrap">（高度貫穿整個列表）
+       底下，畫面呈現順序完全不變，但 .searchbar 的黏著範圍就變成跟卡片列表
+       一樣長，滑到任何位置都黏得住。 -->
   <main class="wrap">
+    <div class="stats" id="siteStats"></div>
+
+    <div class="searchbar">
+      <input type="search" id="q" placeholder="搜尋品牌或優惠">
+      <select id="sort" class="sort-top" aria-label="排序方式" title="排序方式">
+          <option value="value">依省最多</option>
+          <option value="days">依提前天數</option>
+          <option value="trending">最近最多人使用</option>
+          <option value="usage">依使用次數</option>
+          <option value="newest">最新上架</option>
+          <option value="rating">依評分</option>
+          <option value="wished">依收藏人數</option>
+          <option value="fresh">依最新回報</option>
+          <option value="expiry">依到期日</option>
+          <option value="trust">依可信度</option>
+          <option value="brand">依品牌</option>
+          <option value="comments">依留言數</option>
+      </select>
+      <button class="btn sm sort-trigger" id="btnOpenSort" type="button" aria-label="排序方式">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+        <span id="sortTriggerLabel">排序</span>
+      </button>
+      <button class="btn sm filter-trigger" id="btnOpenFilter" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        篩選<span class="filter-badge hidden" id="filterBadge">0</span>
+      </button>
+    </div>
+    <div class="new-banner hidden" id="newOffersBanner">
+      <span class="nb-icon" aria-hidden="true">🎂</span>
+      <span id="newOffersText"></span>
+      <button class="btn sm" id="btnOnlyNew" type="button">只看新的</button>
+      <button class="btn sm plain" id="btnDismissNew" type="button" aria-label="關閉">✕</button>
+    </div>
+    <p class="count" id="count"></p>
+
     <div class="grid" id="grid"></div>
     <div class="empty hidden" id="empty">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
@@ -761,13 +771,13 @@
 <!-- ==================== 排行榜 ==================== -->
 <section id="tab-board" class="hidden">
   <main class="wrap">
-    <div class="panel">
+    <div class="panel" id="pnlBoardStats">
       <h2>站台數據</h2>
       <p class="sub">整站累積的使用狀況。</p>
       <div class="bigstat" id="boardStats"></div>
       <div id="boardCatChart" style="margin-top:14px"></div>
     </div>
-    <div class="panel">
+    <div class="panel" id="pnlBoardInsights">
       <h2>洞察分析</h2>
       <p class="sub">大家用優惠的一些趨勢跟結構，不只是名次表。</p>
       <div id="boardMoM"></div>
@@ -783,22 +793,22 @@
       <div id="boardMemberChart" style="margin-top:16px"></div>
       <div id="boardWeekdayChart" style="margin-top:16px"></div>
     </div>
-    <div class="panel">
+    <div class="panel" id="pnlRecentActivity">
       <h2>最近動態</h2>
       <p class="sub">大家最近用了什麼、留了什麼言。想不顯示暱稱可以到「我的」分頁關掉。</p>
       <div id="recentActivity"></div>
     </div>
-    <div class="panel">
+    <div class="panel" id="pnlPopular">
       <h2>大家都在用什麼</h2>
       <p class="sub">被回報最多次的優惠。</p>
       <div id="popBody"></div>
     </div>
-    <div class="panel">
+    <div class="panel" id="pnlWished">
       <h2>最多人收藏</h2>
       <p class="sub">被加進待辦清單最多次的優惠——大家想用但還沒用的。</p>
       <div id="wishBody"></div>
     </div>
-    <div class="panel">
+    <div class="panel" id="pnlLb">
       <h2>省錢排行榜</h2>
       <p class="sub">每個人只要有成功回報就會上榜，暱稱要不要公開可以自己到「我的」分頁調整。金額跟次數都能排序——省最多不代表用最勤，反過來也一樣。</p>
       <div class="note hidden" id="lbLoginHint" style="margin:0 0 12px">
@@ -824,7 +834,7 @@
       </div>
       <div id="lbBody"></div>
     </div>
-    <div class="panel">
+    <div class="panel" id="pnlContrib">
       <h2>貢獻度排行榜</h2>
       <p class="sub">投稿新優惠、提出修改建議，只要被管理員核可就算一次貢獻——退回的不算。跟省錢排行榜是分開計算的兩件事。</p>
       <div class="row" style="margin-bottom:10px;flex-wrap:wrap">
@@ -989,6 +999,7 @@
           <option value="brand">品牌名稱</option>
           <option value="manual">自訂順序（可上下移動）</option>
         </select></label>
+        <label class="lbl">年度<select id="wlYear"></select></label>
         <label class="toggle"><input type="checkbox" id="wlSinkDone" checked> 已使用的排到最下面</label>
         <label class="toggle"><input type="checkbox" id="wlCompact"> 簡易版</label>
       </div>
@@ -2005,10 +2016,23 @@ async function renderMyWishlist(){
     return;
   }
   const {data}=await sb.from('wishlist')
-    .select('offer_id,done,note,sort_order,created_at,offers(brand,offer,conditions,membership,timing,advance_days,value_twd,valid_until,regions,region_note)')
+    .select('offer_id,done,note,sort_order,created_at,year,offers(brand,offer,conditions,membership,timing,advance_days,value_twd,valid_until,regions,region_note)')
     .eq('user_id',me.id).order('created_at',{ascending:false});
   WL_ROWS=data||[];
   renderWishlistBody();
+}
+// 待辦清單也要能看到「這筆的入會死線是哪一天」——跟 renderPlanner() 用同一套
+// 邏輯（生日月/日 + advance_days 往前推），只是這裡不畫圖表，只算一個日期字串。
+// #bmonth/#bday 是「我的」分頁本身的生日欄位，只要有登入、個人資料讀回來就會
+// 填好，待辦清單面板跟這兩個欄位在同一個分頁，可以直接共用。
+function bdayDeadlineText(advanceDays){
+  const m=+($('#bmonth')?.value||0), d=+($('#bday')?.value||0);
+  if(!m || advanceDays==null) return null;
+  const t=new Date(TODAY.getFullYear(),m-1,d||1);
+  if(t<TODAY) t.setFullYear(TODAY.getFullYear()+1);
+  const dl=new Date(t); dl.setDate(dl.getDate()-advanceDays);
+  const f=x=>`${x.getMonth()+1}/${x.getDate()}`;
+  return `${f(dl)} 前${dl<TODAY?'（已經過期了，建議盡快確認是否還來得及）':''}`;
 }
 // 排序切換不用重打 API，直接用已經抓回來的 WL_ROWS 在前端重排就好——
 // 跟排行榜「隱藏匿名使用者」那組 renderLbBody() 是同一套設計。
@@ -2020,7 +2044,23 @@ function renderWishlistBody(){
   const sinkDone=$('#wlSinkDone')?.checked!==false;
   const compact=$('#wlCompact')?.checked||false;
   const manual=sortBy==='manual';
+  const CURRENT_YEAR=TODAY.getFullYear();
+  // 年度篩選：星號一鍵收藏永遠存「當下這一年」（見 schema_v50），要提早存明年
+  // 的代辦就在清單裡把該筆「移到明年」——這裡的下拉選單負責「切換看哪一年」，
+  // 選項是「今年」「明年」＋資料庫裡實際出現過的其他年份，避免漏掉舊資料。
+  const yearOptions=new Set([CURRENT_YEAR, CURRENT_YEAR+1]);
+  WL_ROWS.forEach(w=>{ if(w.year) yearOptions.add(w.year); });
+  const sortedYears=[...yearOptions].sort((a,b)=>a-b);
+  const wlYearSel=$('#wlYear');
+  if(wlYearSel){
+    const prevVal=wlYearSel.value;
+    wlYearSel.innerHTML=`<option value="all">全部年度</option>`+sortedYears.map(y=>
+      `<option value="${y}">${y}年${y===CURRENT_YEAR?'（今年）':y===CURRENT_YEAR+1?'（明年）':''}</option>`).join('');
+    wlYearSel.value=(prevVal && (prevVal==='all'||sortedYears.includes(Number(prevVal)))) ? prevVal : String(CURRENT_YEAR);
+  }
+  const yearFilter=wlYearSel?.value||'all';
   let list=[...WL_ROWS];
+  if(yearFilter!=='all') list=list.filter(w=>(w.year||CURRENT_YEAR)===Number(yearFilter));
   if(sortBy==='added_asc') list.reverse();
   else if(sortBy==='brand') list.sort((a,b)=>String(a.offers?.brand||'').localeCompare(String(b.offers?.brand||''),'zh-Hant'));
   else if(manual) list.sort((a,b)=>(a.sort_order??999999)-(b.sort_order??999999)
@@ -2051,6 +2091,13 @@ function renderWishlistBody(){
         ${upos<=0?'disabled':''} aria-label="往上移">▲</button>
       <button class="btn sm wl-move" data-id="${w.offer_id}" data-dir="1" type="button"
         ${upos<0||upos>=undoneOrder.length-1?'disabled':''} aria-label="往下移">▼</button>` : '';
+    // 年度標籤：星號收藏預設存「當下這一年」，這顆按鈕讓已經加進待辦的項目
+    // 可以「移到明年」（提早存明年的代辦）或「移回今年」，不用整個重新收藏一次。
+    // 已經用過的項目不需要再切換年度，跟 moveBtns 一樣只在未完成時顯示。
+    const wYear = w.year || CURRENT_YEAR;
+    const yearBadge = wYear!==CURRENT_YEAR ? `<span class="wl-year-badge" style="font-size:.72rem;color:var(--accent-dark);font-weight:700;white-space:nowrap">📅${wYear}</span>` : '';
+    const yearBtn = !done ? `<button class="btn sm wl-year-toggle" data-id="${w.offer_id}" data-year="${wYear}" type="button">${wYear>CURRENT_YEAR?'移回今年':'移到明年'}</button>` : '';
+    const dlText = o.brand ? bdayDeadlineText(o.advance_days) : null;
     // 打勾＝已經用過了，之前只有刪除線＋灰階，看起來像「停用」而不是「達成」，
     // 加個綠色背景跟打勾字樣，一眼就能分出「還沒用」跟「已經用過」。
     if(compact){
@@ -2059,7 +2106,9 @@ function renderWishlistBody(){
           <input type="checkbox" class="wl-done" data-id="${w.offer_id}" ${done?'checked':''} ${usedByReport?'disabled title="已經有使用回報紀錄，狀態自動同步"':''}>
           <span style="${done?'text-decoration:line-through;color:var(--free);font-weight:700':''}">${esc(o.brand||'（已下架）')}</span>
         </label>
+        ${yearBadge}
         ${moveBtns}
+        ${yearBtn}
         <button class="btn sm wl-remove" data-id="${w.offer_id}">移除</button>
       </div>`;
     }
@@ -2070,7 +2119,9 @@ function renderWishlistBody(){
           usedByReport?' <span style="font-weight:400;font-size:.78rem">✓ 已回報使用過</span>'
           :(w.done?' <span style="font-weight:400;font-size:.78rem">✓ 今年已用過</span>':'')}</span>
       </label>
+      ${yearBadge}
       ${moveBtns}
+      ${yearBtn}
       ${o.brand?`<button class="btn sm wl-toggle" data-id="${w.offer_id}" type="button" aria-expanded="false">詳情</button>`:''}
       <button class="btn sm wl-remove" data-id="${w.offer_id}">移除</button>
     </div>
@@ -2087,6 +2138,7 @@ function renderWishlistBody(){
       <div class="sub-item"><b>會員取得</b><span>${esc(o.membership||'—')}</span></div>
       <div class="sub-item"><b>適用期間</b><span>${esc(o.timing||'—')}${o.value_twd?`（約 ${nt(o.value_twd)}）`:''}</span></div>
       <div class="sub-item"><b>提前天數</b><span>${o.advance_days==null?'未明訂':o.advance_days+' 天'}</span></div>
+      ${dlText?`<div class="sub-item"><b>入會死線</b><span>${esc(dlText)}</span></div>`:''}
       <div class="sub-item"><b>適用地區</b><span>${esc((o.regions&&o.regions.length?o.regions.join('、'):'未確認')+(o.region_note?'　'+o.region_note:''))}</span></div>
       <div class="sub-item"><b>檔期迄日</b><span>${esc(o.valid_until||'未明訂')}</span></div>
     </div>`:''}`;
@@ -2139,6 +2191,17 @@ function renderWishlistBody(){
     renderMyWishlist(); render();
   });
   $$('.wl-move').forEach(b=>b.onclick=()=>moveWishlistItem(b.dataset.id, Number(b.dataset.dir)));
+  $$('.wl-year-toggle').forEach(b=>b.onclick=async()=>{
+    const curYear=Number(b.dataset.year), curCY=TODAY.getFullYear();
+    const newYear = curYear>curCY ? curCY : curCY+1;
+    b.disabled=true;
+    const {error}=await sb.from('wishlist').update({year:newYear}).eq('user_id',me.id).eq('offer_id',b.dataset.id);
+    if(error){
+      const hint=/column|does not exist/i.test(error.message)?'（Supabase 可能還沒跑 schema_v50_wishlist_year.sql）':'';
+      alert('切換年度失敗，請稍後再試：'+error.message+hint); b.disabled=false; return;
+    }
+    renderMyWishlist();
+  });
 }
 // 自訂順序：上／下移動按鈕交換相鄰兩筆（在「未使用」這個子群組內）的
 // sort_order，直接寫回 wishlist 表——第一次使用手動排序、還沒有任何
@@ -2166,6 +2229,7 @@ async function moveWishlistItem(offerId, dir){
   }
 }
 $('#wlSort').onchange=renderWishlistBody;
+$('#wlYear').onchange=renderWishlistBody;
 $('#wlSinkDone').onchange=renderWishlistBody;
 $('#wlCompact').onchange=renderWishlistBody;
 
@@ -2864,6 +2928,10 @@ let dtlId=null;
 // 提示卡片，openDetail() 重繪畫面時如果偵測到剛剛送出留言的是這一筆，就把
 // 卡片插進去；點「我用過了」或叉掉才會消失，不會自動不見。
 let POST_COMMENT_REPORT_PROMPT_ID=null;
+// 反過來的方向：送出使用回報（第一次「我用過了」，不是編輯舊回報）以後，
+// 也順勢問一句要不要留言分享心得，或者這筆優惠內容有沒有需要修正的地方——
+// 跟上面留言→回報的提示同一套「常駐卡片」做法，不用 confirm() 系統跳窗。
+let POST_REPORT_PROMPT_ID=null;
 // 留言／使用回報只在點「留言」按鈕打開的獨立視窗裡看得到，
 // 主列表卡片上完全不顯示留言內容，只有一個帶數字的按鈕。
 /* 卡片點任一處都會開這個視窗：上半部是這筆優惠的完整內容（手機電腦一致，
@@ -3033,12 +3101,21 @@ async function openDetail(id, fallback=null){
   </div>`;
   const showCommentReportPrompt = POST_COMMENT_REPORT_PROMPT_ID===id;
   POST_COMMENT_REPORT_PROMPT_ID=null;
+  const showReportFollowupPrompt = POST_REPORT_PROMPT_ID===id;
+  POST_REPORT_PROMPT_ID=null;
   body.innerHTML=offerFactsHtml(o)+editHistoryHtml(eh||[])+rateHtml+`<div class="thread">
     ${showCommentReportPrompt?`<div class="new-banner" id="postCommentReportPrompt" style="margin-bottom:10px">
       <span class="nb-icon" aria-hidden="true">✅</span>
       <div style="flex:1">留言送出了！要不要順便回報一下你用過的結果？</div>
       <button type="button" class="btn sm primary" id="btnInlineReport">我用過了</button>
       <button type="button" class="btn plain" id="btnDismissCommentPrompt" aria-label="關閉提示">✕</button>
+    </div>`:''}
+    ${showReportFollowupPrompt?`<div class="new-banner" id="postReportFollowupPrompt" style="margin-bottom:10px">
+      <span class="nb-icon" aria-hidden="true">✅</span>
+      <div style="flex:1">回報送出了！要不要留言分享心得，或這筆優惠有什麼需要修正的地方？</div>
+      <button type="button" class="btn sm primary" id="btnInlineComment">留言</button>
+      ${me?`<button type="button" class="btn sm" id="btnInlineSuggestEdit">建議修改</button>`:''}
+      <button type="button" class="btn plain" id="btnDismissReportPrompt" aria-label="關閉提示">✕</button>
     </div>`:''}
     ${(r||[]).map(x=>`<div class="rep"><span>${esc(x.used_on)}</span>
       <span class="${R[x.result][1]}">${R[x.result][0]}</span>
@@ -3061,6 +3138,19 @@ async function openDetail(id, fallback=null){
   if(inlineReportBtn) inlineReportBtn.onclick=()=>{ body.querySelector('#postCommentReportPrompt')?.remove(); openReport(id); };
   const dismissPromptBtn=body.querySelector('#btnDismissCommentPrompt');
   if(dismissPromptBtn) dismissPromptBtn.onclick=()=>body.querySelector('#postCommentReportPrompt')?.remove();
+  const inlineCommentBtn=body.querySelector('#btnInlineComment');
+  if(inlineCommentBtn) inlineCommentBtn.onclick=()=>{
+    body.querySelector('#postReportFollowupPrompt')?.remove();
+    const ta=body.querySelector('.ci'); if(ta) ta.focus();
+  };
+  const inlineSuggestBtn=body.querySelector('#btnInlineSuggestEdit');
+  if(inlineSuggestBtn) inlineSuggestBtn.onclick=()=>{
+    body.querySelector('#postReportFollowupPrompt')?.remove();
+    $('#dlgDetail').close();
+    startEditOffer(id,false,true);
+  };
+  const dismissReportPromptBtn=body.querySelector('#btnDismissReportPrompt');
+  if(dismissReportPromptBtn) dismissReportPromptBtn.onclick=()=>body.querySelector('#postReportFollowupPrompt')?.remove();
   [...body.querySelectorAll('.star-btn')].forEach(b=>b.onclick=async()=>{
     const score=Number(b.dataset.s);
     const {error}=await sb.from('offer_ratings')
@@ -3167,6 +3257,15 @@ function showExitHint(){
   t.style.justifyContent='center'; t.style.textAlign='center';
   document.body.appendChild(t);
   setTimeout(()=>t.remove(),1600);
+}
+// 通用的短暫提示條，跟上面「再按一次返回鍵」共用同一顆 .toast 樣式，
+// 給不需要使用者操作、看過就消失的小提示用（例如成就徽章點下去的說明）。
+function showToast(msg, ms=2600){
+  const t=document.createElement('div');
+  t.className='toast'; t.textContent=msg;
+  t.style.justifyContent='center'; t.style.textAlign='center';
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),ms);
 }
 window.addEventListener('popstate', ()=>{
   if(DLG_HISTORY_PUSHED){
@@ -3276,14 +3375,19 @@ $('#btnSaveReport').onclick=async e=>{
     return;
   }
   let error;
+  const isNewReport=!editingReportId;
   if(editingReportId){
     ({error}=await sb.from('usage_reports').update(p).eq('id',editingReportId).eq('user_id',me.id));
   }else{
     ({error}=await sb.from('usage_reports').insert({...p, offer_id:Number(repId), user_id:me.id}));
   }
   if(error){ alert(error.code==='23505'?'你今天已經回報過這筆優惠了。':'回報失敗：'+error.message); return; }
+  const justReportedId=repId;
   $('#dlgReport').close();
   await loadOffers(); render(); loadMyStuff(); loadSiteStats(); loadMyUsedOffers();
+  // 嵐回饋：送出使用回報以後，也順勢問一句要不要留言分享心得或提出修改建議——
+  // 只有「第一次回報」才問，編輯舊回報（例如改個備註）不用每次都被問一輪。
+  if(isNewReport){ POST_REPORT_PROMPT_ID=justReportedId; openDetail(justReportedId); }
 };
 $('#btnDeleteReport').onclick=async()=>{
   if(!editingReportId) return;
@@ -3704,15 +3808,18 @@ function renderSavingsSinceVisit(){
 /* ---- 成就徽章：純粹用 my_savings 這個 view 已經有的欄位算門檻，不用多開表。
    故意分兩軸（用過幾次 / 省了多少 / 用過幾個品牌），達成感比單一門檻豐富，
    也讓「還沒省很多但常回報」的人也有東西可以解鎖，不是只有金額大戶才有徽章。 ---- */
+// metric/unit/threshold 是為了「點徽章看為什麼得到」這個功能額外補的——
+// 原本 check() 就夠畫格子，但沒辦法從 check() 反推「你現在多少、門檻多少」
+// 這種話講給人聽，所以拆出 metric（目前數值）跟 threshold（門檻）分開存。
 const BADGE_DEFS=[
-  {icon:'🎉',label:'初體驗',hint:'首次成功回報',check:sv=>(sv.success_count||0)>=1},
-  {icon:'🔥',label:'常客',hint:'成功回報滿 10 次',check:sv=>(sv.success_count||0)>=10},
-  {icon:'👑',label:'老饕',hint:'成功回報滿 30 次',check:sv=>(sv.success_count||0)>=30},
-  {icon:'💵',label:'小資達人',hint:'累積省下滿 $500',check:sv=>(sv.saved_total||0)>=500},
-  {icon:'💰',label:'省錢高手',hint:'累積省下滿 $2,000',check:sv=>(sv.saved_total||0)>=2000},
-  {icon:'🏆',label:'省錢大戶',hint:'累積省下滿 $5,000',check:sv=>(sv.saved_total||0)>=5000},
-  {icon:'🗺️',label:'跑遍各家',hint:'用過 5 個不同品牌',check:sv=>(sv.brands_used||0)>=5},
-  {icon:'🌟',label:'品牌收藏家',hint:'用過 10 個不同品牌',check:sv=>(sv.brands_used||0)>=10},
+  {icon:'🎉',label:'初體驗',hint:'首次成功回報',metric:sv=>sv.success_count||0,unit:'次',threshold:1,check:sv=>(sv.success_count||0)>=1},
+  {icon:'🔥',label:'常客',hint:'成功回報滿 10 次',metric:sv=>sv.success_count||0,unit:'次',threshold:10,check:sv=>(sv.success_count||0)>=10},
+  {icon:'👑',label:'老饕',hint:'成功回報滿 30 次',metric:sv=>sv.success_count||0,unit:'次',threshold:30,check:sv=>(sv.success_count||0)>=30},
+  {icon:'💵',label:'小資達人',hint:'累積省下滿 $500',metric:sv=>sv.saved_total||0,unit:'元',threshold:500,check:sv=>(sv.saved_total||0)>=500},
+  {icon:'💰',label:'省錢高手',hint:'累積省下滿 $2,000',metric:sv=>sv.saved_total||0,unit:'元',threshold:2000,check:sv=>(sv.saved_total||0)>=2000},
+  {icon:'🏆',label:'省錢大戶',hint:'累積省下滿 $5,000',metric:sv=>sv.saved_total||0,unit:'元',threshold:5000,check:sv=>(sv.saved_total||0)>=5000},
+  {icon:'🗺️',label:'跑遍各家',hint:'用過 5 個不同品牌',metric:sv=>sv.brands_used||0,unit:'個品牌',threshold:5,check:sv=>(sv.brands_used||0)>=5},
+  {icon:'🌟',label:'品牌收藏家',hint:'用過 10 個不同品牌',metric:sv=>sv.brands_used||0,unit:'個品牌',threshold:10,check:sv=>(sv.brands_used||0)>=10},
 ];
 function renderBadges(sv){
   const panel=$('#badgesPanel'), body=$('#badgesBody');
@@ -3720,14 +3827,26 @@ function renderBadges(sv){
   if(!sv){ panel.classList.add('hidden'); return; }
   const earned=BADGE_DEFS.filter(b=>b.check(sv));
   panel.classList.toggle('hidden', earned.length===0 && (sv.success_count||0)===0);
-  body.innerHTML=BADGE_DEFS.map(b=>{
+  body.innerHTML=BADGE_DEFS.map((b,i)=>{
     const got=b.check(sv);
-    return `<div class="badge ${got?'earned':'locked'}">
+    return `<div class="badge ${got?'earned':'locked'}" data-badge-i="${i}" role="button" tabindex="0">
       <span class="b-icon" aria-hidden="true">${b.icon}</span>
       <span class="b-label">${esc(b.label)}</span>
       <span class="b-hint">${got?'已解鎖':esc(b.hint)}</span>
     </div>`;
   }).join('');
+  // 嵐回饋：徽章點下去看不到為什麼得到這個。已解鎖的原本只顯示「已解鎖」，
+  // 沒有講條件；改成點一下（或鍵盤 Enter/Space）用 toast 講清楚「達成條件＋
+  // 目前數值」，沒解鎖的則講「還差多少」，比單看格子上那行小字更完整。
+  $$('#badgesBody .badge').forEach(el=>{
+    const b=BADGE_DEFS[Number(el.dataset.badgeI)];
+    const val=b.metric(sv), got=b.check(sv);
+    const msg=got
+      ? `${b.icon} ${b.label}——${b.hint}，你已經達成了！（目前 ${nt(val)}${b.unit}）`
+      : `${b.icon} ${b.label}——${b.hint}，你目前 ${nt(val)}${b.unit}，還差 ${nt(Math.max(0,b.threshold-val))}${b.unit}解鎖`;
+    el.onclick=()=>showToast(msg,3200);
+    el.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); showToast(msg,3200); } });
+  });
 }
 
 async function loadMyStuff(){
@@ -5699,6 +5818,12 @@ function makeCollapsiblePanel(id, defaultOpen){
 // 比較像歷史紀錄、不用每次進來都看到的預設收合。
 [['profilePanel',true],['remindersPanel',true],['wishlistPanel',true],['mySavingsPanel',true],
  ['badgesPanel',false],['myReportsPanel',false],['myOffersPanel',false]]
+  .forEach(([id,open])=>makeCollapsiblePanel(id,open));
+// 排行榜分頁也套同一套可摺疊 panel（嵐回饋：要跟「我的」分頁一樣可以收合大標題）。
+// 「洞察分析」圖表最多、內容最長，預設收合；其餘幾個是排行榜分頁的主要看點，
+// 預設展開。
+[['pnlBoardStats',true],['pnlBoardInsights',false],['pnlRecentActivity',true],
+ ['pnlPopular',true],['pnlWished',true],['pnlLb',true],['pnlContrib',true]]
   .forEach(([id,open])=>makeCollapsiblePanel(id,open));
 
 paintSeedNow();   // 先畫（零延遲，不等網路）
