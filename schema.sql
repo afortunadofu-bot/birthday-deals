@@ -53,7 +53,7 @@ create table if not exists public.offers (
   id            bigserial primary key,
   slug          text unique,
   brand         text not null check (char_length(brand) between 1 and 120),
-  category      text not null default '連鎖餐廳',
+  category      text not null default '餐廳',
   regions       text[] not null default '{}',
   region_note   text not null default '',
   offer         text not null check (char_length(offer) between 1 and 1000),

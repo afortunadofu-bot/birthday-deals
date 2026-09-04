@@ -978,7 +978,7 @@
     {
       "id": "wowprime-1",
       "brand": "原燒",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "生日當天憑券內用消費 1 客多人套餐（雙人／三人）85 折；非生日當天贈「松阪豬玫瑰花」乙份",
       "membership": "瘋美食 APP 會員",
       "advanceDays": 0,
@@ -1031,7 +1031,7 @@
     {
       "id": "wowprime-2",
       "brand": "王品牛排",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "憑券（內用／外帶）消費單客個人饗宴套餐 9 折",
       "membership": "瘋美食 APP 會員",
       "advanceDays": 0,
@@ -1084,7 +1084,7 @@
     {
       "id": "wowprime-3",
       "brand": "藝奇",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "憑券內用消費享單客套餐 9 折（主餐升級加價亦適用）",
       "membership": "瘋美食 APP 會員",
       "advanceDays": 0,
@@ -1137,7 +1137,7 @@
     {
       "id": "wowprime-4",
       "brand": "夏慕尼",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "憑券內用消費單客套餐 88 折",
       "membership": "瘋美食 APP 會員",
       "advanceDays": 0,
@@ -1196,7 +1196,7 @@
     {
       "id": "wowprime-5",
       "brand": "西堤",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "憑券內用消費獨享單客經典套餐 9 折",
       "membership": "瘋美食 APP 會員",
       "advanceDays": 0,
@@ -1249,7 +1249,7 @@
     {
       "id": "wowprime-6",
       "brand": "陶板屋",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "憑券內用消費享單客和風洋食套餐 9 折（主餐升級亦適用）",
       "membership": "瘋美食 APP 會員",
       "advanceDays": 0,
@@ -1302,7 +1302,7 @@
     {
       "id": "wowprime-7",
       "brand": "品田牧場",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "憑券內用消費享任一套餐 88 折",
       "membership": "瘋美食 APP 會員",
       "advanceDays": 0,
@@ -1369,7 +1369,7 @@
     {
       "id": "wowprime-8",
       "brand": "莆田",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "憑券消費滿 $500 即贈「手作瑪德蓮花束」乙份",
       "membership": "瘋美食 APP 會員",
       "advanceDays": 0,
@@ -1425,7 +1425,7 @@
     {
       "id": "wowprime-9",
       "brand": "青花驕",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "消費憑券贈「青花椒冰淇淋」乙份",
       "membership": "瘋美食 APP 會員",
       "advanceDays": 0,
@@ -1480,7 +1480,7 @@
     {
       "id": "wowprime-10",
       "brand": "享鴨",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "憑券消費即贈「冰糖醬香鴨翅」乙份",
       "membership": "瘋美食 APP 會員",
       "advanceDays": 0,
@@ -1537,7 +1537,7 @@
     {
       "id": "wowprime-11",
       "brand": "丰禾",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "憑券消費滿 $500 元即贈「豬腳麵線」乙份",
       "membership": "瘋美食 APP 會員",
       "advanceDays": 0,
@@ -1591,7 +1591,7 @@
     {
       "id": "wowprime-12",
       "brand": "和牛涮",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "內用消費憑券頂級和牛套餐享單客 9 折",
       "membership": "瘋美食 APP 會員",
       "advanceDays": 0,
@@ -1648,7 +1648,7 @@
     {
       "id": "wowprime-13",
       "brand": "肉次方",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "憑券內用消費享指定套餐單客 9 折",
       "membership": "瘋美食 APP 會員",
       "advanceDays": 0,
@@ -1704,7 +1704,7 @@
     {
       "id": "wowprime-14",
       "brand": "尬鍋",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "憑券內用消費即贈「現蒸壽桃」乙份",
       "membership": "瘋美食 APP 會員",
       "advanceDays": 0,
@@ -1758,7 +1758,7 @@
     {
       "id": "wowprime-15",
       "brand": "阪前",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "憑券內用消費 $1,880 套餐乙客即贈「水果寶石生乳捲」乙份",
       "membership": "瘋美食 APP 會員",
       "advanceDays": 0,
@@ -1813,7 +1813,7 @@
     {
       "id": "wowprime-16",
       "brand": "就饗",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "依王品瘋美食 APP 當月公告的壽星禮為準",
       "membership": "瘋美食 APP 會員",
       "advanceDays": 0,
@@ -1868,7 +1868,7 @@
     {
       "id": "wowprime-17",
       "brand": "金咕",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "依王品瘋美食 APP 當月公告的壽星禮為準",
       "membership": "瘋美食 APP 會員",
       "advanceDays": 0,
@@ -2072,7 +2072,7 @@
     {
       "id": "bodeggi",
       "brand": "薄多義 BoDeGi",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "幾歲送幾隻雞翅",
       "membership": "無需會員，需電話或門市預約",
       "advanceDays": 3,
@@ -2265,7 +2265,7 @@
     {
       "id": "kyotokatsugyu",
       "brand": "京都勝牛",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "全單 8 折乙次；兩人以上同行任選 2 客主餐再贈「四格甜點」乙份（依此類推）",
       "membership": "京都勝牛 APP 會員",
       "advanceDays": 2,
@@ -2315,7 +2315,7 @@
     {
       "id": "xiaoshihou",
       "brand": "小時厚牛排",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "當月：排餐 10 選 1；當日：招待 $40 輕食小點乙份",
       "membership": "小時厚會員",
       "advanceDays": null,
@@ -2518,7 +2518,7 @@
     {
       "id": "jackbrothers",
       "brand": "傑克兄弟牛排",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "帳單上最高價單點餐點 69 折（2026 年由半價調整）",
       "membership": "無需會員",
       "advanceDays": null,
@@ -2608,7 +2608,7 @@
     {
       "id": "yudoufu",
       "brand": "玉豆腐",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "壽星贈蝦活動（最多 50 隻）",
       "membership": "無需會員",
       "advanceDays": null,
@@ -2745,7 +2745,7 @@
     {
       "id": "tgifridays",
       "brand": "TGI FRIDAYS",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "內用消費滿 $1,200 贈「田納西威士忌雙拼組合」乙份",
       "membership": "開展餐飲集團會員",
       "advanceDays": 30,
@@ -2795,7 +2795,7 @@
     {
       "id": "dashixiong",
       "brand": "大師兄銷魂麵舖",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "$298 內套餐買一送一 + 免費送一包乾拌麵",
       "membership": "Ocard 會員",
       "advanceDays": 1,
@@ -2889,7 +2889,7 @@
     {
       "id": "ikea",
       "brand": "IKEA 宜家家居",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "$100 優惠券（滿 $200 可抵用）+ 瑞典餐廳主餐第二件 5 折；卡友新增寶貝資料另有兒童肉丸套餐",
       "membership": "IKEA Family 宜家卡 / LINE@",
       "advanceDays": 30,
@@ -3906,7 +3906,7 @@
     {
       "id": "pizzarock",
       "brand": "Pizza Rock",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "當日壽星消費 $100 贈 8 吋披薩",
       "membership": "無需會員",
       "advanceDays": null,
@@ -3951,7 +3951,7 @@
     {
       "id": "abolang",
       "brand": "阿薄郎薄皮餃子",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "幾歲送幾顆餃子（2026 年改為會員領券模式）",
       "membership": "Ocard APP 會員",
       "advanceDays": 30,
@@ -4082,7 +4082,7 @@
     {
       "id": "weidou",
       "brand": "微兜 Vino Vino",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "蛋糕 3 選 1",
       "membership": "無需會員",
       "advanceDays": null,
@@ -4486,7 +4486,7 @@
     {
       "id": "zhoudafu",
       "brand": "粥大福 CONGEE BOSS",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "粥品買一送一",
       "membership": "Ocard APP 會員",
       "membershipType": "ocard",
@@ -4534,7 +4534,7 @@
     {
       "id": "ichigen",
       "brand": "一幻拉麵 ICHIGEN",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "蝦湯拉麵買一送一",
       "membership": "Ocard APP 會員",
       "membershipType": "ocard",
@@ -4579,7 +4579,7 @@
     {
       "id": "zhewei",
       "brand": "這味泰泰",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "指定餐點買一送一",
       "membership": "Ocard APP 會員",
       "membershipType": "ocard",
@@ -5040,7 +5040,7 @@
     {
       "id": "tianmushengxin",
       "brand": "天母盛鑫餐廳",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "當日壽星 5 折，同行 9 折（附沙拉吧）",
       "membership": "免加入會員",
       "membershipType": "none",
@@ -5084,7 +5084,7 @@
     {
       "id": "mrmay",
       "brand": "Mr. May 牛排館",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "當日壽星 5 折",
       "membership": "免加入會員",
       "membershipType": "none",
@@ -5396,7 +5396,7 @@
     {
       "id": "hilaifoods",
       "brand": "漢來美食",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "當日壽星平日 8 折、假日 85 折",
       "membership": "品牌會員（管道未明）",
       "membershipType": "brand",
@@ -5444,7 +5444,7 @@
     {
       "id": "jitangdashu",
       "brand": "雞湯大叔",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "全單 9 折",
       "membership": "Ocard APP 會員",
       "membershipType": "ocard",
@@ -5582,7 +5582,7 @@
     {
       "id": "xiduo",
       "brand": "喜多酸菜魚",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "95 折；入會另送黑糖豆花 1 碗",
       "membership": "Ocard APP 會員",
       "membershipType": "ocard",
@@ -5627,7 +5627,7 @@
     {
       "id": "timhowan",
       "brand": "添好運 Tim Ho Wan",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "$100 抵用金 + 甜心紅豆包",
       "membership": "Ocard APP 會員",
       "membershipType": "ocard",
@@ -5677,7 +5677,7 @@
     {
       "id": "nagata",
       "brand": "長田本庄軒",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "豚骨叉燒炒麵買一送一",
       "membership": "Ocard APP 會員",
       "membershipType": "ocard",
@@ -5815,7 +5815,7 @@
     {
       "id": "dubuhouse",
       "brand": "涓豆腐 DUBU HOUSE",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "原味韓式炸雞免費送",
       "membership": "Ocard APP 會員",
       "membershipType": "ocard",
@@ -5867,7 +5867,7 @@
     {
       "id": "taigaya",
       "brand": "大河屋",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "點套餐送唐揚雞",
       "membership": "Ocard APP 會員",
       "membershipType": "ocard",
@@ -6431,7 +6431,7 @@
     {
       "id": "legaleagle",
       "brand": "金色三麥",
-      "category": "連鎖餐廳",
+      "category": "餐廳",
       "offer": "當日壽星送 6 吋蛋糕；當月壽星送切片蛋糕",
       "membership": "Ocard APP 會員",
       "membershipType": "ocard",

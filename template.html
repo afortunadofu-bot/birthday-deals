@@ -1427,13 +1427,22 @@ const TIER_LABEL={1:'品牌官方',2:'新聞媒體',3:'部落格',4:'社群貼�
 // 可不可以轉手給別人用，所以獨立成一個欄位，不是塞進既有欄位裡。
 const TRANSFER_LABEL={yes:'可轉讓・免出示證件',no:'需本人・要出示證件',unknown:'尚未確認'};
 const TIMINGS=['當日','當月','當週','當月＋當日','前後3天','前後7天','其他'];
-const CATEGORIES=['速食','連鎖餐廳','火鍋燒肉','飲料','甜點烘焙','零售美妝','娛樂樂園','其他'];
+// celine回饋：「19to1鮮選牛排專賣店」這種單店牛排館，不屬於速食／火鍋燒肉，
+// 卻也不太敢選「連鎖餐廳」（沒有很多分店，感覺不算「連鎖」），結果只能選
+// 「其他」——但「其他」在篩選時常被當成非餐飲類直接跳過，這筆優惠等於變相
+// 消失在飲食類篩選結果外。原本「連鎖餐廳」底下其實已經混了王品牛排、小時
+// 厚牛排等不見得每個人都認得是「連鎖」的品牌，把類別名稱拿掉「連鎖」兩字
+// 改成「餐廳」，泛指各種內用型餐廳（含單店），跟「速食」「火鍋燒肉」的
+// 界線更清楚，也不會逼單店老闆為了避嫌選到「其他」去。
+// 既有資料庫裡舊的 category='連鎖餐廳' 要記得跑 schema_v51_category_restaurant.sql
+// 把它們一起改成'餐廳'，不然舊資料的類別篩選會對不起來。
+const CATEGORIES=['速食','餐廳','火鍋燒肉','飲料','甜點烘焙','零售美妝','娛樂樂園','其他'];
 const COUNTIES=['全台','基隆市','台北市','新北市','桃園市','新竹市','新竹縣','苗栗縣','台中市',
  '彰化縣','南投縣','雲林縣','嘉義市','嘉義縣','台南市','高雄市','屏東縣','宜蘭縣','花蓮縣',
  '台東縣','澎湖縣','金門縣','連江縣'];
 
 // 卡片類別小圓點顏色（低調的可掃描性提示，避免用整條色邊造成視覺過重）
-const CAT_COLOR={'速食':'#c9852c','連鎖餐廳':'#8f5216','火鍋燒肉':'#a63d24','飲料':'#3d7a63',
+const CAT_COLOR={'速食':'#c9852c','餐廳':'#8f5216','火鍋燒肉':'#a63d24','飲料':'#3d7a63',
   '甜點烘焙':'#b5658a','零售美妝':'#5b6f94','娛樂樂園':'#6a8f3d'};
 const ICONS={
   check:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
@@ -2943,10 +2952,11 @@ function adminEditDiffHtml(o){
   const canSee = myProfile?.is_admin || (me && o.submittedBy===me.id);
   if(!canSee) return '';
   const label=k=>(typeof EDIT_FIELD_LABEL!=='undefined'&&EDIT_FIELD_LABEL[k])||k;
+  const fmt=v=>(typeof fmtEditVal!=='undefined')?fmtEditVal(v):String(v??'—');
   const rows=Object.entries(o.adminEditDiff).map(([k,v])=>
     `<div class="sub-item"><b>${esc(label(k))}</b><span>
-       <span style="color:var(--ink-3);text-decoration:line-through">${esc(String(v.from??'—'))}</span>
-       　→　<span style="color:var(--free);font-weight:700">${esc(String(v.to??'—'))}</span></span></div>`).join('');
+       <span style="color:var(--ink-3);text-decoration:line-through">${esc(fmt(v.from))}</span>
+       　→　<span style="color:var(--free);font-weight:700">${esc(fmt(v.to))}</span></span></div>`).join('');
   return `<div class="sub-list" style="margin-top:8px">
     <div class="dl-head">管理員審核時調整了以下欄位</div>${rows}
   </div>`;
@@ -3549,6 +3559,31 @@ $('#fBrand').addEventListener('input',()=>{
   brandDupTimer=setTimeout(renderBrandDupHint, 350);
 });
 
+// 「建議修改」跟「管理員編輯待審投稿記變動」都要比對「改之前 vs 改之後」抓出
+// 真的變動的欄位——celine 回饋：只改「適用縣市」，填了修改原因還是被「沒有
+// 偵測到任何欄位變動」擋下來送不出去。根因是這份比對清單原本只列了 8 個
+// 欄位（brand/offer/conditions/membership/timing/advance_days/value_twd/
+// valid_until），漏掉 regions（適用縣市）、category、membership_type、
+// free_tier、valid_from、requires_companion、transferable、sources 這些
+// 補充欄位——只改到清單外的欄位，patch 永遠是空的。改成用同一份完整清單，
+// 任何一項變動都抓得到；regions／sources 是陣列，不能直接用 !== 比（陣列
+// 參考不同就永遠判定「不同」，或整個沒被比到），另外寫 sameOfferVal 處理。
+const OFFER_DIFF_FIELDS=['brand','category','offer','membership','membership_type','free_tier',
+  'advance_days','value_twd','timing','conditions','valid_from','valid_until',
+  'requires_companion','transferable','regions','sources'];
+function offerDiffVal(src,k){
+  if(k==='timing') return src.timing||src.offer_window||null;
+  const v=src[k];
+  return v===undefined?null:v;
+}
+function sameOfferVal(a,b){
+  if(Array.isArray(a)||Array.isArray(b)){
+    const norm=x=>(x||[]).map(v=>(v&&typeof v==='object')?JSON.stringify(v):String(v)).sort();
+    return JSON.stringify(norm(a))===JSON.stringify(norm(b));
+  }
+  return (a??null)===(b??null);
+}
+
 $('#submitForm').onsubmit=async e=>{
   e.preventDefault();
   const b=$('#btnSubmitOffer'); b.disabled=true;
@@ -3599,13 +3634,11 @@ $('#submitForm').onsubmit=async e=>{
     if(!reason){ b.disabled=false; note($('#submitMsg'),'alert','請填修改原因，讓管理員知道為什麼要改。'); return; }
     // url 是否為空在上面已經用 confirm() 問過、放行過了，這裡不用再擋一次。
     const orig=origOfferForDiff||{};
-    const cmp={brand:row.brand, offer:row.offer, conditions:row.conditions, membership:row.membership,
-      timing:row.timing, advance_days:row.advance_days, value_twd:row.value_twd, valid_until:row.valid_until};
-    const origVal={brand:orig.brand, offer:orig.offer, conditions:orig.conditions, membership:orig.membership,
-      timing:orig.timing||orig.offer_window, advance_days:orig.advance_days??null,
-      value_twd:orig.value_twd??null, valid_until:orig.valid_until??null};
     const patch={};
-    Object.entries(cmp).forEach(([k,v])=>{ if(v!==origVal[k]) patch[k]=v; });
+    OFFER_DIFF_FIELDS.forEach(k=>{
+      const newV=offerDiffVal(row,k), oldV=offerDiffVal(orig,k);
+      if(!sameOfferVal(newV,oldV)) patch[k]=newV;
+    });
     if(!Object.keys(patch).length){ b.disabled=false; note($('#submitMsg'),'alert','沒有偵測到任何欄位變動，改點內容再送出。'); return; }
     ({error}=await sb.from('offer_edits').insert({
       offer_id:Number(editing), proposed_by:me.id, patch, reason, source_url:url, source_tier:tier}));
@@ -3614,13 +3647,11 @@ $('#submitForm').onsubmit=async e=>{
     // 這樣投稿人自己在「我的投稿」點開細節時看得到「被改了哪」，不會一頭霧水。
     if(wasPending&&origOfferForDiff){
       const orig=origOfferForDiff;
-      const cmp={brand:row.brand, offer:row.offer, conditions:row.conditions, membership:row.membership,
-        timing:row.timing, advance_days:row.advance_days, value_twd:row.value_twd, valid_until:row.valid_until};
-      const origVal={brand:orig.brand, offer:orig.offer, conditions:orig.conditions, membership:orig.membership,
-        timing:orig.timing||orig.offer_window, advance_days:orig.advance_days??null,
-        value_twd:orig.value_twd??null, valid_until:orig.valid_until??null};
       const diff={};
-      Object.entries(cmp).forEach(([k,v])=>{ if(v!==origVal[k]) diff[k]={from:origVal[k],to:v}; });
+      OFFER_DIFF_FIELDS.forEach(k=>{
+        const newV=offerDiffVal(row,k), oldV=offerDiffVal(orig,k);
+        if(!sameOfferVal(newV,oldV)) diff[k]={from:oldV,to:newV};
+      });
       row.admin_edit_diff = Object.keys(diff).length ? diff : null;
     }
     ({error}=await sb.from('offers').update(row).eq('id',editing));
@@ -4522,8 +4553,8 @@ async function loadPendingEditsPreview(){
       <div class="row" style="gap:6px;align-items:flex-start;margin-top:6px">
         <span class="filt-label" style="width:64px">${esc(EDIT_FIELD_LABEL[k]||k)}</span>
         <div style="flex:1;min-width:0;font-size:.82rem">
-          <div style="color:var(--ink-3);text-decoration:line-through">${esc(String(e[curKey[k]]??'—'))}</div>
-          <div style="color:var(--free);font-weight:700">${esc(String(v??'—'))}</div>
+          <div style="color:var(--ink-3);text-decoration:line-through">${curKey[k]?esc(fmtEditVal(e[curKey[k]])):'（改前內容未提供預覽）'}</div>
+          <div style="color:var(--free);font-weight:700">${esc(fmtEditVal(v))}</div>
         </div>
       </div>`).join('');
     return `<div class="rej-row" style="border-top:1px solid var(--line);padding:10px 0">
@@ -4945,14 +4976,32 @@ async function loadReviewInsights(){
    管理員是否調整過（見 schema_v42／schema_v40）。 ---- */
 const EDIT_FIELD_LABEL={brand:'品牌名稱',offer:'優惠內容',conditions:'使用條件',membership:'會員取得方式',
   timing:'適用期間',advance_days:'提前天數',value_twd:'優惠價值',valid_until:'檔期迄日',
-  category:'類別',requires_companion:'需同行',regions:'適用地區',transferable:'可轉讓'};
+  category:'類別',requires_companion:'需同行',regions:'適用地區',transferable:'可轉讓',
+  membership_type:'會員種類',free_tier:'免費層級',valid_from:'檔期起日',sources:'資料來源'};
+// regions/sources 是陣列、requires_companion 是布林值——「新舊對照」畫面原本
+// 只处理過純文字/數字欄位，這幾種類型直接 String() 會印出 "true"/"false" 或
+// "[object Object]"，這裡跟 editHistoryHtml 共用同一套格式化規則。
+function fmtEditVal(v){
+  if(v==null||v==='') return '—';
+  if(Array.isArray(v)) return v.length?v.map(x=>(x&&typeof x==='object')?(x.url||JSON.stringify(x)):String(x)).join('、'):'—';
+  if(v===true) return '是'; if(v===false) return '否';
+  return String(v);
+}
 let EDIT_ORIG_PATCH={};   // edit id -> 民眾原始送出的 patch，核可時拿來比對輸入框有沒有被改過
+// regions／sources 是陣列，不適合塞進單一文字輸入框讓管理員直接改（存回去
+// 會變成逗號字串，跟資料庫的陣列/JSON 型別對不起來）——這兩個欄位核可前
+// 就唯讀顯示，管理員如果真的要調整這兩項，退回請對方重新提出即可，不會
+// 進到「核可時把輸入框當下的值收集起來」那段邏輯（沒有 edit-patch-field
+// 這個 class，就不會被收集，也就不會誤觸發 override）。
 function patchFieldInputHtml(editId, field, value){
+  if(field==='regions'||field==='sources')
+    return `<div style="padding:6px 0;color:var(--ink-2)">${esc(fmtEditVal(value))}
+      <span style="color:var(--ink-3);font-size:.76rem">（此欄位僅供預覽，如需調整請退回）</span></div>`;
   const v = value==null ? '' : String(value);
   const common = `class="edit-patch-field" data-edit="${esc(String(editId))}" data-field="${esc(field)}"`;
   if(field==='advance_days'||field==='value_twd')
     return `<input type="number" ${common} value="${esc(v)}" style="width:100%;margin-top:2px">`;
-  if(field==='valid_until')
+  if(field==='valid_until'||field==='valid_from')
     return `<input type="date" ${common} value="${esc(v)}" style="width:100%;margin-top:2px">`;
   if(field==='offer'||field==='conditions'||field==='membership')
     return `<textarea ${common} style="width:100%;margin-top:2px;min-height:52px;overflow:hidden">${esc(v)}</textarea>`;
@@ -4990,7 +5039,8 @@ async function loadPendingEdits(){
   if(!LIVE||!myProfile?.is_admin) return;
   const {data,error}=await sb.from('offer_edits')
     .select('id,offer_id,proposed_by,patch,reason,source_url,source_tier,created_at,'
-      +'offers(brand,offer,conditions,membership,timing,advance_days,value_twd,valid_until)')
+      +'offers(brand,offer,conditions,membership,timing,advance_days,value_twd,valid_until,'
+      +'category,regions,membership_type,free_tier,valid_from,requires_companion,transferable,sources)')
     .eq('status','pending').order('created_at',{ascending:true});
   const ec=$('#editCount');
   if(error){
@@ -5009,7 +5059,7 @@ async function loadPendingEdits(){
       <div class="row" style="gap:6px;align-items:flex-start;margin-top:6px">
         <span class="filt-label" style="width:64px;flex-shrink:0">${esc(EDIT_FIELD_LABEL[k]||k)}</span>
         <div style="flex:1;min-width:0;font-size:.82rem">
-          <div style="color:var(--ink-3);text-decoration:line-through">${esc(String(o[k]??'—'))}</div>
+          <div style="color:var(--ink-3);text-decoration:line-through">${esc(fmtEditVal(o[k]))}</div>
           ${patchFieldInputHtml(e.id,k,v)}
         </div>
       </div>`).join('');
@@ -5063,12 +5113,18 @@ async function loadPendingEdits(){
     let overridePatch=null;
     if(st==='approved'){
       const orig=EDIT_ORIG_PATCH[id]||{};
-      const finalPatch={}; let changed=false;
+      // regions／sources 沒有可編輯輸入框（唯讀預覽，見 patchFieldInputHtml），
+      // 從 orig 完整複製一份當底，只有真的有輸入框的欄位才會被下面覆蓋——
+      // 不然只要管理員調整了「別的」欄位觸發 override，regions/sources 會
+      // 因為沒被收集到而整個從 override 的 patch 裡消失，套用時 RPC 判斷
+      // 「patch 沒有這個 key」就會維持優惠原本的值，等於這筆建議修改裡
+      // 「改適用縣市」的部分被默默丟掉、核可了卻沒真的套用。
+      const finalPatch={...orig}; let changed=false;
       $$(`.edit-patch-field[data-edit="${id}"]`).forEach(inp=>{
         const field=inp.dataset.field;
         let val=inp.value;
         if(field==='advance_days'||field==='value_twd') val = val===''?null:Number(val);
-        else if(field==='valid_until') val = val || null;
+        else if(field==='valid_until'||field==='valid_from') val = val || null;
         finalPatch[field]=val;
         if(orig[field]!==val) changed=true;
       });
