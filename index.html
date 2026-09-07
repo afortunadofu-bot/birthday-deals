@@ -438,7 +438,13 @@
   /* ---------- 詳情視窗：優惠完整內容 + 評分 ---------- */
   .dtl-facts{margin:6px 0 12px}
   .dtl-facts .sub-item b{width:64px}
-  .rate-box{border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;margin:0 0 12px}
+  .rate-box{border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;margin:0 0 12px;transition:box-shadow .3s var(--ease)}
+  /* 回報完的提示卡點「評分」時，捲動過去後短暫發光提醒使用者「就是這裡」。 */
+  .rate-box.rate-highlight{animation:rateGlow 1.5s ease}
+  @keyframes rateGlow{
+    0%,100%{box-shadow:none}
+    25%{box-shadow:0 0 0 3px rgba(169,122,23,.35)}
+  }
   .rate-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:.85rem}
   .rate-avg{color:#a97a17;font-weight:700;font-size:.83rem}
   .stars{display:flex;align-items:center;gap:2px;margin-top:6px}
@@ -3122,8 +3128,9 @@ async function openDetail(id, fallback=null){
     </div>`:''}
     ${showReportFollowupPrompt?`<div class="new-banner" id="postReportFollowupPrompt" style="margin-bottom:10px">
       <span class="nb-icon" aria-hidden="true">✅</span>
-      <div style="flex:1">回報送出了！要不要留言分享心得，或這筆優惠有什麼需要修正的地方？</div>
-      <button type="button" class="btn sm primary" id="btnInlineComment">留言</button>
+      <div style="flex:1">回報送出了！要不要順便幫這家店評分、留言說說好不好用，或這筆優惠有什麼需要修正的地方？</div>
+      ${me?`<button type="button" class="btn sm primary" id="btnInlineRate">評分</button>`:''}
+      <button type="button" class="btn sm${me?'':' primary'}" id="btnInlineComment">留言</button>
       ${me?`<button type="button" class="btn sm" id="btnInlineSuggestEdit">建議修改</button>`:''}
       <button type="button" class="btn plain" id="btnDismissReportPrompt" aria-label="關閉提示">✕</button>
     </div>`:''}
@@ -3148,6 +3155,19 @@ async function openDetail(id, fallback=null){
   if(inlineReportBtn) inlineReportBtn.onclick=()=>{ body.querySelector('#postCommentReportPrompt')?.remove(); openReport(id); };
   const dismissPromptBtn=body.querySelector('#btnDismissCommentPrompt');
   if(dismissPromptBtn) dismissPromptBtn.onclick=()=>body.querySelector('#postCommentReportPrompt')?.remove();
+  const inlineRateBtn=body.querySelector('#btnInlineRate');
+  if(inlineRateBtn) inlineRateBtn.onclick=()=>{
+    body.querySelector('#postReportFollowupPrompt')?.remove();
+    // 評分元件（rateHtml/dtlStars）本來就一直顯示在詳情視窗裡，不用另外
+    // 生一套新的回饋表單——這裡只是捲過去、短暫發光提醒使用者「就是這裡」。
+    const box=body.querySelector('.rate-box');
+    if(box){
+      box.scrollIntoView({behavior:'smooth',block:'center'});
+      box.classList.remove('rate-highlight'); void box.offsetWidth;
+      box.classList.add('rate-highlight');
+      setTimeout(()=>box.classList.remove('rate-highlight'),1600);
+    }
+  };
   const inlineCommentBtn=body.querySelector('#btnInlineComment');
   if(inlineCommentBtn) inlineCommentBtn.onclick=()=>{
     body.querySelector('#postReportFollowupPrompt')?.remove();
@@ -4156,9 +4176,10 @@ async function loadBoard(){
   } else {
     lbQuery=sb.from('leaderboard').select('*');
   }
-  // 名次升降：跟「上一期」（上個月／上週）比對名次變化。全部時間榜沒有
-  // 「上一期」這個概念，就不算。用 user_id 比對——本月/本週榜的 view 本身
-  // 就有回傳 user_id，這個不受隱私限制（跟排行榜本身給不給看是兩回事）。
+  // 名次升降：跟「上一期」（上個月／上週）比對名次變化。用 user_id 比對——
+  // 本月/本週榜的 view 本身就有回傳 user_id，這個不受隱私限制（跟排行榜
+  // 本身給不給看是兩回事）。全部時間榜另外用 leaderboard_prev（見下方
+  // allTimeLbPrev），比法不一樣所以分開處理。
   if(monthly){
     // 用「選到的 ym」往前推一個月，不是永遠用今天的上個月——不然挑過去
     // 月份時，名次升降箭頭會拿系統當下的上個月來比，比錯期間。
@@ -4177,7 +4198,7 @@ async function loadBoard(){
   const trendSince = ISO(new Date(Date.now()-179*864e5));
   const yearSince = ISO(new Date(Date.now()-365*864e5));
   BOARD_CHARTS=[];
-  const [{data:lb,error:lbErr},{data:pop},{data:wish},{data:trendRows},{data:curMonthRows},{data:prevMonthRows},{data:allTimeLb},{data:usedRows},{data:prevPeriodRows},{data:popPrev},{data:wishPrev}]=await Promise.all([
+  const [{data:lb,error:lbErr},{data:pop},{data:wish},{data:trendRows},{data:curMonthRows},{data:prevMonthRows},{data:allTimeLb},{data:usedRows},{data:prevPeriodRows},{data:popPrev},{data:wishPrev},{data:allTimeLbPrev}]=await Promise.all([
     lbQuery,
     // 之前這裡砍到只留前 20 名，但 popular_offers 這張 view 本身就已經排好
     // 「熱門前 50 家」了——多這層 20 的限制沒有任何好處，只會讓「站台數據」
@@ -4203,7 +4224,12 @@ async function loadBoard(){
     // 當切點）。舊站台（還沒跑過 v49）這裡會 error，data 是 null，
     // 下面用 Array.isArray 判斷是否有拿到資料，拿不到就跳過箭頭，不會壞。
     sb.from('popular_offers_prev').select('*'),
-    sb.from('most_wished_prev').select('*')
+    sb.from('most_wished_prev').select('*'),
+    // 省錢排行榜「全部時間」分頁的名次升降（schema_v53），同一套「跟 7
+    // 天前比」邏輯，只是全部時間榜不回傳 user_id（隱私設計），改用
+    // display_name 比對，見下面 allTimeHasPrev 那段。月/週分頁不需要這筆，
+    // 但一起打影響不大，故不特別跳過。
+    (!monthly&&!weekly) ? sb.from('leaderboard_prev').select('display_name,saved_total').order('saved_total',{ascending:false}).limit(100) : Promise.resolve({data:null})
   ]);
   if(lbErr && monthly){
     $('#lbBody').innerHTML=`<div class="note alert">讀取本月排行失敗：${esc(lbErr.message)}
@@ -4232,12 +4258,23 @@ async function loadBoard(){
   renderWeekdayBreakdown(trendRows||[]);
   // 月／週排行沒有 rank 欄位，這裡自己補上名次
   if((monthly||weekly) && lb) lb.forEach((r,i)=>r.rank=i+1);
-  // 附上「上一期名次」，畫面上才能顯示升降——只有本月/本週有意義，全部時間
-  // 榜沒有上一期這個概念，prevRankMap 維持空的，renderLbBody 就不會畫這欄。
+  // 附上「上一期名次」，畫面上才能顯示升降——本月/本週跟「上個月/上週」比。
   const prevRankMap=new Map();
   (prevPeriodRows||[]).forEach((r,i)=>{ if(!prevRankMap.has(r.user_id)) prevRankMap.set(r.user_id,i+1); });
   if((monthly||weekly) && lb) lb.forEach(r=>{ r.prevRank = prevRankMap.has(r.user_id)?prevRankMap.get(r.user_id):null; });
-  LB_ROWS=lb||[]; LB_MONTHLY=monthly; LB_WEEKLY=weekly; LB_YM=ym; LB_HAS_PREV=(monthly||weekly);
+  // 全部時間分頁（預設一打開就是這頁）原本完全沒有「上一期」可比，改跟
+  // 「7 天前」比（schema_v53，同 popular_offers_prev／most_wished_prev
+  // 那一套）。舊站台（還沒跑過 v53）allTimeLbPrev 會是 null，
+  // Array.isArray 判斷失敗就跳過箭頭，不會壞。全部時間榜不回傳 user_id
+  // （隱私設計），改用 display_name 比對——這也是畫面上原本找「哪一列是
+  // 我」用的同一套近似比對法，見下面 myRow 那段的註解。
+  const allTimeHasPrev = !(monthly||weekly) && Array.isArray(allTimeLbPrev);
+  if(allTimeHasPrev){
+    const namePrevRankMap=new Map();
+    allTimeLbPrev.forEach((r,i)=>{ if(!namePrevRankMap.has(r.display_name)) namePrevRankMap.set(r.display_name,i+1); });
+    (lb||[]).forEach(r=>{ r.prevRank = namePrevRankMap.has(r.display_name)?namePrevRankMap.get(r.display_name):null; });
+  }
+  LB_ROWS=lb||[]; LB_MONTHLY=monthly; LB_WEEKLY=weekly; LB_YM=ym; LB_HAS_PREV=(monthly||weekly)||allTimeHasPrev;
   if(!((monthly||weekly) && lbErr)){
     await attachAdminEmails(LB_ROWS, monthly, weekly, 'admin_leaderboard_all_ids');
     renderLbBody();
@@ -4384,6 +4421,11 @@ async function loadContribBoard(){
       .order('total_count',{ascending:false}).limit(50);
   } else {
     q=sb.from('contribution_leaderboard').select('*');
+    // 全部時間分頁原本沒有「上一期」可比，改跟「7 天前」比（schema_v53，
+    // 跟省錢排行榜的 leaderboard_prev 同一套做法）。舊站台還沒跑過 v53
+    // 這裡會 error，data 是 null，下面用 Array.isArray 判斷，拿不到就
+    // 跳過箭頭，不會壞。
+    prevQ=sb.from('contribution_leaderboard_prev').select('display_name,total_count').order('total_count',{ascending:false}).limit(100);
   }
   const [{data:rows,error},{data:prevRows}]=await Promise.all([q, prevQ]);
   if(error){
@@ -4392,10 +4434,18 @@ async function loadContribBoard(){
     return;
   }
   if((monthly||weekly) && rows) rows.forEach((r,i)=>r.rank=i+1);
-  const hasPrev=monthly||weekly;
+  // 本月/本週用 user_id 比對（view 本身就有回傳）；全部時間榜不回傳
+  // user_id（隱私設計），改用 display_name 比對，見上面 leaderboard_prev
+  // 那段一樣的邏輯。
+  const hasPrev = (monthly||weekly) ? true : Array.isArray(prevRows);
   const prevRankMap=new Map();
-  (prevRows||[]).forEach((r,i)=>{ if(!prevRankMap.has(r.user_id)) prevRankMap.set(r.user_id,i+1); });
-  if(hasPrev && rows) rows.forEach(r=>{ r.prevRank=prevRankMap.has(r.user_id)?prevRankMap.get(r.user_id):null; });
+  if(monthly||weekly){
+    (prevRows||[]).forEach((r,i)=>{ if(!prevRankMap.has(r.user_id)) prevRankMap.set(r.user_id,i+1); });
+    if(rows) rows.forEach(r=>{ r.prevRank=prevRankMap.has(r.user_id)?prevRankMap.get(r.user_id):null; });
+  } else if(hasPrev){
+    (prevRows||[]).forEach((r,i)=>{ if(!prevRankMap.has(r.display_name)) prevRankMap.set(r.display_name,i+1); });
+    if(rows) rows.forEach(r=>{ r.prevRank=prevRankMap.has(r.display_name)?prevRankMap.get(r.display_name):null; });
+  }
   CONTRIB_ROWS=rows||[]; CONTRIB_MONTHLY=monthly; CONTRIB_WEEKLY=weekly; CONTRIB_HAS_PREV=hasPrev; CONTRIB_YM=ym;
   await attachAdminEmails(CONTRIB_ROWS, monthly, weekly, 'admin_contrib_leaderboard_all_ids');
   renderContribBody();
