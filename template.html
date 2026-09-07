@@ -157,7 +157,7 @@
   /* ---------- 手機底部 tab bar（參考 Ocard／國泰優惠常見排版） ---------- */
   @media(max-width:768px){
     body{padding-bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom))}
-    nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--surface);
+    nav.tabs{position:fixed;left:0;right:0;bottom:var(--kb-offset,0px);z-index:50;background:var(--surface);
       border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));
       box-shadow:0 -6px 24px rgba(20,20,35,.06);gap:0;overflow:visible}
     /* .tab 本身要加 position:relative，不然下面 .tab .n 徽章的
@@ -463,11 +463,18 @@
   .sub-list{display:grid;gap:0;margin:0;border-radius:var(--r-xs);overflow:hidden;
     border:1px solid var(--line-soft)}
   .sub-list.hidden{display:none}
-  .sub-item{display:flex;gap:10px;align-items:baseline;padding:7px 10px;font-size:.8rem;
+  .sub-item{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;padding:7px 10px;font-size:.8rem;
     background:var(--line-soft)}
   .sub-item:nth-child(even){background:var(--surface)}
   .sub-item b{flex:none;width:76px;color:var(--ink);font-weight:700;white-space:nowrap;
     overflow:hidden;text-overflow:ellipsis}
+  /* 修改建議/修改歷史的新舊對照常常會塞進整串網址（民眾投稿附的資料來源
+     連結），沒有空白可以斷行，手機版一遇到就把整個 .sub-item 撐寬、跑版
+     跑到畫面右邊留一大片空白或直接被切斷看不到——跟 #225 搜尋列消失是不
+     同的跑版成因，但症狀很像，都是長字串在 flex 容器裡不會自動換行。
+     min-width:0 讓 flex 子項目願意縮小，overflow-wrap:anywhere 讓長字串
+     在容器邊界換行，兩個一起才會真的排整齊。 */
+  .sub-item span,.sub-item>div{min-width:0;overflow-wrap:anywhere;word-break:break-word}
   .sub-item span{color:var(--ink-2)}
 
   .kv{margin:2px 0 0;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.82rem}
@@ -614,7 +621,7 @@
   }
 
   /* ---------- 加到主畫面／回報問題：右下角(桌面)或貼底(手機)的提示條，不釘在頁首 ---------- */
-  .toast{position:fixed;left:12px;right:12px;bottom:calc(14px + var(--tabbar-h) + env(safe-area-inset-bottom));
+  .toast{position:fixed;left:12px;right:12px;bottom:calc(14px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom));
     z-index:60;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
     padding:13px 15px;box-shadow:0 10px 30px rgba(20,20,35,.16);display:flex;align-items:center;
     gap:12px;flex-wrap:wrap;font-size:.85rem;animation:toast-in .22s var(--ease)}
@@ -622,7 +629,7 @@
   .toast-actions{display:flex;gap:8px;margin-left:auto}
   @keyframes toast-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   @media(min-width:769px){ .toast{left:auto;right:22px;bottom:22px;max-width:360px} }
-  #btnToTop{position:fixed;right:16px;bottom:calc(16px + var(--tabbar-h) + env(safe-area-inset-bottom));
+  #btnToTop{position:fixed;right:16px;bottom:calc(16px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom));
     z-index:55;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);
     background:var(--surface);color:var(--ink-2);font-size:1.1rem;line-height:1;cursor:pointer;
     box-shadow:0 6px 18px rgba(20,20,35,.14);opacity:0;transform:translateY(8px);
@@ -781,6 +788,7 @@
       <h2>站台數據</h2>
       <p class="sub">整站累積的使用狀況。</p>
       <div class="bigstat" id="boardStats"></div>
+      <div id="boardHoursChart" style="margin-top:14px"></div>
       <div id="boardCatChart" style="margin-top:14px"></div>
     </div>
     <div class="panel" id="pnlBoardInsights">
@@ -1373,6 +1381,28 @@ function syncHeaderHeight(){
 }
 syncHeaderHeight();
 window.addEventListener('resize', syncHeaderHeight);
+
+// 嵐回饋：手機版「新增」分頁（欄位很多，很容易點到輸入框跳出鍵盤）貼底的
+// 導覽列會不見。根因是手機瀏覽器跳出虛擬鍵盤時，大多數情況下「layout
+// viewport」（position:fixed 元素的定位基準）高度不會變，變的是「visual
+// viewport」（畫面實際看得到的範圍）——鍵盤跳出來，visual viewport 縮短，
+// 但 nav.tabs 這種 bottom:0 的元素還是釘在（沒縮短的）layout viewport
+// 最底部，等於被鍵盤整個蓋住、擠到看不到的地方去，並不是真的從畫面上
+// 消失，只是「肉眼看不到」而已，欄位越多的頁面（新增優惠表單）越容易
+// 一直跳出鍵盤、一直遇到。用 visualViewport API 量出鍵盤佔掉的高度，讓
+// nav.tabs／.toast／#btnToTop 這幾個貼底元素一起跟著往上補位，鍵盤收起
+// 來又自動歸零。
+function syncKeyboardOffset(){
+  const vv=window.visualViewport;
+  if(!vv) return;
+  const offset=Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+  document.documentElement.style.setProperty('--kb-offset', offset+'px');
+}
+if(window.visualViewport){
+  syncKeyboardOffset();
+  window.visualViewport.addEventListener('resize', syncKeyboardOffset);
+  window.visualViewport.addEventListener('scroll', syncKeyboardOffset);
+}
 
 let CFG = null, HAS_CFG = false, HAS_SDK = false;
 const IS_FILE = location.protocol === 'file:';
@@ -4198,7 +4228,7 @@ async function loadBoard(){
   const trendSince = ISO(new Date(Date.now()-179*864e5));
   const yearSince = ISO(new Date(Date.now()-365*864e5));
   BOARD_CHARTS=[];
-  const [{data:lb,error:lbErr},{data:pop},{data:wish},{data:trendRows},{data:curMonthRows},{data:prevMonthRows},{data:allTimeLb},{data:usedRows},{data:prevPeriodRows},{data:popPrev},{data:wishPrev},{data:allTimeLbPrev}]=await Promise.all([
+  const [{data:lb,error:lbErr},{data:pop},{data:wish},{data:trendRows},{data:curMonthRows},{data:prevMonthRows},{data:allTimeLb},{data:usedRows},{data:prevPeriodRows},{data:popPrev},{data:wishPrev},{data:allTimeLbPrev},{data:boardSiteStats},{data:onlineNow,error:onlineErr},{data:hourRows,error:hourErr}]=await Promise.all([
     lbQuery,
     // 之前這裡砍到只留前 20 名，但 popular_offers 這張 view 本身就已經排好
     // 「熱門前 50 家」了——多這層 20 的限制沒有任何好處，只會讓「站台數據」
@@ -4229,7 +4259,14 @@ async function loadBoard(){
     // 天前比」邏輯，只是全部時間榜不回傳 user_id（隱私設計），改用
     // display_name 比對，見下面 allTimeHasPrev 那段。月/週分頁不需要這筆，
     // 但一起打影響不大，故不特別跳過。
-    (!monthly&&!weekly) ? sb.from('leaderboard_prev').select('display_name,saved_total').order('saved_total',{ascending:false}).limit(100) : Promise.resolve({data:null})
+    (!monthly&&!weekly) ? sb.from('leaderboard_prev').select('display_name,saved_total').order('saved_total',{ascending:false}).limit(100) : Promise.resolve({data:null}),
+    // 嵐回饋：排行榜也想看到即時在線人數／平台總瀏覽人次／使用時段分布，
+    // 這三個原本只有管理員儀表板看得到（schema_v55 開了公開版 RPC，見
+    // renderBoardStats() 跟 renderBoardHoursChart()）。site_stats 本來就
+    // 是公開 view，直接查就好，不用另外開權限。
+    sb.from('site_stats').select('pageview_count,visitor_count').single(),
+    sb.rpc('site_online_now'),
+    sb.rpc('site_usage_hour_distribution',{p_days:30})
   ]);
   if(lbErr && monthly){
     $('#lbBody').innerHTML=`<div class="note alert">讀取本月排行失敗：${esc(lbErr.message)}
@@ -4248,7 +4285,9 @@ async function loadBoard(){
   (wishPrev||[]).forEach((r,i)=>{ if(!wishPrevRankMap.has(r.offer_id)) wishPrevRankMap.set(r.offer_id,i+1); });
   (wish||[]).forEach((r,i)=>{ r.prevRank = wishPrevRankMap.has(r.offer_id)?wishPrevRankMap.get(r.offer_id):null; });
   renderMostWished(wish||[], wishHasPrev);
-  renderBoardStats(lb||[], pop||[], allTimeSavedRows, usedRows||[]);
+  renderBoardStats(lb||[], pop||[], allTimeSavedRows, usedRows||[], boardSiteStats, onlineErr?null:onlineNow);
+  startBoardOnlineRefresh();
+  renderBoardHoursChart(hourErr?null:hourRows);
   renderCategoryBreakdown(pop||[]);
   renderSavingsTrend(trendRows||[], trendSince);
   renderMonthlyBreakdown(trendRows||[]);
@@ -4603,8 +4642,8 @@ async function loadPendingEditsPreview(){
       <div class="row" style="gap:6px;align-items:flex-start;margin-top:6px">
         <span class="filt-label" style="width:64px">${esc(EDIT_FIELD_LABEL[k]||k)}</span>
         <div style="flex:1;min-width:0;font-size:.82rem">
-          <div style="color:var(--ink-3);text-decoration:line-through">${curKey[k]?esc(fmtEditVal(e[curKey[k]])):'（改前內容未提供預覽）'}</div>
-          <div style="color:var(--free);font-weight:700">${esc(fmtEditVal(v))}</div>
+          <div style="color:var(--ink-3);text-decoration:line-through;overflow-wrap:anywhere;word-break:break-word">${curKey[k]?esc(fmtEditVal(e[curKey[k]])):'（改前內容未提供預覽）'}</div>
+          <div style="color:var(--free);font-weight:700;overflow-wrap:anywhere;word-break:break-word">${esc(fmtEditVal(v))}</div>
         </div>
       </div>`).join('');
     return `<div class="rej-row" style="border-top:1px solid var(--line);padding:10px 0">
@@ -4633,7 +4672,7 @@ function renderMostWished(rows, hasPrev){
 }
 
 /* ---- 排行榜上方的整站數據：全部從已載入的兩張表算，不用再多打 API ---- */
-function renderBoardStats(lb, pop, allTimeSavedRows, usedRows){
+function renderBoardStats(lb, pop, allTimeSavedRows, usedRows, siteStatsRow, onlineNow){
   const reports = pop.reduce((a,r)=>a+(r.report_count||0),0);
   const success = pop.reduce((a,r)=>a+(r.success_count||0),0);
   // 金額改用「排行榜（近一年、依人加總）」的總和，不要再用 popular_offers
@@ -4658,11 +4697,18 @@ function renderBoardStats(lb, pop, allTimeSavedRows, usedRows){
     const o=OFFERS.find(x=>String(x.id)===String(r.offer_id));
     if(o?.brand) brandSet.add(o.brand);
   });
+  // 即時在線人數／平台總瀏覽人次（schema_v55）：跟「有沒有回報資料」無關，
+  // 站台一開始沒人回報過也看得到，所以拉到 !reports 的提早 return 之前，
+  // 兩張卡片永遠都會畫出來。
+  const liveStatsHtml=
+    `<div><div class="v" id="boardOnlineNow">${onlineNow==null?'—':onlineNow}</div><div class="k">即時在線人數</div></div>
+    <div><div class="v">${nt2(siteStatsRow?.pageview_count)}</div><div class="k">平台總瀏覽人次</div></div>`;
   if(!reports){
-    $('#boardStats').innerHTML='<div style="color:var(--ink-3);font-size:.86rem">還沒有任何回報資料，去「優惠」分頁按「我用過了」就會開始累積。</div>';
+    $('#boardStats').innerHTML=liveStatsHtml
+      +'<div style="color:var(--ink-3);font-size:.86rem;flex-basis:100%">還沒有任何回報資料，去「優惠」分頁按「我用過了」就會開始累積。</div>';
     return;
   }
-  $('#boardStats').innerHTML=`
+  $('#boardStats').innerHTML=liveStatsHtml+`
     <div><div class="v">${nt(saved)}</div><div class="k">大家累積省下（近一年）</div></div>
     <div><div class="v">${reports}</div><div class="k">總回報次數</div></div>
     <div><div class="v ${rate>=70?'free':''}">${rate==null?'—':rate+'%'}</div><div class="k">整體成功率</div></div>
@@ -4671,6 +4717,45 @@ function renderBoardStats(lb, pop, allTimeSavedRows, usedRows){
     <div><div class="v">${nt(avg)}</div><div class="k">平均每人省下</div></div>
     <div><div class="v" style="font-size:1.05rem">${esc(top?.brand||'—')}</div>
       <div class="k">最多人用（${top?.report_count||0} 次）</div></div>`;
+}
+// 「即時在線」不是真的 WebSocket 推播，是每隔一段時間重打一次公開版
+// site_online_now() RPC。排行榜分頁不像管理員儀表板那樣有獨立生命週期
+// 管理，這裡用同樣的「離開分頁/背景分頁就不打」邏輯，換一個獨立的計時器
+// 跟管理員那邊的 startOnlineRefresh() 分開，兩邊互不影響。
+let boardOnlineTimer=null;
+function startBoardOnlineRefresh(){
+  if(boardOnlineTimer) return;
+  boardOnlineTimer=setInterval(async ()=>{
+    if(document.hidden || ACTIVE_TAB!=='board' || !LIVE) return;
+    const {data,error}=await sb.rpc('site_online_now');
+    const el=$('#boardOnlineNow');
+    if(!error && el) el.textContent=data??0;
+  }, 20000);
+}
+// 使用時段分布（schema_v55 公開版），跟管理員儀表板那張圖是同一個畫法，
+// 獨立寫一份而不是共用函式——管理員那邊還有「近 N 天」篩選器等專屬邏輯，
+// 硬共用反而要多繞一層參數，不如照抄畫法但保持兩邊各自獨立比較不會互相
+// 牽連出 bug。
+function renderBoardHoursChart(hourRows){
+  const box=$('#boardHoursChart');
+  if(!box) return;
+  if(!hourRows){ box.innerHTML=''; return; }
+  const hrows=hourRows||[];
+  const hmax=Math.max(1,...hrows.map(r=>r.count));
+  const peak=hrows.length?hrows.slice().sort((a,b)=>b.count-a.count)[0]:null;
+  box.innerHTML=`<div class="dash-chart">
+    <b style="font-size:.85rem">近 30 天使用時段分布（台灣時間，依瀏覽次數）</b>
+    <div style="margin-top:10px;display:flex;align-items:flex-end;gap:2px;height:80px">
+      ${hrows.map(r=>`<div style="flex:1;height:100%;display:flex;align-items:flex-end" title="${r.hour}時：${r.count} 次">
+        <div style="width:100%;background:${peak&&r.hour===peak.hour?'var(--accent)':'var(--line)'};
+          border-radius:2px 2px 0 0;height:${r.count?Math.max(3,r.count/hmax*100):2}%"></div>
+      </div>`).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:.66rem;color:var(--ink-3);margin-top:3px">
+      <span>0時</span><span>6時</span><span>12時</span><span>18時</span><span>23時</span>
+    </div>
+    ${peak?`<div style="font-size:.76rem;color:var(--ink-3);margin-top:4px">尖峰時段：${peak.hour}:00 前後，共 ${peak.count} 次瀏覽</div>`:''}
+  </div>`;
 }
 
 // 各類別使用狀況：popular_offers 本身沒有 category 欄位，這裡拿已經
@@ -5045,7 +5130,10 @@ let EDIT_ORIG_PATCH={};   // edit id -> 民眾原始送出的 patch，核可時�
 // 這個 class，就不會被收集，也就不會誤觸發 override）。
 function patchFieldInputHtml(editId, field, value){
   if(field==='regions'||field==='sources')
-    return `<div style="padding:6px 0;color:var(--ink-2)">${esc(fmtEditVal(value))}
+    // sources 是網址陣列，民眾貼的來源連結常常很長又沒有空白可斷行，
+    // overflow-wrap:anywhere 讓它撐滿寬度後換行，不會把整個 row 撐爆
+    // 跑版（見上面 .sub-item 那段一樣的問題跟修法）。
+    return `<div style="padding:6px 0;color:var(--ink-2);overflow-wrap:anywhere;word-break:break-word">${esc(fmtEditVal(value))}
       <span style="color:var(--ink-3);font-size:.76rem">（此欄位僅供預覽，如需調整請退回）</span></div>`;
   const v = value==null ? '' : String(value);
   const common = `class="edit-patch-field" data-edit="${esc(String(editId))}" data-field="${esc(field)}"`;
@@ -5109,7 +5197,7 @@ async function loadPendingEdits(){
       <div class="row" style="gap:6px;align-items:flex-start;margin-top:6px">
         <span class="filt-label" style="width:64px;flex-shrink:0">${esc(EDIT_FIELD_LABEL[k]||k)}</span>
         <div style="flex:1;min-width:0;font-size:.82rem">
-          <div style="color:var(--ink-3);text-decoration:line-through">${esc(fmtEditVal(o[k]))}</div>
+          <div style="color:var(--ink-3);text-decoration:line-through;overflow-wrap:anywhere;word-break:break-word">${esc(fmtEditVal(o[k]))}</div>
           ${patchFieldInputHtml(e.id,k,v)}
         </div>
       </div>`).join('');
