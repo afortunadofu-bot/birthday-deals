@@ -9,6 +9,26 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v56　優惠詳細頁顯示該優惠目前待審的修改建議
+
+`schema_v56_pending_edit_preview_fields.sql`
+
+celine回饋：店家如果有人新增修改建議，要能夠在詳細頁面看的到。之前只有
+兩個地方看得到待審的修改建議：1) 管理員審核區塊 2) 登入後首頁的「待審
+投稿/修改建議」全站公開預覽區（列全站，不是針對單一優惠）——點進某家店
+自己的詳情彈窗完全看不出來「這筆優惠現在有沒有人在提修改建議」，容易
+重複投稿同樣的建議。這次在詳情彈窗跟「修改歷史」並列加一個新區塊，直接
+查 offer_edits_pending_preview（過濾這個 offer_id），顯示提議者、原因、
+新舊欄位對照。
+
+順便補齊一個 #228 遺留的缺口：offer_edits_pending_preview 的 current_*
+欄位是 schema_v44 當初訂的舊 8 欄位版本，#228 把可比對欄位從 8 個擴充到
+16 個（多了 category/membership_type/free_tier/valid_from/requires_
+companion/transferable/regions/sources）之後沒有跟著補這張 view，導致
+這幾個欄位被建議修改時「改前內容」在預覽區顯示不出來（只會看到「改前
+內容未提供預覽」）——這次牛排店的案例剛好就是改 category/regions，
+一併補上這張 view 的完整欄位。純資料庫變更，前端已能吃到新欄位。
+
 ## 大版本　修改建議的長網址又把版面撐爆
 
 嵐回饋：超連結又跑版了。查到是這次(v52/#228)剛加的「建議修改」新舊對照

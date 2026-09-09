@@ -3025,6 +3025,26 @@ function editHistoryHtml(rows){
     <div class="dl-head">修改歷史</div>${rowsHtml}
   </div>`;
 }
+// celine 回饋：店家如果有人新增修改建議，要能夠在詳細頁面看得到——之前
+// 只有 1) 管理員審核區塊 2) 登入後首頁的「待審投稿/修改建議」全站預覽區
+// 看得到，優惠自己的詳情彈窗完全沒顯示。這裡跟 editHistoryHtml（已套用的
+// 修改歷史）並列放在同一顆彈窗，讓人一眼看到「已經有人提過同樣的建議」，
+// 不用再重複投稿一次。新舊對照沿用跟全站預覽區同一套 editDiffRowsHtml。
+function pendingOfferEditsHtml(rows){
+  if(!rows || !rows.length) return '';
+  const cards=rows.map(e=>{
+    const diff=editDiffRowsHtml(e);
+    return `<div class="sub-item" style="display:block">
+      <div class="meta"><span>提議者：${esc(e.proposed_by_name||'匿名')}</span>
+        <span>${esc(fmtD(e.created_at))}</span></div>
+      ${e.reason?`<div style="margin-top:4px;font-size:.82rem;color:var(--ink-2)">原因：${esc(e.reason)}</div>`:''}
+      ${diff||'<div class="hint" style="margin-top:6px">（沒有偵測到欄位差異）</div>'}
+    </div>`;
+  }).join('');
+  return `<div class="sub-list" style="margin-top:8px">
+    <div class="dl-head">目前有 ${rows.length} 筆待審的修改建議</div>${cards}
+  </div>`;
+}
 function offerFactsHtml(o){
   if(!o) return '';
   const ex=expText(o), pu=pulseText(o);
@@ -3089,7 +3109,7 @@ async function openDetail(id, fallback=null){
   body.innerHTML=offerFactsHtml(o)+'<div class="thread" style="min-height:min(260px,40vh)">載入中…</div>';
   $('#dlgDetail').showModal(); pushDlgHistory();
   const isAdmin=!!myProfile?.is_admin;
-  const [{data:c},{data:r},{data:myR},{data:eh}]=await Promise.all([
+  const [{data:c},{data:r},{data:myR},{data:eh},{data:pe}]=await Promise.all([
     sb.from('comments').select('id,body,created_at,is_hidden,user_id')
       .eq('offer_id',id).order('created_at',{ascending:false}).limit(50),
     sb.from('usage_reports').select('id,used_on,result,store,note,saved_twd,user_id')
@@ -3100,7 +3120,14 @@ async function openDetail(id, fallback=null){
     // 舊資料庫還沒跑 schema_v40 的話 data 會是 null/undefined，
     // 下面渲染時用 (eh||[]) 接住就好，不影響其他區塊正常顯示。
     sb.from('offer_edit_history').select('changes,reason,actor_name,created_at')
-      .eq('offer_id',id).order('created_at',{ascending:false}).limit(10)]);
+      .eq('offer_id',id).order('created_at',{ascending:false}).limit(10),
+    // 這筆優惠目前是否有待審的修改建議（celine 回饋：之前只有管理員審核區
+    // 跟首頁全站預覽區看得到，詳情彈窗完全沒顯示）。offer_edits_pending_
+    // preview 只開放給登入使用者（跟全站預覽區同一個權限），未登入時不查，
+    // 直接當作沒有資料，不影響其他區塊照常顯示。
+    me? sb.from('offer_edits_pending_preview').select('*').eq('offer_id',id)
+      .order('created_at',{ascending:false})
+      : Promise.resolve({data:null})]);
   if(dtlId!==id) return;   // 使用者手快，已經切到別筆了，這批結果就不用了
   // v44 把 profiles 的讀取權限收緊成只能看自己那列，comments／usage_reports
   // 不能再直接 embed profiles(display_name) 撈到「別人」的暱稱（會變 null）。
@@ -3149,7 +3176,7 @@ async function openDetail(id, fallback=null){
   POST_COMMENT_REPORT_PROMPT_ID=null;
   const showReportFollowupPrompt = POST_REPORT_PROMPT_ID===id;
   POST_REPORT_PROMPT_ID=null;
-  body.innerHTML=offerFactsHtml(o)+editHistoryHtml(eh||[])+rateHtml+`<div class="thread">
+  body.innerHTML=offerFactsHtml(o)+pendingOfferEditsHtml(pe||[])+editHistoryHtml(eh||[])+rateHtml+`<div class="thread">
     ${showCommentReportPrompt?`<div class="new-banner" id="postCommentReportPrompt" style="margin-bottom:10px">
       <span class="nb-icon" aria-hidden="true">✅</span>
       <div style="flex:1">留言送出了！要不要順便回報一下你用過的結果？</div>
@@ -4634,18 +4661,8 @@ async function loadPendingEditsPreview(){
   }
   const list=data||[];
   cnt.textContent=list.length; cnt.classList.toggle('hidden',!list.length);
-  const curKey={brand:'brand',offer:'current_offer',conditions:'current_conditions',
-    membership:'current_membership',timing:'current_timing',advance_days:'current_advance_days',
-    value_twd:'current_value_twd',valid_until:'current_valid_until'};
   box.innerHTML = list.length ? list.map(e=>{
-    const rows=Object.entries(e.patch||{}).map(([k,v])=>`
-      <div class="row" style="gap:6px;align-items:flex-start;margin-top:6px">
-        <span class="filt-label" style="width:64px">${esc(EDIT_FIELD_LABEL[k]||k)}</span>
-        <div style="flex:1;min-width:0;font-size:.82rem">
-          <div style="color:var(--ink-3);text-decoration:line-through;overflow-wrap:anywhere;word-break:break-word">${curKey[k]?esc(fmtEditVal(e[curKey[k]])):'（改前內容未提供預覽）'}</div>
-          <div style="color:var(--free);font-weight:700;overflow-wrap:anywhere;word-break:break-word">${esc(fmtEditVal(v))}</div>
-        </div>
-      </div>`).join('');
+    const rows=editDiffRowsHtml(e);
     return `<div class="rej-row" style="border-top:1px solid var(--line);padding:10px 0">
       <div class="chead"><h3 style="font-size:.95rem">${esc(e.brand)}</h3></div>
       <div class="meta"><span>提議者：${esc(e.proposed_by_name||'匿名')}</span>
@@ -5121,6 +5138,25 @@ function fmtEditVal(v){
   if(Array.isArray(v)) return v.length?v.map(x=>(x&&typeof x==='object')?(x.url||JSON.stringify(x)):String(x)).join('、'):'—';
   if(v===true) return '是'; if(v===false) return '否';
   return String(v);
+}
+// offer_edits_pending_preview 的 current_* 欄位對照——跟 OFFER_DIFF_FIELDS
+// 保持同一份 16 欄位清單（見 schema_v56），loadPendingEditsPreview（全站
+// 預覽區）跟 openDetail 裡「這筆優惠目前的待審修改建議」共用同一套。
+const EDIT_CUR_KEY={brand:'brand',offer:'current_offer',conditions:'current_conditions',
+  membership:'current_membership',membership_type:'current_membership_type',
+  free_tier:'current_free_tier',timing:'current_timing',advance_days:'current_advance_days',
+  value_twd:'current_value_twd',valid_from:'current_valid_from',valid_until:'current_valid_until',
+  category:'current_category',requires_companion:'current_requires_companion',
+  transferable:'current_transferable',regions:'current_regions',sources:'current_sources'};
+function editDiffRowsHtml(e){
+  return Object.entries(e.patch||{}).map(([k,v])=>`
+    <div class="row" style="gap:6px;align-items:flex-start;margin-top:6px">
+      <span class="filt-label" style="width:64px">${esc(EDIT_FIELD_LABEL[k]||k)}</span>
+      <div style="flex:1;min-width:0;font-size:.82rem">
+        <div style="color:var(--ink-3);text-decoration:line-through;overflow-wrap:anywhere;word-break:break-word">${EDIT_CUR_KEY[k]?esc(fmtEditVal(e[EDIT_CUR_KEY[k]])):'（改前內容未提供預覽）'}</div>
+        <div style="color:var(--free);font-weight:700;overflow-wrap:anywhere;word-break:break-word">${esc(fmtEditVal(v))}</div>
+      </div>
+    </div>`).join('');
 }
 let EDIT_ORIG_PATCH={};   // edit id -> 民眾原始送出的 patch，核可時拿來比對輸入框有沒有被改過
 // regions／sources 是陣列，不適合塞進單一文字輸入框讓管理員直接改（存回去
