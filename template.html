@@ -563,15 +563,49 @@
   .who-email{flex-basis:100%;font-size:.72rem;color:var(--ink-3);font-weight:400;
     overflow-wrap:anywhere;word-break:break-all}
   .who-avatar[data-email]{cursor:pointer}
-  .bigstat{display:flex;gap:34px;flex-wrap:wrap;margin-bottom:18px}
-  .bigstat .v{font-size:2rem;font-weight:800;letter-spacing:-.02em;
-    line-height:1.1;font-variant-numeric:tabular-nums}
-  .bigstat .k{font-size:.78rem;color:var(--ink-3);margin-top:3px}
+  /* 「站台數據」「洞察分析」的大數字統計——celine回饋「站台數據那個區塊
+     的介面很醜」，查現況是每個數字就直接飄在 panel 裡，彼此之間只靠
+     gap 隔開，沒有任何容器感，數字一多（尤其手機版換行後）看起來像
+     隨便貼上去的文字堆。改成每個數字包一張淺底卡片，跟下面「洞察分析」
+     的 .dash-chart 圖表卡片用同一套語彙，兩個區塊才會像同一份設計。 */
+  .bigstat{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+  .bigstat>div{background:var(--line-soft);border-radius:var(--r-sm);
+    padding:13px 18px;flex:1 1 128px;min-width:112px}
+  .bigstat .v{font-size:1.6rem;font-weight:800;letter-spacing:-.02em;
+    line-height:1.15;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .bigstat .v.free{color:var(--free)}
+  .bigstat .k{font-size:.74rem;color:var(--ink-3);margin-top:4px;font-weight:600}
+  @media(max-width:600px){ .bigstat>div{padding:11px 14px} }
 
-  /* ---------- 管理員儀表板走勢圖 ---------- */
+  /* ---------- 管理員儀表板走勢圖／排行榜「洞察分析」圖表 ----------
+     跟「站台數據」同一輪改版：原本只有折線圖／時段分布圖有 .dash-chart
+     卡片外框，「各類別使用狀況」「近6個月」「優惠類型／會員取得方式佔比」
+     這幾個長條圖是直接把 <b> 標題跟長條列表灌進 panel，沒有卡片外框，
+     跟旁邊有外框的圖表擺在一起，深淺不一、大小不一，看起來像沒做完。
+     現在全部統一包進 .dash-chart，卡片本身也從「純白+細框線」改成
+     「帶陰影的卡片」，跟全站其他 .panel／.card 的立體感一致。 */
   .dash-charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
-  .dash-chart{border:1px solid var(--line);border-radius:var(--r-sm);padding:12px 14px}
+  .dash-chart{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:16px 18px;box-shadow:var(--shadow-sm)}
+  .dash-chart>b, .dash-chart>.dc-title{display:block;font-size:.85rem;font-weight:700;
+    color:var(--ink);margin-bottom:2px}
   @media(max-width:640px){ .dash-charts{grid-template-columns:1fr} }
+
+  /* 長條圖列（各類別使用狀況／近6個月／優惠類型／會員取得方式佔比 共用）：
+     原本每個 render 函式都各自重複寫一次一模一樣的 inline style，這裡
+     收斂成共用 class，順便把長條軌道加深一點、長條本身圓角拉滿＋加上
+     hover 微互動，看起來比一條條純色矩形更精緻。 */
+  .hbar-row{display:flex;align-items:center;gap:8px;font-size:.78rem}
+  .hbar-row+.hbar-row{margin-top:6px}
+  .hbar-label{flex-shrink:0;color:var(--ink-2);display:flex;align-items:center;gap:4px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hbar-track{flex:1;background:var(--line-soft);border-radius:99px;height:14px;overflow:hidden;
+    min-width:40px}
+  .hbar-fill{height:100%;border-radius:99px;transition:width .4s var(--ease);
+    background:linear-gradient(90deg,var(--accent-dark),var(--accent))}
+  .hbar-fill.free{background:linear-gradient(90deg,#0d8a3d,var(--free))}
+  .hbar-val{flex-shrink:0;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  .hbar-row:hover .hbar-track{background:var(--accent-soft)}
 
   /* ---------- 表單 / 對話框 ---------- */
   dialog{border:none;border-radius:var(--r);padding:0;max-width:520px;
@@ -1100,7 +1134,7 @@
     <div id="fbList"></div>
   </div>
   <div class="panel" id="pnlPending">
-    <h2>待審佇列</h2>
+    <h2>待審佇列<span class="n hidden" id="pendQueueCount"></span></h2>
     <p class="sub">勾「已查證」代表你向品牌官方確認過。核可後才會出現在公開的「優惠」分頁。</p>
     <div class="note" style="margin:0 0 16px">
       <b>這裡只會出現公開投稿</b>——一開始用 <code>seed.py</code> 匯入的
@@ -4761,11 +4795,12 @@ function renderBoardHoursChart(hourRows){
   const hmax=Math.max(1,...hrows.map(r=>r.count));
   const peak=hrows.length?hrows.slice().sort((a,b)=>b.count-a.count)[0]:null;
   box.innerHTML=`<div class="dash-chart">
-    <b style="font-size:.85rem">近 30 天使用時段分布（台灣時間，依瀏覽次數）</b>
+    <b>近 30 天使用時段分布（台灣時間，依瀏覽次數）</b>
     <div style="margin-top:10px;display:flex;align-items:flex-end;gap:2px;height:80px">
       ${hrows.map(r=>`<div style="flex:1;height:100%;display:flex;align-items:flex-end" title="${r.hour}時：${r.count} 次">
-        <div style="width:100%;background:${peak&&r.hour===peak.hour?'var(--accent)':'var(--line)'};
-          border-radius:2px 2px 0 0;height:${r.count?Math.max(3,r.count/hmax*100):2}%"></div>
+        <div style="width:100%;border-radius:3px 3px 0 0;transition:opacity .15s var(--ease);
+          background:${peak&&r.hour===peak.hour?'linear-gradient(180deg,var(--accent),var(--accent-dark))':'var(--line-soft)'};
+          height:${r.count?Math.max(3,r.count/hmax*100):2}%"></div>
       </div>`).join('')}
     </div>
     <div style="display:flex;justify-content:space-between;font-size:.66rem;color:var(--ink-3);margin-top:3px">
@@ -4798,17 +4833,15 @@ function renderCategoryBreakdown(pop){
     .filter(r=>r.reports).sort((a,b)=>b.reports-a.reports);
   if(!rows.length){ box.innerHTML=''; return; }
   const max=Math.max(1,...rows.map(r=>r.reports));
-  box.innerHTML=`<b style="font-size:.85rem">各類別使用狀況（依回報次數）</b>
-    <div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
-      ${rows.map(r=>`<div style="display:flex;align-items:center;gap:8px;font-size:.78rem">
-        <span style="width:88px;flex-shrink:0;color:var(--ink-3);display:flex;align-items:center;gap:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+  box.innerHTML=`<div class="dash-chart"><b>各類別使用狀況（依回報次數）</b>
+    <div style="margin-top:8px">
+      ${rows.map(r=>`<div class="hbar-row">
+        <span class="hbar-label" style="width:88px">
           <i class="catdot" style="--c:${CAT_COLOR[r.cat]||'var(--ink-3)'}"></i>${esc(r.cat)}</span>
-        <div style="flex:1;background:var(--line);border-radius:4px;height:14px;overflow:hidden">
-          <div style="width:${r.reports?Math.max(4,r.reports/max*100):0}%;height:100%;background:var(--accent)"></div>
-        </div>
-        <span style="width:128px;text-align:right;flex-shrink:0;color:var(--ink-3)">${r.reports} 次・${r.stores} 家店</span>
+        <div class="hbar-track"><div class="hbar-fill" style="width:${r.reports?Math.max(4,r.reports/max*100):0}%"></div></div>
+        <span class="hbar-val" style="width:128px;text-align:right">${r.reports} 次・${r.stores} 家店</span>
       </div>`).join('')}
-    </div>`;
+    </div></div>`;
 }
 
 // 近 30 天全站省錢走勢：usage_reports 的 select 政策本來就是 using(true)（誰都
@@ -4882,16 +4915,14 @@ function renderMonthlyBreakdown(rows){
   const vals = months.map(ym=>by.get(ym)||0);
   if(!vals.some(v=>v)){ box.innerHTML=''; return; }
   const max=Math.max(1,...vals);
-  box.innerHTML=`<b style="font-size:.85rem">近 6 個月：每月${label}</b>
-    <div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
-      ${months.map((ym,i)=>`<div style="display:flex;align-items:center;gap:8px;font-size:.78rem">
-        <span style="width:56px;flex-shrink:0;color:var(--ink-3)">${esc(ym.slice(5))} 月</span>
-        <div style="flex:1;background:var(--line);border-radius:4px;height:14px;overflow:hidden">
-          <div style="width:${vals[i]?Math.max(4,vals[i]/max*100):0}%;height:100%;background:var(--accent)"></div>
-        </div>
-        <span style="width:96px;text-align:right;flex-shrink:0;color:var(--ink-3)">${metric==='count'?vals[i]+' 次':nt(vals[i])}</span>
+  box.innerHTML=`<div class="dash-chart"><b>近 6 個月：每月${label}</b>
+    <div style="margin-top:8px">
+      ${months.map((ym,i)=>`<div class="hbar-row">
+        <span class="hbar-label" style="width:56px">${esc(ym.slice(5))} 月</span>
+        <div class="hbar-track"><div class="hbar-fill" style="width:${vals[i]?Math.max(4,vals[i]/max*100):0}%"></div></div>
+        <span class="hbar-val" style="width:96px;text-align:right">${metric==='count'?vals[i]+' 次':nt(vals[i])}</span>
       </div>`).join('')}
-    </div>`;
+    </div></div>`;
 }
 $('#trendMetric').onchange=()=>{ renderTrendChart(); renderMonthlyBreakdown(TREND_ROWS); };
 
@@ -4907,15 +4938,18 @@ function renderMoMCompare(curRows, prevRows, curYm, prevYm){
   if(!curSaved && !prevSaved){ box.innerHTML=''; return; }
   const pct = prevSaved>0 ? Math.round((curSaved-prevSaved)/prevSaved*100) : (curSaved>0?100:0);
   const up = pct>=0;
-  box.innerHTML=`<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
-      <div><div class="v" style="font-size:1.7rem;font-weight:800;letter-spacing:-.02em">${nt(curSaved)}</div>
+  box.innerHTML=`<div class="dash-chart">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div><div class="v" style="font-size:1.7rem;font-weight:800;letter-spacing:-.02em;
+          font-variant-numeric:tabular-nums">${nt(curSaved)}</div>
         <div class="k" style="font-size:.78rem;color:var(--ink-3);margin-top:1px">${esc(curYm)} 累積省下</div></div>
-      <div style="font-size:.86rem;font-weight:700;color:${up?'var(--free)':'var(--accent-dark)'}">
-        ${up?'▲':'▼'} ${Math.abs(pct)}%
-        <span style="font-weight:400;color:var(--ink-3)">比上個月（${nt(prevSaved)}）</span>
-      </div>
+      <span style="font-size:.82rem;font-weight:700;padding:4px 10px;border-radius:99px;
+        background:${up?'var(--free-bg)':'var(--accent-soft)'};color:${up?'var(--free)':'var(--accent-dark)'}">
+        ${up?'▲':'▼'} ${Math.abs(pct)}%</span>
+      <span style="font-size:.78rem;color:var(--ink-3)">比上個月（${nt(prevSaved)}）</span>
     </div>
-    <div style="font-size:.78rem;color:var(--ink-3);margin-top:4px">${esc(curYm)} 成功使用 ${curUses} 次　·　上個月 ${prevUses} 次</div>`;
+    <div style="font-size:.78rem;color:var(--ink-3);margin-top:8px">${esc(curYm)} 成功使用 ${curUses} 次　·　上個月 ${prevUses} 次</div>
+  </div>`;
 }
 
 // 大家用的優惠類型佔比（免費/需消費/折扣…），一樣拿 popular_offers 反查
@@ -4933,16 +4967,14 @@ function renderTypeBreakdown(pop){
     .filter(r=>r.count).sort((a,b)=>b.count-a.count);
   const total=rows.reduce((a,r)=>a+r.count,0);
   if(!total){ box.innerHTML=''; return; }
-  box.innerHTML=`<b style="font-size:.85rem">大家用的優惠是什麼類型（依回報次數佔比）</b>
-    <div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
-      ${rows.map(r=>`<div style="display:flex;align-items:center;gap:8px;font-size:.78rem">
-        <span style="width:104px;flex-shrink:0;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.label)}</span>
-        <div style="flex:1;background:var(--line);border-radius:4px;height:14px;overflow:hidden">
-          <div style="width:${Math.max(4,r.count/total*100)}%;height:100%;background:var(--free)"></div>
-        </div>
-        <span style="width:44px;text-align:right;flex-shrink:0">${Math.round(r.count/total*100)}%</span>
+  box.innerHTML=`<div class="dash-chart"><b>大家用的優惠是什麼類型（依回報次數佔比）</b>
+    <div style="margin-top:8px">
+      ${rows.map(r=>`<div class="hbar-row">
+        <span class="hbar-label" style="width:104px">${esc(r.label)}</span>
+        <div class="hbar-track"><div class="hbar-fill free" style="width:${Math.max(4,r.count/total*100)}%"></div></div>
+        <span class="hbar-val" style="width:44px;text-align:right">${Math.round(r.count/total*100)}%</span>
       </div>`).join('')}
-    </div>`;
+    </div></div>`;
 }
 
 // 大家用的優惠是哪種會員取得方式（免會員/品牌APP/LINE/Ocard…），一樣拿
@@ -4961,16 +4993,14 @@ function renderMemberBreakdown(pop){
     .filter(r=>r.count).sort((a,b)=>b.count-a.count);
   const total=rows.reduce((a,r)=>a+r.count,0);
   if(!total){ box.innerHTML=''; return; }
-  box.innerHTML=`<b style="font-size:.85rem">大家用的優惠是什麼會員取得方式（依回報次數佔比）</b>
-    <div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
-      ${rows.map(r=>`<div style="display:flex;align-items:center;gap:8px;font-size:.78rem">
-        <span style="width:104px;flex-shrink:0;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.label)}</span>
-        <div style="flex:1;background:var(--line);border-radius:4px;height:14px;overflow:hidden">
-          <div style="width:${Math.max(4,r.count/total*100)}%;height:100%;background:var(--accent)"></div>
-        </div>
-        <span style="width:44px;text-align:right;flex-shrink:0">${Math.round(r.count/total*100)}%</span>
+  box.innerHTML=`<div class="dash-chart"><b>大家用的優惠是什麼會員取得方式（依回報次數佔比）</b>
+    <div style="margin-top:8px">
+      ${rows.map(r=>`<div class="hbar-row">
+        <span class="hbar-label" style="width:104px">${esc(r.label)}</span>
+        <div class="hbar-track"><div class="hbar-fill" style="width:${Math.max(4,r.count/total*100)}%"></div></div>
+        <span class="hbar-val" style="width:44px;text-align:right">${Math.round(r.count/total*100)}%</span>
       </div>`).join('')}
-    </div>`;
+    </div></div>`;
 }
 
 // 星期幾最多人成功使用：拿近 30 天走勢圖同一批 usage_reports 資料
@@ -4994,16 +5024,14 @@ function renderWeekdayBreakdown(rows){
   if(!total){ box.innerHTML=''; return; }
   const max=Math.max(1,...counts);
   const order=[1,2,3,4,5,6,0]; // 一～日，週末排最後比較好讀
-  box.innerHTML=`<b style="font-size:.85rem">近 30 天：星期幾最多人成功使用</b>
-    <div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
-      ${order.map(i=>`<div style="display:flex;align-items:center;gap:8px;font-size:.78rem">
-        <span style="width:40px;flex-shrink:0;color:var(--ink-3)">週${WEEKDAY_LABEL[i]}</span>
-        <div style="flex:1;background:var(--line);border-radius:4px;height:14px;overflow:hidden">
-          <div style="width:${counts[i]?Math.max(4,counts[i]/max*100):0}%;height:100%;background:${(i===0||i===6)?'var(--free)':'var(--accent)'}"></div>
-        </div>
-        <span style="width:44px;text-align:right;flex-shrink:0;color:var(--ink-3)">${counts[i]} 次</span>
+  box.innerHTML=`<div class="dash-chart"><b>近 30 天：星期幾最多人成功使用</b>
+    <div style="margin-top:8px">
+      ${order.map(i=>`<div class="hbar-row">
+        <span class="hbar-label" style="width:40px">週${WEEKDAY_LABEL[i]}</span>
+        <div class="hbar-track"><div class="hbar-fill${(i===0||i===6)?' free':''}" style="width:${counts[i]?Math.max(4,counts[i]/max*100):0}%"></div></div>
+        <span class="hbar-val" style="width:44px;text-align:right">${counts[i]} 次</span>
       </div>`).join('')}
-    </div>`;
+    </div></div>`;
 }
 
 /* ===================================================================== */
@@ -5012,8 +5040,12 @@ async function loadPending(){
   const {data}=await sb.from('offers').select('*').eq('status','pending')
     .order('created_at',{ascending:true});
   await mergeProfileNames(data, 'submitted_by');
-  const list=(data||[]).map(fromRow), pc=$('#pendCount');
+  const list=(data||[]).map(fromRow), pc=$('#pendCount'), pqc=$('#pendQueueCount');
   pc.textContent=list.length; pc.classList.toggle('hidden',!list.length);
+  // #pendCount 是底部導覽列「審核」分頁的徽章，跟這個 panel 標題旁的
+  // #pendQueueCount 是兩個不同元素——嵐回饋「待審佇列旁邊要寫有幾個待審
+  // 的」，之前這個 panel 標題本身沒有徽章，只有導覽列有，容易誤會沒更新。
+  if(pqc){ pqc.textContent=list.length; pqc.classList.toggle('hidden',!list.length); }
   $('#pendingList').innerHTML=list.map(o=>`
     <div class="pend-row" data-row="${o.id}" style="border-top:1px solid var(--line);padding:14px 0">
       <div class="chead"><h3 style="font-size:.95rem">${esc(o.brand)}</h3>
@@ -5056,14 +5088,25 @@ async function loadPending(){
       return;
     }
     note($('#pendMsg'),'good',`✓ 已${st==='approved'?'核可':'退回'}「${esc(brand)}」`);
-    if(row){ row.style.transition='opacity .25s var(--ease)'; row.style.opacity='0';
-      setTimeout(()=>row.remove(),250); }
-    await withScrollRestore([(async()=>{
-      await loadOffers(); render(); loadSiteStats(); loadReviewInsights();
-      const {data:fresh}=await sb.from('offers').select('id').eq('status','pending');
-      const pc2=$('#pendCount'); pc2.textContent=(fresh||[]).length;
-      pc2.classList.toggle('hidden',!(fresh||[]).length);
-    })()]);
+    if(row){ row.style.transition='opacity .25s var(--ease)'; row.style.opacity='0'; }
+    // row 淡出後的 remove() 之前是獨立、沒被 await 的 setTimeout，跟下面
+    // 重載清單／統計的動作是「並行」而不是「先後」——withScrollRestore
+    // 記錄／復位捲動位置的當下，row 可能都還沒真的被移除，等它 250ms 後
+    // 真的 remove() 掉，畫面高度又變一次，這次變化完全沒被保護到，變成
+    // 核可完畫面「先」被復位、「之後」又自己跳一次（嵐回饋：按完核可都
+    // 會跳掉）。修法：把淡出等待跟 remove() 也包進 withScrollRestore 的
+    // tasks 一起 await，讓復位捲動位置在「所有」高度變化都做完之後才做。
+    await withScrollRestore([
+      (async()=>{ if(row){ await new Promise(r=>setTimeout(r,250)); row.remove(); } })(),
+      (async()=>{
+        await loadOffers(); render(); loadSiteStats(); loadReviewInsights();
+        const {data:fresh}=await sb.from('offers').select('id').eq('status','pending');
+        const pc2=$('#pendCount'), pqc2=$('#pendQueueCount');
+        pc2.textContent=(fresh||[]).length;
+        pc2.classList.toggle('hidden',!(fresh||[]).length);
+        if(pqc2){ pqc2.textContent=(fresh||[]).length; pqc2.classList.toggle('hidden',!(fresh||[]).length); }
+      })()
+    ]);
   };
   $$('.ap').forEach(b=>b.onclick=()=>act(b.dataset.id,'approved',
     list.find(o=>String(o.id)===String(b.dataset.id))?.brand||''));
@@ -5206,8 +5249,14 @@ async function bulkApproveEdits(ids){
   } else {
     note($('#editMsg'),'good',`✓ 已核可 ${ids.length} 筆修改建議`);
   }
-  await loadOffers(); render();
-  await withScrollRestore([loadPendingEdits(), loadRejected(), loadPendingEditsPreview()]);
+  // 捲動位置的記錄／復位要包住「所有」會改變畫面高度的動作，loadOffers／
+  // render 也算在內——不然萬一它們本身也有副作用改到目前分頁的高度，
+  // 記錄 Y 值的時間點就抓早了，withScrollRestore 復位時可能已經跟畫面
+  // 實際狀態對不上。
+  await withScrollRestore([
+    (async()=>{ await loadOffers(); render(); })(),
+    loadPendingEdits(), loadRejected(), loadPendingEditsPreview()
+  ]);
 }
 async function loadPendingEdits(){
   if(!LIVE||!myProfile?.is_admin) return;
@@ -5307,9 +5356,15 @@ async function loadPendingEdits(){
     const {error}=await sb.rpc('review_offer_edit',{p_edit_id:Number(id),p_status:st,p_note:n,p_override_patch:overridePatch});
     if(error){ btns?.forEach(b=>b.disabled=false); note($('#editMsg'),'alert',`審核失敗：${esc(error.message)}`); return; }
     note($('#editMsg'),'good',`✓ 已${st==='approved'?(overridePatch?'調整後核可':'核可'):'退回'}這筆修改建議`);
-    if(row){ row.style.transition='opacity .25s var(--ease)'; row.style.opacity='0'; setTimeout(()=>row.remove(),250); }
+    if(row){ row.style.transition='opacity .25s var(--ease)'; row.style.opacity='0'; }
     if(st==='approved'){ await loadOffers(); render(); }
-    await withScrollRestore([loadPendingEdits(), loadRejected(), loadPendingEditsPreview()]);
+    // 同 loadPending() 的 act()：row 淡出後的 remove() 要跟重載清單一起
+    // await，捲動位置才會在「所有」高度變化都做完之後才復位一次，不會
+    // 核可完先跳回原位、250ms 後又因為 row 真的被移除再跳一次。
+    await withScrollRestore([
+      (async()=>{ if(row){ await new Promise(r=>setTimeout(r,250)); row.remove(); } })(),
+      loadPendingEdits(), loadRejected(), loadPendingEditsPreview()
+    ]);
   };
   $$('.eap').forEach(b=>b.onclick=()=>act(b.dataset.id,'approved'));
   $$('.erj').forEach(b=>b.onclick=()=>act(b.dataset.id,'rejected'));
@@ -5318,12 +5373,17 @@ async function loadPendingEdits(){
 /* ---- 已退回清單：被退回的投稿 + 被退回的修改建議，記錄投稿日期跟退回日期 ---- */
 async function loadRejected(){
   if(!LIVE||!myProfile?.is_admin) return;
-  const [{data:offs,error:e1},{data:edits,error:e2}]=await Promise.all([
+  // 跟 loadApproved() 同一個毛病：渲染用的清單各自 .limit(50)，退回總數
+  // 一旦超過 100 筆，直接拿 items.length 當標題徽章會比真實總數少。這裡
+  // 另外開兩個 exact count 查詢拿真正的投稿／修改建議退回總數。
+  const [{data:offs,error:e1},{data:edits,error:e2},{count:offCount,error:ce1},{count:editRejCount,error:ce2}]=await Promise.all([
     sb.from('offers').select('*')
       .eq('status','rejected').order('reviewed_at',{ascending:false}).limit(50),
     sb.from('offer_edits').select('id,offer_id,proposed_by,patch,reason,source_url,created_at,reviewed_at,review_note,'
       +'offers(brand,offer,conditions,membership,timing,advance_days,value_twd,valid_until)')
-      .eq('status','rejected').order('reviewed_at',{ascending:false}).limit(50)
+      .eq('status','rejected').order('reviewed_at',{ascending:false}).limit(50),
+    sb.from('offers').select('id',{count:'exact',head:true}).eq('status','rejected'),
+    sb.from('offer_edits').select('id',{count:'exact',head:true}).eq('status','rejected')
   ]);
   if(e1||e2){
     const hint=/relation|does not exist|offer_edits/i.test((e2&&e2.message)||'')?'（Supabase 可能還沒跑 schema_v11_edits.sql）':'';
@@ -5350,13 +5410,16 @@ async function loadRejected(){
   ].sort((a,b)=>new Date(b.reviewed||b.created)-new Date(a.reviewed||a.created));
 
   // 數字統計：總數放在標題旁的小徽章，投稿／修改建議各幾筆放在說明文字下面，
-  // 管理員一眼就能看出退回的大部分是新投稿還是修改建議。
-  $('#rejCount').textContent=items.length;
-  $('#rejCount').classList.toggle('hidden',!items.length);
-  const rejOfferN=items.filter(x=>x.kind==='offer').length;
-  const rejEditN=items.filter(x=>x.kind==='edit').length;
-  $('#rejStats').textContent = items.length
-    ? `共 ${items.length} 筆　·　投稿 ${rejOfferN} 筆　·　修改建議 ${rejEditN} 筆` : '';
+  // 管理員一眼就能看出退回的大部分是新投稿還是修改建議。count 查詢失敗
+  // 時退回用手上這批（最多各50筆）湊，好過完全不顯示。
+  const rejOfferN=ce1?items.filter(x=>x.kind==='offer').length:(offCount??0);
+  const rejEditN=ce2?items.filter(x=>x.kind==='edit').length:(editRejCount??0);
+  const rejTotal=rejOfferN+rejEditN;
+  $('#rejCount').textContent=rejTotal;
+  $('#rejCount').classList.toggle('hidden',!rejTotal);
+  $('#rejStats').textContent = rejTotal
+    ? `共 ${rejTotal} 筆　·　投稿 ${rejOfferN} 筆　·　修改建議 ${rejEditN} 筆`
+      +(items.length<rejTotal?`　·　下方清單僅顯示最新 ${items.length} 筆`:'') : '';
 
   $('#rejectedList').innerHTML = items.length ? items.map(x=>`
     <div class="rej-row" data-rej="${x.kind}-${x.id}" style="border-top:1px solid var(--line);padding:12px 0">
@@ -5413,8 +5476,20 @@ async function loadRejected(){
 let APPROVED_FALLBACK={};
 async function loadApproved(){
   if(!LIVE||!myProfile?.is_admin) return;
-  const {data,error}=await sb.from('offers').select('*')
-    .eq('status','approved').order('reviewed_at',{ascending:false}).limit(200);
+  // 標題旁徽章／統計文字要是「真正的總數」，不能拿下面這份為了畫面效能
+  // 只抓最新 200 筆的清單去算——已上架優惠一旦超過 200 筆，用 list.length
+  // 湊出來的總數／使用者投稿數／系統匯入數就會被悄悄砍到只剩 200 出頭，
+  // 跟「站台儀表板」的「上架優惠數」、「審核分析」的「核可率」（兩者都是
+  // 真正 count(*) where status='approved'，定義完全一樣）對不起來，變成
+  // celine 回饋的「總核可筆數不統一」。這裡另外開兩個 exact count 查詢
+  // 拿真正的總數／使用者投稿數，跟下面實際渲染用的 200 筆清單分開算。
+  const [{data,error},{count:totalN,error:ce1},{count:userNExact,error:ce2}]=await Promise.all([
+    sb.from('offers').select('*')
+      .eq('status','approved').order('reviewed_at',{ascending:false}).limit(200),
+    sb.from('offers').select('id',{count:'exact',head:true}).eq('status','approved'),
+    sb.from('offers').select('id',{count:'exact',head:true})
+      .eq('status','approved').not('submitted_by','is',null)
+  ]);
   if(error){
     $('#approvedList').innerHTML=`<div class="note alert">讀取失敗：${esc(error.message)}</div>`;
     $('#apCount').classList.add('hidden'); $('#apStats').textContent=''; return; }
@@ -5422,15 +5497,16 @@ async function loadApproved(){
   await mergeProfileNames(list, 'submitted_by');
   APPROVED_FALLBACK={};
   list.forEach(r=>{ APPROVED_FALLBACK[r.id]=fromRow(r); });
-  // 數字統計：不管上面的來源篩選選了什麼，標題徽章跟統計文字永遠顯示「全部」
-  // 已通過的總數跟來源拆分，不然篩到只剩使用者投稿時，總數看起來會忽大忽小、
-  // 誤以為資料量變了。
-  const userN=list.filter(o=>o.submitted_by).length;
-  const sysN=list.length-userN;
-  $('#apCount').textContent=list.length;
-  $('#apCount').classList.toggle('hidden',!list.length);
-  $('#apStats').textContent = list.length
-    ? `共 ${list.length} 筆　·　使用者投稿 ${userN} 筆　·　系統匯入 ${sysN} 筆` : '';
+  // count 查詢萬一失敗（例如很舊的資料庫版本），退回用手上這 200 筆湊，
+  // 好過完全不顯示；正常情況下都拿得到準確的 totalN/userNExact。
+  const total=ce1?list.length:(totalN??list.length);
+  const userN=ce2?list.filter(o=>o.submitted_by).length:(userNExact??0);
+  const sysN=total-userN;
+  $('#apCount').textContent=total;
+  $('#apCount').classList.toggle('hidden',!total);
+  $('#apStats').textContent = total
+    ? `共 ${total} 筆　·　使用者投稿 ${userN} 筆　·　系統匯入 ${sysN} 筆`
+      +(list.length<total?`　·　下方清單僅顯示最新 ${list.length} 筆`:'') : '';
   // 沒有 submitted_by 的是一開始用 seed.py／爬蟲匯入的，不是真的「匿名使用者」投稿，
   // 這裡分開標示，管理員也能用上面的下拉篩選只看其中一種。
   const src=$('#apSourceFilter').value;
