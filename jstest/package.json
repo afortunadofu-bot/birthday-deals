@@ -1,0 +1,14 @@
+{
+  "name": "birthday-deals-jstest",
+  "version": "1.0.0",
+  "private": true,
+  "description": "壽星日前端 jsdom 迴歸測試",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node run_all.js"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "jsdom": "^30.0.1"
+  }
+}

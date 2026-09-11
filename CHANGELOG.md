@@ -9,6 +9,54 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## 大版本　待審佇列批次核可、管理員點頭貼看信箱、地區標籤跑版
+
+嵐／celine 這一批三項回饋，都落在管理員審核與排行榜這一塊。
+
+**待審佇列「適用地區」標籤跑版**——嵐回饋「又跑版了」，截圖是審核分頁的
+待審佇列。根因是 `.flag` 為了讓「當月」「免費・需消費」這種短標籤不要從
+中間斷掉，設了 `white-space:nowrap`；但「適用地區」那一顆塞的是縣市清單，
+全台的店可以長到十幾個縣市（基隆市、台北市、……、花蓮縣），nowrap 就把
+整串撐出卡片右邊。修法沒有動 `.flag` 本身（動了短標籤又會開始亂斷），
+而是新增 `.flag.wrap` 變體（`white-space:normal` ＋ `max-width:100%` ＋
+`overflow-wrap:anywhere`），只套在 loadPending() 的地區標籤上。
+
+**待審佇列一鍵全選批次核可**——嵐回饋「待審核清單也要一鍵審核全選」。
+跟「修改建議待審」的 editBulkBar 同一套：新增 `#pendBulkBar`（全選 ＋
+「核可已勾選（已選 N 筆）」）與每一列的 `.pend-check`。差別在投稿每一列
+本來就有自己的「已查證」勾選框跟「審核備註」輸入框，所以 bulkApproveOffers()
+是照每一列當下的值送進 review_offer，不是一律送未查證／空備註——不然
+管理員一列一列填好的東西會被一次核可洗掉。核可完的重新載入一樣包在
+withScrollRestore 裡，畫面不會跳。
+
+**管理員點頭貼看註冊信箱**——嵐回饋：不管是排行榜還是留言，管理員點頭貼
+要看得到這個人的註冊 gmail。兩邊資料來源不一樣，所以拆成兩條路：
+
+- 排行榜的 email 本來就隨榜單批次查好、預先藏在 `.who-email` 裡
+  （attachAdminEmails），原本(#217)的互動是「長按頭貼 550ms」才顯示。
+  長按在手機上很容易變成選取文字／跳出系統選單，而且不點下去根本不知道
+  可以按，所以 `wireEmailLongPress` 改寫成 `wireEmailPeek`：單純點一下切換
+  顯示／隱藏，並且 stopPropagation 擋掉外層「點這一列展開品牌明細」，
+  不會按一下頭貼結果整列跟著展開。
+- 留言（詳情彈窗＋管理員「最近留言」）那邊的清單只有 user_id、沒有 email
+  欄位，改成「按了才查」：新增 `adminEmailBtnHtml()` / `adminLookupEmail()` /
+  `wireAdminEmailBtns()`，只有管理員才會產生那顆信封鈕，點了才呼叫既有的
+  `admin_user_emails()` RPC（schema_v48 就有，本來就只有管理員能執行），
+  查過的存在 `ADMIN_EMAIL_CACHE`，同一個人第二次點不用再打 API。
+
+純前端變更，不需要跑新的 SQL。
+
+**同時重建了 jsdom 迴歸測試（`jstest/`）**——前一個 session 那批測試
+（t4.js ~ t22.js）放在 sandbox 暫存區，換機器就整批消失了。這次放進 repo
+並進版控：`cd jstest && npm install && node run_all.js`。目前覆蓋上面這三項
+（含「非管理員完全不該出現信封鈕」「點頭貼不能連帶展開整列」「批次核可要帶
+對每一列的 verified/note」這幾個最容易回歸的點），共 5 支、70 條斷言。
+harness 踩過的坑（外部 script 要 stub 成載入失敗才不會卡 5 秒逾時、query
+builder 的鏈式方法要補滿、頂層 `let` 變數要用 `win.eval` 才改得到）都寫在
+`jstest/README.md` 跟 `harness.js` 的檔頭註解裡。
+
+---
+
 ## 大版本　審核區塊多項回饋：待審筆數、核可跳掉、統計數字不一致、視覺改版
 
 celine回饋一次五項，都是管理員審核／排行榜相關：
@@ -63,6 +111,14 @@ companion/transferable/regions/sources）之後沒有跟著補這張 view，導�
 這幾個欄位被建議修改時「改前內容」在預覽區顯示不出來（只會看到「改前
 內容未提供預覽」）——這次牛排店的案例剛好就是改 category/regions，
 一併補上這張 view 的完整欄位。純資料庫變更，前端已能吃到新欄位。
+
+**補正**：第一版寫成 `create or replace view` 會執行失敗，報
+`42P16: cannot change name of view column "current_timing" to
+"current_membership_type"`。Postgres 的 create or replace view 只允許
+在既有欄位「後面」append 新欄位，既有欄位的名稱／型別／順序都不能動，
+而這次新補的欄位是照 offers 本身的欄位順序插在中間。已改成
+`drop view if exists` 再 `create view`（這張 view 沒有其他物件依賴，
+只有前端直接查，drop 再建是安全的），重新貼一次就能跑過。
 
 ## 大版本　修改建議的長網址又把版面撐爆
 

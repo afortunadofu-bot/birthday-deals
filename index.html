@@ -427,6 +427,13 @@
     background:var(--c,var(--ink-3));margin-right:1px;vertical-align:1px}
   .flag{display:inline-block;font-size:.72rem;padding:2px 9px;border-radius:6px;
     border:1px solid var(--line);color:var(--ink-2);white-space:nowrap;font-weight:600}
+  /* .flag 預設 white-space:nowrap 是為了「當月」「免費・需消費」這種短標籤
+     不要從中間斷掉，但「適用地區」那顆標籤塞的是縣市清單，全台的店可以長到
+     十幾個縣市（基隆市、台北市、……、花蓮縣），nowrap 就會整串撐出卡片右邊
+     跑版（嵐回饋：又跑版了，截圖是審核分頁的待審佇列）。這顆改用 .flag.wrap，
+     允許換行、寬度不超過容器，其餘短標籤維持原本不換行的行為。 */
+  .flag.wrap{white-space:normal;max-width:100%;overflow-wrap:anywhere;word-break:break-word;
+    text-align:left;line-height:1.5}
   .flag.free{background:var(--free-bg);border-color:var(--free-line);color:var(--free)}
   .flag.today{background:var(--accent);border-color:var(--accent);color:#fff}
   .flag.alert{border-color:var(--alert-line);background:var(--alert-bg);color:var(--alert)}
@@ -1142,6 +1149,10 @@
       可以先到「新增」分頁投稿一筆測試資料，再回這裡核可或退回。
     </div>
     <div id="reviewInsights" style="margin:0 0 16px"></div>
+    <div class="row hidden" id="pendBulkBar" style="margin:0 0 10px;align-items:center;gap:10px">
+      <label class="toggle"><input type="checkbox" id="pendSelectAll"> 全選</label>
+      <button class="btn sm" id="pendBulkApprove" type="button" disabled>核可已勾選（已選 0 筆）</button>
+    </div>
     <div id="pendMsg"></div>
     <div id="pendingList"></div>
   </div>
@@ -3181,7 +3192,7 @@ async function openDetail(id, fallback=null){
   const cmtHtml=x=>{
     const mine = me && x.user_id===me.id;
     return `<div class="cmt${x.is_hidden?' hidden-cmt':''}" data-cid="${x.id}">
-      <div class="who">${esc(x.profiles?.display_name||'匿名')}　${esc(fmtD(x.created_at))}
+      <div class="who">${esc(x.profiles?.display_name||'匿名')}${adminEmailBtnHtml(x.user_id)}　${esc(fmtD(x.created_at))}
         ${x.is_hidden?'<span class="flag alert" style="margin-left:6px">已隱藏</span>':''}
         <span style="margin-left:auto;display:flex;gap:4px">
         ${isAdmin?`<button class="btn sm cm-hide" data-cid="${x.id}" data-hide="${x.is_hidden?'0':'1'}"
@@ -3301,6 +3312,7 @@ async function openDetail(id, fallback=null){
   }
   const unrateBtn=body.querySelector('#dtlUnrate');
   if(unrateBtn) unrateBtn.onclick=unrateHandler;
+  wireAdminEmailBtns(body);   // 留言旁的信封鈕（只有管理員看得到）
   [...body.querySelectorAll('.cm-hide')].forEach(b=>b.onclick=async()=>{
     b.disabled=true;
     const {error}=await sb.from('comments').update({is_hidden:b.dataset.hide==='1'}).eq('id',b.dataset.cid);
@@ -4189,35 +4201,63 @@ function wireShowMore(root){
   root.querySelectorAll('.lb-showmore').forEach(wireToggleButton);
 }
 
-// 管理員排行榜 email：長按（手機）／按住（滑鼠）頭貼 550ms 才顯示，短按或
-// 一般點擊不顯示，也不能擋掉原本「點列展開品牌明細」的既有互動。用
-// pointerdown/up/leave/cancel 自己算按住時間，不用額外套件；長按觸發後在
-// 該元素的 click 事件上擋一次（stopPropagation），避免手指放開時多觸發一次
-// 展開/收合。
-function wireEmailLongPress(root){
+// 管理員排行榜 email：原本(#217)是「長按頭貼 550ms」才顯示，嵐回饋改成
+// 「點頭貼」就要看得到（長按在手機上很容易變成選取文字／跳出系統選單，
+// 而且不點下去根本不知道可以按）。改成單純 click 切換顯示／隱藏，並且
+// stopPropagation 擋掉外層「點這一列展開品牌明細」的既有互動，不會按一下
+// 頭貼結果整列跟著展開。email 一樣預設藏著，要按才出現，不會一直曝露。
+function wireEmailPeek(root){
   root.querySelectorAll('.who-avatar[data-email]').forEach(el=>{
     // 頭貼現在包在 .who-main 裡面（跟暱稱同一層，方便暱稱單獨縮寫），
     // email 那個 span 是外層 .who 的子項、跟 .who-main 平級，
     // 所以要往上找到 .who 再找 email，不能只看 el 自己的 parentElement。
     const emailSpan=el.closest('.who')?.querySelector('.who-email');
     if(!emailSpan) return;
-    let timer=null, longPressed=false;
-    const start=()=>{
-      longPressed=false;
-      clearTimeout(timer);
-      timer=setTimeout(()=>{
-        longPressed=true;
-        emailSpan.classList.toggle('hidden');
-      },550);
-    };
-    const cancelTimer=()=>{ clearTimeout(timer); };
-    el.addEventListener('pointerdown',start);
-    el.addEventListener('pointerup',cancelTimer);
-    el.addEventListener('pointerleave',cancelTimer);
-    el.addEventListener('pointercancel',cancelTimer);
+    el.title='點一下看註冊信箱';
     el.addEventListener('click',e=>{
-      if(longPressed){ e.stopPropagation(); longPressed=false; }
+      e.stopPropagation();
+      emailSpan.classList.toggle('hidden');
     });
+  });
+}
+
+/* ---- 管理員查註冊信箱（留言、最近動態等「只有 user_id、沒有 email 欄位」
+   的地方共用）----
+   嵐回饋：管理員點頭貼要可以看到這個人的註冊 gmail，不管是留言還是排行榜。
+   排行榜那邊的 email 是隨著榜單一起批次查好、預先藏在 .who-email 裡（見
+   attachAdminEmails）；留言這類清單沒有那一層，所以改成「按了才查」——
+   點下去才呼叫 admin_user_emails()（schema_v48 就有的通用 RPC，本來就只有
+   管理員能執行），查完直接把按鈕換成信箱文字。查過的存在 cache 裡，同一個
+   人第二次點不用再打一次 API。非管理員完全不會產生這顆按鈕。 ---- */
+const ADMIN_EMAIL_CACHE=new Map();
+function adminEmailBtnHtml(uid){
+  if(!myProfile?.is_admin || !uid) return '';
+  return `<button type="button" class="btn plain admin-email-btn" data-uid="${esc(String(uid))}"
+    title="看這個人的註冊信箱" aria-label="看這個人的註冊信箱"
+    style="padding:0 4px;font-size:.78rem;color:var(--ink-3);line-height:1">✉</button>`;
+}
+async function adminLookupEmail(uid){
+  if(ADMIN_EMAIL_CACHE.has(uid)) return ADMIN_EMAIL_CACHE.get(uid);
+  const {data,error}=await sb.rpc('admin_user_emails',{p_ids:[uid]});
+  const email = error ? null : ((data||[])[0]?.email || null);
+  ADMIN_EMAIL_CACHE.set(uid,email);
+  return email;
+}
+function wireAdminEmailBtns(root){
+  (root||document).querySelectorAll('.admin-email-btn').forEach(b=>{
+    if(b.dataset.wired) return;
+    b.dataset.wired='1';
+    b.onclick=async e=>{
+      // 留言列本身通常是可點的（會開對應優惠的詳情），按信封不要順便觸發。
+      e.stopPropagation();
+      b.disabled=true;
+      const email=await adminLookupEmail(b.dataset.uid);
+      const span=document.createElement('span');
+      span.className='who-email';
+      span.style.flexBasis='auto';
+      span.textContent=email||'（查不到信箱）';
+      b.replaceWith(span);
+    };
   });
 }
 
@@ -4441,7 +4481,7 @@ function renderLbBody(){
     `<div style="color:var(--ink-3);font-size:.86rem">${hideAnon&&LB_ROWS.length?'隱藏匿名使用者後這裡暫時空的，取消勾選可以看全部。':
       LB_MONTHLY?`${esc(LB_YM)} 這個月還沒有人上榜。`:LB_WEEKLY?'這一週還沒有人上榜。':'還沒有人上榜。回報「我用過了」並填成功，就會出現在這裡。'}</div>`);
   wireShowMore($('#lbBody'));
-  wireEmailLongPress($('#lbBody'));
+  wireEmailPeek($('#lbBody'));
   $$('.lb-row').forEach(row=>row.onclick=()=>{
     const det=document.querySelector(`.lb-detail[data-lbd="${row.dataset.lb}"]`);
     det.classList.toggle('hidden'); row.classList.toggle('open',!det.classList.contains('hidden'));
@@ -4563,7 +4603,7 @@ function renderContribBody(){
     entries, 5, 'contrib-more-rows',
     `<div style="color:var(--ink-3);font-size:.86rem">${CONTRIB_MONTHLY?esc(CONTRIB_YM)+' 這個月':CONTRIB_WEEKLY?'這一週':''}還沒有人上榜。投稿新優惠或提出修改建議，被核可後就會出現在這裡。</div>`);
   wireShowMore($('#contribBody'));
-  wireEmailLongPress($('#contribBody'));
+  wireEmailPeek($('#contribBody'));
 }
 // 貢獻度排行榜的月份選擇器，跟省錢排行榜的 #lbPeriod/#lbMonth 是同一套
 // 寫法——選「本月」時才顯示月份輸入框，預設帶入當月，之後就可以自己
@@ -5034,6 +5074,29 @@ function renderWeekdayBreakdown(rows){
     </div></div>`;
 }
 
+/* ---- 批次核可待審投稿：嵐回饋「待審核清單也要一鍵審核全選」。跟
+   bulkApproveEdits 同一套精神，但這裡會把每一列自己的「已查證」勾選狀態
+   跟「審核備註」一起帶進 review_offer，不是一律送未查證／空備註——管理員
+   可能是先一列一列把已查證勾好、備註打好，最後才一次核可。 ---- */
+async function bulkApproveOffers(ids){
+  if(!LIVE||!myProfile?.is_admin||!ids.length) return;
+  const results=await Promise.all(ids.map(id=>{
+    const v=document.querySelector(`.cv[data-id="${id}"]`)?.checked||false;
+    const n=document.querySelector(`.rn[data-id="${id}"]`)?.value||'';
+    return sb.rpc('review_offer',{p_offer_id:Number(id),p_status:'approved',p_verified:v,p_note:n});
+  }));
+  const failed=results.filter(r=>r.error);
+  if(failed.length){
+    note($('#pendMsg'),'alert',`${ids.length-failed.length}/${ids.length} 筆核可成功，${failed.length} 筆失敗：${esc(failed[0].error.message)}`);
+  } else {
+    note($('#pendMsg'),'good',`✓ 已核可 ${ids.length} 筆投稿`);
+  }
+  // 跟單筆核可一樣，捲動位置的記錄／復位要包住所有會改變畫面高度的動作。
+  await withScrollRestore([
+    (async()=>{ await loadOffers(); render(); loadSiteStats(); loadReviewInsights(); })(),
+    loadPending()
+  ]);
+}
 /* ===================================================================== */
 async function loadPending(){
   if(!LIVE||!myProfile?.is_admin) return;
@@ -5048,7 +5111,10 @@ async function loadPending(){
   if(pqc){ pqc.textContent=list.length; pqc.classList.toggle('hidden',!list.length); }
   $('#pendingList').innerHTML=list.map(o=>`
     <div class="pend-row" data-row="${o.id}" style="border-top:1px solid var(--line);padding:14px 0">
-      <div class="chead"><h3 style="font-size:.95rem">${esc(o.brand)}</h3>
+      <div class="chead" style="align-items:center;gap:8px">
+        <label class="toggle" style="flex:none" title="勾選後可用上方「核可已勾選」一次核可">
+          <input type="checkbox" class="pend-check" data-id="${o.id}"></label>
+        <h3 style="font-size:.95rem;flex:1;min-width:0">${esc(o.brand)}</h3>
         ${o.valueTwd?`<span class="val">約 ${nt(o.valueTwd)}</span>`:''}</div>
       <div class="meta"><span>投稿者：${esc(o.submitterName||'匿名')}</span>
         <span>${esc(fmtD(o.createdAt))}</span></div>
@@ -5056,7 +5122,7 @@ async function loadPending(){
         <span class="flag">${esc(o.timing)}</span>
         <span class="flag">${esc(FREE_LABEL[o.freeTier])}</span>
         <span class="flag">${esc(MEM_LABEL[o.membershipType])}</span>
-        <span class="flag">${o.regions.length?esc(o.regions.join('、')):'未填地區'}</span>
+        <span class="flag wrap">${o.regions.length?esc(o.regions.join('、')):'未填地區'}</span>
       </div>
       <p class="offer">${esc(o.offer)}</p>
       <dl class="kv"><dt>提前</dt><dd>${o.advanceDays??'未填'} 天</dd>
@@ -5074,6 +5140,31 @@ async function loadPending(){
   // 核可前發現內容需要修正，可以直接編輯——會切到「新增」分頁，改完存檔後
   // 這筆還是待審狀態，回到這裡再核可即可，不用先退回再叫對方重投。
   $$('.pend-edit').forEach(b=>b.onclick=()=>startEditOffer(b.dataset.id, true));
+  // 批次核可工具列（嵐回饋：待審核清單也要一鍵審核全選）——跟「修改建議
+  // 待審」的 editBulkBar 同一套，差別在投稿每一列本來就有自己的「已查證」
+  // 勾選框跟「審核備註」輸入框，批次核可時照每一列當下的值送，不會一律
+  // 當成未查證／空備註（不然一次核可就把每列個別填好的東西洗掉了）。
+  $('#pendBulkBar').classList.toggle('hidden', list.length===0);
+  const updatePendBulkBar=()=>{
+    const checks=$$('.pend-check');
+    const checked=checks.filter(c=>c.checked);
+    $('#pendBulkApprove').textContent=`核可已勾選（已選 ${checked.length} 筆）`;
+    $('#pendBulkApprove').disabled=checked.length===0;
+    $('#pendSelectAll').checked = checks.length>0 && checked.length===checks.length;
+  };
+  $$('.pend-check').forEach(c=>c.onchange=updatePendBulkBar);
+  $('#pendSelectAll').onchange=e=>{
+    $$('.pend-check').forEach(c=>c.checked=e.target.checked);
+    updatePendBulkBar();
+  };
+  $('#pendBulkApprove').onclick=async()=>{
+    const ids=[...new Set($$('.pend-check').filter(c=>c.checked).map(c=>c.dataset.id))];
+    if(!ids.length) return;
+    if(!confirm(`一次核可這 ${ids.length} 筆投稿？核可後就會出現在公開的「優惠」分頁。`)) return;
+    $('#pendBulkApprove').disabled=true;
+    await bulkApproveOffers(ids);
+  };
+  updatePendBulkBar();
   const act=async(id,st,brand)=>{
     const v=document.querySelector(`.cv[data-id="${id}"]`)?.checked||false;
     const n=document.querySelector(`.rn[data-id="${id}"]`)?.value||'';
@@ -5640,9 +5731,10 @@ async function loadAdminCommentList(){
   $('#adminCommentList').innerHTML=list.length?list.map(c=>`
     <div class="sub-item admin-cm-row" data-offer="${esc(c.offer_id)}" style="cursor:pointer">
       <b>${esc(c.offers?.brand||'（已刪除）')}${c.is_hidden?' <span class="lbl" style="color:var(--alert)">已隱藏</span>':''}</b>
-      <span>${esc(c.profiles?.display_name||'匿名')}：${esc(c.body)}
+      <span>${esc(c.profiles?.display_name||'匿名')}${adminEmailBtnHtml(c.user_id)}：${esc(c.body)}
         <br><span style="color:var(--ink-3);font-size:.74rem">${esc(fmtDT(c.created_at))}</span></span>
     </div>`).join('') : '<div style="color:var(--ink-3);font-size:.86rem">目前沒有留言。</div>';
+  wireAdminEmailBtns($('#adminCommentList'));
   $$('.admin-cm-row').forEach(row=>row.onclick=()=>{
     const id=row.dataset.offer;
     if(id) openDetail(id);

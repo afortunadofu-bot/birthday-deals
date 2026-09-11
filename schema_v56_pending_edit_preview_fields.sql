@@ -19,9 +19,20 @@
 -- 案例剛好就是改 category/regions，正好補上。
 --
 -- 可重複執行。
+--
+-- 注意：這裡是 drop + create，不是 create or replace——Postgres 的
+-- create or replace view 只允許「在既有欄位後面 append 新欄位」，既有
+-- 欄位的名稱／型別／順序都不能動。這次補的 current_membership_type／
+-- current_free_tier／current_valid_from 是照 offers 本身的欄位邏輯插在
+-- 中間（這樣讀起來才跟資料表對得起來），第 5 個位置從 current_timing
+-- 變成 current_membership_type，直接 replace 會被擋下來報
+-- 「42P16: cannot change name of view column ...」。這張 view 沒有其他
+-- 物件依賴（只有前端直接查），drop 再建是安全的。
 -- ---------------------------------------------------------------------
 
-create or replace view public.offer_edits_pending_preview
+drop view if exists public.offer_edits_pending_preview;
+
+create view public.offer_edits_pending_preview
 with (security_invoker = true) as
 select e.id, e.offer_id, e.patch, e.reason, e.source_url, e.created_at,
        o.brand,

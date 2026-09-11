@@ -3,3 +3,4 @@ __pycache__/
 *.bak
 diff_report.md
 threads_report.md
+node_modules/
