@@ -7,3 +7,4 @@ node_modules/
 .places_cache/
 stores_import.sql
 stores_fetched.json
+stores_import_*.sql

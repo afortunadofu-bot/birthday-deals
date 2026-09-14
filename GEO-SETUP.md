@@ -10,7 +10,7 @@
 | 部分 | 檔案 | 說明 |
 | --- | --- | --- |
 | 資料表＋距離查詢 | `schema_v58_offer_stores.sql` | `offer_stores` 分店表、`nearest_offer_stores()`（每筆優惠最近的一家）、`offer_stores_in_bounds()`（地圖畫面內的分店）、`offer_store_coverage`（管理員查哪些優惠沒有分店） |
-| 抓分店 | `fetch_stores.py` | 用 Google Places API（New）Text Search，逐縣市查每個品牌，產生 `stores_import.sql` |
+| 抓分店 | `fetch_stores.py` | 用 Google Places API（New）Text Search，逐縣市查每個品牌（大縣市被 60 筆上限截斷時自動分區補抓），產生 `stores_import_*.sql` |
 | 品牌別名 | `store_search_aliases.json` | 品牌名稱跟 Google 店名對不上、聯名卡要拆成好幾個品牌搜、純線上優惠要略過，都在這裡設定 |
 | 前端 | `template.html` | 「📍 附近」按鈕、距離範圍、離我最近排序、卡片上的「最近分店＋導航」、Leaflet 地圖（點地圖可以換查詢位置） |
 
@@ -51,15 +51,17 @@ python fetch_stores.py
 
 最後會列出「一家都沒找到」的優惠，通常是兩種情況：
 
-- **店名跟 Google 上不一樣**：在 `store_search_aliases.json` 的 `brands` 加上 `query`（拿去搜的字）和 `match`（店名要包含其中一個才收）。
+- **店名跟 Google 上不一樣**：在 `store_search_aliases.json` 的 `brands` 加上 `query`（拿去搜的字）和 `match`（店名要包含其中一個才收）。大部分「中文＋英文」的品牌名稱不用設，腳本會自動拆開比對。
+- **抓到別家店**（例如「寶雅」比到「寶雅中醫診所」）：在那個品牌加 `exclude`（店名包含這些字就不收）。
+- **不確定是不是同一個品牌、集團優惠要列出旗下品牌**：`store_search_aliases.json` 最下面的 `_待celine確認` 有逐筆說明，確認後再改別名。
 - **純線上／App 優惠，沒有實體店**：把品牌名稱加進 `skip`。
 
-改完別名直接重跑，已經查過的會走快取。
+改完別名先跑 `python fetch_stores.py --cache-only`：只用快取重算，不打 API、不花錢，可以快速看比對結果；確認沒問題再拿金鑰正常跑一次，補齊還沒查過的部分。
 
 ## 五、匯入 Supabase（依序貼進 SQL Editor）
 
 1. `schema_v58_offer_stores.sql`
-2. `stores_import.sql`（腳本產生的，可重複執行）
+2. `stores_import_01.sql`、`stores_import_02.sql`…**依序全部貼完**。腳本把分店拆成每檔 1,500 家，避免單一檔案太大貼不進 SQL Editor；最後一個檔會先檢查前面都貼過了，才自動隱藏已歇業的分店，少貼一個會報錯停下來。全部可重複執行
 3. 檢查覆蓋率：
 
    ```sql
@@ -68,7 +70,7 @@ python fetch_stores.py
 
 ## 六、上線清單（全部打勾才合併回 main）
 
-- [ ] v58 已經在 Supabase 跑過，`stores_import.sql` 已經匯入
+- [ ] v58 已經在 Supabase 跑過，`stores_import_*.sql` 全部依序匯入
 - [ ] `offer_store_coverage` 裡 `store_count = 0` 的，都確認過是純線上優惠，或已經補好別名重跑
 - [ ] 抽查 5 個大型連鎖（麥當勞、摩斯、星巴克…）：在地圖上的分店位置正確、沒有混進別家店
 - [ ] 手機實測：允許定位 → 列表變成由近到遠，卡片有「最近分店」，導航連結會開 Google 地圖

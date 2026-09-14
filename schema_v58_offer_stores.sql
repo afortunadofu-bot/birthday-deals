@@ -34,10 +34,16 @@ create table if not exists public.offer_stores (
   business_status  text,
   source           text not null default 'google_places',
   hidden           boolean not null default false,
+  -- hidden_by：'import'＝重跑匯入時這家分店沒再出現，被自動隱藏（下一輪又出現會自動打開）；
+  -- 'admin'（或其他值）＝管理員手動隱藏，重跑匯入永遠不會把它打開
+  hidden_by        text,
   fetched_at       timestamptz not null default now(),
   created_at       timestamptz not null default now(),
   unique (offer_id, place_id)
 );
+
+-- 表如果是舊版 v58 建的（還沒有 hidden_by），補上欄位
+alter table public.offer_stores add column if not exists hidden_by text;
 
 create index if not exists offer_stores_offer_idx on public.offer_stores (offer_id);
 create index if not exists offer_stores_lat_lng_idx on public.offer_stores (lat, lng) where not hidden;
