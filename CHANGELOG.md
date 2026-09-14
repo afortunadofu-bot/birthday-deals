@@ -9,6 +9,22 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v57　使用回報日期檢查從 CHECK 改成 trigger
+
+celine 在 SQL Editor 重新加 `usage_reports_used_on_check` 時報
+`23514: check constraint ... is violated by some row`。根因是這個 CHECK 用了
+`now()`——「在一年內」是會隨時間改變的條件，add constraint 當下會拿「今天」
+去驗全表：網站上線初期允許回報最多 365 天前的日期，那些列當時合法，現在
+已經超過 366 天，整個 add constraint 失敗。用 `NOT VALID` 跳過也不行，之後
+使用者編輯舊回報（就算只改備註）UPDATE 會重驗整列，舊回報變成永遠改不了。
+
+改成 BEFORE INSERT OR UPDATE trigger，只在「新增」或「used_on 真的被改」時
+才檢查範圍（台北時間今天 +1 天～366 天前，跟原本那版一致），舊資料不動、
+舊回報照常可以編輯。**要貼 `schema_v57_used_on_trigger.sql` 執行一次**，
+原本那段 `alter table ... add constraint usage_reports_used_on_check` 不要再跑。
+
+---
+
 ## 大版本　待審佇列批次核可、管理員點頭貼看信箱、地區標籤跑版
 
 嵐／celine 這一批三項回饋，都落在管理員審核與排行榜這一塊。

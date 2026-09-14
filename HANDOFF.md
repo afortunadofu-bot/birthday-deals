@@ -167,6 +167,7 @@ celine 會轉述朋友「嵐」的回饋（口語、有時間戳、繁中）。�
 - `schema_v54_timing_check_other.sql`
 - `schema_v55_public_online_hours.sql`
 - `schema_v56_pending_edit_preview_fields.sql` ← 已修成 drop + create
+- `schema_v57_used_on_trigger.sql` ← 取代會報 23514 的 used_on CHECK constraint（見 CHANGELOG v57）
 
 **沒跑的話對應前端功能不會動**（名次箭頭、全選核可、即時在線人數、
 詳情頁待審修改建議的「改前內容」）。
