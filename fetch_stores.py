@@ -250,7 +250,11 @@ def fetch_county(api_key, query, keys, county, refresh, max_pages):
     text = f"{query} {county}"
     places, calls, capped = paged(api_key, text, None, refresh, max_pages)
     if capped:
-        box = COUNTY_BOX.get(county) or bbox_of(places)
+        # 沒有預設外框的縣市，用「地址真的在這個縣市」的那幾家算補抓範圍——不能用全部
+        # 60 筆：小縣市的查詢結果可能混了一堆外縣市的店，外框會一路包到台北，補抓就變成
+        # 全台灣重查一遍、白花錢。一家都不在這個縣市的話就不補抓。
+        local = [x for x in places if tw(county) in tw(x.get("formattedAddress", ""))]
+        box = COUNTY_BOX.get(county) or bbox_of(local)
         if box:
             p2, c2 = tiled(api_key, text, box, refresh, max_pages, 0, info)
             places += p2

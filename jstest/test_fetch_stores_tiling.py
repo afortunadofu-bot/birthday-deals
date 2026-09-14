@@ -40,7 +40,15 @@ for i in range(360, 365):   # 永久歇業
                        "台北市", "CLOSED_PERMANENTLY"))
 for i in range(365, 380):   # 嘉義市 15 家，不會被截斷
     WORLD.append(place(i, random.uniform(23.46, 23.50), random.uniform(120.43, 120.48), f"麥當勞-嘉義{i}店", "嘉義市"))
+for i in range(380, 383):   # 雲林縣只有 3 家，但查詢結果被外縣市的店塞滿 60 筆
+    WORLD.append(place(i, random.uniform(23.69, 23.72), random.uniform(120.52, 120.55), f"麥當勞-雲林{i}店", "雲林縣"))
 
+SPILLOVER = {
+    '台北市': ['新北市'],
+    # 最壞情況：小縣市的查詢被遠方大縣市的店塞滿。雲林縣沒有預設外框，要用「真的在
+    # 雲林的那幾家」算補抓範圍；如果用全部 60 筆算，外框會一路包到台北，變成全台重查。
+    '雲林縣': ['台北市', '新北市'],
+}
 CALLS = []
 
 
@@ -49,13 +57,17 @@ def fake_search(api_key, query, page_token=None, refresh=False, rect=None):
     CALLS.append((query, page_token, rect))
     r = rect or fs.TAIWAN_RECT
     county = query.split()[-1]
+    # Google Text Search 依「文字相關度」回結果，不會把全台灣所有麥當勞都丟回來——
+    # 試跑時小縣市（嘉義縣 3 家、南投縣 1 家）都是一頁就結束。這裡模擬成只回
+    # 「地址在這個縣市」的店，外加 SPILLOVER 設定的外縣市（查台北市時混進新北市的店，
+    # 是試跑時真的看到的）。第一版假回應把全台灣的店都丟回來，小縣市也被當成截斷，
+    # 測出來的「多打了幾十次」是假回應的問題，不是 fetch_stores 的問題。
+    rel = [county] + SPILLOVER.get(county, [])
     inside = [p for p in WORLD
-              if r["low"]["latitude"] <= p["location"]["latitude"] <= r["high"]["latitude"]
+              if any(c in p["formattedAddress"] for c in rel)
+              and r["low"]["latitude"] <= p["location"]["latitude"] <= r["high"]["latitude"]
               and r["low"]["longitude"] <= p["location"]["longitude"] <= r["high"]["longitude"]]
-    if rect is None:   # 沒給外框時，Google 大致依文字相關度排，縣市名稱對的排前面
-        inside.sort(key=lambda p: (county not in p["formattedAddress"], p["id"]))
-    else:
-        inside.sort(key=lambda p: p["id"])
+    inside.sort(key=lambda p: (county not in p["formattedAddress"], p["id"]))
     page = int(page_token or 0)
     chunk = inside[page * 20:(page + 1) * 20]
     has_more = len(inside) > (page + 1) * 20 and page < 2
@@ -99,6 +111,13 @@ check("沒被截斷的縣市只打 1 次（不滿一頁不翻頁）", len(CALLS)
 CALLS.clear()
 rows, calls, info = fs.fetch_county("k", "麥當勞", ["麥當勞"], "新竹市", False, 3)
 check("完全沒有分店的縣市回空、不補抓", rows == [] and info["tiles"] == 0 and len(CALLS) == 1, (len(rows), info, len(CALLS)))
+
+CALLS.clear()
+rows, calls, info = fs.fetch_county("k", "麥當勞", ["麥當勞"], "雲林縣", False, 3)
+check("雲林縣 3 家全部抓到、沒混進外縣市", len(rows) == 3 and all("雲林縣" in r["address"] for r in rows),
+      [r["address"] for r in rows])
+check("被外縣市塞滿時，補抓範圍只包雲林那幾家（不會全台重查）", info["tiles"] <= 1 and len(CALLS) <= 4,
+      (info, len(CALLS)))
 
 ok = all(results)
 print(f"[fetch_stores 分區補抓] {sum(results)}/{len(results)} passed")
