@@ -58,6 +58,23 @@ COUNTIES = ['基隆市', '台北市', '新北市', '桃園市', '新竹市', '�
 TAIWAN_RECT = {"low": {"latitude": 21.8, "longitude": 118.1},
                "high": {"latitude": 26.4, "longitude": 122.1}}
 
+# 分區補抓用的縣市外框（大約值，只要「包得住整個縣市」就好，多包一點沒關係，
+# 超出縣市的店最後會被地址過濾掉）。為什麼需要：第一次試跑麥當勞，台北市、台中市
+# 都剛好卡在 59 家（Text Search 一個查詢最多 60 筆），新北市更只剩 29 家——「麥當勞
+# 新北市」回來的 60 筆裡混了一堆台北市的店，被地址過濾掉之後就少一大半。實際上
+# 雙北各有七八十家以上。沒列在這裡的縣市，被截斷時就用那 60 筆結果自己的範圍外擴。
+COUNTY_BOX = {
+    '台北市': {"low": {"latitude": 24.96, "longitude": 121.45}, "high": {"latitude": 25.21, "longitude": 121.67}},
+    '新北市': {"low": {"latitude": 24.67, "longitude": 121.28}, "high": {"latitude": 25.30, "longitude": 122.01}},
+    '桃園市': {"low": {"latitude": 24.59, "longitude": 120.97}, "high": {"latitude": 25.12, "longitude": 121.49}},
+    '台中市': {"low": {"latitude": 23.99, "longitude": 120.46}, "high": {"latitude": 24.45, "longitude": 121.45}},
+    '台南市': {"low": {"latitude": 22.88, "longitude": 120.03}, "high": {"latitude": 23.42, "longitude": 120.66}},
+    '高雄市': {"low": {"latitude": 22.46, "longitude": 120.17}, "high": {"latitude": 23.47, "longitude": 121.05}},
+    '彰化縣': {"low": {"latitude": 23.78, "longitude": 120.24}, "high": {"latitude": 24.20, "longitude": 120.73}},
+}
+MAX_TILE_DEPTH = 5          # 最多切 5 層（單邊縮成 1/32），再小就不切了
+MIN_TILE_DEG = 0.01         # 格子邊長小於約 1 公里就不再切
+
 API_URL = "https://places.googleapis.com/v1/places:searchText"
 FIELD_MASK = ",".join([
     "places.id", "places.displayName", "places.formattedAddress",
@@ -118,9 +135,9 @@ def load_aliases():
     return data
 
 
-def search(api_key, query, page_token=None, refresh=False):
+def search(api_key, query, page_token=None, refresh=False, rect=None):
     body = {"textQuery": query, "languageCode": "zh-TW", "regionCode": "TW",
-            "pageSize": 20, "locationRestriction": {"rectangle": TAIWAN_RECT}}
+            "pageSize": 20, "locationRestriction": {"rectangle": rect or TAIWAN_RECT}}
     if page_token:
         body["pageToken"] = page_token
     raw = json.dumps(body, ensure_ascii=False, sort_keys=True)
@@ -161,6 +178,92 @@ def plan_for(offer, aliases):
     return queries, keys, counties
 
 
+def paged(api_key, text, rect, refresh, max_pages):
+    """翻頁拿完一個查詢。回傳 (places, 計費次數, 是否被 60 筆上限截斷)。
+    翻滿 3 頁之後還有 nextPageToken，代表 Google 手上還有更多、只是不給了。"""
+    places, calls, token, pages = [], 0, None, 0
+    for _ in range(max(1, min(max_pages, 3))):
+        data, billed = search(api_key, text, token, refresh, rect)
+        calls += billed
+        pages += 1
+        places += data.get("places", [])
+        token = data.get("nextPageToken")
+        if not token:
+            break
+    return places, calls, bool(token) and pages >= 3
+
+
+def split4(rect):
+    lo, hi = rect["low"], rect["high"]
+    mlat = (lo["latitude"] + hi["latitude"]) / 2
+    mlng = (lo["longitude"] + hi["longitude"]) / 2
+    box = lambda a, b, c, d: {"low": {"latitude": a, "longitude": b}, "high": {"latitude": c, "longitude": d}}
+    return [box(lo["latitude"], lo["longitude"], mlat, mlng), box(lo["latitude"], mlng, mlat, hi["longitude"]),
+            box(mlat, lo["longitude"], hi["latitude"], mlng), box(mlat, mlng, hi["latitude"], hi["longitude"])]
+
+
+def bbox_of(places, pad=0.05):
+    pts = [p["location"] for p in places if (p.get("location") or {}).get("latitude") is not None]
+    if not pts:
+        return None
+    return {"low": {"latitude": min(x["latitude"] for x in pts) - pad, "longitude": min(x["longitude"] for x in pts) - pad},
+            "high": {"latitude": max(x["latitude"] for x in pts) + pad, "longitude": max(x["longitude"] for x in pts) + pad}}
+
+
+def tiled(api_key, text, rect, refresh, max_pages, depth, info):
+    """被截斷的區域切成四塊各自再查，直到每一塊都沒被截斷（或切到很小了）。"""
+    places, calls, capped = paged(api_key, text, rect, refresh, max_pages)
+    info["tiles"] += 1
+    span = min(rect["high"]["latitude"] - rect["low"]["latitude"],
+               rect["high"]["longitude"] - rect["low"]["longitude"])
+    if capped and depth < MAX_TILE_DEPTH and span / 2 >= MIN_TILE_DEG:
+        for sub in split4(rect):
+            p2, c2 = tiled(api_key, text, sub, refresh, max_pages, depth + 1, info)
+            places += p2
+            calls += c2
+    elif capped:
+        info["still_capped"] = True
+    return places, calls
+
+
+def keep_place(p, keys, county):
+    """店名要對得上品牌、地址要在這個縣市、不是永久歇業。"""
+    name = (p.get("displayName") or {}).get("text", "")
+    loc = p.get("location") or {}
+    if not p.get("id") or "latitude" not in loc:
+        return None
+    if p.get("businessStatus") == "CLOSED_PERMANENTLY":
+        return None
+    if not name_matches(name, keys):
+        return None
+    addr = p.get("formattedAddress", "")
+    if tw(county) not in tw(addr):
+        return None
+    return {"place_id": p["id"], "name": name, "address": addr, "county": county,
+            "lat": loc["latitude"], "lng": loc["longitude"], "business_status": p.get("businessStatus")}
+
+
+def fetch_county(api_key, query, keys, county, refresh, max_pages):
+    """查一個品牌在一個縣市的所有分店。先照舊查「品牌 縣市」；如果被 60 筆上限截斷，
+    改用縣市外框分區補抓。回傳 (過濾後的分店, 計費次數, {"tiles": 補抓幾區, "still_capped": bool})。"""
+    info = {"tiles": 0, "still_capped": False}
+    text = f"{query} {county}"
+    places, calls, capped = paged(api_key, text, None, refresh, max_pages)
+    if capped:
+        box = COUNTY_BOX.get(county) or bbox_of(places)
+        if box:
+            p2, c2 = tiled(api_key, text, box, refresh, max_pages, 0, info)
+            places += p2
+            calls += c2
+    out, seen = [], set()
+    for p in places:
+        r = keep_place(p, keys, county)
+        if r and r["place_id"] not in seen:
+            seen.add(r["place_id"])
+            out.append(r)
+    return out, calls, info
+
+
 def sql_str(v):
     if v is None:
         return "null"
@@ -189,41 +292,28 @@ def main():
     n_queries = sum(len(q) * len(c) for _, q, _, c in planned)
     print(f"{len(planned)} 筆優惠（略過 {len(offers) - len(planned)} 筆），"
           f"共 {n_queries} 個縣市查詢；每個查詢最多 {args.max_pages} 頁，"
-          f"最多 {n_queries * args.max_pages} 次 API 呼叫（有結果不滿一頁就不會翻下一頁）。")
+          f"最多 {n_queries * args.max_pages} 次 API 呼叫（有結果不滿一頁就不會翻下一頁）。\n"
+          f"大縣市被 60 筆上限截斷時會自動分區補抓，實際呼叫次數會比這個多一些。")
     if args.dry_run:
         for o, q, _, c in planned:
             print(f"  #{o['id']} {o['brand']}  查「{'」「'.join(q)}」× {len(c)} 縣市")
         return
 
-    rows, calls, per_offer = [], 0, {}
+    rows, calls, per_offer, tiled_log, still_capped = [], 0, {}, [], []
     for o, queries, keys, counties in planned:
         seen = set()
         for query, county in ((q, c) for q in queries for c in counties):
-            token = None
-            for _ in range(max(1, min(args.max_pages, 3))):
-                data, billed = search(api_key, f"{query} {county}", token, args.refresh)
-                calls += billed
-                for p in data.get("places", []):
-                    pid = p.get("id")
-                    name = (p.get("displayName") or {}).get("text", "")
-                    addr = p.get("formattedAddress", "")
-                    loc = p.get("location") or {}
-                    if not pid or pid in seen or "latitude" not in loc:
-                        continue
-                    if p.get("businessStatus") == "CLOSED_PERMANENTLY":
-                        continue
-                    if not name_matches(name, keys):
-                        continue
-                    if tw(county) not in tw(addr):
-                        continue
-                    seen.add(pid)
-                    rows.append({"offer_id": o["id"], "brand": o["brand"], "place_id": pid,
-                                 "name": name, "address": addr, "county": county,
-                                 "lat": loc["latitude"], "lng": loc["longitude"],
-                                 "business_status": p.get("businessStatus")})
-                token = data.get("nextPageToken")
-                if not token:
-                    break
+            found, c, info = fetch_county(api_key, query, keys, county, args.refresh, args.max_pages)
+            calls += c
+            if info["tiles"]:
+                tiled_log.append(f"{o['brand']}／{county}：分 {info['tiles']} 區補抓")
+            if info["still_capped"]:
+                still_capped.append(f"{o['brand']}／{county}")
+            for r in found:
+                if r["place_id"] in seen:
+                    continue
+                seen.add(r["place_id"])
+                rows.append({"offer_id": o["id"], "brand": o["brand"], **r})
         per_offer[o["brand"]] = len(seen)
         print(f"  #{o['id']} {o['brand']}：{len(seen)} 家分店")
 
@@ -265,6 +355,14 @@ def main():
     ]
     OUT_SQL.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
+    if tiled_log:
+        print(f"\n這些縣市被 60 筆上限截斷，已自動分區補抓：")
+        for x in tiled_log:
+            print("  -", x)
+    if still_capped:
+        print(f"\n⚠️ 下面這些切到最小格還是被截斷，可能還有漏抓的分店（通常不會發生）：")
+        for x in still_capped:
+            print("  -", x)
     zero = [b for b, n in per_offer.items() if n == 0]
     print(f"\n完成：{len(rows)} 家分店，實際計費 API 呼叫 {calls} 次（其餘走快取）。")
     print(f"輸出：{OUT_SQL.name}（貼進 SQL Editor）、{OUT_JSON.name}（人工檢查用）")
