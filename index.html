@@ -2066,6 +2066,28 @@ async function bulkVerifyOffers(ids){
 function syncWishButtons(id, pressed){
   $$(`.wish[data-id="${id}"]`).forEach(b=>b.setAttribute('aria-pressed', String(pressed)));
 }
+/* ---- 收藏後提示「收到哪裡去了」----
+   Cindy 回饋：「想請問怎麼看到自己儲存的東西」。登入後按收藏只有書籤圖示變色，
+   完全沒說收進哪裡；待辦清單其實在「我的」分頁，但從「優惠」分頁看不出兩者
+   有關係。第一次收藏時提示一次、附一顆直接跳過去的按鈕，之後不再打擾（跟
+   未登入那兩段提醒一樣只提示一次，這個存 localStorage，換分頁重整也不會再跳）。 ---- */
+function hintWishlistLocation(){
+  try{
+    if(localStorage.getItem('sxr_wish_where_hinted')) return;
+    localStorage.setItem('sxr_wish_where_hinted','1');
+  }catch{ return; }
+  note($('#modeBanner'),'good',
+    '已加入<b>待辦清單</b>！收藏的優惠都放在下方「我的」分頁。'
+    +'<button type="button" class="btn sm" id="btnGoWishlist" style="margin-left:6px">去看看</button>');
+  $('#btnGoWishlist').onclick=()=>{
+    $('#modeBanner').innerHTML='';
+    $('.tab[data-tab="mine"]').click();
+    const p=$('#wishlistPanel');
+    // 「我的」分頁的 panel 可以摺疊，使用者之前收起來的話要先打開，不然跳過去什麼都看不到
+    if(p?.classList.contains('collapsed')) p.querySelector('h2')?.click();
+    p?.scrollIntoView({behavior:'smooth',block:'start'});
+  };
+}
 async function toggleWish(id, btn){
   const has=WISH.has(String(id));
   has?WISH.delete(String(id)):WISH.add(String(id));
@@ -2079,6 +2101,7 @@ async function toggleWish(id, btn){
       const hint=/relation|does not exist|wishlist/i.test(error.message)
         ? '\n（這通常是 Supabase 資料庫還沒建立「待辦清單」的資料表，請管理員到 SQL Editor 執行 schema_v8.sql。）' : '';
       alert('收藏失敗：'+error.message+hint); return; }
+    if(!has) hintWishlistLocation();
   } else {
     localStorage.setItem('sxr_wishlist', JSON.stringify([...WISH]));
     // 只提醒一次就好，每按一次跳一次會很煩
@@ -2212,7 +2235,7 @@ function renderWishlistBody(){
       ${yearBadge}
       ${moveBtns}
       ${yearBtn}
-      ${o.brand?`<button class="btn sm wl-toggle" data-id="${w.offer_id}" type="button" aria-expanded="false">詳情</button>`:''}
+      ${o.brand?`<button class="btn sm wl-toggle" data-id="${w.offer_id}" type="button">詳情</button>`:''}
       <button class="btn sm wl-remove" data-id="${w.offer_id}">移除</button>
     </div>
     ${o.offer?`<div style="font-size:.78rem;color:var(--ink-2);margin:-4px 0 8px;overflow:hidden;
@@ -2222,16 +2245,7 @@ function renderWishlistBody(){
         placeholder="加個備註，只有你自己看得到" value="${esc(w.note||'')}"
         style="width:100%;font-size:.78rem;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg)">
     </div>
-    ${o.brand?`<div class="sub-list hidden" id="wl-detail-${w.offer_id}">
-      <div class="sub-item"><b>優惠內容</b><span>${esc(o.offer||'—')}</span></div>
-      <div class="sub-item"><b>使用條件</b><span>${esc(o.conditions||'—')}</span></div>
-      <div class="sub-item"><b>會員取得</b><span>${esc(o.membership||'—')}</span></div>
-      <div class="sub-item"><b>適用期間</b><span>${esc(o.timing||'—')}${o.value_twd?`（約 ${nt(o.value_twd)}）`:''}</span></div>
-      <div class="sub-item"><b>提前天數</b><span>${o.advance_days==null?'未明訂':o.advance_days+' 天'}</span></div>
-      ${dlText?`<div class="sub-item"><b>入會死線</b><span>${esc(dlText)}</span></div>`:''}
-      <div class="sub-item"><b>適用地區</b><span>${esc((o.regions&&o.regions.length?o.regions.join('、'):'未確認')+(o.region_note?'　'+o.region_note:''))}</span></div>
-      <div class="sub-item"><b>檔期迄日</b><span>${esc(o.valid_until||'未明訂')}</span></div>
-    </div>`:''}`;
+    ${dlText&&!done?`<div style="font-size:.76rem;color:var(--accent-dark);margin:-4px 0 8px">⏰ ${esc(dlText)}</div>`:''}`;
   }).join('') : '<div style="color:var(--ink-3);font-size:.86rem">還沒有收藏，去「優惠」分頁點卡片上的書籤圖示加入。</div>';
   // 把剛剛發現「有回報但 wishlist.done 還沒同步」的幾筆補寫回資料庫，純粹是
   // 讓資料庫本身也保持一致（目前前端只有這裡讀 wishlist.done），不影響畫面
@@ -2267,11 +2281,13 @@ function renderWishlistBody(){
     inp.addEventListener('input',()=>{ clearTimeout(wlNoteTimer); wlNoteTimer=setTimeout(save,600); });
     inp.addEventListener('blur',()=>{ clearTimeout(wlNoteTimer); save(); });
   });
+  // DORIS 回饋：「待辦清單希望點開的時候跟在優惠頁面點開的內容一樣，可以同時看到
+  // 別人回報使用的狀況或是其他人的留言」。原本這顆「詳情」只是在列下方展開一小段
+  // 自己拼的欄位清單，沒有回報、留言、評分。改成直接開跟優惠卡片同一個詳情視窗；
+  // OFFERS 裡找不到（例如已下架）時用待辦清單自己 join 到的那份資料當備援。
   $$('.wl-toggle').forEach(b=>b.onclick=()=>{
-    const open=b.getAttribute('aria-expanded')!=='true';
-    b.setAttribute('aria-expanded',String(open));
-    b.textContent=open?'收合':'詳情';
-    $('#wl-detail-'+b.dataset.id).classList.toggle('hidden',!open);
+    const w=WL_ROWS.find(x=>String(x.offer_id)===b.dataset.id);
+    openDetail(b.dataset.id, w?.offers ? fromRow({...w.offers, id:w.offer_id}) : null);
   });
   $$('.wl-remove').forEach(b=>b.onclick=async()=>{
     b.disabled=true;
@@ -3157,7 +3173,7 @@ async function openDetail(id, fallback=null){
   const [{data:c},{data:r},{data:myR},{data:eh},{data:pe}]=await Promise.all([
     sb.from('comments').select('id,body,created_at,is_hidden,user_id')
       .eq('offer_id',id).order('created_at',{ascending:false}).limit(50),
-    sb.from('usage_reports').select('id,used_on,result,store,note,saved_twd,user_id')
+    sb.from('usage_reports').select('id,used_on,result,store,note,saved_twd,user_id,created_at')
       .eq('offer_id',id).order('used_on',{ascending:false}).limit(30),
     me? sb.from('offer_ratings').select('score').eq('offer_id',id).eq('user_id',me.id).maybeSingle()
       : Promise.resolve({data:null}),
@@ -3242,6 +3258,8 @@ async function openDetail(id, fallback=null){
       ${x.store?`<span style="color:var(--ink-3)">${esc(x.store)}</span>`:''}
       <span style="flex:1;min-width:0">${esc(x.note||'')}</span>
       <span style="color:var(--ink-3);font-size:.75rem">${esc(x.profiles?.display_name||'匿名')}</span>
+      ${me&&x.user_id===me.id?`<button type="button" class="btn sm dtl-rep-edit" data-rid="${esc(x.id)}"
+        style="padding:2px 8px;font-size:.72rem">編輯</button>`:''}
     </div>`).join('')||'<div style="color:var(--ink-3);padding:5px 0">還沒有使用回報</div>'}
     <div class="cmt-list">${shown.map(cmtHtml).join('')}</div>
     ${rest.length?`<div class="cmt-rest hidden">${rest.map(cmtHtml).join('')}</div>
@@ -3251,6 +3269,13 @@ async function openDetail(id, fallback=null){
       <textarea class="ci" maxlength="800" placeholder="分享使用經驗"></textarea>
       <button class="btn sm primary cs" data-id="${esc(id)}" style="margin-top:5px">送出留言</button></div>`
      :'<div style="color:var(--ink-3);padding:6px 0">登入後可留言</div>'}</div>`;
+  // DORIS 回饋：「送出後沒辦法修改再補充內容」。其實「我的」分頁的「我的使用回報」
+  // 點進去就能編輯／刪除，但那個 panel 預設收合，大家又是在詳情頁看到自己的回報，
+  // 自然會想在這裡改。自己的那幾筆直接給一顆「編輯」，開的是同一個回報視窗。
+  body.querySelectorAll('.dtl-rep-edit').forEach(btn=>btn.onclick=()=>{
+    const x=(r||[]).find(v=>String(v.id)===btn.dataset.rid);
+    if(x) openReport(id, {...x, offers:{brand:o?.brand, offer:o?.offer}});
+  });
   const more=body.querySelector('.cm-more');
   if(more) more.onclick=()=>{ body.querySelector('.cmt-rest').classList.remove('hidden'); more.remove(); };
   const inlineReportBtn=body.querySelector('#btnInlineReport');
@@ -3468,8 +3493,14 @@ $('#btnFbSubmit').onclick=async()=>{
    同一個 dialog 兩用：openReport(offerId) 是新增，openReport(offerId, existing) 是點
    「我的使用回報」列表進來的編輯／看細項模式，帶第二個參數就代表在編輯。 */
 let repId=null, editingReportId=null;
-function openReport(id, existing=null){
+async function openReport(id, existing=null){
   if(!LIVE){ alert('離線模式無法回報。請先用 python serve.py 啟動並設定 config.js。'); return; }
+  // DORIS 回饋：「環球購物有兩筆，結果我兩筆都回報使用，省下的錢也重複計算了」。
+  // 資料庫只擋「同一天對同一筆回報兩次」（unique offer_id,user_id,used_on），換個
+  // 日期、或同一家店剛好有兩張卡片，都擋不住。今年已經回報過這筆（或同品牌的
+  // 另一張卡片）的話，先問要不要改成編輯原本那一筆——不直接擋，因為一年內真的
+  // 用兩次是合法的（例如一筆是生日當月、一筆是整年可用的點數）。
+  if(!existing && me) existing = await askEditPreviousReport(id) || null;
   // 未登入也讓人先填——填完按送出時才問要不要登入，
   // 一進來就擋掉會讓人不知道自己錯過了什麼。
   repId=id; editingReportId=existing?.id||null;
@@ -3530,6 +3561,40 @@ $('#btnDeleteReport').onclick=async()=>{
   $('#dlgReport').close();
   await loadOffers(); render(); loadMyStuff(); loadSiteStats(); loadMyUsedOffers();
 };
+
+// 找「今年已經回報過的同一筆／同品牌另一張卡片」。品牌比對沿用投稿查重的
+// normBrand，但只在比較短的那個名字至少 4 個字時才接受「包含」關係——
+// 「Global Mall 環球購物中心」跟「環球購物中心」要算同一家，「王品」跟
+// 「王品牛排」卻是不同品牌，太短的名字只接受完全相同。
+function sameBrandOfferIds(id){
+  const me0=OFFERS.find(x=>String(x.id)===String(id));
+  const ids=new Set([Number(id)]);
+  const a=normBrand(me0?.brand);
+  if(a) OFFERS.forEach(x=>{
+    const b=normBrand(x.brand);
+    if(!b || x.status!=='approved') return;
+    const short=a.length<=b.length?a:b, long=a.length<=b.length?b:a;
+    if(a===b || (short.length>=4 && long.includes(short))) ids.add(Number(x.id));
+  });
+  return [...ids].filter(n=>Number.isFinite(n));
+}
+async function askEditPreviousReport(id){
+  const ids=sameBrandOfferIds(id);
+  const {data,error}=await sb.from('usage_reports')
+    .select('id,used_on,result,saved_twd,store,note,created_at,offer_id')
+    .eq('user_id',me.id).in('offer_id',ids).gte('used_on',`${new Date().getFullYear()}-01-01`)
+    .order('used_on',{ascending:false}).limit(1);
+  const prev=(!error&&data||[])[0];
+  if(!prev) return null;
+  const po=OFFERS.find(x=>String(x.id)===String(prev.offer_id));
+  const brand=po?.brand||'這筆優惠';
+  const other=String(prev.offer_id)!==String(id);
+  const ok=confirm(`你在 ${prev.used_on} 已經回報過「${brand}」了${prev.saved_twd?`（省 ${nt(prev.saved_twd)}）`:''}`
+    +`${other?'——那是同一家店的另一張優惠卡片':''}。\n\n`
+    +'同一次使用回報兩次，「我省下多少」跟排行榜都會重複計算。\n'
+    +'按「確定」改成編輯原本那一筆；按「取消」照樣新增一筆（例如今年真的又用了一次）。');
+  return ok ? {...prev, offers:{brand:po?.brand||'', offer:po?.offer||''}} : null;
+}
 
 /* ===================================================================== */
 function paintSubmitGate(){
@@ -4032,7 +4097,8 @@ async function loadMyStuff(){
   $('#myReports').innerHTML=MY_REPORTS.map(r=>`<div class="rep rep-click" data-id="${r.id}">
     <span>${esc(r.used_on)}</span><b style="flex:1;min-width:0">${esc(r.offers?.brand||'（已下架）')}</b>
     <span class="${R[r.result][1]}">${R[r.result][0]}</span>
-    <span>${nt(r.saved_twd)}</span></div>`).join('')
+    <span>${nt(r.saved_twd)}</span>
+    <span style="color:var(--ink-3);font-size:.75rem;white-space:nowrap">編輯 ›</span></div>`).join('')
     ||'<div style="color:var(--ink-3);font-size:.86rem">還沒有回報紀錄。</div>';
   $$('.rep-click').forEach(row=>row.onclick=()=>{
     const r=MY_REPORTS.find(x=>String(x.id)===row.dataset.id);
