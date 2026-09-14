@@ -43,6 +43,11 @@ for i in range(365, 380):   # 嘉義市 15 家，不會被截斷
 for i in range(380, 383):   # 雲林縣只有 3 家，但查詢結果被外縣市的店塞滿 60 筆
     WORLD.append(place(i, random.uniform(23.69, 23.72), random.uniform(120.52, 120.55), f"麥當勞-雲林{i}店", "雲林縣"))
 
+for i in range(383, 385):   # 台東縣只有 2 家原燒……
+    WORLD.append(place(i, random.uniform(22.75, 22.76), random.uniform(121.14, 121.15), f"原燒 台東{i}店", "台東縣"))
+for i in range(385, 485):   # ……但附近有 100 家別家燒肉，Google 會拿來把 60 筆補滿
+    WORLD.append(place(i, random.uniform(22.70, 22.80), random.uniform(121.10, 121.20), f"某某燒肉{i}", "台東縣"))
+
 SPILLOVER = {
     '台北市': ['新北市'],
     # 最壞情況：小縣市的查詢被遠方大縣市的店塞滿。雲林縣沒有預設外框，要用「真的在
@@ -120,6 +125,12 @@ check("雲林縣 3 家全部抓到、沒混進外縣市", len(rows) == 3 and all
       [r["address"] for r in rows])
 check("被外縣市塞滿時，補抓範圍只包雲林那幾家（不會全台重查）", info["tiles"] <= 1 and len(CALLS) <= 4,
       (info, len(CALLS)))
+
+CALLS.clear()
+rows, calls, info = fs.fetch_county("k", "原燒", ["原燒"], "台東縣", False, 3)
+check("小縣市被別家店補滿 60 筆：2 家原燒照樣抓到", len(rows) == 2, [r["name"] for r in rows])
+check("小縣市被別家店補滿 60 筆：不算截斷、不分區補抓（實跑時白花了很多次 API）",
+      info["tiles"] == 0 and not info["still_capped"] and len(CALLS) == 3, (info, len(CALLS)))
 
 print("--- 店名比對規則（第一次全部跑完 79 筆 0 家分店，大多是比對太嚴）---")
 

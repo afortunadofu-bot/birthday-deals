@@ -346,21 +346,30 @@ def plan_for(offer, aliases):
     return queries, keys, counties
 
 
-def paged(api_key, text, rect, refresh, max_pages):
+def paged(api_key, text, rect, refresh, max_pages, relevant=None):
     """翻頁拿完一個查詢。回傳 (places, 計費次數, 是否被 60 筆上限截斷)。
     翻滿 3 頁之後還有 nextPageToken，代表 Google 手上還有更多、只是不給了。"""
-    places, calls, token, pages = [], 0, None, 0
+    places, calls, token, pages, last_page = [], 0, None, 0, []
     for _ in range(max(1, min(max_pages, 3))):
         data, billed = search(api_key, text, token, refresh, rect)
         calls += billed
         pages += 1
-        places += data.get("places", [])
+        last_page = data.get("places", [])
+        places += last_page
         token = data.get("nextPageToken")
         if not token:
             break
     # Google 最多給 3 頁（60 筆），而且第 3 頁之後「不會」再給 nextPageToken，就算手上還有
     # 更多。第一版用「翻滿 3 頁還有 token」判斷截斷，這個條件實際上永遠不成立——全部跑完
     # 雙北、台中還是卡在 59 家，分區補抓一次都沒觸發。改成「3 頁都拿滿（60 筆）」就當作截斷。
+    #
+    # 但「拿滿 60 筆」不代表這個品牌還有更多：Google 找完這個品牌的店之後，會拿附近其他
+    # 相關的店（別家燒肉、別家飲料）把頁面補滿。celine 拿金鑰全部跑完時，原燒／雲林縣、
+    # 雞湯桑／花蓮縣、Tea top／台東縣這種小縣市全部被當成截斷，一路切到最小格還是「滿的」，
+    # 白白多打了很多次 API。所以再加一個條件：第 3 頁裡還有這個品牌的店，才算真的截斷；
+    # 第 3 頁已經全是別家店，代表這個品牌已經列完了。
+    if relevant is not None and not any(relevant(p) for p in (last_page if pages >= 3 else [])):
+        return places, calls, False
     return places, calls, pages >= 3 and len(places) >= 60
 
 
@@ -381,15 +390,15 @@ def bbox_of(places, pad=0.05):
             "high": {"latitude": max(x["latitude"] for x in pts) + pad, "longitude": max(x["longitude"] for x in pts) + pad}}
 
 
-def tiled(api_key, text, rect, refresh, max_pages, depth, info):
+def tiled(api_key, text, rect, refresh, max_pages, depth, info, relevant=None):
     """被截斷的區域切成四塊各自再查，直到每一塊都沒被截斷（或切到很小了）。"""
-    places, calls, capped = paged(api_key, text, rect, refresh, max_pages)
+    places, calls, capped = paged(api_key, text, rect, refresh, max_pages, relevant)
     info["tiles"] += 1
     span = min(rect["high"]["latitude"] - rect["low"]["latitude"],
                rect["high"]["longitude"] - rect["low"]["longitude"])
     if capped and depth < MAX_TILE_DEPTH and span / 2 >= MIN_TILE_DEG:
         for sub in split4(rect):
-            p2, c2 = tiled(api_key, text, sub, refresh, max_pages, depth + 1, info)
+            p2, c2 = tiled(api_key, text, sub, refresh, max_pages, depth + 1, info, relevant)
             places += p2
             calls += c2
     elif capped:
@@ -426,7 +435,9 @@ def fetch_county(api_key, query, keys, county, refresh, max_pages):
     改用縣市外框分區補抓。回傳 (過濾後的分店, 計費次數, {"tiles": 補抓幾區, "still_capped": bool})。"""
     info = {"tiles": 0, "still_capped": False}
     text = f"{query} {county}"
-    places, calls, capped = paged(api_key, text, None, refresh, max_pages)
+    any_keys, all_keys = (keys["any"], keys["all"]) if isinstance(keys, dict) else (keys, [])
+    relevant = lambda p: name_matches((p.get("displayName") or {}).get("text", ""), any_keys, all_keys)
+    places, calls, capped = paged(api_key, text, None, refresh, max_pages, relevant)
     if capped:
         # 沒有預設外框的縣市，用「地址真的在這個縣市」的那幾家算補抓範圍——不能用全部
         # 60 筆：小縣市的查詢結果可能混了一堆外縣市的店，外框會一路包到台北，補抓就變成
@@ -434,7 +445,7 @@ def fetch_county(api_key, query, keys, county, refresh, max_pages):
         local = [x for x in places if tw(county) in tw(x.get("formattedAddress", ""))]
         box = COUNTY_BOX.get(county) or bbox_of(local)
         if box:
-            p2, c2 = tiled(api_key, text, box, refresh, max_pages, 0, info)
+            p2, c2 = tiled(api_key, text, box, refresh, max_pages, 0, info, relevant)
             places += p2
             calls += c2
     out, seen = [], set()
