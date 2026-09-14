@@ -434,6 +434,12 @@
      允許換行、寬度不超過容器，其餘短標籤維持原本不換行的行為。 */
   .flag.wrap{white-space:normal;max-width:100%;overflow-wrap:anywhere;word-break:break-word;
     text-align:left;line-height:1.5}
+  /* 附近模式（feature/geo）：搜尋列下方的狀態列＋地圖，卡片上多一行「最近分店」 */
+  .near-bar{margin:8px 0 4px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-sm);
+    background:var(--bg);font-size:.84rem}
+  .near-trigger.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  .line.near-line{color:var(--ink-2)}
+  .near-line a{margin-left:6px;font-size:.78rem}
   .flag.free{background:var(--free-bg);border-color:var(--free-line);color:var(--free)}
   .flag.today{background:var(--accent);border-color:var(--accent);color:#fff}
   .flag.alert{border-color:var(--alert-line);background:var(--alert-bg);color:var(--alert)}
@@ -790,6 +796,7 @@
           <option value="trust">依可信度</option>
           <option value="brand">依品牌</option>
           <option value="comments">依留言數</option>
+          <option value="distance">離我最近（附近模式）</option>
       </select>
       <button class="btn sm sort-trigger" id="btnOpenSort" type="button" aria-label="排序方式">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
@@ -799,6 +806,25 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
         篩選<span class="filter-badge hidden" id="filterBadge">0</span>
       </button>
+      <button class="btn sm near-trigger" id="btnNear" type="button" aria-pressed="false" title="找附近有優惠的分店">📍 附近</button>
+    </div>
+    <div class="near-bar hidden" id="nearBar">
+      <div class="row" style="align-items:center;gap:8px;flex-wrap:wrap">
+        <span id="nearStatus" style="flex:1;min-width:200px"></span>
+        <label class="toggle" style="gap:6px">距離
+          <select id="nearKm" aria-label="距離範圍">
+            <option value="1">1 公里</option><option value="3">3 公里</option><option value="5">5 公里</option>
+            <option value="10">10 公里</option><option value="30">30 公里</option>
+          </select></label>
+        <button class="btn sm" id="btnNearLocate" type="button">重新定位</button>
+        <button class="btn sm" id="btnNearMap" type="button">地圖</button>
+        <button class="btn sm plain" id="btnNearClose" type="button" aria-label="關閉附近模式">✕</button>
+      </div>
+      <div class="hint" style="margin-top:4px">位置只用來算距離，不會存起來。分店資料來自 Google 地圖，可能有遺漏或已歇業。</div>
+      <div class="hint" id="nearMapHint" style="margin-top:4px"></div>
+      <div class="hidden" id="nearMapWrap" style="margin-top:8px">
+        <div id="nearMap" style="height:min(360px,55vh);border-radius:var(--r-sm);border:1px solid var(--line);overflow:hidden"></div>
+      </div>
     </div>
     <div class="new-banner hidden" id="newOffersBanner">
       <span class="nb-icon" aria-hidden="true">🎂</span>
@@ -2632,12 +2658,185 @@ function pulseText(o){
   return `最近有人用：${w}　成功率 ${o.successRate??'—'}%（${o.reportCount} 次）`;
 }
 
+/* ---- 附近有優惠的店（feature/geo，整個做完才上線）----
+   使用者回饋：Z（9/9）「離自己最近的分店，人在北車就從北車方圓距離由近到遠」、
+   王（9/6）「地圖功能，人在 101 裡面有哪些店有優惠」、Cindy（9/13）「篩選加地理距離」。
+   分店座標來自 Google Places（fetch_stores.py → offer_stores，見 schema_v58）。
+   距離在資料庫算（nearest_offer_stores），前端只拿「每筆優惠最近的一家」回來排序／
+   篩選，不把全台幾千家分店都下載到手機上。
+   位置來源兩種：瀏覽器定位，或在地圖上點一下——定位被拒絕，或人不在那裡但想先查
+   「北車附近」都用得到。座標只放在記憶體裡當 RPC 參數，不寫 localStorage、不寫資料庫；
+   只有「距離範圍」會記住。
+   地圖用 Leaflet＋OpenStreetMap 圖磚，點了「地圖」才動態載入，沒用到的人不用多下載。 ---- */
+const NEAR_DEFAULT_CENTER={lat:25.0478, lng:121.5170};   // 台北車站：定位失敗時地圖先開在這
+const NEAR={active:false, lat:null, lng:null, label:'', km:3, byOffer:null, loading:false,
+  reqSeq:0, sortTouched:false};
+try{ const k=Number(localStorage.getItem('sxr_near_km')); if([1,3,5,10,30].includes(k)) NEAR.km=k; }catch{}
+let NEAR_MAP=null, NEAR_MAP_CENTER=null, NEAR_MAP_CIRCLE=null, NEAR_MAP_PINS=null, NEAR_PIN_TIMER=null;
+
+function fmtDistance(m){
+  if(m==null) return '';
+  return m<1000 ? `${Math.max(10,Math.round(m/10)*10)} 公尺` : `${(m/1000).toFixed(m<10000?1:0)} 公里`;
+}
+function mapsLink(st){
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(st.lat+','+st.lng)}`
+    +(st.place_id?`&query_place_id=${encodeURIComponent(st.place_id)}`:'');
+}
+function renderNearBar(){
+  const btn=$('#btnNear');
+  btn.setAttribute('aria-pressed', String(NEAR.active));
+  btn.classList.toggle('active', NEAR.active);
+  $('#nearBar').classList.toggle('hidden', !NEAR.active);
+  if(!NEAR.active) return;
+  $('#nearKm').value=String(NEAR.km);
+  const n=NEAR.byOffer?NEAR.byOffer.size:0;
+  $('#nearStatus').innerHTML = NEAR.loading ? '找附近的分店中…'
+    : NEAR.lat==null ? '還沒有位置——允許定位，或打開地圖點一下你要查的地方。'
+    : `📍 <b>${esc(NEAR.label)}</b>附近 ${NEAR.km} 公里內，有 ${n} 筆優惠有分店`;
+}
+function startNear(){
+  if(!LIVE){ alert('離線模式查不到分店位置，請先用 python serve.py 啟動並設定 config.js。'); return; }
+  NEAR.active=true;
+  if(!navigator.geolocation){ renderNearBar(); openNearMap(); return; }
+  NEAR.loading=true; renderNearBar();
+  navigator.geolocation.getCurrentPosition(
+    pos=>setNearCenter(pos.coords.latitude, pos.coords.longitude, '你目前的位置'),
+    err=>{
+      NEAR.loading=false; renderNearBar();
+      // 被拒絕／逾時都不擋功能：直接打開地圖讓人點位置
+      $('#nearStatus').innerHTML=(err&&err.code===1?'沒有定位權限':'暫時抓不到你的位置')
+        +'——在下面地圖上點一下你要查的地方就可以。';
+      openNearMap();
+    },
+    {enableHighAccuracy:false, timeout:8000, maximumAge:300000});
+}
+function stopNear(){
+  NEAR.active=false; NEAR.byOffer=null; NEAR.lat=NEAR.lng=null; NEAR.loading=false;
+  NEAR.reqSeq++; NEAR.sortTouched=false;
+  if($('#sort').value==='distance') $('#sort').value='value';
+  closeNearMap();
+  $('#nearMapHint').textContent='';
+  renderNearBar(); render();
+}
+async function setNearCenter(lat, lng, label){
+  NEAR.lat=lat; NEAR.lng=lng; NEAR.label=label;
+  syncNearMapCenter(true);
+  await loadNear();
+}
+async function loadNear(){
+  if(!NEAR.active||NEAR.lat==null) return;
+  const seq=++NEAR.reqSeq;
+  NEAR.loading=true; renderNearBar();
+  const {data,error}=await sb.rpc('nearest_offer_stores',{p_lat:NEAR.lat, p_lng:NEAR.lng, p_km:NEAR.km});
+  if(seq!==NEAR.reqSeq) return;   // 使用者手快又換了位置／距離，舊結果丟掉
+  NEAR.loading=false;
+  if(error){
+    NEAR.byOffer=null; renderNearBar();
+    const hint=/function|does not exist|offer_stores/i.test(error.message)
+      ? '（資料庫還沒建分店資料，請管理員執行 schema_v58_offer_stores.sql 並匯入分店）' : '';
+    $('#nearStatus').innerHTML=`找附近分店失敗：${esc(error.message)}${hint}`;
+    render();
+    return;
+  }
+  NEAR.byOffer=new Map((data||[]).map(r=>[String(r.offer_id), r]));
+  // 開附近模式就是想看「由近到遠」，自動切到距離排序；使用者之後自己改了排序就尊重他的選擇
+  if(!NEAR.sortTouched) $('#sort').value='distance';
+  renderNearBar(); render();
+}
+function loadLeaflet(){
+  if(window.L) return Promise.resolve(true);
+  if(!document.querySelector('link[data-leaflet]')){
+    const l=document.createElement('link');
+    l.rel='stylesheet'; l.dataset.leaflet='1';
+    l.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+    document.head.appendChild(l);
+  }
+  return loadScriptTag('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js', 8000)
+    .then(ok=>ok&&!!window.L);
+}
+async function openNearMap(){
+  $('#nearMapWrap').classList.remove('hidden');
+  $('#btnNearMap').textContent='收起地圖';
+  if(NEAR_MAP){ NEAR_MAP.invalidateSize(); syncNearMapCenter(false); return; }
+  const ok=await loadLeaflet();
+  if(!ok){
+    closeNearMap();
+    $('#nearMapHint').textContent='地圖載入失敗，請檢查網路後再按一次「地圖」。';
+    return;
+  }
+  const c=NEAR.lat!=null?{lat:NEAR.lat,lng:NEAR.lng}:NEAR_DEFAULT_CENTER;
+  NEAR_MAP=L.map($('#nearMap')).setView([c.lat,c.lng], 15);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'})
+    .addTo(NEAR_MAP);
+  NEAR_MAP_PINS=L.layerGroup().addTo(NEAR_MAP);
+  NEAR_MAP.on('click', e=>setNearCenter(e.latlng.lat, e.latlng.lng, '地圖上選的位置'));
+  NEAR_MAP.on('moveend', ()=>{ clearTimeout(NEAR_PIN_TIMER); NEAR_PIN_TIMER=setTimeout(loadNearPins, 300); });
+  // Leaflet 的 popup 會擋掉 click 往外冒泡，所以按鈕要在 popup 打開時直接綁
+  NEAR_MAP.on('popupopen', e=>{
+    const b=e.popup.getElement()?.querySelector('.map-open-offer');
+    if(b) b.onclick=()=>openDetail(b.dataset.id);
+  });
+  syncNearMapCenter(false);
+  loadNearPins();
+}
+function closeNearMap(){
+  $('#nearMapWrap').classList.add('hidden');
+  $('#btnNearMap').textContent='地圖';
+}
+function syncNearMapCenter(pan){
+  if(!NEAR_MAP||NEAR.lat==null) return;
+  const ll=[NEAR.lat,NEAR.lng];
+  if(!NEAR_MAP_CENTER) NEAR_MAP_CENTER=L.marker(ll,{title:'查詢位置'}).addTo(NEAR_MAP);
+  else NEAR_MAP_CENTER.setLatLng(ll);
+  if(!NEAR_MAP_CIRCLE) NEAR_MAP_CIRCLE=L.circle(ll,{radius:NEAR.km*1000,weight:1,fillOpacity:.06}).addTo(NEAR_MAP);
+  else { NEAR_MAP_CIRCLE.setLatLng(ll); NEAR_MAP_CIRCLE.setRadius(NEAR.km*1000); }
+  if(pan) NEAR_MAP.panTo(ll);
+}
+async function loadNearPins(){
+  if(!NEAR_MAP) return;
+  const hint=$('#nearMapHint');
+  // 縮到整個縣市以上的大小，一次畫幾千個點手機會卡，也看不出什麼
+  if(NEAR_MAP.getZoom()<13){ NEAR_MAP_PINS.clearLayers(); hint.textContent='放大地圖一點，才會顯示有優惠的分店。'; return; }
+  const b=NEAR_MAP.getBounds();
+  const {data,error}=await sb.rpc('offer_stores_in_bounds',
+    {p_south:b.getSouth(), p_west:b.getWest(), p_north:b.getNorth(), p_east:b.getEast(), p_limit:500});
+  if(error){ hint.textContent='分店載入失敗：'+error.message; return; }
+  NEAR_MAP_PINS.clearLayers();
+  (data||[]).forEach(st=>{
+    const o=OFFERS.find(x=>String(x.id)===String(st.offer_id));
+    if(!o) return;
+    L.circleMarker([st.lat,st.lng],{radius:7,weight:2,color:'#c2410c',fillColor:'#fb923c',fillOpacity:.85})
+      .bindPopup(`<b>${esc(o.brand)}</b><br><span style="font-size:.8rem">${esc(st.name)}</span><br>
+        <span style="font-size:.8rem">${esc(String(o.offer||'').slice(0,60))}</span><br>
+        <button type="button" class="btn sm map-open-offer" data-id="${esc(o.id)}" style="margin-top:6px">看優惠</button>
+        <a href="${esc(mapsLink(st))}" target="_blank" rel="noopener" style="margin-left:6px;font-size:.8rem">導航↗</a>`)
+      .addTo(NEAR_MAP_PINS);
+  });
+  const n=NEAR_MAP_PINS.getLayers().length;
+  hint.textContent=(n?`這個畫面裡有 ${n} 家分店有優惠。`:'這個畫面裡還沒有分店資料。')+'點地圖任一處可以改查那裡附近。';
+}
+$('#btnNear').onclick=()=>NEAR.active?stopNear():startNear();
+$('#btnNearClose').onclick=stopNear;
+$('#btnNearLocate').onclick=startNear;
+$('#btnNearMap').onclick=()=>$('#nearMapWrap').classList.contains('hidden')?openNearMap():closeNearMap();
+$('#nearKm').onchange=e=>{
+  NEAR.km=Number(e.target.value)||3;
+  try{ localStorage.setItem('sxr_near_km', String(NEAR.km)); }catch{}
+  syncNearMapCenter(false);
+  loadNear();
+};
+$('#sort').addEventListener('input',()=>{ if(NEAR.active) NEAR.sortTouched=true; });
+
 function render(){
   const q=$('#q').value.trim().toLowerCase();
   const onlyV=$('#fVerified').checked, hideX=$('#fLive').checked, onlyR=$('#fReported').checked;
   const onlyC=$('#fHasComments').checked, noCompanion=$('#fNoCompanion').checked;
   const onlyTransferable=$('#fTransferable').checked;
-  const sortBy=$('#sort').value;
+  let sortBy=$('#sort').value;
+  // 「離我最近」只有附近模式拿到距離資料時才有意義。重新整理後 saveFilters 會把排序
+  // 還原成 distance，但座標刻意不存、附近模式是關的，這時退回預設排序，不然列表會亂序。
+  if(sortBy==='distance'&&!(NEAR.active&&NEAR.byOffer)){ sortBy='value'; if(!NEAR.active) $('#sort').value='value'; }
 
   const activeCount = (q?1:0)+activeRegion.size+activeMemType.size+activeCat.size+activeFree.size+activeTiming.size
     +(onlyV?1:0)+(!hideX?1:0)+(onlyR?1:0)+(onlyC?1:0)+(noCompanion?1:0)+(onlyTransferable?1:0);
@@ -2648,6 +2847,7 @@ function render(){
 
   let list=OFFERS.filter(o=>{
     if(onlyNewActive&&!NEW_OFFER_IDS.has(o.id)) return false;
+    if(NEAR.active&&NEAR.byOffer&&!NEAR.byOffer.has(String(o.id))) return false;
     if(activeCat.size&&!activeCat.has(o.category)) return false;
     if(activeFree.size&&!activeFree.has(o.freeTier)) return false;
     if(activeTiming.size&&!activeTiming.has(o.timing)) return false;
@@ -2672,6 +2872,10 @@ function render(){
 
   const bn=(a,b)=>a.brand.localeCompare(b.brand,'zh-Hant');
   list.sort((a,b)=>{
+    if(sortBy==='distance'){
+      const A=NEAR.byOffer.get(String(a.id))?.distance_m??Infinity, B=NEAR.byOffer.get(String(b.id))?.distance_m??Infinity;
+      return A-B||bn(a,b);
+    }
     if(sortBy==='brand') return bn(a,b);
     if(sortBy==='trust') return trustOf(a)-trustOf(b)||bn(a,b);
     if(sortBy==='value') return (b.valueTwd||0)-(a.valueTwd||0)||bn(a,b);
@@ -2701,7 +2905,7 @@ function render(){
 
   const sum=list.filter(o=>o.valueTwd).reduce((a,o)=>a+o.valueTwd,0);
   $('#count').textContent=`${list.length} / ${OFFERS.length} 筆`
-    +(activeRegion.size?`　${[...activeRegion].filter(r=>r!=='__none__').join('、')}含全台`:'')+(sum?`　合計約 ${nt(sum)}`:'');
+    +(activeRegion.size?`　${[...activeRegion].filter(r=>r!=='__none__').join('、')}含全台`:'')+(sum?`　合計約 ${nt(sum)}`:'')+(NEAR.active&&NEAR.byOffer?`　📍 ${NEAR.km} 公里內`:'');
   $('#empty').classList.toggle('hidden',list.length>0);
   // 搜尋沒結果時，使用者常常不知道是「真的沒有」還是「被篩選 chips 擋住了」。
   // 這裡只用關鍵字（忽略地區/類別/會員等篩選條件）再撈一次，如果其實有東西、
@@ -2721,6 +2925,10 @@ function render(){
       $('#emptySub').textContent='試試看調整篩選條件，或換個關鍵字搜尋';
       $('#btnEmptyClearFilters').classList.add('hidden');
     }
+    if(NEAR.active&&NEAR.byOffer&&!blockedByFilters){
+      $('#emptyTitle').textContent=`${NEAR.km} 公里內還沒有找到有優惠的分店`;
+      $('#emptySub').textContent='試試把距離調大，或打開地圖換個地方查';
+    }
   }
 
   const isAdmin=!!myProfile?.is_admin;
@@ -2730,6 +2938,7 @@ function render(){
     const ex=expText(o), pu=pulseText(o);
     const cost=o.membershipCost==='spend'?'．需消費紀錄':o.membershipCost==='tier'?'．需達等級':'';
     const wished=WISH.has(String(o.id));
+    const nearSt=NEAR.active&&NEAR.byOffer?NEAR.byOffer.get(String(o.id)):null;
     return `<article class="card" data-id="${esc(o.id)}" style="--i:${idx}">
       ${NEW_OFFER_IDS.has(o.id)?'<span class="new-ribbon">NEW</span>':''}
       <div class="chead"><h3>${esc(o.brand)}</h3>
@@ -2760,6 +2969,9 @@ function render(){
       ${o.advanceNote?`<div class="meta">${esc(o.advanceNote)}</div>`:''}
       ${ex?`<div class="line${ex.startsWith('剩')||ex.startsWith('已結束')?' warn':''}">${esc(ex)}</div>`:''}
       ${pu?`<div class="line">${esc(pu)}</div>`:''}
+      ${nearSt?`<div class="line near-line">📍 最近分店 <b>${esc(fmtDistance(nearSt.distance_m))}</b>・${esc(nearSt.name)}${
+        nearSt.stores_within>1?`（${NEAR.km} 公里內共 ${nearSt.stores_within} 家）`:''}<a class="near-nav" href="${esc(mapsLink(nearSt))}"
+        target="_blank" rel="noopener">導航↗</a></div>`:''}
       <dl class="kv">
         <dt>條件</dt><dd>${esc(o.conditions||'—')}</dd>
         <dt>期限</dt><dd>${esc(o.validity||'—')}</dd>
@@ -2784,6 +2996,8 @@ function render(){
   $$('.act-suggest').forEach(b=>b.onclick=e=>{e.stopPropagation();startEditOffer(b.dataset.id,false,true);});
   $$('.act-verify').forEach(b=>b.onclick=e=>{e.stopPropagation();setVerified(b.dataset.id,b.dataset.v==='1');});
   $$('.wish').forEach(b=>b.onclick=e=>{ e.stopPropagation(); toggleWish(b.dataset.id,b); });
+  // 點導航連結不要順便打開整張卡片的詳情
+  $$('.near-nav').forEach(a=>a.onclick=e=>e.stopPropagation());
   // 整張卡片都可以點開詳情——按鈕的 click 都有 stopPropagation，不會互相打架
   $$('#grid .card').forEach(c=>c.onclick=()=>openDetail(c.dataset.id));
   renderPlanner();

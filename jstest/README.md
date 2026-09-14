@@ -30,6 +30,7 @@ node t01_pending_bulk_approve.js
 | `t03_region_flag_wrap.js` | 待審佇列「適用地區」標籤換行（`.flag.wrap`），其餘短標籤維持不換行 |
 | `t04_detail_comment_email.js` | 優惠詳情彈窗的留言也接上信封鈕（第二個接線點，容易改一邊漏一邊） |
 | `t05_reports_wishlist_feedback.js` | 重複回報提醒（含同品牌另一張卡片、王品≠王品牛排）、詳情頁編輯自己的回報、待辦清單詳情開完整視窗、第一次收藏提示 |
+| `t06_near_me.js` | 附近模式（feature/geo）：定位→由近到遠、卡片最近分店＋導航、換距離、舊結果不蓋新結果、保留使用者排序、拒絕定位改點地圖、v58 沒跑的提示、座標不寫進 localStorage |
 
 ## harness 的坑（`harness.js` 裡有更詳細的註解）
 

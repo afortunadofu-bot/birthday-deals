@@ -1,0 +1,33 @@
+{
+  "_說明": "fetch_stores.py 的品牌別名。brands：品牌名稱（跟 offers.brand 完全一樣）→ query 是拿去 Google 搜的字（或用 queries 給多個字分開搜）、match 是店名要包含其中一個才收。skip：純線上／App 優惠，沒有實體分店，不查。",
+  "brands": {
+    "Global Mall 環球購物中心": {
+      "query": "環球購物中心",
+      "match": [
+        "環球購物中心",
+        "Global Mall"
+      ]
+    },
+    "PK雙饗卡（肯德基 × 必勝客）": {
+      "queries": [
+        "肯德基",
+        "必勝客"
+      ],
+      "match": [
+        "肯德基",
+        "KFC",
+        "必勝客",
+        "Pizza Hut"
+      ]
+    },
+    "31冰淇淋 Baskin-Robbins": {
+      "query": "31冰淇淋",
+      "match": [
+        "31冰淇淋",
+        "Baskin",
+        "酷聖石"
+      ]
+    }
+  },
+  "skip": []
+}
