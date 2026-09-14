@@ -61,7 +61,7 @@ python fetch_stores.py
 ## 五、匯入 Supabase（依序貼進 SQL Editor）
 
 1. `schema_v58_offer_stores.sql`
-2. `stores_import_01.sql`、`stores_import_02.sql`…**依序全部貼完**。腳本把分店拆成每檔 1,500 家，避免單一檔案太大貼不進 SQL Editor；最後一個檔會先檢查前面都貼過了，才自動隱藏已歇業的分店，少貼一個會報錯停下來。全部可重複執行
+2. `stores_import_01.sql`、`stores_import_02.sql`…**依序全部貼完**。腳本把分店拆成每檔 400 家（約 90KB）。**貼上後直接按 Run，不要按儲存或重新命名**——SQL Editor 存 snippet 有大小限制，會報「request entity too large」；如果連 Run 都報這個錯，用 `python fetch_stores.py --cache-only --rows-per-file 200` 重新產生更小的檔案（不花錢）。最後一個檔會先檢查前面都貼過了，才自動隱藏已歇業的分店，少貼一個會報錯停下來。全部可重複執行
 3. 檢查覆蓋率：
 
    ```sql

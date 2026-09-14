@@ -55,7 +55,7 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 - 別名檔新增 `exclude`（寶雅中醫診所、誠品畫廊）；不確定的品牌、集團優惠、地區對不上
   的，列在 `_待celine確認`
 - 新增 `--cache-only`：改完比對規則只用快取重算，不打 API、不花錢
-- 匯入檔拆成 `stores_import_01.sql`…每檔 1,500 家；最後一檔先檢查前面都貼過才自動隱藏
+- 匯入檔拆成 `stores_import_01.sql`…每檔 400 家（原本 1,500 家約 340KB，貼進 SQL Editor 報 request entity too large；可用 `--rows-per-file` 調整）；最後一檔先檢查前面都貼過才自動隱藏
   已歇業分店；`offer_stores.hidden_by` 區分「匯入自動隱藏」（下次出現會打開）跟管理員手動隱藏
 - 只用快取重算的結果：8,8xx 家、19 筆 0 家（其中 10 筆待 celine 確認）。大縣市的分區補抓
   要拿金鑰再跑一次才會補齊

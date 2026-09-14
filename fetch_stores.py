@@ -17,7 +17,7 @@
    也塞進結果）、地址要在那個縣市裡（避免「台北市」查到新北的店重複歸錯縣市）；
    永久歇業的不收
 4. 每個 API 回應都存在 .places_cache/，重跑不會重複計費；要強制重抓就加 --refresh
-5. 輸出 stores_import_01.sql、_02.sql…（每檔 1,500 家，upsert，可重複執行，不會動到管理員手動隱藏的分店）
+5. 輸出 stores_import_01.sql、_02.sql…（每檔 400 家，upsert，可重複執行，不會動到管理員手動隱藏的分店）
 
 用法：
   set GOOGLE_MAPS_API_KEY=你的金鑰          (PowerShell: $env:GOOGLE_MAPS_API_KEY="...")
@@ -47,7 +47,10 @@ from pathlib import Path
 HERE = Path(__file__).parent
 CACHE = HERE / ".places_cache"
 ALIASES = HERE / "store_search_aliases.json"
-ROWS_PER_FILE = 1500   # 一個匯入檔最多幾家分店，避免單一檔案太大貼不進 SQL Editor
+# 一個匯入檔最多幾家分店。原本 1,500 家（約 340KB），celine 貼進 Supabase SQL Editor 時報
+# 「request entity too large」——SQL Editor 會把整段查詢存成 snippet，太大存不進去。
+# 400 家約 90KB；還是太大的話用 --rows-per-file 再調小。
+ROWS_PER_FILE = 400
 CACHE_ONLY = False     # --cache-only：只用快取重算、不打 API
 OUT_JSON = HERE / "stores_fetched.json"
 
@@ -463,6 +466,8 @@ def main():
     ap.add_argument("--refresh", action="store_true", help="忽略快取強制重抓")
     ap.add_argument("--cache-only", action="store_true",
                     help="只用 .places_cache 裡查過的結果重算（改比對規則／別名後用，不打 API、不花錢）")
+    ap.add_argument("--rows-per-file", type=int, default=ROWS_PER_FILE,
+                    help=f"每個匯入檔幾家分店（預設 {ROWS_PER_FILE}；SQL Editor 報 request entity too large 就調小）")
     args = ap.parse_args()
     global CACHE_ONLY
     CACHE_ONLY = args.cache_only
@@ -515,7 +520,8 @@ def main():
     offer_ids = sorted({o["id"] for o, *_ in planned})
     for old in HERE.glob("stores_import*.sql"):
         old.unlink()
-    parts = [rows[i:i + ROWS_PER_FILE] for i in range(0, len(rows), ROWS_PER_FILE)] or [[]]
+    per = max(50, args.rows_per_file)
+    parts = [rows[i:i + per] for i in range(0, len(rows), per)] or [[]]
     out_files = []
     for n, chunk in enumerate(parts, 1):
         last = n == len(parts)
