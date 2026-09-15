@@ -553,6 +553,16 @@
     bottom:calc(72px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom));
     background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
     box-shadow:0 8px 24px rgba(0,0,0,.14);padding:12px 14px;font-size:.86rem}
+  /* 「我的」分頁：更新紀錄＋新更新小紅點 */
+  .upd-entry{padding:10px 0;border-top:1px solid var(--line-soft)}
+  .upd-entry:first-child{border-top:0;padding-top:2px}
+  .upd-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .upd-date{font-size:.74rem;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  .upd-title{font-size:.9rem}
+  .upd-new{font-size:.66rem;font-weight:700;color:#fff;background:var(--accent);border-radius:999px;padding:1px 7px}
+  .upd-entry ul{margin:6px 0 0;padding-left:1.2em;font-size:.84rem;color:var(--ink-2);line-height:1.75}
+  .tab-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);
+    margin-left:3px;vertical-align:top}
   .ok{color:var(--free);font-weight:700}
   .partial{color:#8a6a1f;font-weight:700}
   .fail{color:var(--alert);font-weight:700}
@@ -1062,6 +1072,17 @@
 <!-- ==================== 我的 ==================== -->
 <section id="tab-mine" class="hidden">
   <main class="wrap">
+    <!-- celine：「我的」那邊也要提醒使用者可以加到主畫面。原本的 #a2hsPanel 其實訪客也看得到，
+         但被排在「我的」分頁最底下、所有會員區塊之後，幾乎沒人滑得到。頂部加一條小提醒，
+         按了能直接安裝（瀏覽器有給權限時）或捲到下面的步驟說明。已經加過的人不會出現。 -->
+    <div class="hidden" id="mineA2hsBanner">
+      <div class="note" style="display:flex;gap:10px;align-items:center;margin:0 0 14px">
+        <span aria-hidden="true" style="font-size:1.3rem;line-height:1">📱</span>
+        <div style="flex:1;font-size:.85rem"><b>把壽星日加到主畫面</b><br>像 App 一樣一鍵打開，生日月找優惠更快。</div>
+        <button type="button" class="btn sm primary" id="btnMineA2hs">怎麼加</button>
+        <button type="button" class="btn plain" id="btnMineA2hsClose" aria-label="先不要">✕</button>
+      </div>
+    </div>
     <!-- 回饋問卷入口：訪客、會員都看得到，所以不能放在 #mineAuthedPanels 裡。
          這裡先寫在最上面，開機時 JS 會把它搬到「我的」分頁最底下（見 surveyPanel 搬移那段）。 -->
     <div class="panel" id="surveyPanel">
@@ -1165,6 +1186,14 @@
         <p style="margin:0 0 6px"><b>Android（Chrome）</b>：點右上角「⋮」選單 →「加到主畫面」或「安裝應用程式」。</p>
         <p style="margin:0"><b>iPhone／iPad（Safari）</b>：點下方工具列的分享圖示 <span aria-hidden="true">⬆️</span> → 往下滑找「加入主畫面」。</p>
       </div>
+    </div>
+    <!-- 更新紀錄：celine 要「我的」頁面有個小地方記每次更新的日期、簡單說改了哪裡。
+         訪客也看得到，所以放在會員專屬區塊外面。內容在 SITE_UPDATES。 -->
+    <div class="panel" id="siteUpdatesPanel">
+      <h2>🆕 更新紀錄</h2>
+      <p class="sub">壽星日最近改了什麼，都記在這裡。</p>
+      <div id="siteUpdatesList"></div>
+      <button type="button" class="btn sm hidden" id="btnSiteUpdatesMore" style="margin-top:6px"></button>
     </div>
     <div class="panel hidden" id="myDebug">
       <h2>帳號與權限</h2>
@@ -2600,6 +2629,7 @@ function renderA2hsPanel(){
   const standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
     || window.navigator.standalone===true;
   panel.classList.toggle('hidden', standalone);
+  renderMineA2hsBanner(standalone);
   if(standalone) return;
   $('#btnA2hsDirect').classList.toggle('hidden', !deferredInstall);
 }
@@ -2609,6 +2639,120 @@ $('#btnA2hsDirect').onclick = async()=>{
   deferredInstall=null;
   renderA2hsPanel();
 };
+
+/* ---- 「我的」分頁頂部：加到主畫面小提醒 ----
+   ✕ 之後 30 天不再出現：「優惠」分頁本來就有會自動跳的加到主畫面提示條（關掉 7 天），
+   這裡是常駐入口的補充提醒，不要跟那條一起反覆煩人。 ---- */
+const MINE_A2HS_SNOOZE_DAYS=30;
+function renderMineA2hsBanner(standalone){
+  const b=$('#mineA2hsBanner'); if(!b) return;
+  let snoozed=false;
+  try{ snoozed=Number(localStorage.getItem('sxr_mine_a2hs_snooze_until')||0) > Date.now(); }catch{}
+  b.classList.toggle('hidden', !!standalone || snoozed);
+  $('#btnMineA2hs').textContent = deferredInstall ? '加到主畫面' : '怎麼加';
+}
+$('#btnMineA2hs').onclick=async()=>{
+  if(deferredInstall){
+    deferredInstall.prompt(); await deferredInstall.userChoice;
+    deferredInstall=null; renderA2hsPanel();
+    return;
+  }
+  // iPhone／大部分瀏覽器不能用程式直接安裝，捲到下面的步驟說明並閃一下外框
+  const p=$('#a2hsPanel'); if(!p) return;
+  p.scrollIntoView({behavior:'smooth', block:'center'});
+  p.style.transition='box-shadow .3s';
+  p.style.boxShadow='0 0 0 3px rgba(166,61,36,.35)';
+  setTimeout(()=>p.style.boxShadow='', 1600);
+};
+$('#btnMineA2hsClose').onclick=()=>{
+  try{ localStorage.setItem('sxr_mine_a2hs_snooze_until', String(Date.now()+MINE_A2HS_SNOOZE_DAYS*864e5)); }catch{}
+  $('#mineA2hsBanner').classList.add('hidden');
+};
+
+/* ---- 更新紀錄 ----
+   給一般使用者看的版本：只寫「用起來有什麼不一樣」，不寫資料庫、管理員後台這些使用者看不到
+   的東西；還在 feature/geo 分支、沒上線的功能（附近分店、地圖模式）不列。
+   新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
+const SITE_UPDATES=[
+  {date:'2026-09-15', title:'回饋問卷、按讚、Google 地圖', items:[
+    '新增回饋問卷：在「我的」分頁最下面，全部用點的，大約 1 分鐘，歡迎隨時來填',
+    '使用回報、留言可以按讚 👍，覺得有幫助就按一下',
+    '每張優惠卡片多一顆「📍 地圖」，直接用 Google 地圖找附近分店',
+    '手機版：回報的補充說明不再擠成一條、編輯回報不會一打開就跳日曆、收藏備註可以完整顯示',
+    '「我的」分頁新增更新紀錄，還有加到主畫面的提醒',
+    '更新善菓屋生日禮資訊：需要消費才能兌換']},
+  {date:'2026-09-14', title:'回報與待辦清單更好用', items:[
+    '在優惠詳情看到自己的回報，旁邊就能直接編輯',
+    '同一家店今年回報第二次時會先提醒，避免省下的金額算兩次',
+    '待辦清單點「詳情」，直接看得到大家的使用回報和留言',
+    '第一次收藏時，會告訴你收藏的優惠放在「我的」分頁',
+    '修正清晨時回報「今天」會失敗的問題']},
+  {date:'2026-09-09', title:'看得到大家正在提的修改建議', items:[
+    '優惠詳情頁可以看到這筆優惠目前有哪些修改建議在審核中，不用重複提']},
+  {date:'2026-09-07', title:'排行榜新數據、手機版修正', items:[
+    '排行榜多了即時在線人數、平台總瀏覽人次、大家都在什麼時段用',
+    '排行榜「全部時間」也看得到名次升降',
+    '手機版填新增表單時，鍵盤不會再蓋住底部導覽列',
+    '修改建議裡很長的網址不會再把畫面撐爆',
+    '回報使用狀況後，會邀請你順便幫店家評分']},
+  {date:'2026-09-04', title:'待辦清單分年度、入會死線提醒', items:[
+    '待辦清單可以分年度整理，還會提醒入會死線',
+    '成就徽章點開就看得到怎麼解鎖',
+    '排行榜分頁的區塊可以收合',
+    '往下滑時搜尋列會一直固定在上方',
+    '類別「連鎖餐廳」改名「餐廳」，並新增「其他」',
+    '提修改建議時，改任何欄位都偵測得到']},
+  {date:'2026-09-03', title:'排行榜手機版排版', items:[
+    '名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團']},
+  {date:'2026-08-06', title:'一大包使用體驗改善', items:[
+    '投稿可以取消、評分可以取消、暱稱可以自己改',
+    '排行榜上的店家可以點進去看詳情',
+    '資料來源連結最多可以放 5 個',
+    '優惠詳情加了好按的關閉鈕，手機返回鍵也能關',
+    '待辦清單勾選完成時，會順便邀請你回報省下多少',
+    '網頁打開速度變快，畫面不再跳來跳去']},
+  {date:'2026-08-05', title:'壽星日上線 🎂', items:[
+    '整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況']},
+];
+const SITE_UPDATES_SHOW=3;
+let SITE_UPDATES_EXPANDED=false;
+
+function updatesSeenDate(){
+  try{
+    const v=localStorage.getItem('sxr_updates_seen');
+    // 第一次來的人：現有的更新對他來說都不是「新的」，直接記成已讀，不顯示小紅點
+    if(v===null){ localStorage.setItem('sxr_updates_seen', SITE_UPDATES[0].date); return SITE_UPDATES[0].date; }
+    return v;
+  }catch{ return SITE_UPDATES[0].date; }
+}
+function renderSiteUpdates(){
+  const box=$('#siteUpdatesList'); if(!box) return;
+  const seen=updatesSeenDate();
+  const list=SITE_UPDATES_EXPANDED ? SITE_UPDATES : SITE_UPDATES.slice(0, SITE_UPDATES_SHOW);
+  box.innerHTML=list.map(u=>`<div class="upd-entry">
+      <div class="upd-head"><span class="upd-date">${esc(u.date)}</span>
+        <b class="upd-title">${esc(u.title)}</b>
+        ${u.date>seen?'<span class="upd-new">NEW</span>':''}</div>
+      <ul>${u.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>
+    </div>`).join('');
+  const rest=SITE_UPDATES.length-SITE_UPDATES_SHOW;
+  const more=$('#btnSiteUpdatesMore');
+  more.classList.toggle('hidden', rest<=0);
+  more.textContent = SITE_UPDATES_EXPANDED ? '收起' : `看更早的更新（${rest}）`;
+  // 「我的」分頁按鈕上的小紅點
+  const hasNew = SITE_UPDATES[0].date > seen;
+  $$('.tab[data-tab="mine"]').forEach(t=>{
+    let dot=t.querySelector('.tab-dot');
+    if(hasNew && !dot){ dot=document.createElement('span'); dot.className='tab-dot'; dot.setAttribute('aria-label','有新的更新'); t.appendChild(dot); }
+    if(!hasNew && dot) dot.remove();
+  });
+}
+function markUpdatesSeen(){
+  try{ localStorage.setItem('sxr_updates_seen', SITE_UPDATES[0].date); }catch{}
+  renderSiteUpdates();
+}
+$('#btnSiteUpdatesMore').onclick=()=>{ SITE_UPDATES_EXPANDED=!SITE_UPDATES_EXPANDED; renderSiteUpdates(); };
+renderSiteUpdates();
 
 /* ---- 推薦給朋友：純粹分享網址，跟「省錢成果／排行榜名次」那兩個分享圖卡
    是不同層次的東西——這個不用登入、不用任何資料，單純讓網站觸及更多人。
@@ -2639,6 +2783,8 @@ $('#btnShareSite').onclick = async()=>{
 /* ---- 分頁 ---- */
 let ACTIVE_TAB='browse';
 $$('.tab').forEach(t=>t.onclick=()=>{
+  // 打開「我的」分頁幾秒後才把新更新標成已讀：一打開就清掉的話，NEW 標籤還沒被看到就消失了
+  if(t.dataset.tab==='mine') setTimeout(markUpdatesSeen, 4000);
   const already = t.dataset.tab===ACTIVE_TAB;
   $$('.tab').forEach(x=>x.setAttribute('aria-selected', x===t));
   ['browse','board','submit','mine','admin'].forEach(n=>
