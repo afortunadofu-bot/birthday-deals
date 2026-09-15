@@ -22,8 +22,9 @@ const { boot, tick, makeAsserts } = require('./harness');
   const panel = doc.querySelector('#siteUpdatesPanel');
   t.ok('「我的」分頁有更新紀錄', !!panel && !!panel.closest('#tab-mine'));
   t.ok('更新紀錄不在會員專屬區塊裡（訪客也看得到）', panel && !panel.closest('#mineAuthedPanels'));
-  const survey = doc.querySelector('#surveyPanel');
-  t.ok('位置在回饋問卷上面', panel && survey && (panel.compareDocumentPosition(survey) & 4) === 4);
+  // celine：更新紀錄也要可以摺疊（預設收合，免得「我的」分頁太長）
+  t.ok('更新紀錄可以摺疊', !!panel.querySelector('.panel-cbody'));
+  t.ok('更新紀錄預設收合', panel.classList.contains('collapsed'));
 
   const updates = win.eval('SITE_UPDATES');
   const dates = updates.map((u) => u.date);
@@ -68,6 +69,25 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.eq('看過之後小紅點消失', tabDot(), 0);
   t.eq('看過之後 NEW 消失', doc.querySelectorAll('#siteUpdatesList .upd-new').length, 0);
   t.eq('記下看過最新一筆', ls.getItem('sxr_updates_seen'), updates[0].date);
+
+  // 可以摺疊之後：收合時標題旁要看得到 NEW；只打開「我的」分頁不算看過，展開更新紀錄才算
+  const headNew = doc.querySelector('#updHeadNew');
+  const h2 = panel.querySelector('h2');
+  ls.setItem('sxr_updates_seen', updates[1].date);
+  win.renderSiteUpdates();
+  if (!panel.classList.contains('collapsed')) h2.click();
+  t.ok('收合時標題旁也看得到 NEW', !headNew.classList.contains('hidden'));
+  doc.querySelector('.tab[data-tab="mine"]').click();
+  await new Promise((r) => win.setTimeout(r, 4300));
+  t.eq('更新紀錄收合著，只打開「我的」分頁不算看過', ls.getItem('sxr_updates_seen'), updates[1].date);
+  h2.click();
+  t.ok('點標題展開更新紀錄', !panel.classList.contains('collapsed'));
+  await new Promise((r) => win.setTimeout(r, 2800));
+  t.eq('展開幾秒後才標成已讀', ls.getItem('sxr_updates_seen'), updates[0].date);
+  t.ok('看過之後標題旁的 NEW 消失', headNew.classList.contains('hidden'));
+  t.eq('看過之後「我的」分頁小紅點消失', tabDot(), 0);
+  h2.click();
+  t.ok('再點標題收合', panel.classList.contains('collapsed'));
 
   // 更新紀錄文字有跳脫
   win.eval(`SITE_UPDATES.unshift({date:'2099-01-01', title:'<img src=x onerror=alert(1)>', items:['<script>bad()</script>']});`);
