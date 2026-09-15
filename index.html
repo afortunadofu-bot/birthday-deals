@@ -526,6 +526,27 @@
   .like-btn.on{background:var(--free-bg);border-color:var(--free-line);color:var(--free)}
   .like-btn:disabled{opacity:.6;cursor:default}
   #repTitle:focus{outline:none}
+  /* 回饋問卷（v62）：celine 要「填法越簡單越好，像是勾選之類」，全部做成大顆可點的按鈕 */
+  .sv-q{margin:14px 0}
+  .sv-q>b{display:block;font-size:.88rem;margin-bottom:6px}
+  .sv-group{display:flex;flex-wrap:wrap;gap:6px}
+  .sv-opt{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;
+    padding:6px 12px;font-size:.84rem;cursor:pointer;min-height:36px;font-family:inherit}
+  .sv-opt[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+  .sv-faces .sv-opt{flex:1;min-width:54px;display:flex;flex-direction:column;align-items:center;
+    border-radius:12px;padding:6px 2px;font-size:1.35rem;line-height:1.1}
+  .sv-faces .sv-opt small{font-size:.66rem;margin-top:3px}
+  .sv-nps .sv-opt{flex:1;min-width:0;padding:6px 0;border-radius:8px;text-align:center}
+  .sv-nps{flex-wrap:nowrap;gap:3px}
+  .sv-scale{display:flex;justify-content:space-between;font-size:.7rem;color:var(--ink-3);margin-top:3px}
+  .sv-aspect{display:flex;align-items:center;gap:8px;margin:6px 0}
+  .sv-aspect>span{width:80px;font-size:.82rem;flex:none}
+  .sv-aspect .sv-group{flex:1;flex-wrap:nowrap;gap:4px}
+  .sv-aspect .sv-opt{flex:1;padding:6px 0;border-radius:8px;min-width:0;text-align:center}
+  #surveyNudge{position:fixed;left:12px;right:12px;max-width:360px;margin-left:auto;z-index:60;
+    bottom:calc(72px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom));
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
+    box-shadow:0 8px 24px rgba(0,0,0,.14);padding:12px 14px;font-size:.86rem}
   .ok{color:var(--free);font-weight:700}
   .partial{color:#8a6a1f;font-weight:700}
   .fail{color:var(--alert);font-weight:700}
@@ -1015,6 +1036,16 @@
 <!-- ==================== 我的 ==================== -->
 <section id="tab-mine" class="hidden">
   <main class="wrap">
+    <!-- 回饋問卷入口：訪客、會員都看得到，所以不能放在 #mineAuthedPanels 裡。
+         這裡先寫在最上面，開機時 JS 會把它搬到「我的」分頁最底下（見 surveyPanel 搬移那段）。 -->
+    <div class="panel" id="surveyPanel">
+      <h2>💬 給壽星日一點回饋</h2>
+      <p class="sub">全部用點的，大約 1 分鐘。可以重複填——不同時候的感受都想知道。</p>
+      <div class="row" style="gap:10px;align-items:center">
+        <button class="btn primary" type="button" id="btnOpenSurvey">填寫回饋問卷</button>
+        <span class="hint" id="surveyLastHint"></span>
+      </div>
+    </div>
     <div class="panel hidden" id="mineLoginCta" style="text-align:center">
       <h2>登入解鎖完整功能</h2>
       <p class="sub">目前是訪客瀏覽模式，資料只存在這台裝置上。登入後（只要 Google 帳號）還能：</p>
@@ -1141,6 +1172,20 @@
     <h2>最近留言<span class="n hidden" id="cmCount"></span></h2>
     <p class="sub">全站最新的留言，方便看有沒有需要處理的內容（檢舉、不當發言等）。</p>
     <div id="adminCommentList"></div>
+  </div>
+  <div class="panel" id="pnlSurvey">
+    <h2>問卷回饋<span class="n hidden" id="svCount"></span></h2>
+    <p class="sub">使用者填的回饋問卷（訪客也能填、可以重複填，同一台裝置或會員 24 小時一份）。
+      NPS＝推薦者（9–10 分）比例減掉批評者（0–6 分）比例，範圍 −100～100。</p>
+    <div class="row" style="margin:0 0 10px;gap:8px;align-items:center">
+      <label class="lbl">區間<select id="svRange">
+        <option value="30">近 30 天</option><option value="7">近 7 天</option>
+        <option value="90">近 90 天</option><option value="0">全部時間</option>
+      </select></label>
+      <button class="btn sm" type="button" id="btnSvExport">匯出 CSV</button>
+    </div>
+    <div id="svAdminMsg"></div>
+    <div id="svBody"></div>
   </div>
   <div class="panel" id="pnlFeedback">
     <h2>問題回報／建議<span class="n hidden" id="fbCount"></span></h2>
@@ -1329,6 +1374,31 @@
     <button class="btn primary" id="btnSaveReport" value="ok">送出</button>
   </div>
 </form></dialog>
+
+<!-- 回饋問卷（v62）：題目按鈕由 renderSurveyForm() 依 SURVEY_* 常數產生 -->
+<dialog id="dlgSurvey"><form method="dialog" class="dlg" onsubmit="return false">
+  <h2 tabindex="-1" autofocus>給壽星日一點回饋</h2>
+  <p class="sub">全部用點的，大約 1 分鐘。之後也可以再填，不同時候的感受都想聽。</p>
+  <div id="svQuestions"></div>
+  <div id="svMsg"></div>
+  <div class="foot">
+    <button type="button" class="btn" id="btnSvCancel">取消</button>
+    <button type="button" class="btn primary" id="btnSvSubmit">送出</button>
+  </div>
+</form></dialog>
+
+<div class="hidden" id="surveyNudge" role="dialog" aria-label="回饋問卷邀請">
+  <div style="display:flex;gap:8px;align-items:flex-start">
+    <span aria-hidden="true" style="font-size:1.3rem;line-height:1">💬</span>
+    <div style="flex:1"><b>花 1 分鐘幫壽星日變更好？</b>
+      <div class="hint" style="margin-top:2px">全部用點的，想到什麼點什麼。</div></div>
+    <button type="button" class="btn plain" id="btnSvNudgeClose" aria-label="之後再說">✕</button>
+  </div>
+  <div class="row" style="margin-top:10px;gap:8px;justify-content:flex-end">
+    <button type="button" class="btn sm" id="btnSvNudgeLater">之後再說</button>
+    <button type="button" class="btn sm primary" id="btnSvNudgeGo">好啊</button>
+  </div>
+</div>
 
 <!-- 留言／使用回報獨立視窗——不在列表上直接顯示，點「留言」才打開 -->
 <dialog id="dlgDetail"><div class="dlg">
@@ -1771,6 +1841,7 @@ async function connectLive(){
   paintOffers();   // 不管成功或失敗，都用目前最新的 OFFERS 重畫一次
   loadSiteStats(); loadSiteAnnouncement(); registerSW();
   logEvent('pageview', {tab: location.hash||'offers'});
+  startSurveyNudges();
 }
 
 /* ---- 成效追蹤：極簡事件記錄，失敗就默默略過，不能影響網站正常使用 ---- */
@@ -1839,7 +1910,7 @@ async function onSession(s){
   if(me){ loadMyStuff(); loadWishlist(); loadMyUsedOffers(); flushPendingReport(); loadPendingPreview(); loadPendingEditsPreview(); loadNotifCount(); }
   else { $('#pendPreviewPanel').classList.add('hidden'); $('#pendEditsPreviewPanel').classList.add('hidden'); $('#btnNotif').classList.add('hidden'); }
   if(myProfile?.is_admin){ loadPending(); loadPendingEdits(); loadRejected(); loadApproved();
-    loadAdminSettings(); loadAdminDashboard(); loadFeedbackList(); loadUsageReportsAdmin();
+    loadAdminSettings(); loadAdminDashboard(); loadFeedbackList(); loadUsageReportsAdmin(); loadSurveyAdmin();
     loadAdminCommentList(); loadReviewInsights(); }
 }
 
@@ -2133,6 +2204,7 @@ async function toggleWish(id, btn){
     }
   }
   if(!has) logEvent('wish', {offer_id:id});
+  if(!has && LIVE) surveyAfterFirst('wish');
   if(!$('#tab-mine').classList.contains('hidden')) renderMyWishlist();
   renderReminders();
 }
@@ -3662,6 +3734,7 @@ $('#btnSaveReport').onclick=async e=>{
     ({error}=await sb.from('usage_reports').insert({...p, offer_id:Number(repId), user_id:me.id}));
   }
   if(error){ alert(error.code==='23505'?'你今天已經回報過這筆優惠了。':'回報失敗：'+error.message); return; }
+  if(isNewReport) surveyAfterFirst('report');
   const justReportedId=repId;
   $('#dlgReport').close();
   await loadOffers(); render(); loadMyStuff(); loadSiteStats(); loadMyUsedOffers();
@@ -6013,6 +6086,303 @@ function renderFbList(){
 $('#fbTypeFilter').onchange=renderFbList;
 
 /* ---- 站台儀表板 ---- */
+/* ===================================================================== */
+/* ---- 回饋問卷（v62）----
+   celine：想要一個跳出來讓使用者填的回饋問卷，固定在「我的」分頁，新使用者也會被引導
+   去填，未來當作品集用的回饋。要求逐條對應：
+   - 填法越簡單越好 → 全部是點選按鈕，只有最後一格「還想說的話」是選填文字
+   - 問喜歡哪些功能、最常用哪些功能 → 兩題分開，都是複選
+   - 可以重複填（不同時間有不同感受）→ 每次都是新的一份；資料庫限制同一台裝置／會員
+     24 小時一份，避免被灌票
+   - 訪客也能填
+   - 引導小卡片：第 2 次來、第一次收藏／回報成功、這次停留滿 5 分鐘，任一個條件就出現，
+     每次打開網站最多一次；「之後再說」7 天內不再出現；填完 30 天內不主動跳
+   題目改版時把 SURVEY_VERSION 往上加，後台統計跟 CSV 就分得出新舊版本的答案。 ---- */
+const SURVEY_VERSION='v1';
+const SURVEY_FACES=[['1','😣','很差'],['2','🙁','不太好'],['3','😐','普通'],['4','🙂','不錯'],['5','😍','超喜歡']];
+const SURVEY_ASPECTS=[['score_find','找優惠方便'],['score_accuracy','資訊正確'],['score_mobile','手機好用'],['score_look','畫面好看']];
+const SURVEY_FEATURES=[['browse','瀏覽／篩選優惠'],['wishlist','待辦清單'],['report','回報使用狀況'],
+  ['comment','留言／評分'],['leaderboard','排行榜'],['submit','投稿新優惠'],['map','Google 地圖找分店'],
+  ['deadline','生日提醒／入會死線']];
+const SURVEY_SOURCES=[['threads','Threads'],['instagram','Instagram'],['facebook','Facebook'],
+  ['friend','朋友推薦'],['search','Google 搜尋'],['other','其他']];
+const SURVEY_SNOOZE_DAYS=7, SURVEY_AFTER_SUBMIT_DAYS=30, SURVEY_STAY_MS=5*60*1000, SURVEY_VISIT_GAP_MS=30*60*1000;
+let SURVEY_NUDGE_SHOWN=false;
+
+function renderSurveyForm(){
+  const opt=(v,html,multi)=>`<button type="button" class="sv-opt" data-v="${esc(v)}" aria-pressed="false">${html}</button>`;
+  const group=(q,cls,multi,inner)=>`<div class="sv-group ${cls}" data-q="${q}" data-multi="${multi?'1':''}">${inner}</div>`;
+  $('#svQuestions').innerHTML=`
+    <div class="sv-q"><b>整體來說，你喜歡壽星日嗎？ *</b>
+      ${group('overall','sv-faces',false,SURVEY_FACES.map(([v,e,l])=>opt(v,`${e}<small>${esc(l)}</small>`)).join(''))}</div>
+    <div class="sv-q"><b>你會推薦壽星日給朋友嗎？ *</b>
+      ${group('nps','sv-nps',false,Array.from({length:11},(_,i)=>opt(String(i),String(i))).join(''))}
+      <div class="sv-scale"><span>完全不會</span><span>一定會</span></div></div>
+    <div class="sv-q"><b>用起來感覺如何？（1 很差 → 5 很好）</b>
+      ${SURVEY_ASPECTS.map(([k,l])=>`<div class="sv-aspect"><span>${esc(l)}</span>
+        ${group(k,'',false,['1','2','3','4','5'].map(v=>opt(v,v)).join(''))}</div>`).join('')}</div>
+    <div class="sv-q"><b>你喜歡哪些功能？（可複選）</b>
+      ${group('liked','',true,SURVEY_FEATURES.map(([k,l])=>opt(k,esc(l))).join(''))}</div>
+    <div class="sv-q"><b>你最常用哪些功能？（可複選）</b>
+      ${group('used','',true,SURVEY_FEATURES.map(([k,l])=>opt(k,esc(l))).join(''))}</div>
+    <div class="sv-q"><b>你怎麼知道壽星日的？</b>
+      ${group('source','',false,SURVEY_SOURCES.map(([k,l])=>opt(k,esc(l))).join(''))}</div>
+    <details class="sv-q"><summary style="cursor:pointer;font-size:.88rem;font-weight:600">還想說的話（選填）</summary>
+      <textarea id="svComment" maxlength="500" rows="3" style="width:100%;margin-top:6px"
+        placeholder="最喜歡的地方、希望改進的地方，想到什麼都可以"></textarea></details>`;
+  $('#svMsg').innerHTML='';
+}
+function surveyPick(q){
+  const b=document.querySelector(`#dlgSurvey .sv-group[data-q="${q}"] .sv-opt[aria-pressed="true"]`);
+  return b ? b.dataset.v : null;
+}
+function surveyPicks(q){
+  return [...document.querySelectorAll(`#dlgSurvey .sv-group[data-q="${q}"] .sv-opt[aria-pressed="true"]`)].map(b=>b.dataset.v);
+}
+function openSurvey(from){
+  hideSurveyNudge();
+  renderSurveyForm();
+  $('#dlgSurvey').showModal(); pushDlgHistory();
+  logEvent('survey_open', {from:from||'mine'});
+}
+$('#dlgSurvey').addEventListener('click', e=>{
+  const b=e.target.closest('.sv-opt'); if(!b) return;
+  const g=b.closest('.sv-group'); if(!g) return;
+  if(g.dataset.multi==='1') b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed')!=='true'));
+  else g.querySelectorAll('.sv-opt').forEach(x=>x.setAttribute('aria-pressed', String(x===b)));
+});
+$('#btnSvCancel').onclick=()=>$('#dlgSurvey').close();
+$('#btnSvSubmit').onclick=async()=>{
+  if(!LIVE){ note($('#svMsg'),'alert','離線示範模式無法送出問卷。'); return; }
+  const overall=surveyPick('overall'), nps=surveyPick('nps');
+  if(!overall || nps==null){ note($('#svMsg'),'alert','請至少點選前兩題（喜不喜歡、會不會推薦）。'); return; }
+  const num=v=>v==null?null:Number(v);
+  const row={
+    user_id: me?.id||null, session_id: SESSION_ID, version: SURVEY_VERSION,
+    overall:Number(overall), nps:Number(nps),
+    score_find:num(surveyPick('score_find')), score_accuracy:num(surveyPick('score_accuracy')),
+    score_mobile:num(surveyPick('score_mobile')), score_look:num(surveyPick('score_look')),
+    liked_features:surveyPicks('liked'), used_features:surveyPicks('used'),
+    source:surveyPick('source'), comment:($('#svComment')?.value||'').trim().slice(0,500),
+    device: (window.matchMedia && window.matchMedia('(max-width: 767px)').matches) ? 'mobile' : 'desktop',
+    page: String(location.hash||'').slice(0,100)
+  };
+  const btn=$('#btnSvSubmit'); btn.disabled=true;
+  const {error}=await sb.from('survey_responses').insert(row);
+  btn.disabled=false;
+  if(error){
+    const msg = /row-level security|violates row-level|42501/i.test(error.message+(error.code||''))
+      ? '你 24 小時內已經填過一份了，謝謝！明天再來分享新的感受吧。'
+      : /relation|does not exist/i.test(error.message)
+        ? '問卷功能還沒開通（管理員需要先在 Supabase 執行 schema_v62_survey_and_visits.sql）。'
+        : '送出失敗：'+esc(error.message);
+    note($('#svMsg'),'alert',msg);
+    return;
+  }
+  try{ localStorage.setItem('sxr_survey_last_submit', String(Date.now())); }catch{}
+  logEvent('survey_submit', {overall:row.overall, nps:row.nps});
+  renderSurveyLastHint();
+  note($('#svMsg'),'good','✓ 收到了，謝謝你的回饋！');
+  setTimeout(()=>{ if($('#dlgSurvey').open) $('#dlgSurvey').close(); }, 1200);
+};
+$('#btnOpenSurvey').onclick=()=>openSurvey('mine');
+
+function renderSurveyLastHint(){
+  const el=$('#surveyLastHint'); if(!el) return;
+  let last=0; try{ last=Number(localStorage.getItem('sxr_survey_last_submit')||0); }catch{}
+  if(!last){ el.textContent=''; return; }
+  const days=Math.floor((Date.now()-last)/864e5);
+  el.textContent = days<1 ? '你今天填過了，謝謝！' : `你上次填是 ${days} 天前`;
+}
+// 問卷入口要訪客、會員都看得到，搬到「我的」分頁最底下（在登入卡片、會員專屬區塊之後）
+(()=>{ const p=$('#surveyPanel'), m=$('#tab-mine main'); if(p&&m) m.appendChild(p); renderSurveyLastHint(); })();
+
+/* ---- 引導填問卷的小卡片 ---- */
+function surveyNudgeAllowed(){
+  if(!LIVE || SURVEY_NUDGE_SHOWN) return false;
+  try{
+    const now=Date.now();
+    if(Number(localStorage.getItem('sxr_survey_snooze_until')||0) > now) return false;
+    const last=Number(localStorage.getItem('sxr_survey_last_submit')||0);
+    if(last && now-last < SURVEY_AFTER_SUBMIT_DAYS*864e5) return false;
+  }catch{ return false; }
+  return true;
+}
+function maybeShowSurveyNudge(reason){
+  if(!surveyNudgeAllowed()) return false;
+  SURVEY_NUDGE_SHOWN=true;
+  $('#surveyNudge').classList.remove('hidden');
+  logEvent('survey_nudge', {reason});
+  return true;
+}
+function hideSurveyNudge(){ $('#surveyNudge').classList.add('hidden'); }
+function snoozeSurveyNudge(){
+  try{ localStorage.setItem('sxr_survey_snooze_until', String(Date.now()+SURVEY_SNOOZE_DAYS*864e5)); }catch{}
+  hideSurveyNudge();
+}
+$('#btnSvNudgeGo').onclick=()=>openSurvey('nudge');
+$('#btnSvNudgeLater').onclick=snoozeSurveyNudge;
+$('#btnSvNudgeClose').onclick=snoozeSurveyNudge;
+
+// 造訪次數用跟管理員統計同一個規則：跟上一次打開網站間隔超過 30 分鐘才算新的一次
+function trackSurveyVisit(){
+  try{
+    const now=Date.now(), last=Number(localStorage.getItem('sxr_visit_last')||0);
+    let n=Number(localStorage.getItem('sxr_visit_count')||0);
+    if(!last || now-last > SURVEY_VISIT_GAP_MS){ n+=1; localStorage.setItem('sxr_visit_count', String(n)); }
+    localStorage.setItem('sxr_visit_last', String(now));
+    return n;
+  }catch{ return 0; }
+}
+// 第一次收藏／第一次回報成功（只算第一次，之後收藏不會再觸發）
+function surveyAfterFirst(kind){
+  try{
+    const k='sxr_survey_first_'+kind;
+    if(localStorage.getItem(k)) return false;
+    localStorage.setItem(k,'1');
+  }catch{ return false; }
+  setTimeout(()=>maybeShowSurveyNudge('first_'+kind), 1500);
+  return true;
+}
+function startSurveyNudges(){
+  if(!LIVE) return;
+  if(trackSurveyVisit()>=2) setTimeout(()=>maybeShowSurveyNudge('second_visit'), 4000);
+  // 停留滿 5 分鐘：只算畫面真的在前景的時間，切到別的 App 不算
+  let stayed=0, lastTick=Date.now();
+  const iv=setInterval(()=>{
+    const now=Date.now();
+    if(document.visibilityState!=='hidden') stayed += now-lastTick;
+    lastTick=now;
+    if(stayed>=SURVEY_STAY_MS || SURVEY_NUDGE_SHOWN){
+      clearInterval(iv);
+      if(stayed>=SURVEY_STAY_MS) maybeShowSurveyNudge('stay_5min');
+    }
+  }, 15000);
+}
+
+/* ---- 管理員：問卷統計 ---- */
+let SV_ADMIN_SEQ=0;
+async function loadSurveyAdmin(){
+  if(!LIVE||!myProfile?.is_admin) return;
+  const seq=++SV_ADMIN_SEQ;
+  const days=Number($('#svRange').value);
+  const label=days ? `近 ${days} 天` : '全部時間';
+  const {data:d,error}=await sb.rpc('admin_survey_summary',{p_days: days||null});
+  if(seq!==SV_ADMIN_SEQ) return;
+  if(error){
+    $('#svBody').innerHTML = /function|does not exist/i.test(error.message)
+      ? '<div class="note">問卷功能要先在 Supabase 執行 <code>schema_v62_survey_and_visits.sql</code>。</div>'
+      : `<div class="note alert">讀取失敗：${esc(error.message)}</div>`;
+    return;
+  }
+  renderSurveySummary(d||{}, label);
+}
+function renderSurveySummary(d, label){
+  const total=Number(d.total||0);
+  $('#svCount').textContent=total; $('#svCount').classList.toggle('hidden',!total);
+  if(!total){ $('#svBody').innerHTML=`<div class="hint">${esc(label)}還沒有人填問卷。</div>`; return; }
+  const nps=Math.round((Number(d.promoters||0)-Number(d.detractors||0))/total*100);
+  const avg=x=>x==null?'—':Number(x).toFixed(1);
+  const cell=(v,k)=>`<div><div class="v">${esc(String(v))}</div><div class="k">${esc(k)}</div></div>`;
+  const bar=(label, n, max, val)=>`<div class="hbar-row">
+      <span class="hbar-label" style="width:128px">${esc(label)}</span>
+      <div class="hbar-track"><div class="hbar-fill" style="width:${n?Math.max(4,n/max*100):0}%"></div></div>
+      <span class="hbar-val" style="width:92px;text-align:right">${val}</span></div>`;
+  const countBars=(title, obj, list)=>{
+    const known=list.map(([k,l])=>[l, Number(obj?.[k]||0)]);
+    const extra=Object.entries(obj||{}).filter(([k])=>!list.some(([x])=>x===k)).map(([k,n])=>[k==='unknown'?'沒填':k, Number(n)]);
+    const rows=[...known,...extra].filter(r=>r[1]).sort((a,b)=>b[1]-a[1]);
+    if(!rows.length) return '';
+    const max=Math.max(1,...rows.map(r=>r[1]));
+    return `<div class="dash-chart" style="margin-top:12px"><b>${esc(title)}</b><div style="margin-top:8px">
+      ${rows.map(([l,n])=>bar(l,n,max,`${n} 人・${Math.round(n/total*100)}%`)).join('')}</div></div>`;
+  };
+  const aspects=SURVEY_ASPECTS.map(([k,l])=>[l, d[k.replace('score_','')+'_avg']]).filter(r=>r[1]!=null);
+  $('#svBody').innerHTML=`
+    <div class="bigstat">
+      ${cell(total, label+'回覆數')}
+      ${cell(avg(d.overall_avg)+' / 5', '平均滿意度')}
+      ${cell(nps, 'NPS 分數')}
+      ${cell(`${d.members||0} / ${d.guests||0}`, '會員 / 訪客')}
+    </div>
+    <p class="statline" style="margin-top:8px">推薦者 ${d.promoters||0}　·　中立 ${d.passives||0}　·　批評者 ${d.detractors||0}</p>
+    ${aspects.length?`<div class="dash-chart" style="margin-top:12px"><b>各面向平均（滿分 5）</b><div style="margin-top:8px">
+      ${aspects.map(([l,v])=>bar(l,Number(v),5,`${avg(v)} / 5`)).join('')}</div></div>`:''}
+    ${countBars('喜歡的功能', d.liked, SURVEY_FEATURES)}
+    ${countBars('最常用的功能', d.used, SURVEY_FEATURES)}
+    ${countBars('怎麼知道壽星日', d.source, SURVEY_SOURCES)}
+    ${(d.recent_comments||[]).length?`<div class="dash-chart" style="margin-top:12px"><b>還想說的話（最新 50 則）</b>
+      <div class="sub-list" style="margin-top:8px">${d.recent_comments.map(c=>`<div class="sub-item">
+        <b>${esc(fmtDT(c.created_at))}・${c.is_member?'會員':'訪客'}・滿意度 ${esc(String(c.overall))}・推薦 ${esc(String(c.nps))}</b>
+        <span style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(c.comment)}</span></div>`).join('')}</div></div>`:''}`;
+}
+$('#svRange').onchange=loadSurveyAdmin;
+
+// CSV 給作品集整理用：不含 user_id／裝置代號這些可以追到個人的欄位；
+// 開頭加 BOM，Excel 打開中文才不會變亂碼
+function buildSurveyCsv(rows){
+  const cols=[['created_at','填寫時間'],['member','會員'],['device','裝置'],['version','問卷版本'],
+    ['overall','整體滿意度(1-5)'],['nps','推薦分數(0-10)'],['score_find','找優惠方便'],['score_accuracy','資訊正確'],
+    ['score_mobile','手機好用'],['score_look','畫面好看'],['liked_features','喜歡的功能'],['used_features','最常用的功能'],
+    ['source','怎麼知道壽星日'],['comment','還想說的話']];
+  const q=v=>{ const t=v==null?'':String(v); return /[",\r\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t; };
+  const names=(list,arr)=>(arr||[]).map(x=>(list.find(([k])=>k===x)||[x,x])[1]).join('、');
+  const lines=[cols.map(c=>c[1]).join(',')];
+  (rows||[]).forEach(r=>lines.push(cols.map(([k])=>{
+    if(k==='member') return q(r.user_id?'是':'否');
+    if(k==='liked_features'||k==='used_features') return q(names(SURVEY_FEATURES,r[k]));
+    if(k==='source') return q(r.source?(SURVEY_SOURCES.find(([x])=>x===r.source)||[null,r.source])[1]:'');
+    return q(r[k]);
+  }).join(',')));
+  return '﻿'+lines.join('\r\n');
+}
+$('#btnSvExport').onclick=async()=>{
+  if(!LIVE||!myProfile?.is_admin) return;
+  const days=Number($('#svRange').value);
+  let query=sb.from('survey_responses').select('*').order('created_at',{ascending:false}).limit(5000);
+  if(days) query=query.gte('created_at', new Date(Date.now()-days*864e5).toISOString());
+  const {data,error}=await query;
+  if(error){ note($('#svAdminMsg'),'alert','匯出失敗：'+esc(error.message)); return; }
+  if(!(data||[]).length){ note($('#svAdminMsg'),'alert','這個區間沒有問卷可以匯出。'); return; }
+  const blob=new Blob([buildSurveyCsv(data)],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`壽星日問卷_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  $('#svAdminMsg').innerHTML='';
+};
+
+/* ---- 管理員儀表板：平均每位會員造訪幾次（v62）----
+   celine：想看平均每個會員點進來看幾次。「一次造訪」＝兩次打開網站間隔超過 30 分鐘才算
+   新的一次（連續重新整理不重複算）；分母是這段期間的活躍會員，跟上面「活躍會員」同一個數。 */
+let VISIT_STATS_SEQ=0;
+async function loadVisitStats(statsDays, rangeLabel){
+  const seq=++VISIT_STATS_SEQ;
+  const {data:v,error}=await sb.rpc('admin_visit_stats',{p_days:statsDays});
+  const el=$('#dashVisits');
+  if(!el || seq!==VISIT_STATS_SEQ) return;
+  if(error){
+    el.innerHTML = /function|does not exist/i.test(error.message)
+      ? '<div class="note">「平均每位會員造訪幾次」要先在 Supabase 執行 <code>schema_v62_survey_and_visits.sql</code>。</div>'
+      : `<div class="note alert">造訪統計讀取失敗：${esc(error.message)}</div>`;
+    return;
+  }
+  const d=v||{};
+  const one=x=>x==null?'—':String(Math.round(Number(x)*10)/10);
+  const cell=(val,k)=>`<div><div class="v">${esc(val)}</div><div class="k">${esc(k)}</div></div>`;
+  el.innerHTML=`<div class="dash-chart"><b style="font-size:.85rem">${esc(rangeLabel)}會員造訪</b>
+    <div class="bigstat" style="margin-top:8px">
+      ${cell(one(d.avg_visits_per_member),'平均每位會員造訪次數')}
+      ${cell(one(d.avg_pageviews_per_member),'平均每位會員瀏覽次數')}
+      ${cell(d.returning_rate==null?'—':(Math.round(Number(d.returning_rate)*1000)/10)+'%','回訪率（造訪 2 次以上）')}
+      ${cell(one(d.avg_visits_per_guest_device),'訪客：平均每台裝置造訪次數')}
+    </div>
+    <p class="sub" style="margin-top:6px">「造訪」＝同一個人兩次打開網站間隔超過 30 分鐘才算新的一次，連續重新整理
+      不會重複算；「瀏覽」是每次打開／重新整理都算。分母是這段期間的活躍會員
+      （${esc(String(d.active_members??0))} 人，跟上面「活躍會員」同一個數字）。</p></div>`;
+}
+
 async function loadAdminDashboard(days){
   if(!LIVE||!myProfile?.is_admin) return;
   // dashRange 選單傳「0」代表「全部時間」——注意不能用 `Number(days)||...`
@@ -6134,10 +6504,12 @@ async function loadAdminDashboard(days){
       有多少比例當場註冊／回報使用心得；「會員活躍率」是全部累積會員裡，
       這段期間還有回來的比例。</p>
   </div>
+  <div id="dashVisits" style="margin-top:16px"></div>
   ${chartsHtml}
   ${hoursHtml}
   ${bmonthHtml}`;
   wireChartTooltips(box);
+  loadVisitStats(statsDays, rangeLabel);
   startOnlineRefresh();
 }
 // 「即時在線」不是真的 WebSocket 推播，是每隔一段時間重打一次
@@ -6415,7 +6787,7 @@ function makeCollapsiblePanel(id, defaultOpen){
     try{ localStorage.setItem(skey, now?'1':'0'); }catch{}
   });
 }
-[['pnlDash',true],['pnlComments',true],['pnlFeedback',true],['pnlPending',true],['pnlEdits',true],
+[['pnlDash',true],['pnlComments',true],['pnlSurvey',true],['pnlFeedback',true],['pnlPending',true],['pnlEdits',true],
  ['pnlRejected',false],['pnlApproved',false],['pnlUsageReports',false],
  ['pnlAnnounce',false],['pnlAdminSettings',false]]
   .forEach(([id,open])=>makeCollapsiblePanel(id,open));
