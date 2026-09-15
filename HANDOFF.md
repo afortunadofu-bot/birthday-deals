@@ -154,9 +154,8 @@ celine 會轉述朋友「嵐」的回饋（口語、有時間戳、繁中）。�
 核可要送出兩次 review_offer 且帶對 verified/note；非管理員完全不該出現信封鈕；
 點排行榜頭貼不能連帶展開該列。
 
-**已知小瑕疵（還沒改）**：`adminLookupEmail()` 在 RPC 失敗時會把 `null` 一起
-存進 `ADMIN_EMAIL_CACHE`，所以那個人之後再點都直接顯示「（查不到信箱）」，
-要重新整理頁面才會再查一次。實務上影響很小，先記著。
+~~已知小瑕疵~~（2026-09-15 已修）：`adminLookupEmail()` 原本 RPC 失敗時也把 `null`
+存進 cache，現在失敗不存、再點會重查。同一次也修了「打開信箱後收不回去」。
 
 ### 🔴 要 celine 貼進 Supabase SQL Editor 執行的
 
