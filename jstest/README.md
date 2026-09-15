@@ -31,6 +31,7 @@ node t01_pending_bulk_approve.js
 | `t04_detail_comment_email.js` | 優惠詳情彈窗的留言也接上信封鈕（第二個接線點，容易改一邊漏一邊） |
 | `t05_reports_wishlist_feedback.js` | 重複回報提醒（含同品牌另一張卡片、王品≠王品牛排）、詳情頁編輯自己的回報、待辦清單詳情開完整視窗、第一次收藏提示 |
 | `t07_maps_button.js` | Google 地圖按鈕：卡片／詳情都有、搜尋字整理（限定店、括號英文、單一縣市、品牌已含縣市不重複）、點了不會開卡片詳情 |
+| `t08_mobile_fixes_likes.js` | 回報說明獨佔一行（手機跑版）、回報視窗打開不聚焦日期欄、收藏備註改會長高的 textarea（含跳脫）、回報／留言按讚（讚數、自己不能按、按／收回、失敗改回、沒登入、v61 未跑時不顯示） |
 | `t06_near_me.js` | 附近模式（feature/geo）：定位→由近到遠、卡片最近分店＋導航、換距離、舊結果不蓋新結果、保留使用者排序、拒絕定位改點地圖、v58 沒跑的提示、座標不寫進 localStorage |
 
 ## harness 的坑（`harness.js` 裡有更詳細的註解）
