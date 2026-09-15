@@ -33,7 +33,7 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   const sb = makeSb({});
   const realFrom = sb.from;
   sb.from = (table) => table === 'survey_responses'
-    ? { insert: (row) => { inserts.push(row); return Promise.resolve(insertResult); } }
+    ? { insert: (row) => { inserts.push(row); return Promise.resolve(typeof insertResult === 'function' ? insertResult(row) : insertResult); } }
     : realFrom(table);
   win.__sb = sb;
   win.eval('sb = window.__sb; LIVE = true; me = null; myProfile = null;');
@@ -53,6 +53,14 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
     && g('liked').querySelectorAll('.sv-opt').length >= 6);
   t.ok('只有最後一格是文字（選填）', doc.querySelectorAll('#dlgSurvey textarea').length === 1
     && doc.querySelectorAll('#dlgSurvey input[type="text"]').length === 0);
+  // celine：還想說的話的格子要預設展開
+  t.ok('「還想說的話」預設展開（沒有包在收合裡）', !doc.querySelector('#svComment').closest('details'));
+  // celine：多問一些問題，一樣用點的
+  const extra = win.eval('SURVEY_EXTRA');
+  t.ok('新增至少 6 題', extra.length >= 6, extra.length);
+  t.ok('新題目全部都是點選按鈕', extra.every((x) => g(x.key) && g(x.key).querySelectorAll('.sv-opt').length === x.opts.length));
+  t.ok('新題目有單選也有複選', extra.some((x) => x.multi) && extra.some((x) => !x.multi)
+    && extra.every((x) => g(x.key).dataset.multi === (x.multi ? '1' : '')));
 
   // 必填
   doc.querySelector('#btnSvSubmit').click();
@@ -67,6 +75,13 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   pick('liked', 'browse'); pick('liked', 'wishlist'); pick('liked', 'map'); pick('liked', 'map');
   t.eq('複選題可以多選、再點一次取消', [...g('liked').querySelectorAll('.sv-opt[aria-pressed="true"]')].map((b) => b.dataset.v), ['browse', 'wishlist']);
   pick('nps', '9'); pick('score_mobile', '4'); pick('used', 'browse'); pick('source', 'threads');
+  pick('visit_freq', 'monthly'); pick('visit_freq', 'weekly');
+  pick('want_types', 'food'); pick('want_types', 'beauty');
+  // 「都沒有」跟其他選項互斥
+  pick('problems', 'slow'); pick('problems', 'none');
+  t.eq('點「都沒有」會清掉其他問題', [...g('problems').querySelectorAll('.sv-opt[aria-pressed="true"]')].map((b) => b.dataset.v), ['none']);
+  pick('problems', 'outdated');
+  t.eq('再點其他問題會清掉「都沒有」', [...g('problems').querySelectorAll('.sv-opt[aria-pressed="true"]')].map((b) => b.dataset.v), ['outdated']);
   doc.querySelector('#svComment').value = '  很好用，希望有地圖  ';
 
   const beforeSubmit = Date.now();
@@ -81,7 +96,8 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   t.eq('最常用的功能', row.used_features, ['browse']);
   t.eq('來源', row.source, 'threads');
   t.eq('文字去頭尾空白', row.comment, '很好用，希望有地圖');
-  t.eq('問卷版本', row.version, 'v1');
+  t.eq('問卷版本', row.version, 'v2');
+  t.eq('新題目答案放進 extra（沒點的題目不放）', row.extra, { visit_freq: 'weekly', want_types: ['food', 'beauty'], problems: ['outdated'] });
   t.ok('記下填寫時間', Number(ls.getItem('sxr_survey_last_submit')) >= beforeSubmit);
   t.ok('顯示謝謝', /謝謝/.test(doc.querySelector('#svMsg').textContent));
   t.ok('「我的」區塊顯示今天填過', /今天填過/.test(doc.querySelector('#surveyLastHint').textContent));
@@ -96,6 +112,20 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   await tick(win, 3);
   t.eq('重複填會送出新的一份（不是更新舊的）', inserts.length, 2);
   t.ok('24 小時內重填被擋下時講人話', /24 小時內已經填過/.test(doc.querySelector('#svMsg').textContent), doc.querySelector('#svMsg').textContent);
+  // v63 還沒跑：沒有 extra 欄位 → 拿掉 extra 再送一次
+  insertResult = (r) => ('extra' in r)
+    ? { data: null, error: { code: 'PGRST204', message: "Could not find the 'extra' column of 'survey_responses' in the schema cache" } }
+    : { data: null, error: null };
+  const nBefore = inserts.length;
+  win.eval('SURVEY_NUDGE_SHOWN = false;');
+  ls.removeItem('sxr_survey_last_submit');
+  doc.querySelector('#btnSvSubmit').click();
+  await tick(win, 4);
+  t.eq('v63 沒跑時自動重送一次', inserts.length, nBefore + 2);
+  t.ok('重送的那份不帶 extra、舊題目照樣送', !('extra' in inserts[inserts.length - 1]) && inserts[inserts.length - 1].overall === 3);
+  t.ok('重送成功顯示謝謝', /謝謝/.test(doc.querySelector('#svMsg').textContent), doc.querySelector('#svMsg').textContent);
+  win.eval('openSurvey("mine")');
+  pick('overall', '3'); pick('nps', '6');
   insertResult = { data: null, error: { message: 'relation "public.survey_responses" does not exist' } };
   doc.querySelector('#btnSvSubmit').click();
   await tick(win, 3);
@@ -170,6 +200,7 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
     find_avg: 4.1, accuracy_avg: 3.8, mobile_avg: 4.5, look_avg: 4.0,
     liked: { browse: 8, wishlist: 5, map: 2 }, used: { browse: 9, report: 3 },
     source: { threads: 6, friend: 3, unknown: 1 },
+    extra: { want_types: { food: 7, beauty: 2 }, problems: { none: 4 } },
     recent_comments: [{ created_at: '2026-09-15T03:00:00Z', overall: 5, nps: 10, comment: '<b>超讚</b>', is_member: true, device: 'mobile' }],
   };
   const sbAdmin = makeSb({ rpcs: { admin_survey_summary: { data: summary, error: null } } });
@@ -181,6 +212,8 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   t.ok('平均滿意度顯示到小數一位', /4\.3 \/ 5/.test(body.textContent));
   t.ok('喜歡的功能長條圖用中文功能名稱', /瀏覽／篩選優惠/.test(body.textContent) && /8 人・80%/.test(body.textContent));
   t.ok('來源沒填的顯示「沒填」', /沒填/.test(body.textContent));
+  t.ok('新題目也有長條圖、用中文選項', /你最想看到哪類優惠/.test(body.textContent) && /餐廳／吃到飽/.test(body.textContent) && /7 人・70%/.test(body.textContent));
+  t.ok('v63 還沒跑（沒有 extra）也畫得出來', (() => { win.renderSurveySummary({ ...summary, extra: undefined }, '測試'); const ok = /喜歡的功能/.test(body.textContent); win.renderSurveySummary(summary, '近 30 天'); return ok; })());
   t.ok('文字回饋有跳脫（不會變成 HTML）', !body.querySelector('.sub-item b b') && /<b>超讚<\/b>/.test(body.textContent));
   t.eq('標題旁顯示回覆數', doc.querySelector('#svCount').textContent, '10');
   t.eq('查詢帶區間天數', sbAdmin.__calls.rpc.find((c) => c.name === 'admin_survey_summary').params, { p_days: 30 });
@@ -195,7 +228,7 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   const csv = win.buildSurveyCsv([
     { created_at: '2026-09-15T03:00:00Z', user_id: 'u-1', session_id: 'sSECRET', device: 'mobile', version: 'v1', overall: 5, nps: 9,
       score_find: 4, score_accuracy: null, score_mobile: 5, score_look: 3, liked_features: ['browse', 'map'], used_features: ['browse'],
-      source: 'friend', comment: '好用, 但"希望"\n有地圖' },
+      source: 'friend', comment: '好用, 但"希望"\n有地圖', extra: { visit_freq: 'weekly', want_types: ['food', 'free'] } },
     { created_at: '2026-09-14T03:00:00Z', user_id: null, session_id: 'sOTHER', device: 'desktop', version: 'v1', overall: 2, nps: 3,
       liked_features: [], used_features: [], source: null, comment: '' },
   ]);
@@ -203,6 +236,7 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   t.ok('CSV 不含 user_id／裝置代號', !/u-1|sSECRET|sOTHER/.test(csv));
   t.ok('CSV 功能用中文名稱', /瀏覽／篩選優惠、Google 地圖找分店/.test(csv));
   t.ok('CSV 逗號、引號、換行有正確跳脫', csv.includes('"好用, 但""希望""\n有地圖"'));
+  t.ok('CSV 有新題目欄位、答案轉中文', /你多久會來一次壽星日/.test(csv) && /,每週,/.test(csv) && /餐廳／吃到飽、免消費就能拿/.test(csv));
   t.ok('CSV 會員／訪客標示', /,是,mobile,/.test(csv) && /,否,desktop,/.test(csv));
 
   /* ================= 管理員：造訪統計 ================= */
