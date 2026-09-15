@@ -22,9 +22,9 @@ const { boot, tick, makeAsserts } = require('./harness');
   const panel = doc.querySelector('#siteUpdatesPanel');
   t.ok('「我的」分頁有更新紀錄', !!panel && !!panel.closest('#tab-mine'));
   t.ok('更新紀錄不在會員專屬區塊裡（訪客也看得到）', panel && !panel.closest('#mineAuthedPanels'));
-  // celine：更新紀錄也要可以摺疊（預設收合，免得「我的」分頁太長）
+  // celine：更新紀錄要可以摺疊、預設展開
   t.ok('更新紀錄可以摺疊', !!panel.querySelector('.panel-cbody'));
-  t.ok('更新紀錄預設收合', panel.classList.contains('collapsed'));
+  t.ok('更新紀錄預設展開', !panel.classList.contains('collapsed'));
 
   const updates = win.eval('SITE_UPDATES');
   const dates = updates.map((u) => u.date);
@@ -96,6 +96,63 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.ok('更新內容有跳脫（不會變成 HTML）', !doc.querySelector('#siteUpdatesList img') && !doc.querySelector('#siteUpdatesList script'));
   win.eval('SITE_UPDATES.shift();');
   win.markUpdatesSeen();
+
+  /* ================= 有新更新時跳通知 ================= */
+  const unudge = doc.querySelector('#updatesNudge');
+  const snudge = doc.querySelector('#surveyNudge');
+  const resetUpd = () => { ls.setItem('sxr_updates_seen', updates[1].date); ls.removeItem('sxr_updates_nudge_done'); unudge.classList.add('hidden'); win.renderSiteUpdates(); };
+
+  // 第一次來的人不跳
+  ls.removeItem('sxr_updates_seen'); ls.removeItem('sxr_updates_nudge_done');
+  win.renderSiteUpdates();
+  t.eq('第一次來的人不跳更新通知', win.maybeShowUpdatesNudge(), false);
+  t.eq('沒有新更新不跳', win.maybeShowUpdatesNudge(), false);
+
+  resetUpd();
+  t.eq('有新更新時打開網站跳通知', win.maybeShowUpdatesNudge(), true);
+  t.ok('通知出現', !unudge.classList.contains('hidden'));
+  t.ok('通知寫出最新更新的標題', doc.querySelector('#updNudgeText').textContent.includes(updates[0].title), doc.querySelector('#updNudgeText').textContent);
+
+  // 不跟問卷小卡片疊在一起
+  win.eval('LIVE = true; SURVEY_NUDGE_SHOWN = false;');
+  ['sxr_survey_snooze_until', 'sxr_survey_last_submit'].forEach((k) => ls.removeItem(k));
+  t.eq('更新通知在畫面上時問卷小卡片先不跳', win.maybeShowSurveyNudge('test'), false);
+  t.ok('問卷小卡片沒出現', snudge.classList.contains('hidden'));
+  unudge.classList.add('hidden');
+  win.eval('LIVE = false;');
+
+  // 晚點再看：這次的更新不再跳，但小紅點還在
+  resetUpd();
+  win.maybeShowUpdatesNudge();
+  doc.querySelector('#btnUpdNudgeLater').click();
+  t.ok('按「晚點再看」收起通知', unudge.classList.contains('hidden'));
+  t.eq('「晚點再看」之後這次的更新不再跳', win.maybeShowUpdatesNudge(), false);
+  t.ok('「晚點再看」不算看過，小紅點還在', tabDot() > 0);
+  t.eq('之後再有新的更新會再跳', (() => { ls.setItem('sxr_updates_nudge_done', updates[1].date); return win.maybeShowUpdatesNudge(); })(), true);
+  unudge.classList.add('hidden');
+
+  // 去看看：切到「我的」、展開更新紀錄、捲過去
+  resetUpd();
+  if (!panel.classList.contains('collapsed')) h2.click();
+  doc.querySelector('.tab[data-tab="browse"]').click();
+  win.maybeShowUpdatesNudge();
+  let scrolledTo = null;
+  panel.scrollIntoView = function () { scrolledTo = this.id; };
+  doc.querySelector('#btnUpdNudgeGo').click();
+  t.ok('按「去看看」收起通知', unudge.classList.contains('hidden'));
+  t.eq('按「去看看」切到「我的」分頁', doc.querySelector('.tab[data-tab="mine"]').getAttribute('aria-selected'), 'true');
+  t.ok('按「去看看」展開更新紀錄', !panel.classList.contains('collapsed'));
+  await new Promise((r) => win.setTimeout(r, 300));
+  t.eq('按「去看看」捲到更新紀錄', scrolledTo, 'siteUpdatesPanel');
+  await new Promise((r) => win.setTimeout(r, 2700));
+  t.eq('看了幾秒後標成已讀', ls.getItem('sxr_updates_seen'), updates[0].date);
+  t.eq('看過之後不再跳', win.maybeShowUpdatesNudge(), false);
+
+  // 在別的地方看過更新（例如自己打開「我的」），通知也跟著收起
+  resetUpd();
+  win.maybeShowUpdatesNudge();
+  win.markUpdatesSeen();
+  t.ok('更新標成已讀時通知跟著收起', unudge.classList.contains('hidden'));
 
   /* ================= 加到主畫面提醒 ================= */
   const banner = doc.querySelector('#mineA2hsBanner');
