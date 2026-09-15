@@ -2768,6 +2768,8 @@ function render(){
       <div class="cfoot">
         <button class="btn sm act-report" data-id="${esc(o.id)}">${ICONS.check}我用過了</button>
         <button class="btn sm act-thread" data-id="${esc(o.id)}">${ICONS.chat}詳情${o.commentCount?`（${o.commentCount}）`:''}</button>
+        <a class="btn sm act-map" href="${esc(mapsSearchUrl(o))}" target="_blank" rel="noopener"
+          title="用 Google 地圖找附近的分店">📍 地圖</a>
         ${isAdmin?`<button class="btn sm act-verify" data-id="${esc(o.id)}" data-v="${o.verified?'0':'1'}">${
             o.verified?'取消查證':'標記已查證'}</button>
           <button class="btn sm act-adminedit" data-id="${esc(o.id)}">編輯</button>`
@@ -2780,6 +2782,8 @@ function render(){
 
   $$('.act-report').forEach(b=>b.onclick=e=>{e.stopPropagation();openReport(b.dataset.id);});
   $$('.act-thread').forEach(b=>b.onclick=e=>{e.stopPropagation();openDetail(b.dataset.id);});
+  // 地圖連結直接開新分頁，不要順便觸發整張卡片「點了開詳情」
+  $$('.act-map').forEach(a=>a.onclick=e=>e.stopPropagation());
   $$('.act-adminedit').forEach(b=>b.onclick=e=>{e.stopPropagation();startEditOffer(b.dataset.id,true);});
   $$('.act-suggest').forEach(b=>b.onclick=e=>{e.stopPropagation();startEditOffer(b.dataset.id,false,true);});
   $$('.act-verify').forEach(b=>b.onclick=e=>{e.stopPropagation();setVerified(b.dataset.id,b.dataset.v==='1');});
@@ -3106,6 +3110,29 @@ function pendingOfferEditsHtml(rows){
     <div class="dl-head">目前有 ${rows.length} 筆待審的修改建議</div>${cards}
   </div>`;
 }
+/* ---- 在 Google 地圖找附近分店 ----
+   celine 回饋：多一個連到 Google Map 的按鈕。這顆不需要任何分店資料（「附近」功能要的
+   分店座標還在 feature/geo 分支、要整個做完才上線），就是用品牌名稱開 Google 地圖搜尋——
+   Google 會用使用者自己手機的位置排出附近的分店，所以現在就能上線。
+   品牌名稱先整理過再拿去搜：「紅茶老爹(限板橋裕民店)」要搜「紅茶老爹 板橋裕民店」，只搜
+   品牌會跳出一堆不適用的分店；「屋莎洋食鬆餅屋（Woosa）」這種括號裡的英文名去掉，免得
+   搜尋字太長反而找不到。只適用一個縣市的優惠順便帶縣市（避免跳到外縣市的同名店）；
+   全台或多個縣市就不帶，交給 Google 用使用者位置判斷。 ---- */
+function mapsSearchQuery(o){
+  let brand=String(o?.brand||'');
+  const only=brand.match(/[（(]\s*限\s*([^）)]*)[）)]/);
+  brand=brand.replace(/[（(][^）)]*[）)]/g,' ');
+  if(only) brand+=' '+only[1].trim();
+  brand=brand.replace(/\s+/g,' ').trim();
+  const regs=(o?.regions||[]).filter(r=>r&&r!=='全台');
+  // 品牌名稱本身已經含縣市（「台中長榮桂冠酒店」vs 地區「台中市」）就不重複帶，比對時去掉市／縣字尾
+  const county=regs.length===1?regs[0]:'';
+  return county && !brand.includes(county.replace(/[市縣]$/,'')) ? `${brand} ${county}` : brand;
+}
+function mapsSearchUrl(o){
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapsSearchQuery(o))}`;
+}
+
 function offerFactsHtml(o){
   if(!o) return '';
   const ex=expText(o), pu=pulseText(o);
@@ -3139,6 +3166,9 @@ function offerFactsHtml(o){
       ${o.reviewNote?kv('審核備註',o.reviewNote):''}
     </div>
     ${adminEditDiffHtml(o)}
+    ${o.brand?`<div class="row" style="margin-top:10px">
+      <a class="btn sm dtl-map" href="${esc(mapsSearchUrl(o))}" target="_blank" rel="noopener"
+        title="用 Google 地圖找附近的分店">📍 在 Google 地圖找附近分店</a></div>`:''}
     ${(o.sources&&o.sources.length)?`<div class="meta" style="margin-top:8px">
       ${o.sources.map(s=>`<span>${esc(s.tierLabel||TIER_LABEL[s.tier]||'來源')}
         <a href="${esc(s.url)}" target="_blank" rel="noopener nofollow">連結↗</a></span>`).join('')}
