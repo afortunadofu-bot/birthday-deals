@@ -1061,7 +1061,7 @@
          這裡先寫在最上面，開機時 JS 會把它搬到「推薦給朋友」正下方（見 surveyPanel 搬移那段）。 -->
     <div class="panel" id="surveyPanel">
       <h2>💬 給壽星日一點回饋</h2>
-      <p class="sub">全部用點的，大約 1 分鐘。可以重複填——不同時候的感受都想知道。</p>
+      <p class="sub">全部用點的，大約 2 分鐘。可以重複填——不同時候的感受都想知道。</p>
       <div class="row" style="gap:10px;align-items:center">
         <button class="btn primary" type="button" id="btnOpenSurvey">填寫回饋問卷</button>
         <span class="hint" id="surveyLastHint"></span>
@@ -1407,7 +1407,7 @@
 <!-- 回饋問卷（v62）：題目按鈕由 renderSurveyForm() 依 SURVEY_* 常數產生 -->
 <dialog id="dlgSurvey"><form method="dialog" class="dlg" onsubmit="return false">
   <h2 tabindex="-1" autofocus>給壽星日一點回饋</h2>
-  <p class="sub">全部用點的，大約 1 分鐘。之後也可以再填，不同時候的感受都想聽。</p>
+  <p class="sub">全部用點的，大約 2 分鐘。之後也可以再填，不同時候的感受都想聽。</p>
   <div id="svQuestions"></div>
   <div id="svMsg"></div>
   <div class="foot">
@@ -1419,7 +1419,7 @@
 <div class="hidden" id="surveyNudge" role="dialog" aria-label="回饋問卷邀請">
   <div style="display:flex;gap:8px;align-items:flex-start">
     <span aria-hidden="true" style="font-size:1.3rem;line-height:1">💬</span>
-    <div style="flex:1"><b>花 1 分鐘幫壽星日變更好？</b>
+    <div style="flex:1"><b>花 2 分鐘幫壽星日變更好？</b>
       <div class="hint" style="margin-top:2px">全部用點的，想到什麼點什麼。</div></div>
     <button type="button" class="btn plain" id="btnSvNudgeClose" aria-label="之後再說">✕</button>
   </div>
@@ -2649,7 +2649,7 @@ $('#btnMineA2hsClose').onclick=()=>{
    新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
 const SITE_UPDATES=[
   {date:'2026-09-15', title:'回饋問卷、按讚、Google 地圖', items:[
-    '新增回饋問卷：在「我的」分頁「推薦給朋友」下面，全部用點的，大約 1 分鐘，歡迎隨時來填',
+    '新增回饋問卷：在「我的」分頁「推薦給朋友」下面，全部用點的，大約 2 分鐘，歡迎隨時來填',
     '使用回報、留言可以按讚 👍，覺得有幫助就按一下',
     '每張優惠卡片多一顆「📍 地圖」，直接用 Google 地圖找附近分店',
     '手機版：回報的補充說明不再擠成一條、編輯回報不會一打開就跳日曆、收藏備註可以完整顯示',
@@ -6258,7 +6258,7 @@ $('#fbTypeFilter').onchange=renderFbList;
    - 引導小卡片：第 2 次來、第一次收藏／回報成功、這次停留滿 5 分鐘，任一個條件就出現，
      每次打開網站最多一次；「之後再說」7 天內不再出現；填完 30 天內不主動跳
    題目改版時把 SURVEY_VERSION 往上加，後台統計跟 CSV 就分得出新舊版本的答案。 ---- */
-const SURVEY_VERSION='v1';
+const SURVEY_VERSION='v2';
 const SURVEY_FACES=[['1','😣','很差'],['2','🙁','不太好'],['3','😐','普通'],['4','🙂','不錯'],['5','😍','超喜歡']];
 const SURVEY_ASPECTS=[['score_find','找優惠方便'],['score_accuracy','資訊正確'],['score_mobile','手機好用'],['score_look','畫面好看']];
 const SURVEY_FEATURES=[['browse','瀏覽／篩選優惠'],['wishlist','待辦清單'],['report','回報使用狀況'],
@@ -6266,11 +6266,34 @@ const SURVEY_FEATURES=[['browse','瀏覽／篩選優惠'],['wishlist','待辦清
   ['deadline','生日提醒／入會死線']];
 const SURVEY_SOURCES=[['threads','Threads'],['instagram','Instagram'],['facebook','Facebook'],
   ['friend','朋友推薦'],['search','Google 搜尋'],['other','其他']];
+// v2（v63）：celine 想多問一些問題、一樣用點的。新題目統一存進 extra（jsonb），
+// 單選存字串、複選存陣列；以後加題目只要改這裡，不用再跑 SQL。
+// exclusive：像「都沒有」這種選項，點了會清掉同一題其他選項（反過來也是）。
+const SURVEY_EXTRA=[
+  {key:'visit_freq', title:'你多久會來一次壽星日？', opts:[['first','第一次來'],['birthday_month','生日月才來'],
+    ['monthly','每個月'],['weekly','每週'],['daily','幾乎每天']]},
+  {key:'used_offer', title:'你有真的去用過在這裡找到的優惠嗎？', opts:[['many','用過好幾個'],['one','用過 1 個'],
+    ['planning','還沒，但打算去'],['not_yet','還沒有']]},
+  {key:'vs_self', title:'跟自己上網查比起來，找優惠有變快嗎？', opts:[['much','快很多'],['bit','快一點'],
+    ['same','差不多'],['slower','比較慢']]},
+  {key:'want_types', title:'你最想看到哪類優惠？（可複選）', multi:true, opts:[['food','餐廳／吃到飽'],['drink','飲料甜點'],
+    ['beauty','美妝保養'],['fun','娛樂休閒'],['stay','住宿旅遊'],['shopping','購物商場'],['free','免消費就能拿']]},
+  {key:'decide', title:'決定要不要去用一個優惠，你最看重什麼？（可複選）', multi:true, opts:[['no_spend','不用消費'],
+    ['value','省下的金額'],['near','離家近'],['easy','兌換簡單'],['reviews','別人的回報／留言'],['long_period','期限夠長']]},
+  {key:'problems', title:'你遇過哪些問題？（可複選）', multi:true, opts:[['outdated','資訊過期或不對'],
+    ['cant_find','找不到想要的店'],['too_many','優惠太多看不完'],['confusing','不太會用'],['slow','載入很慢'],
+    ['login','登入麻煩'],['none','都沒有 👍',true]]},
+  {key:'wish_next', title:'最希望壽星日接下來加什麼？（可複選）', multi:true, opts:[['nearby','找離我最近的分店'],
+    ['remind','生日前通知提醒'],['more_shops','更多店家'],['expire','優惠快到期提醒'],['plan','幫我排生日當天行程'],
+    ['friends','跟朋友一起揪']]},
+  {key:'age', title:'你的年紀？', opts:[['u18','18 歲以下'],['18_24','18–24'],['25_34','25–34'],['35_44','35–44'],
+    ['45p','45 歲以上'],['secret','不想說']]}
+];
 const SURVEY_SNOOZE_DAYS=7, SURVEY_AFTER_SUBMIT_DAYS=30, SURVEY_STAY_MS=5*60*1000, SURVEY_VISIT_GAP_MS=30*60*1000;
 let SURVEY_NUDGE_SHOWN=false;
 
 function renderSurveyForm(){
-  const opt=(v,html,multi)=>`<button type="button" class="sv-opt" data-v="${esc(v)}" aria-pressed="false">${html}</button>`;
+  const opt=(v,html,excl)=>`<button type="button" class="sv-opt" data-v="${esc(v)}"${excl?' data-excl="1"':''} aria-pressed="false">${html}</button>`;
   const group=(q,cls,multi,inner)=>`<div class="sv-group ${cls}" data-q="${q}" data-multi="${multi?'1':''}">${inner}</div>`;
   $('#svQuestions').innerHTML=`
     <div class="sv-q"><b>整體來說，你喜歡壽星日嗎？ *</b>
@@ -6285,11 +6308,13 @@ function renderSurveyForm(){
       ${group('liked','',true,SURVEY_FEATURES.map(([k,l])=>opt(k,esc(l))).join(''))}</div>
     <div class="sv-q"><b>你最常用哪些功能？（可複選）</b>
       ${group('used','',true,SURVEY_FEATURES.map(([k,l])=>opt(k,esc(l))).join(''))}</div>
+    ${SURVEY_EXTRA.map(x=>`<div class="sv-q"><b>${esc(x.title)}</b>
+      ${group(x.key,'',!!x.multi,x.opts.map(([k,l,excl])=>opt(k,esc(l),excl)).join(''))}</div>`).join('')}
     <div class="sv-q"><b>你怎麼知道壽星日的？</b>
       ${group('source','',false,SURVEY_SOURCES.map(([k,l])=>opt(k,esc(l))).join(''))}</div>
-    <details class="sv-q"><summary style="cursor:pointer;font-size:.88rem;font-weight:600">還想說的話（選填）</summary>
-      <textarea id="svComment" maxlength="500" rows="3" style="width:100%;margin-top:6px"
-        placeholder="最喜歡的地方、希望改進的地方，想到什麼都可以"></textarea></details>`;
+    <div class="sv-q"><b>還想說的話（選填）</b>
+      <textarea id="svComment" maxlength="500" rows="3" style="width:100%"
+        placeholder="最喜歡的地方、希望改進的地方，想到什麼都可以"></textarea></div>`;
   $('#svMsg').innerHTML='';
 }
 function surveyPick(q){
@@ -6298,6 +6323,15 @@ function surveyPick(q){
 }
 function surveyPicks(q){
   return [...document.querySelectorAll(`#dlgSurvey .sv-group[data-q="${q}"] .sv-opt[aria-pressed="true"]`)].map(b=>b.dataset.v);
+}
+// 新題目的答案：沒點的題目不放進去
+function surveyExtraAnswers(){
+  const o={};
+  SURVEY_EXTRA.forEach(x=>{
+    if(x.multi){ const v=surveyPicks(x.key); if(v.length) o[x.key]=v; }
+    else { const v=surveyPick(x.key); if(v!=null) o[x.key]=v; }
+  });
+  return o;
 }
 function openSurvey(from){
   hideSurveyNudge();
@@ -6308,7 +6342,14 @@ function openSurvey(from){
 $('#dlgSurvey').addEventListener('click', e=>{
   const b=e.target.closest('.sv-opt'); if(!b) return;
   const g=b.closest('.sv-group'); if(!g) return;
-  if(g.dataset.multi==='1') b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed')!=='true'));
+  if(g.dataset.multi==='1'){
+    const on=b.getAttribute('aria-pressed')!=='true';
+    b.setAttribute('aria-pressed', String(on));
+    // 「都沒有」跟其他選項不能同時選
+    if(on) g.querySelectorAll('.sv-opt').forEach(x=>{
+      if(x!==b && (b.dataset.excl==='1' || x.dataset.excl==='1')) x.setAttribute('aria-pressed','false');
+    });
+  }
   else g.querySelectorAll('.sv-opt').forEach(x=>x.setAttribute('aria-pressed', String(x===b)));
 });
 $('#btnSvCancel').onclick=()=>$('#dlgSurvey').close();
@@ -6325,10 +6366,16 @@ $('#btnSvSubmit').onclick=async()=>{
     liked_features:surveyPicks('liked'), used_features:surveyPicks('used'),
     source:surveyPick('source'), comment:($('#svComment')?.value||'').trim().slice(0,500),
     device: (window.matchMedia && window.matchMedia('(max-width: 767px)').matches) ? 'mobile' : 'desktop',
-    page: String(location.hash||'').slice(0,100)
+    page: String(location.hash||'').slice(0,100),
+    extra: surveyExtraAnswers()
   };
   const btn=$('#btnSvSubmit'); btn.disabled=true;
-  const {error}=await sb.from('survey_responses').insert(row);
+  let {error}=await sb.from('survey_responses').insert(row);
+  // v63 還沒跑（沒有 extra 欄位）：拿掉新題目再送一次，至少舊題目收得到
+  if(error && /extra/i.test(error.message||'') && /column|schema cache/i.test(error.message||'')){
+    const {extra, ...old}=row;
+    ({error}=await sb.from('survey_responses').insert(old));
+  }
   btn.disabled=false;
   if(error){
     const msg = /row-level security|violates row-level|42501/i.test(error.message+(error.code||''))
@@ -6478,6 +6525,7 @@ function renderSurveySummary(d, label){
     ${countBars('喜歡的功能', d.liked, SURVEY_FEATURES)}
     ${countBars('最常用的功能', d.used, SURVEY_FEATURES)}
     ${countBars('怎麼知道壽星日', d.source, SURVEY_SOURCES)}
+    ${SURVEY_EXTRA.map(x=>countBars(x.title.replace(/（可複選）$/,''), d.extra?.[x.key], x.opts)).join('')}
     ${(d.recent_comments||[]).length?`<div class="dash-chart" style="margin-top:12px"><b>還想說的話（最新 50 則）</b>
       <div class="sub-list" style="margin-top:8px">${d.recent_comments.map(c=>`<div class="sub-item">
         <b>${esc(fmtDT(c.created_at))}・${c.is_member?'會員':'訪客'}・滿意度 ${esc(String(c.overall))}・推薦 ${esc(String(c.nps))}</b>
@@ -6491,12 +6539,18 @@ function buildSurveyCsv(rows){
   const cols=[['created_at','填寫時間'],['member','會員'],['device','裝置'],['version','問卷版本'],
     ['overall','整體滿意度(1-5)'],['nps','推薦分數(0-10)'],['score_find','找優惠方便'],['score_accuracy','資訊正確'],
     ['score_mobile','手機好用'],['score_look','畫面好看'],['liked_features','喜歡的功能'],['used_features','最常用的功能'],
-    ['source','怎麼知道壽星日'],['comment','還想說的話']];
+    ['source','怎麼知道壽星日'],
+    ...SURVEY_EXTRA.map(x=>['extra:'+x.key, x.title.replace(/[？?]?（可複選）$|[？?]$/,'')]),
+    ['comment','還想說的話']];
   const q=v=>{ const t=v==null?'':String(v); return /[",\r\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t; };
   const names=(list,arr)=>(arr||[]).map(x=>(list.find(([k])=>k===x)||[x,x])[1]).join('、');
   const lines=[cols.map(c=>c[1]).join(',')];
   (rows||[]).forEach(r=>lines.push(cols.map(([k])=>{
     if(k==='member') return q(r.user_id?'是':'否');
+    if(k.startsWith('extra:')){
+      const x=SURVEY_EXTRA.find(e=>'extra:'+e.key===k), v=r.extra?.[x.key];
+      return q(v==null?'':names(x.opts, Array.isArray(v)?v:[v]));
+    }
     if(k==='liked_features'||k==='used_features') return q(names(SURVEY_FEATURES,r[k]));
     if(k==='source') return q(r.source?(SURVEY_SOURCES.find(([x])=>x===r.source)||[null,r.source])[1]:'');
     return q(r[k]);
