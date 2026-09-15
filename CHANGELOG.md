@@ -9,6 +9,17 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v60　善菓屋生日禮改成「免費・需消費」
+
+`schema_v60_shanguowu_free_min.sql`
+
+資料庫原本寫「免費・無低消」、條件「—」。9/2 使用者實際使用紀錄寫「任意消費即可兌換」，
+網路整理文章也寫「消費送達克瓦茲」，celine 確認改成需消費（free_min），條件欄寫
+「需任意消費才能兌換」；會員管道、優惠內容、地區等其他欄位不動。種子資料 offers.json
+同步修改。v59 列出的其他差異（麥當勞價格、UG 會員管道）celine 決定不動。
+
+---
+
 ## v59　Google 地圖按鈕、新增海底撈／康是美／手工殿
 
 `schema_v59_new_offers_haidilao_cosmed_shougongdian.sql`
