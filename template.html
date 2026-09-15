@@ -515,6 +515,17 @@
   .rep.rep-click:hover{background:var(--line-soft)}
   .rep.wl-row-done{background:var(--free-bg);border-radius:var(--r-xs);margin:0 -8px;padding:6px 8px;
     border-bottom-color:transparent}
+  /* 詳情視窗的使用回報：celine 回饋手機上有補充說明的回報會「一行一兩個字、拉得很長」。
+     .rep 是單行 flex，日期／結果／金額／門市／說明／暱稱全部擠在同一列，手機寬度不夠時
+     說明那一格被擠到剩一兩個字寬。改成允許換行，說明自己獨佔下一整行。 */
+  .rep.rep-full{flex-wrap:wrap;row-gap:3px}
+  .rep-full .rep-note{flex-basis:100%;white-space:pre-wrap;overflow-wrap:anywhere;
+    color:var(--ink-2);line-height:1.55}
+  /* 回報／留言的「有幫助」讚 */
+  .like-btn{padding:2px 8px;font-size:.72rem;white-space:nowrap}
+  .like-btn.on{background:var(--free-bg);border-color:var(--free-line);color:var(--free)}
+  .like-btn:disabled{opacity:.6;cursor:default}
+  #repTitle:focus{outline:none}
   .ok{color:var(--free);font-weight:700}
   .partial{color:#8a6a1f;font-weight:700}
   .fail{color:var(--alert);font-weight:700}
@@ -1287,7 +1298,11 @@
 </div>
 
 <dialog id="dlgReport"><form method="dialog" class="dlg">
-  <h2 id="repTitle">回報使用狀況</h2>
+  <!-- celine 回饋：手機版編輯回報時，一點開就直接跳出日曆。<dialog>.showModal() 會自動把
+       焦點放到第一個能輸入的欄位，也就是「使用日期」，手機一聚焦日期欄就會彈出日期選擇器。
+       把 autofocus 放在標題（tabindex=-1 讓它可以被聚焦但不會出現在 Tab 順序裡），
+       打開時焦點停在標題，要改日期再自己點。 -->
+  <h2 id="repTitle" tabindex="-1" autofocus>回報使用狀況</h2>
   <p class="sub" id="repBrand"></p>
   <p class="hint hidden" id="repMeta"></p>
   <div class="note alert hidden" id="repGuest" style="margin:0 0 12px">
@@ -2241,9 +2256,9 @@ function renderWishlistBody(){
     ${o.offer?`<div style="font-size:.78rem;color:var(--ink-2);margin:-4px 0 8px;overflow:hidden;
       text-overflow:ellipsis;white-space:nowrap" title="${esc(o.offer)}">${esc(o.offer)}</div>`:''}
     <div style="padding:0 0 8px">
-      <input type="text" class="wl-note" data-id="${w.offer_id}" maxlength="200"
-        placeholder="加個備註，只有你自己看得到" value="${esc(w.note||'')}"
-        style="width:100%;font-size:.78rem;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg)">
+      <textarea class="wl-note" data-id="${w.offer_id}" maxlength="200" rows="1"
+        placeholder="加個備註，只有你自己看得到"
+        style="width:100%;font-size:.78rem;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);resize:none;overflow:hidden;line-height:1.5;font-family:inherit;display:block;field-sizing:content">${esc(w.note||'')}</textarea>
     </div>
     ${dlText&&!done?`<div style="font-size:.76rem;color:var(--accent-dark);margin:-4px 0 8px">⏰ ${esc(dlText)}</div>`:''}`;
   }).join('') : '<div style="color:var(--ink-3);font-size:.86rem">還沒有收藏，去「優惠」分頁點卡片上的書籤圖示加入。</div>';
@@ -2269,6 +2284,14 @@ function renderWishlistBody(){
   });
   let wlNoteTimer=null;
   $$('.wl-note').forEach(inp=>{
+    // celine 回饋：手機版收藏備註字數多就顯示不完整。原本是單行 input，超過寬度的字只能
+    // 左右捲。改成 textarea 並依內容自動長高；支援 field-sizing:content 的瀏覽器純 CSS
+    // 就會長高，這段是給其他瀏覽器的備援。panel 收合時量不到高度（scrollHeight=0），
+    // 那時候先不動，等使用者點進去（focus）再量一次。
+    const fit=()=>{ if(!inp.scrollHeight) return; inp.style.height='auto'; inp.style.height=inp.scrollHeight+'px'; };
+    fit();
+    inp.addEventListener('input',fit);
+    inp.addEventListener('focus',fit);
     const save=async()=>{
       const {error}=await sb.from('wishlist').update({note:inp.value.slice(0,200)})
         .eq('user_id',me.id).eq('offer_id',inp.dataset.id);
@@ -3176,6 +3199,66 @@ function offerFactsHtml(o){
   </div>`;
 }
 
+/* ---- 使用回報、留言按讚（v61）----
+   celine 回饋：「不知道能不能幫回報人或是分享經驗的人按讚，有些他們提供的資訊很好、很想
+   按讚」。按鈕一開始是隱藏的，等讚數查回來才顯示——資料庫還沒跑 v61（表不存在）的話查詢
+   會失敗，這時整個按讚功能就不出現，不會變成一顆按了只會噴錯的按鈕。
+   自己的回報／留言看得到讚數但不能按（資料庫也會擋）；沒登入按下去提示登入。
+   按下去先改畫面再送出，失敗才改回來，手機上按了立刻有反應。 ---- */
+function likeBtnHtml(kind, x){
+  const own = !!(me && x.user_id===me.id);
+  return `<button type="button" class="btn sm like-btn hidden" data-kind="${kind}" data-id="${esc(String(x.id))}"
+    data-owner="${own?'1':''}" aria-pressed="false">👍 <span class="like-n">0</span></button>`;
+}
+function setLikeBtn(b, n, mine){
+  b.querySelector('.like-n').textContent = n;
+  b.setAttribute('aria-pressed', String(mine));
+  b.classList.toggle('on', mine);
+  b.title = b.dataset.owner ? '不能幫自己按讚' : mine ? '收回讚' : '這則很有幫助';
+}
+async function loadHelpfulLikes(root, reports, comments){
+  const rIds=(reports||[]).map(x=>x.id), cIds=(comments||[]).map(x=>x.id);
+  const none=Promise.resolve({data:[],error:null});
+  const [rl,cl]=await Promise.all([
+    rIds.length ? sb.from('report_likes').select('report_id,user_id').in('report_id',rIds) : none,
+    cIds.length ? sb.from('comment_likes').select('comment_id,user_id').in('comment_id',cIds) : none]);
+  if(rl.error || cl.error) return;
+  const tally=(rows,key)=>{
+    const m=new Map();
+    (rows||[]).forEach(x=>{
+      const k=String(x[key]), e=m.get(k)||{n:0,mine:false};
+      e.n++; if(me && x.user_id===me.id) e.mine=true;
+      m.set(k,e);
+    });
+    return m;
+  };
+  const maps={report:tally(rl.data,'report_id'), comment:tally(cl.data,'comment_id')};
+  root.querySelectorAll('.like-btn').forEach(b=>{
+    const e=maps[b.dataset.kind].get(b.dataset.id)||{n:0,mine:false};
+    setLikeBtn(b, e.n, e.mine);
+    b.disabled = !!b.dataset.owner;
+    b.classList.remove('hidden');
+    b.onclick = ev=>{ ev.stopPropagation(); toggleHelpfulLike(b); };
+  });
+}
+async function toggleHelpfulLike(b){
+  if(!me){ alert('登入後就可以幫有幫助的回報和留言按讚。'); return; }
+  if(b.dataset.owner) return;
+  const isReport = b.dataset.kind==='report';
+  const table = isReport ? 'report_likes' : 'comment_likes';
+  const col = isReport ? 'report_id' : 'comment_id';
+  const id = Number(b.dataset.id);
+  const wasOn = b.getAttribute('aria-pressed')==='true';
+  const n = Number(b.querySelector('.like-n').textContent)||0;
+  setLikeBtn(b, Math.max(0, n+(wasOn?-1:1)), !wasOn);
+  b.disabled = true;
+  const {error} = wasOn
+    ? await sb.from(table).delete().eq(col,id).eq('user_id',me.id)
+    : await sb.from(table).insert({[col]:id, user_id:me.id});
+  b.disabled = false;
+  if(error){ setLikeBtn(b, n, wasOn); alert('按讚失敗：'+error.message); }
+}
+
 async function openDetail(id, fallback=null){
   if(!LIVE){ alert('離線模式無法讀取留言，請先用 python serve.py 啟動並設定 config.js。'); return; }
   dtlId=id;
@@ -3241,6 +3324,7 @@ async function openDetail(id, fallback=null){
       <div class="who">${esc(x.profiles?.display_name||'匿名')}${adminEmailBtnHtml(x.user_id)}　${esc(fmtD(x.created_at))}
         ${x.is_hidden?'<span class="flag alert" style="margin-left:6px">已隱藏</span>':''}
         <span style="margin-left:auto;display:flex;gap:4px">
+        ${x.is_hidden?'':likeBtnHtml('comment',x)}
         ${isAdmin?`<button class="btn sm cm-hide" data-cid="${x.id}" data-hide="${x.is_hidden?'0':'1'}"
           style="padding:2px 8px;font-size:.72rem">${x.is_hidden?'取消隱藏':'隱藏'}</button>`:''}
         ${(mine||isAdmin)?`<button class="btn sm cm-del" data-cid="${x.id}"
@@ -3282,14 +3366,15 @@ async function openDetail(id, fallback=null){
       ${me?`<button type="button" class="btn sm" id="btnInlineSuggestEdit">建議修改</button>`:''}
       <button type="button" class="btn plain" id="btnDismissReportPrompt" aria-label="關閉提示">✕</button>
     </div>`:''}
-    ${(r||[]).map(x=>`<div class="rep"><span>${esc(x.used_on)}</span>
+    ${(r||[]).map(x=>`<div class="rep rep-full"><span>${esc(x.used_on)}</span>
       <span class="${R[x.result][1]}">${R[x.result][0]}</span>
       ${x.saved_twd?`<span>省 ${nt(x.saved_twd)}</span>`:''}
       ${x.store?`<span style="color:var(--ink-3)">${esc(x.store)}</span>`:''}
-      <span style="flex:1;min-width:0">${esc(x.note||'')}</span>
-      <span style="color:var(--ink-3);font-size:.75rem">${esc(x.profiles?.display_name||'匿名')}</span>
+      <span style="color:var(--ink-3);font-size:.75rem;margin-left:auto">${esc(x.profiles?.display_name||'匿名')}</span>
+      ${likeBtnHtml('report',x)}
       ${me&&x.user_id===me.id?`<button type="button" class="btn sm dtl-rep-edit" data-rid="${esc(x.id)}"
         style="padding:2px 8px;font-size:.72rem">編輯</button>`:''}
+      ${x.note?`<div class="rep-note">${esc(x.note)}</div>`:''}
     </div>`).join('')||'<div style="color:var(--ink-3);padding:5px 0">還沒有使用回報</div>'}
     <div class="cmt-list">${shown.map(cmtHtml).join('')}</div>
     ${rest.length?`<div class="cmt-rest hidden">${rest.map(cmtHtml).join('')}</div>
@@ -3302,6 +3387,7 @@ async function openDetail(id, fallback=null){
   // DORIS 回饋：「送出後沒辦法修改再補充內容」。其實「我的」分頁的「我的使用回報」
   // 點進去就能編輯／刪除，但那個 panel 預設收合，大家又是在詳情頁看到自己的回報，
   // 自然會想在這裡改。自己的那幾筆直接給一顆「編輯」，開的是同一個回報視窗。
+  loadHelpfulLikes(body, r, cmts);
   body.querySelectorAll('.dtl-rep-edit').forEach(btn=>btn.onclick=()=>{
     const x=(r||[]).find(v=>String(v.id)===btn.dataset.rid);
     if(x) openReport(id, {...x, offers:{brand:o?.brand, offer:o?.offer}});
