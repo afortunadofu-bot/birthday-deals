@@ -46,6 +46,16 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   await tick(win, 1);
   t.ok('再點一次收回去', emailSpan.classList.contains('hidden'));
 
+  // 點信箱文字本身也要能收回，而且不能連帶展開整列
+  avatars[0].dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+  await tick(win, 1);
+  const lbDetail = doc.querySelector('#lbBody .lb-detail[data-lbd="0"]');
+  const wasHidden = lbDetail.classList.contains('hidden');
+  emailSpan.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+  await tick(win, 1);
+  t.ok('點排行榜的信箱文字就收起來', emailSpan.classList.contains('hidden'));
+  t.eq('點信箱文字不會連帶展開整列', lbDetail.classList.contains('hidden'), wasHidden);
+
   // stopPropagation：點頭貼不能連帶把那一列的品牌明細展開
   const detail = doc.querySelector('#lbBody .lb-detail[data-lbd="0"]');
   t.ok('明細列一開始是收合的', detail.classList.contains('hidden'));
@@ -93,8 +103,28 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   t.ok('查完把按鈕換成信箱文字',
     /u-1@gmail\.com/.test(doc.querySelector('#adminCommentList').textContent),
     doc.querySelector('#adminCommentList').textContent.slice(0, 120));
-  t.eq('那顆信封鈕已經不在了',
-    doc.querySelectorAll('#adminCommentList .admin-email-btn').length, 1);
+  // celine 回饋：打開之後收不回去。信封鈕要一直留著，再點一次或點信箱文字都能收起來
+  t.eq('打開信箱後信封鈕還在（才收得回去）',
+    doc.querySelectorAll('#adminCommentList .admin-email-btn').length, 2);
+  t.eq('信封鈕標示為已展開', btns[0].getAttribute('aria-expanded'), 'true');
+  btns[0].dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+  await tick(win, 2);
+  t.ok('再點一次信封就收起來',
+    !/u-1@gmail\.com/.test(doc.querySelector('#adminCommentList').textContent));
+  t.eq('收起來後標示為未展開', btns[0].getAttribute('aria-expanded'), 'false');
+  btns[0].dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+  await tick(win, 3);
+  t.eq('再打開走 cache，不重打 API', sb.__calls.rpc.filter((c) => c.name === 'admin_user_emails').length, 1);
+  const peek = doc.querySelector('#adminCommentList .admin-email-peek');
+  t.ok('再打開信箱又出現', peek && /u-1@gmail\.com/.test(peek.textContent));
+  const rowOpened = [];
+  const realOpen = win.openDetail;
+  win.openDetail = (id) => rowOpened.push(id);
+  peek.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+  await tick(win, 2);
+  win.openDetail = realOpen;
+  t.eq('點信箱文字本身也能收起來', doc.querySelectorAll('#adminCommentList .admin-email-peek').length, 0);
+  t.eq('點信箱文字不會順便打開那則留言的優惠詳情', rowOpened.length, 0);
 
   // 重新渲染一次清單，同一個人再按一次 → 應該吃 cache，不再打 RPC
   await win.loadAdminCommentList();
@@ -104,6 +134,35 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   await tick(win, 3);
   t.eq('同一個人第二次按吃 cache、不再打 API',
     sb.__calls.rpc.filter((c) => c.name === 'admin_user_emails').length, 1);
+
+  /* ================= B2. 查詢失敗不能被記住 ================= */
+  // 之前失敗也存進 cache，網路閃一下之後這個人永遠顯示「查不到信箱」
+  let failOnce = true;
+  const sbFlaky = makeSb({
+    tables: {
+      comments: [{ id: 'c9', body: '測試', created_at: '2026-09-03T03:00:00Z', is_hidden: false, offer_id: 7, user_id: 'u-77', offers: { brand: '早餐店' } }],
+      profiles_public: [{ id: 'u-77', display_name: '小美' }],
+    },
+    rpcs: {
+      admin_user_emails: (p) => {
+        if (failOnce) { failOnce = false; return { data: null, error: { message: 'network' } }; }
+        return { data: p.p_ids.map((id) => ({ id, email: `${id}@gmail.com` })), error: null };
+      },
+    },
+  });
+  win.__sb = sbFlaky; win.eval('sb = window.__sb;');
+  await win.loadAdminCommentList();
+  await tick(win, 2);
+  const fb = doc.querySelector('#adminCommentList .admin-email-btn[data-uid="u-77"]');
+  fb.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+  await tick(win, 3);
+  t.ok('查詢失敗時講清楚、提示重試', /查詢失敗/.test(doc.querySelector('#adminCommentList').textContent));
+  fb.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));   // 收起失敗訊息
+  await tick(win, 2);
+  fb.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));   // 再打開 → 應該重查
+  await tick(win, 3);
+  t.eq('失敗那次沒進 cache，重試會再查一次', sbFlaky.__calls.rpc.filter((c) => c.name === 'admin_user_emails').length, 2);
+  t.ok('重試成功顯示信箱', /u-77@gmail\.com/.test(doc.querySelector('#adminCommentList').textContent));
 
   /* ================= C. 非管理員一顆信封鈕都不該有 ================= */
   win.eval('myProfile = {id:"u-9", is_admin:false, display_name:"路人"};');

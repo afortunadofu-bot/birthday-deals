@@ -4614,6 +4614,11 @@ function wireEmailPeek(root){
       e.stopPropagation();
       emailSpan.classList.toggle('hidden');
     });
+    // celine 回饋：打開信箱之後收不回去。頭貼再點一次其實收得回去，但信箱文字出現後大家
+    // 直覺是點那串文字把它收起來——之前點文字沒反應（還會冒泡去展開整列）。
+    emailSpan.style.cursor='pointer';
+    emailSpan.title='點一下收起來';
+    emailSpan.onclick=e=>{ e.stopPropagation(); emailSpan.classList.add('hidden'); };
   });
 }
 
@@ -4632,10 +4637,14 @@ function adminEmailBtnHtml(uid){
     title="看這個人的註冊信箱" aria-label="看這個人的註冊信箱"
     style="padding:0 4px;font-size:.78rem;color:var(--ink-3);line-height:1">✉</button>`;
 }
+// 回傳信箱字串；這個人真的沒有信箱回 null；查詢失敗回 undefined。
+// 失敗「不」存進 cache——之前連失敗也存成 null，網路閃一下之後這個人永遠顯示
+// 「查不到信箱」，要重新整理頁面才會再查（HANDOFF 記過的已知小瑕疵）。
 async function adminLookupEmail(uid){
   if(ADMIN_EMAIL_CACHE.has(uid)) return ADMIN_EMAIL_CACHE.get(uid);
   const {data,error}=await sb.rpc('admin_user_emails',{p_ids:[uid]});
-  const email = error ? null : ((data||[])[0]?.email || null);
+  if(error) return undefined;
+  const email = (data||[])[0]?.email || null;
   ADMIN_EMAIL_CACHE.set(uid,email);
   return email;
 }
@@ -4643,16 +4652,33 @@ function wireAdminEmailBtns(root){
   (root||document).querySelectorAll('.admin-email-btn').forEach(b=>{
     if(b.dataset.wired) return;
     b.dataset.wired='1';
+    b.setAttribute('aria-expanded','false');
     b.onclick=async e=>{
       // 留言列本身通常是可點的（會開對應優惠的詳情），按信封不要順便觸發。
       e.stopPropagation();
+      // celine 回饋：管理員打開別人的信箱之後就收不回去。原本查完直接把信封鈕 replaceWith
+      // 成信箱文字，按鈕從畫面上消失，當然沒有東西可以再點。改成信封鈕一直留著，信箱文字
+      // 插在旁邊：再點一次信封、或點信箱文字，都會收起來；再打開走 cache，不會重打 API。
+      const shown=b.nextElementSibling?.classList.contains('admin-email-peek') ? b.nextElementSibling : null;
+      if(shown){
+        shown.remove();
+        b.setAttribute('aria-expanded','false');
+        b.title='看這個人的註冊信箱';
+        return;
+      }
       b.disabled=true;
       const email=await adminLookupEmail(b.dataset.uid);
+      b.disabled=false;
       const span=document.createElement('span');
-      span.className='who-email';
+      span.className='who-email admin-email-peek';
       span.style.flexBasis='auto';
-      span.textContent=email||'（查不到信箱）';
-      b.replaceWith(span);
+      span.style.cursor='pointer';
+      span.title='點一下收起來';
+      span.textContent = email===undefined ? '（查詢失敗，再點一次信封重試）' : (email||'（查不到信箱）');
+      span.onclick=ev=>{ ev.stopPropagation(); b.click(); };
+      b.after(span);
+      b.setAttribute('aria-expanded','true');
+      b.title='收起信箱';
     };
   });
 }
