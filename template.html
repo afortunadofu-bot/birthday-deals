@@ -549,7 +549,7 @@
   .sv-aspect>span{width:80px;font-size:.82rem;flex:none}
   .sv-aspect .sv-group{flex:1;flex-wrap:nowrap;gap:4px}
   .sv-aspect .sv-opt{flex:1;padding:6px 0;border-radius:8px;min-width:0;text-align:center}
-  #surveyNudge{position:fixed;left:12px;right:12px;max-width:360px;margin-left:auto;z-index:60;
+  #surveyNudge,#updatesNudge{position:fixed;left:12px;right:12px;max-width:360px;margin-left:auto;z-index:60;
     bottom:calc(72px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom));
     background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
     box-shadow:0 8px 24px rgba(0,0,0,.14);padding:12px 14px;font-size:.86rem}
@@ -1442,6 +1442,20 @@
   </div>
 </form></dialog>
 
+<!-- 有新更新時，打開網站跳出來引導去看更新紀錄（maybeShowUpdatesNudge） -->
+<div class="hidden" id="updatesNudge" role="dialog" aria-label="壽星日有新的更新">
+  <div style="display:flex;gap:8px;align-items:flex-start">
+    <span aria-hidden="true" style="font-size:1.3rem;line-height:1">🆕</span>
+    <div style="flex:1"><b>壽星日更新了！</b>
+      <div class="hint" style="margin-top:2px" id="updNudgeText"></div></div>
+    <button type="button" class="btn plain" id="btnUpdNudgeClose" aria-label="晚點再看">✕</button>
+  </div>
+  <div class="row" style="margin-top:10px;gap:8px;justify-content:flex-end">
+    <button type="button" class="btn sm" id="btnUpdNudgeLater">晚點再看</button>
+    <button type="button" class="btn sm primary" id="btnUpdNudgeGo">去看看</button>
+  </div>
+</div>
+
 <div class="hidden" id="surveyNudge" role="dialog" aria-label="回饋問卷邀請">
   <div style="display:flex;gap:8px;align-items:flex-start">
     <span aria-hidden="true" style="font-size:1.3rem;line-height:1">💬</span>
@@ -1897,6 +1911,7 @@ async function connectLive(){
   loadSiteStats(); loadSiteAnnouncement(); registerSW();
   logEvent('pageview', {tab: location.hash||'offers'});
   startSurveyNudges();
+  setTimeout(maybeShowUpdatesNudge, 1200);
 }
 
 /* ---- 成效追蹤：極簡事件記錄，失敗就默默略過，不能影響網站正常使用 ---- */
@@ -2679,7 +2694,8 @@ const SITE_UPDATES=[
     '使用回報、留言可以按讚 👍，覺得有幫助就按一下',
     '每張優惠卡片多一顆「📍 地圖」，直接用 Google 地圖找附近分店',
     '手機版：回報的補充說明不再擠成一條、編輯回報不會一打開就跳日曆、收藏備註可以完整顯示',
-    '「我的」分頁新增可以收合的更新紀錄，還有加到主畫面的提醒',
+    '「我的」分頁新增更新紀錄，有新的更新時打開網站會通知你；還有加到主畫面的提醒',
+    '回饋問卷多了幾題，一樣全部用點的；「還想說的話」直接就能寫',
     '更新善菓屋生日禮資訊：需要消費才能兌換']},
   {date:'2026-09-14', title:'回報與待辦清單更好用', items:[
     '在優惠詳情看到自己的回報，旁邊就能直接編輯',
@@ -2751,6 +2767,7 @@ function renderSiteUpdates(){
 }
 function markUpdatesSeen(){
   try{ localStorage.setItem('sxr_updates_seen', SITE_UPDATES[0].date); }catch{}
+  $('#updatesNudge')?.classList.add('hidden');
   renderSiteUpdates();
 }
 $('#btnSiteUpdatesMore').onclick=()=>{ SITE_UPDATES_EXPANDED=!SITE_UPDATES_EXPANDED; renderSiteUpdates(); };
@@ -2767,6 +2784,45 @@ $('#siteUpdatesPanel h2').addEventListener('click',()=>{
     if(updatesPanelOpen()) setTimeout(()=>{ if(updatesPanelOpen()) markUpdatesSeen(); }, 2500);
   }, 0);
 });
+
+/* ---- 有新更新時跳通知 ----
+   celine：新打開 App 時跳通知，引導大家去看近期的更新紀錄。
+   - 只有「上次看過之後又有新更新」才跳；第一次來的人不跳（現有的更新對他不算新的）
+   - 「去看看」→ 切到「我的」、展開更新紀錄、捲過去；停留幾秒後照原本規則標成已讀
+   - 「晚點再看」／✕ → 這一次的更新就不再跳（「我的」分頁的小紅點、NEW 還是會留著），
+     下次有更新的更新才會再跳
+   - 跟回饋問卷的小卡片同一個位置，不會同時出現（先出現的優先） */
+function updatesNudgeDone(){
+  try{ return localStorage.getItem('sxr_updates_nudge_done')||''; }catch{ return SITE_UPDATES[0].date; }
+}
+function maybeShowUpdatesNudge(){
+  const latest=SITE_UPDATES[0];
+  if(!(latest.date > updatesSeenDate())) return false;
+  if(updatesNudgeDone() >= latest.date) return false;
+  if(!$('#surveyNudge').classList.contains('hidden')) return false;
+  const newer=SITE_UPDATES.filter(u=>u.date>updatesSeenDate()).length;
+  $('#updNudgeText').textContent = newer>1
+    ? `最近有 ${newer} 次更新，最新是「${latest.title}」`
+    : `最新更新：「${latest.title}」`;
+  $('#updatesNudge').classList.remove('hidden');
+  logEvent('updates_nudge', {action:'show', date:latest.date});
+  return true;
+}
+function closeUpdatesNudge(action){
+  try{ localStorage.setItem('sxr_updates_nudge_done', SITE_UPDATES[0].date); }catch{}
+  $('#updatesNudge').classList.add('hidden');
+  logEvent('updates_nudge', {action, date:SITE_UPDATES[0].date});
+}
+$('#btnUpdNudgeLater').onclick=()=>closeUpdatesNudge('later');
+$('#btnUpdNudgeClose').onclick=()=>closeUpdatesNudge('later');
+$('#btnUpdNudgeGo').onclick=()=>{
+  closeUpdatesNudge('go');
+  document.querySelector('.tab[data-tab="mine"]')?.click();
+  const p=$('#siteUpdatesPanel');
+  if(p && !updatesPanelOpen()) p.querySelector('h2')?.click();
+  // 切分頁會捲回頂端，等它做完再捲到更新紀錄
+  setTimeout(()=>p?.scrollIntoView({behavior:'smooth', block:'start'}), 120);
+};
 
 /* ---- 推薦給朋友：純粹分享網址，跟「省錢成果／排行榜名次」那兩個分享圖卡
    是不同層次的東西——這個不用登入、不用任何資料，單純讓網站觸及更多人。
@@ -6638,6 +6694,8 @@ function surveyNudgeAllowed(){
 }
 function maybeShowSurveyNudge(reason){
   if(!surveyNudgeAllowed()) return false;
+  // 更新通知還在畫面上：同一個位置不疊兩張卡片，這次先不跳
+  if(!$('#updatesNudge').classList.contains('hidden')) return false;
   SURVEY_NUDGE_SHOWN=true;
   $('#surveyNudge').classList.remove('hidden');
   logEvent('survey_nudge', {reason});
@@ -7231,8 +7289,8 @@ function makeCollapsiblePanel(id, defaultOpen){
 // 比較像歷史紀錄、不用每次進來都看到的預設收合。
 [['profilePanel',true],['remindersPanel',true],['wishlistPanel',true],['mySavingsPanel',true],
  ['badgesPanel',false],['myReportsPanel',false],['myOffersPanel',false],
- // 更新紀錄（celine：也要可以摺疊）預設收合，免得「我的」分頁太長；有新更新時標題旁會標 NEW
- ['siteUpdatesPanel',false]]
+ // 更新紀錄（celine：可以摺疊、預設展開）；收合時有新更新標題旁會標 NEW
+ ['siteUpdatesPanel',true]]
   .forEach(([id,open])=>makeCollapsiblePanel(id,open));
 // 排行榜分頁也套同一套可摺疊 panel（嵐回饋：要跟「我的」分頁一樣可以收合大標題）。
 // 「洞察分析」圖表最多、內容最長，預設收合；其餘幾個是排行榜分頁的主要看點，
