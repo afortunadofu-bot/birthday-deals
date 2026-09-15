@@ -1084,7 +1084,7 @@
       </div>
     </div>
     <!-- 回饋問卷入口：訪客、會員都看得到，所以不能放在 #mineAuthedPanels 裡。
-         這裡先寫在最上面，開機時 JS 會把它搬到「我的」分頁最底下（見 surveyPanel 搬移那段）。 -->
+         這裡先寫在最上面，開機時 JS 會把它搬到「推薦給朋友」正下方（見 surveyPanel 搬移那段）。 -->
     <div class="panel" id="surveyPanel">
       <h2>💬 給壽星日一點回饋</h2>
       <p class="sub">全部用點的，大約 1 分鐘。可以重複填——不同時候的感受都想知道。</p>
@@ -1190,7 +1190,7 @@
     <!-- 更新紀錄：celine 要「我的」頁面有個小地方記每次更新的日期、簡單說改了哪裡。
          訪客也看得到，所以放在會員專屬區塊外面。內容在 SITE_UPDATES。 -->
     <div class="panel" id="siteUpdatesPanel">
-      <h2>🆕 更新紀錄</h2>
+      <h2>🆕 更新紀錄 <span class="upd-new hidden" id="updHeadNew">NEW</span></h2>
       <p class="sub">壽星日最近改了什麼，都記在這裡。</p>
       <div id="siteUpdatesList"></div>
       <button type="button" class="btn sm hidden" id="btnSiteUpdatesMore" style="margin-top:6px"></button>
@@ -2675,11 +2675,11 @@ $('#btnMineA2hsClose').onclick=()=>{
    新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
 const SITE_UPDATES=[
   {date:'2026-09-15', title:'回饋問卷、按讚、Google 地圖', items:[
-    '新增回饋問卷：在「我的」分頁最下面，全部用點的，大約 1 分鐘，歡迎隨時來填',
+    '新增回饋問卷：在「我的」分頁「推薦給朋友」下面，全部用點的，大約 1 分鐘，歡迎隨時來填',
     '使用回報、留言可以按讚 👍，覺得有幫助就按一下',
     '每張優惠卡片多一顆「📍 地圖」，直接用 Google 地圖找附近分店',
     '手機版：回報的補充說明不再擠成一條、編輯回報不會一打開就跳日曆、收藏備註可以完整顯示',
-    '「我的」分頁新增更新紀錄，還有加到主畫面的提醒',
+    '「我的」分頁新增可以收合的更新紀錄，還有加到主畫面的提醒',
     '更新善菓屋生日禮資訊：需要消費才能兌換']},
   {date:'2026-09-14', title:'回報與待辦清單更好用', items:[
     '在優惠詳情看到自己的回報，旁邊就能直接編輯',
@@ -2741,6 +2741,8 @@ function renderSiteUpdates(){
   more.textContent = SITE_UPDATES_EXPANDED ? '收起' : `看更早的更新（${rest}）`;
   // 「我的」分頁按鈕上的小紅點
   const hasNew = SITE_UPDATES[0].date > seen;
+  // 更新紀錄收合時看不到裡面的 NEW，標題旁也標一個
+  $('#updHeadNew')?.classList.toggle('hidden', !hasNew);
   $$('.tab[data-tab="mine"]').forEach(t=>{
     let dot=t.querySelector('.tab-dot');
     if(hasNew && !dot){ dot=document.createElement('span'); dot.className='tab-dot'; dot.setAttribute('aria-label','有新的更新'); t.appendChild(dot); }
@@ -2753,6 +2755,18 @@ function markUpdatesSeen(){
 }
 $('#btnSiteUpdatesMore').onclick=()=>{ SITE_UPDATES_EXPANDED=!SITE_UPDATES_EXPANDED; renderSiteUpdates(); };
 renderSiteUpdates();
+// 更新紀錄可以摺疊之後，「打開我的分頁」不等於「看過更新」——收合著根本沒看到內容。
+// 改成：更新紀錄是展開的狀態下停留幾秒，才把新更新標成已讀。
+function updatesPanelOpen(){
+  const p=$('#siteUpdatesPanel');
+  return !!p && !p.classList.contains('collapsed');
+}
+$('#siteUpdatesPanel h2').addEventListener('click',()=>{
+  // 摺疊的切換是另一個 click 監聽器做的，等它跑完再判斷現在是展開還收合
+  setTimeout(()=>{
+    if(updatesPanelOpen()) setTimeout(()=>{ if(updatesPanelOpen()) markUpdatesSeen(); }, 2500);
+  }, 0);
+});
 
 /* ---- 推薦給朋友：純粹分享網址，跟「省錢成果／排行榜名次」那兩個分享圖卡
    是不同層次的東西——這個不用登入、不用任何資料，單純讓網站觸及更多人。
@@ -2783,8 +2797,8 @@ $('#btnShareSite').onclick = async()=>{
 /* ---- 分頁 ---- */
 let ACTIVE_TAB='browse';
 $$('.tab').forEach(t=>t.onclick=()=>{
-  // 打開「我的」分頁幾秒後才把新更新標成已讀：一打開就清掉的話，NEW 標籤還沒被看到就消失了
-  if(t.dataset.tab==='mine') setTimeout(markUpdatesSeen, 4000);
+  // 打開「我的」分頁幾秒後、而且更新紀錄是展開的，才把新更新標成已讀（收合著等於沒看到）
+  if(t.dataset.tab==='mine') setTimeout(()=>{ if(updatesPanelOpen()) markUpdatesSeen(); }, 4000);
   const already = t.dataset.tab===ACTIVE_TAB;
   $$('.tab').forEach(x=>x.setAttribute('aria-selected', x===t));
   ['browse','board','submit','mine','admin'].forEach(n=>
@@ -6554,8 +6568,15 @@ function renderSurveyLastHint(){
   const days=Math.floor((Date.now()-last)/864e5);
   el.textContent = days<1 ? '你今天填過了，謝謝！' : `你上次填是 ${days} 天前`;
 }
-// 問卷入口要訪客、會員都看得到，搬到「我的」分頁最底下（在登入卡片、會員專屬區塊之後）
-(()=>{ const p=$('#surveyPanel'), m=$('#tab-mine main'); if(p&&m) m.appendChild(p); renderSurveyLastHint(); })();
+// 問卷入口要訪客、會員都看得到。celine：回饋區域要放在「推薦給朋友」附近——兩個都是
+// 「幫壽星日變更好」的入口，放一起比較好找；「推薦給朋友」本身在會員專屬區塊外面，
+// 放它正下方訪客一樣看得到。找不到「推薦給朋友」時退回放到分頁最底下。
+(()=>{
+  const p=$('#surveyPanel'), share=$('#shareSitePanel'), m=$('#tab-mine main');
+  if(p && share) share.after(p);
+  else if(p && m) m.appendChild(p);
+  renderSurveyLastHint();
+})();
 
 /* ---- 引導填問卷的小卡片 ---- */
 function surveyNudgeAllowed(){
@@ -7155,7 +7176,9 @@ function makeCollapsiblePanel(id, defaultOpen){
 // 我省下多少這幾個常用的預設展開，成就徽章／使用回報／投稿紀錄這幾個
 // 比較像歷史紀錄、不用每次進來都看到的預設收合。
 [['profilePanel',true],['remindersPanel',true],['wishlistPanel',true],['mySavingsPanel',true],
- ['badgesPanel',false],['myReportsPanel',false],['myOffersPanel',false]]
+ ['badgesPanel',false],['myReportsPanel',false],['myOffersPanel',false],
+ // 更新紀錄（celine：也要可以摺疊）預設收合，免得「我的」分頁太長；有新更新時標題旁會標 NEW
+ ['siteUpdatesPanel',false]]
   .forEach(([id,open])=>makeCollapsiblePanel(id,open));
 // 排行榜分頁也套同一套可摺疊 panel（嵐回饋：要跟「我的」分頁一樣可以收合大標題）。
 // 「洞察分析」圖表最多、內容最長，預設收合；其餘幾個是排行榜分頁的主要看點，

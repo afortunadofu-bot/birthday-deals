@@ -22,7 +22,10 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   const panel = doc.querySelector('#surveyPanel');
   t.ok('「我的」分頁有問卷區塊', !!panel && !!panel.closest('#tab-mine'));
   t.ok('問卷區塊不在會員專屬區塊裡（訪客也看得到）', panel && !panel.closest('#mineAuthedPanels'));
-  t.ok('問卷區塊被搬到「我的」分頁最底下', panel && panel.parentElement.lastElementChild === panel);
+  // celine：回饋區域要放在「推薦給朋友」附近
+  t.ok('問卷區塊在「推薦給朋友」正下方',
+    panel && panel.previousElementSibling && panel.previousElementSibling.id === 'shareSitePanel',
+    panel && panel.previousElementSibling && panel.previousElementSibling.id);
 
   /* ================= 問卷視窗 ================= */
   const inserts = [];
