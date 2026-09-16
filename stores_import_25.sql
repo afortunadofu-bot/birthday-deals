@@ -1,11 +1,24 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 25/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 25/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(91,'ChIJTcMUOXOpQjQRszJ8UmzcUWs'::text,'吉野家 館前店'::text,'100臺北市中正區黎明里館前路59號'::text,'台北市'::text,25.044830100000002::float8,121.51515140000001::float8,'OPERATIONAL'::text),
+(91,'ChIJFTbh8yg2aDQRNO1pl8tuqXI'::text,'吉野家 聯發科店'::text,'300新竹市東區科園里篤行一路1號'::text,'新竹市'::text,24.7722707::float8,121.0232623::float8,'OPERATIONAL'::text),
+(91,'ChIJ-QseXdCoQjQRN_4AQ3cKP3c'::text,'吉野家 三重正義店'::text,'241新北市三重區中央里正義北路105號'::text,'新北市'::text,25.065587999999998::float8,121.49706::float8,'OPERATIONAL'::text),
+(91,'ChIJ3w6fB0kiaDQRsXRT4Pi4FhY'::text,'吉野家 中壢中正店'::text,'32041桃園市中壢區石頭里中正路22號'::text,'桃園市'::text,24.9542024::float8,121.22484039999999::float8,'OPERATIONAL'::text),
+(91,'ChIJBemucG6vQjQRRHtTUFOopSU'::text,'吉野家 北投中央店'::text,'11263臺北市北投區長安里中央北路一段50號'::text,'台北市'::text,25.1342622::float8,121.50056079999999::float8,'OPERATIONAL'::text),
+(91,'ChIJMYdnd549aTQRLxcgxxB7cMA'::text,'吉野家 台中公益店'::text,'403臺中市西區中興里公益路165號'::text,'台中市'::text,24.150723499999998::float8,120.66211539999999::float8,'OPERATIONAL'::text),
+(91,'ChIJkXsLngcWaTQRsXB436L_iso'::text,'吉野家 台中永福店'::text,'407臺中市西屯區福雅里永福路122號'::text,'台中市'::text,24.1846759::float8,120.6211402::float8,'OPERATIONAL'::text),
+(91,'ChIJD_UBIRY2aDQRQI8bnq0dTcQ'::text,'吉野家 新竹光復店'::text,'30080新竹市東區科園里光復路一段651號'::text,'新竹市'::text,24.7866723::float8,121.0105615::float8,'OPERATIONAL'::text),
+(91,'ChIJA8AlVHSoQjQRXXsNucAT6vg'::text,'吉野家 新莊中港店'::text,'242新北市新莊區中和里中港路315號'::text,'新北市'::text,25.044704199999998::float8,121.4526216::float8,'OPERATIONAL'::text),
+(91,'ChIJZXg5-KcZaDQRgmqZ0BY-L6g'::text,'吉野家 桃園八德店'::text,'334桃園市八德區大和里介壽路二段148號'::text,'桃園市'::text,24.9538726::float8,121.298251::float8,'OPERATIONAL'::text),
+(91,'ChIJ_aQvZfweaDQRk55W8OX6ezg'::text,'吉野家 桃園成功店'::text,'33043桃園市桃園區武陵里成功路一段1號'::text,'桃園市'::text,24.9928498::float8,121.3132067::float8,'OPERATIONAL'::text),
+(91,'ChIJkdSuk68FbjQROYCAdtmWk3o'::text,'吉野家 高雄大樂店'::text,'807高雄市三民區灣興里民族一路463號'::text,'高雄市'::text,22.659104::float8,120.3153657::float8,'OPERATIONAL'::text),
+(91,'ChIJ5S3FlO8EbjQR-U09U_qBY7I'::text,'吉野家 高雄建國店'::text,'807高雄市三民區港西里建國三路19之1號'::text,'高雄市'::text,22.6376481::float8,120.3016361::float8,'OPERATIONAL'::text),
 (91,'ChIJD_UBIRY2aDQRhg6uo-LZxdU'::text,'火車站，吉野家 新竹林森店'::text,'30042新竹市東區榮光里林森路13號'::text,'新竹市'::text,24.801669999999998::float8,120.97049899999999::float8,'OPERATIONAL'::text),
 (91,'ChIJzbYe8WWpQjQRJ3y2kpl1iUs'::text,'吉野家庭料理'::text,'104臺北市中山區正義里林森北路119巷24號'::text,'台北市'::text,25.0504653::float8,121.5260501::float8,'OPERATIONAL'::text),
 (91,'ChIJf8mVijwlbjQRz3GCOZXaeuY'::text,'吉野家農莊露營區'::text,'921屏東縣泰武鄉來義鄉佳興部落至舊武潭部落聯絡道路'::text,'屏東縣'::text,22.5683716::float8,120.64986679999998::float8,'OPERATIONAL'::text),
@@ -192,20 +205,7 @@ from (values
 (102,'ChIJOSsq-Ml3bjQREvcauKmccGM'::text,'Second Floor 貳樓台南店'::text,'700臺南市中西區西湖里中華西路二段579號'::text,'台南市'::text,22.9993676::float8,120.1864624::float8,'OPERATIONAL'::text),
 (102,'ChIJTwJKgoWpQjQReeg0Zb8cNts'::text,'Second Floor 貳樓師大店'::text,'106臺北市大安區古莊里師大路24號'::text,'台北市'::text,25.025405::float8,121.5282001::float8,'OPERATIONAL'::text),
 (102,'ChIJTUsu4ZsDaDQR8NADaOZHav0'::text,'Second Floor 貳樓板橋店'::text,'220新北市板橋區鄉雲里遠東路62之6號1樓'::text,'新北市'::text,25.0000815::float8,121.45514890000001::float8,'OPERATIONAL'::text),
-(102,'ChIJEY2gTQWnQjQRCo1HdGhwoNg'::text,'Second Floor 貳樓林口店'::text,'244新北市林口區南勢里民富街108號'::text,'新北市'::text,25.0751647::float8,121.37044039999998::float8,'OPERATIONAL'::text),
-(102,'ChIJCyKuHW-sQjQRLbLgae6QWSU'::text,'Second Floor 貳樓西湖店'::text,'114臺北市內湖區西湖里內湖路一段300號'::text,'台北市'::text,25.0818802::float8,121.5687222::float8,'OPERATIONAL'::text),
-(102,'ChIJHdyrxrWpQjQRVUx2nUhAuPs'::text,'Second Floor 貳樓中山南西店'::text,'104臺北市中山區民安里中山北路二段16巷22號'::text,'台北市'::text,25.052991199999997::float8,121.5210538::float8,'OPERATIONAL'::text),
-(102,'ChIJyWRT3mWrQjQRFOM_DSk68CE'::text,'Second Floor 貳樓南港車站店'::text,'115臺北市南港區忠孝東路七段359號 City LinkB棟 2樓'::text,'台北市'::text,25.0528418::float8,121.60619349999999::float8,'OPERATIONAL'::text),
-(102,'ChIJneUTn3KpQjQR8_eBLgiNFMU'::text,'Second Floor 貳樓台北車站店'::text,'100臺北市中正區黎明里北平西路3號2樓'::text,'台北市'::text,25.047749::float8,121.51704399999998::float8,'OPERATIONAL'::text),
-(102,'ChIJS4LqBdGVbjQRCiorgYJ1RnE'::text,'Second Floor 貳樓嘉義秀泰店'::text,'600嘉義市西區湖邊里文化路299號一樓'::text,'嘉義市'::text,23.4855181::float8,120.44776549999999::float8,'OPERATIONAL'::text),
-(102,'ChIJiwbs0gGrQjQRHo5yLLB1zH8'::text,'Second Floor 貳樓微風南山店'::text,'110臺北市信義區西村里松智路17號7樓'::text,'台北市'::text,25.0342834::float8,121.56598429999998::float8,'OPERATIONAL'::text),
-(102,'ChIJbVdk5x01aDQR4Mnm8xnJ4V4'::text,'Second Floor 貳樓新竹巨城店'::text,'300新竹市東區復中里中央路229 號1 樓'::text,'新竹市'::text,24.8099088::float8,120.9742285::float8,'OPERATIONAL'::text),
-(102,'ChIJiUmzzDehQjQRilMKDrml7cw'::text,'Second Floor 貳樓桃園台茂店'::text,'338桃園市蘆竹區錦中里南崁路一段112號1樓'::text,'桃園市'::text,25.0532915::float8,121.2881557::float8,'OPERATIONAL'::text),
-(102,'ChIJC9Y_wcMhaDQRi-YzvFPGlY8'::text,'Second Floor 貳樓桃園華泰店'::text,'320桃園市中壢區青埔里春德路189號一期3樓'::text,'桃園市'::text,25.0145829::float8,121.21286800000001::float8,'OPERATIONAL'::text),
-(102,'ChIJBbb-oBKlQjQRTfeKzhXaMuc'::text,'Second Floor 貳樓淡水站前店'::text,'251新北市淡水區長庚里中山路8號6樓'::text,'新北市'::text,25.169176999999998::float8,121.44491000000001::float8,'OPERATIONAL'::text),
-(102,'ChIJEcolBwABaDQRGsMqbv9IJhA'::text,'Second Floor 貳樓新店裕隆城店'::text,'231新北市新店區寶福里中興路三段70號2樓'::text,'新北市'::text,24.978061::float8,121.546478::float8,'OPERATIONAL'::text),
-(102,'ChIJu78RSgADbjQRURTPiHuywKk'::text,'Second Floor 貳樓高雄夢時代店'::text,'806高雄市前鎮區興邦里中華五路789號B1F'::text,'高雄市'::text,22.595321400000003::float8,120.30788260000001::float8,'OPERATIONAL'::text),
-(102,'ChIJmVp9uxM9aTQRLbb1WV3Nl_8'::text,'Second Floor 貳樓台中秀泰文心店'::text,'40854臺中市南屯區豐樂里文心南路289號秀泰生活台中文心店1樓'::text,'台中市'::text,24.1297835::float8,120.64577050000001::float8,'OPERATIONAL'::text)
+(102,'ChIJEY2gTQWnQjQRCo1HdGhwoNg'::text,'Second Floor 貳樓林口店'::text,'244新北市林口區南勢里民富街108號'::text,'新北市'::text,25.0751647::float8,121.37044039999998::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

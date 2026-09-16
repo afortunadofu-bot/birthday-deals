@@ -1,11 +1,24 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 44/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 44/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(333,'ChIJmaeu7yWtbjQRiM12x-FXBJQ'::text,'麥味登 彰化大城店（固定週二公休）6/22休息'::text,'527彰化縣大城鄉大城村北平一街2號'::text,'彰化縣'::text,23.8562419::float8,120.3209438::float8,'OPERATIONAL'::text),
+(333,'ChIJo4eiCrEdbjQRz2ufDk8WJL8'::text,'麥味登MWD早午餐 小港孔宅店 (近孔宅綠園)'::text,'812高雄市小港區孔宅里小港三路56巷26號'::text,'高雄市'::text,22.5781921::float8,120.3754276::float8,'OPERATIONAL'::text),
+(333,'ChIJRfcg2-OrQjQRRbjhSebk4L4'::text,'MWD 麥味登cafe&brunch 北市龍江店'::text,'10491臺北市中山區江山里龍江路244號'::text,'台北市'::text,25.0590427::float8,121.5405812::float8,'OPERATIONAL'::text),
+(333,'ChIJBxoWDD-rQjQR9Rt1h0TEaoQ'::text,'麥味登北市民生金控店-Coffee&Brunch'::text,'105017臺北市松山區精忠里民生東路四段54-2號'::text,'台北市'::text,25.0573575::float8,121.55093439999999::float8,'OPERATIONAL'::text),
+(333,'ChIJuWKmAxcnaTQRj2dJt1PeIPw'::text,'麥味登國姓成功店 Cafe＆Brunch 早午餐'::text,'544南投縣國姓鄉柑林村中正路二段344號'::text,'南投縣'::text,24.025430399999998::float8,120.84620559999998::float8,'OPERATIONAL'::text),
+(333,'ChIJ-aK8W_2pQjQRTUyxcOs3C9U'::text,'麥味登 三重霸子店 （6/19公休）早餐、寵物友善'::text,'241新北市三重區大園里大同北路97號'::text,'新北市'::text,25.0637382::float8,121.49457629999999::float8,'OPERATIONAL'::text),
+(333,'ChIJ-fHsWQAdaDQRL3s9ICqHzd4'::text,'麥味登 土城頂埔店（開幕於2023年12月24日）'::text,'236新北市土城區頂埔里中央路四段73號'::text,'新北市'::text,24.958138400000003::float8,121.4172163::float8,'OPERATIONAL'::text),
+(333,'ChIJ_3FnzIE1aDQRzoOK0nQLwkM'::text,'麥味登 新竹經國店（可以直接網路訂餐外帶要先結帳喔）'::text,'30069新竹市北區經國路二段276號'::text,'新竹市'::text,24.809124300000004::float8,120.959656::float8,'OPERATIONAL'::text),
+(333,'ChIJBV2v8tYxaTQRcHMTEkZXDmk'::text,'麥味登—草屯財神店 MWD Cafe & Brunch'::text,'542南投縣草屯鎮明正里忠孝街322號'::text,'南投縣'::text,23.9834438::float8,120.68036780000001::float8,'OPERATIONAL'::text),
+(333,'ChIJl8JkUbwjbjQRzAGfY7QsSos'::text,'麥味登 內埔新光店 (店休日請見FB粉專/官方LINE)'::text,'91241屏東縣內埔鄉內埔村光明路99號'::text,'屏東縣'::text,22.6162441::float8,120.57403559999999::float8,'OPERATIONAL'::text),
+(333,'ChIJszDe37uXbjQRFzq4XN1mmrs'::text,'嘉義麥味登友愛店 - 嘉義早午餐（07:00-14:30）'::text,'600嘉義市西區福全里友愛路154號'::text,'嘉義市'::text,23.4796709::float8,120.43433549999999::float8,'OPERATIONAL'::text),
+(333,'ChIJ40cRSgqrQjQRjIrcYiZ7ADg'::text,'麥味登 信義福德店cafe&brunch 洋食ブランチ 브런치'::text,'110臺北市信義區中行里福德街246號'::text,'台北市'::text,25.038746::float8,121.58522300000001::float8,'OPERATIONAL'::text),
+(333,'ChIJJTv4cJ1HaDQRIk4Rj0ZbkWc'::text,'麥味登 竹東幸福店 （最後點餐時間13:30，營業至14:00）'::text,'310新竹縣竹東鎮東寧里東寧路一段139號'::text,'新竹縣'::text,24.7252673::float8,121.0943934::float8,'OPERATIONAL'::text),
 (333,'ChIJ06WB8_E1aDQRUPbiMOg31Lc'::text,'麥味登-香山牛埔店/新竹香山人氣早午餐/熱門早午餐/平價早午餐/'::text,'300新竹市香山區埔前里牛埔路418號1樓'::text,'新竹市'::text,24.7977919::float8,120.94323370000001::float8,'OPERATIONAL'::text),
 (333,'ChIJa7caPgCVbjQRrPl7NRfYVQQ'::text,'麥味登早餐店（上課日早上位於嘉中側門-承億文旅旁，9點在店營業）'::text,'600嘉義市東區東川里大雅路二段682號'::text,'嘉義市'::text,23.4772328::float8,120.46631900000001::float8,'OPERATIONAL'::text),
 (333,'ChIJbVB3DWusQjQRtsaOf6MfptE'::text,'麥味登 內湖文湖店（環山路德明附近）｜會議餐點｜外送下午茶｜團體訂餐｜'::text,'114臺北市內湖區西安里環山路一段88號'::text,'台北市'::text,25.0865526::float8,121.56740389999999::float8,'OPERATIONAL'::text),
@@ -192,20 +205,7 @@ from (values
 (345,'ChIJsVGTZ3-nQjQRXPl3tTa_vCA'::text,'燒肉smile 林口文化店 (自助吧)'::text,'244新北市林口區麗林里文化二路一段76號2樓'::text,'新北市'::text,25.069162::float8,121.3660814::float8,'OPERATIONAL'::text),
 (345,'ChIJj2xodUU9aTQRyayjVGWXyLs'::text,'焼肉スマイル（燒肉Smile）台中一中店'::text,'404臺中市北區新北里育才街3號1樓'::text,'台中市'::text,24.1488908::float8,120.6865082::float8,'OPERATIONAL'::text),
 (345,'ChIJDVCYgfF3bjQR8ETo-tP7evI'::text,'焼肉スマイル（燒肉Smile）台南成大店'::text,'701臺南市東區大學里勝利路118號'::text,'台南市'::text,22.9958529::float8,120.2184623::float8,'OPERATIONAL'::text),
-(345,'ChIJS9iV6vA5aTQR_K8qHArE4UQ'::text,'焼肉スマイル（燒肉Smile）彰化中山店'::text,'500彰化縣彰化市中山路二段332號'::text,'彰化縣'::text,24.0729035::float8,120.54330590000001::float8,'OPERATIONAL'::text),
-(345,'ChIJJaXYoOupQjQRPGQLqDzYcVQ'::text,'焼肉スマイル（燒肉Smile）新北三重店'::text,'241新北市三重區重新路二段100號1樓'::text,'新北市'::text,25.0616766::float8,121.49690090000001::float8,'OPERATIONAL'::text),
-(345,'ChIJsR40Ju4daDQR6DBilce8S00'::text,'焼肉スマイル（燒肉Smile）樹林秀泰店'::text,'238新北市樹林區保安里樹新路40-6號7樓'::text,'新北市'::text,24.995362999999998::float8,121.42831939999999::float8,'OPERATIONAL'::text),
-(345,'ChIJvflU1aEDbjQR7oorErkO_5s'::text,'焼肉スマイル（燒肉Smile）高雄台鋁店'::text,'806高雄市前鎮區忠純里忠勤路8號'::text,'高雄市'::text,22.6036525::float8,120.30293929999998::float8,'OPERATIONAL'::text),
-(345,'ChIJG5QNt0c9aTQRy0TzGpMgB14'::text,'焼肉スマイル（燒肉Smile） 台中高工店'::text,'402臺中市南區永和里高工路388之9號'::text,'台中市'::text,24.114279::float8,120.6680261::float8,'OPERATIONAL'::text),
-(345,'ChIJ6S7LlmGnQjQRtyZDGPtGPV8'::text,'焼肉スマイル（燒肉Smile） 林口長庚店'::text,'333桃園市龜山區復興一路128-2號2樓'::text,'桃園市'::text,25.058683199999997::float8,121.3673031::float8,'OPERATIONAL'::text),
-(345,'ChIJGcJKNwsVaTQRbgIZtdu2QNA'::text,'焼肉スマイル（燒肉Smile） 梧棲大智店'::text,'435臺中市梧棲區頂寮里大智路二段222號'::text,'台中市'::text,24.2588433::float8,120.53704959999997::float8,'OPERATIONAL'::text),
-(345,'ChIJyfBHrFw3aDQRghkpN8x5IO4'::text,'焼肉スマイル（燒肉Smile）竹北享平方店'::text,'302新竹縣竹北市鹿場里自強南路36號1樓'::text,'新竹縣'::text,24.8190174::float8,121.02680199999998::float8,'OPERATIONAL'::text),
-(345,'ChIJj8lhNThPXTQRisIr816gauo'::text,'焼肉スマイル（燒肉Smile）基隆潮境公園店'::text,'202基隆市中正區北寧路369巷61號2樓'::text,'基隆市'::text,25.1448841::float8,121.8037948::float8,'OPERATIONAL'::text),
-(345,'ChIJzajrXpQ9aTQR1uXWnulDOGo'::text,'焼肉スマイル（燒肉Smile）市政店（自助吧）'::text,'407臺中市西屯區惠來里文心路二段215號'::text,'台中市'::text,24.1601359::float8,120.64751::float8,'OPERATIONAL'::text),
-(345,'ChIJi0MSBLOVbjQRIEJk7LEv8Kw'::text,'焼肉スマイル（燒肉Smile）嘉義秀泰店（自助吧）'::text,'600嘉義市西區湖邊里文化路299號3樓'::text,'嘉義市'::text,23.4853918::float8,120.44777::float8,'OPERATIONAL'::text),
-(345,'ChIJg2Ffm8obaTQRUnUHWNh8TsQ'::text,'焼肉スマイル（燒肉Smile） 台中豐原店(自助吧)'::text,'420臺中市豐原區向陽路188號1f'::text,'台中市'::text,24.252235100000004::float8,120.7257541::float8,'OPERATIONAL'::text),
-(345,'ChIJFfDNDgADbjQRfWpoF_jSsQA'::text,'焼肉スマイル（燒肉Smile）高雄SKM Park店'::text,'806高雄市前鎮區明正里中安路1-1號3樓'::text,'高雄市'::text,22.582630599999998::float8,120.32906200000001::float8,'OPERATIONAL'::text),
-(345,'ChIJx0k55kQ9aTQRrBuuDJuFa7Y'::text,'焼肉スマイル（燒肉Smile）台中文心秀泰店(自助吧)'::text,'408臺中市南屯區豐樂里文心南路289號6樓'::text,'台中市'::text,24.1298821::float8,120.64576690000001::float8,'OPERATIONAL'::text)
+(345,'ChIJS9iV6vA5aTQR_K8qHArE4UQ'::text,'焼肉スマイル（燒肉Smile）彰化中山店'::text,'500彰化縣彰化市中山路二段332號'::text,'彰化縣'::text,24.0729035::float8,120.54330590000001::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

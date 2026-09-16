@@ -1,11 +1,24 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 39/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 39/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(293,'ChIJQaFbI5sXbjQRsNxokndxYMc'::text,'無印良品 屏東門市'::text,'900屏東縣屏東市大同里中正路72號2F'::text,'屏東縣'::text,22.674238::float8,120.489824::float8,'OPERATIONAL'::text),
+(293,'ChIJVZX9rtCrQjQRzNysA7kEln4'::text,'無印良品 崇光門市'::text,'106臺北市大安區義村里忠孝東路三段300號6F'::text,'台北市'::text,25.041336599999998::float8,121.54308119999999::float8,'OPERATIONAL'::text),
+(293,'ChIJJc7UYWUFbjQRXEDzOUUK-7Y'::text,'無印良品 左營門市'::text,'813高雄市左營區菜公里高鐵路123號3樓'::text,'高雄市'::text,22.688971799999997::float8,120.31030569999999::float8,'OPERATIONAL'::text),
+(293,'ChIJl50jswgFbjQR1ckHo3ow1k0'::text,'無印良品 巨蛋門市'::text,'3樓, 漢神巨蛋購物廣場No. 777號博愛二路新下里左營區高雄市813'::text,'高雄市'::text,22.669592599999998::float8,120.30228600000001::float8,'OPERATIONAL'::text),
+(293,'ChIJV8swk9urQjQR_zh6Pms79-E'::text,'無印良品 微風門市'::text,'105臺北市松山區中崙里復興南路一段39號3樓'::text,'台北市'::text,25.046022::float8,121.5441453::float8,'OPERATIONAL'::text),
+(293,'ChIJlcE-w089aTQRlbow-3Ze32Q'::text,'無印良品 文心門市'::text,'408臺中市南屯區豐樂里文心南路289號4樓'::text,'台中市'::text,24.129763::float8,120.6457662::float8,'OPERATIONAL'::text),
+(293,'ChIJLQDI8PUBaDQRJe3SUA7w68Q'::text,'無印良品 新店門市'::text,'231新北市新店區國校里北宜路一段16號'::text,'新北市'::text,24.9574457::float8,121.53794280000001::float8,'OPERATIONAL'::text),
+(293,'ChIJ8cmHwhioQjQR6verSEWhiko'::text,'無印良品 新板門市'::text,'220新北市板橋區福丘里新站路28號3樓'::text,'新北市'::text,25.013688::float8,121.46682249999999::float8,'OPERATIONAL'::text),
+(293,'ChIJl7NHz-o1aDQRj2dlo15zF5Q'::text,'無印良品 新竹門市'::text,'300新竹市東區西大路323號7樓'::text,'新竹市'::text,24.8019347::float8,120.9648374::float8,'OPERATIONAL'::text),
+(293,'ChIJXTREgmupQjQRiVJdYyonk7Y'::text,'無印良品 景美門市'::text,'116臺北市文山區景興路188號3~4樓'::text,'台北市'::text,24.9923::float8,121.543815::float8,'OPERATIONAL'::text),
+(293,'ChIJ97F8rPweaDQRMWfrKb8q61s'::text,'無印良品 桃園門市'::text,'3樓, No. 20號中正路武陵里桃園區桃園市330'::text,'桃園市'::text,24.9897057::float8,121.31377920000001::float8,'OPERATIONAL'::text),
+(293,'ChIJ_3neH2EdaDQRmTdLBD7EFtQ'::text,'無印良品 樹林門市'::text,'238新北市樹林區保安里樹新路40-6號1樓'::text,'新北市'::text,24.9955128::float8,121.42842569999999::float8,'OPERATIONAL'::text),
+(293,'ChIJmwTJTNupQjQRd0RCbs-n67Q'::text,'無印良品 比漾門市'::text,'234新北市永和區保安里中山路一段238號2F'::text,'新北市'::text,25.008000499999998::float8,121.5075411::float8,'OPERATIONAL'::text),
 (293,'ChIJb6GcSSeoQjQRd6VQ7How2YY'::text,'無印良品 環球門市'::text,'2樓, No. 122號中山路三段員山里中和區新北市235'::text,'新北市'::text,25.0065836::float8,121.4748252::float8,'OPERATIONAL'::text),
 (293,'ChIJqdMO3BsRbjQRN4Hlvqw9vGA'::text,'無印良品 義大門市'::text,'840高雄市大樹區三和里學城路一段12號C區B1'::text,'高雄市'::text,22.7297694::float8,120.40641760000001::float8,'OPERATIONAL'::text),
 (293,'ChIJM6g7-8WVbjQR57uwtKmodpY'::text,'無印良品 耐斯門市'::text,'600嘉義市東區忠孝路600號_B1F'::text,'嘉義市'::text,23.4965197::float8,120.45258209999999::float8,'OPERATIONAL'::text),
@@ -192,20 +205,7 @@ from (values
 (314,'ChIJQTjqiv4RaTQRq_U2mB8ebwk'::text,'小北百貨-台中大甲店SHOWBA'::text,'437臺中市大甲區大甲里光明路40號'::text,'台中市'::text,24.343964099999997::float8,120.62455810000002::float8,'OPERATIONAL'::text),
 (314,'ChIJz1B-e3I9aTQR5vYClDXWvxU'::text,'SHOWBA小北百貨-台中新成功店'::text,'400臺中市中區中華里中華路一段52號'::text,'台中市'::text,24.1433923::float8,120.6750345::float8,'OPERATIONAL'::text),
 (314,'ChIJuRZzC512bjQRlDWD--h7nEM'::text,'SHOWBA小北百貨-台南新崇明店'::text,'701臺南市東區忠孝里崇明路268號'::text,'台南市'::text,22.978166599999998::float8,120.21919919999999::float8,'OPERATIONAL'::text),
-(314,'ChIJp-MEd5Z2bjQRApG9WQCU5i0'::text,'SHOWBA小北百貨-台南新東安店'::text,'701臺南市東區東明里東安路16號'::text,'台南市'::text,22.9911963::float8,120.2262468::float8,'OPERATIONAL'::text),
-(314,'ChIJEdrRf9wxaTQRdqlz-SPq2Bs'::text,'小北百貨-南投草屯店 SHOWBA'::text,'542南投縣草屯鎮和平里中山街210號'::text,'南投縣'::text,23.9784172::float8,120.6830393::float8,'OPERATIONAL'::text),
-(314,'ChIJNUE8U8g8aTQRtyspk7ShmGE'::text,'小北百貨-台中仁化店 SHOWBA'::text,'412臺中市大里區仁德里仁化路466號'::text,'台中市'::text,24.096158199999998::float8,120.7034026::float8,'OPERATIONAL'::text),
-(314,'ChIJ2y53m-8WaTQRj76vlu6WNEc'::text,'小北百貨-台中大雅店 SHOWBA'::text,'428臺中市大雅區上雅里雅環路二段28號'::text,'台中市'::text,24.224888699999997::float8,120.6536267::float8,'OPERATIONAL'::text),
-(314,'ChIJyexB89sXaTQR1A0JYo6OqEA'::text,'小北百貨-台中天津店 SHOWBA'::text,'406臺中市北屯區平德里天津路三段108號'::text,'台中市'::text,24.169497::float8,120.6829574::float8,'OPERATIONAL'::text),
-(314,'ChIJwVJCw4kXaTQRJjU_guUbSWk'::text,'小北百貨-台中旅順店 SHOWBA'::text,'406臺中市北屯區平田里旅順路二段351號'::text,'台中市'::text,24.1736382::float8,120.6952842::float8,'OPERATIONAL'::text),
-(314,'ChIJQY0GHfcXaTQRJvGHTGnMnds'::text,'小北百貨-台中東山店 SHOWBA'::text,'406臺中市北屯區水景里東山路一段173-1號'::text,'台中市'::text,24.17036::float8,120.7081601::float8,'OPERATIONAL'::text),
-(314,'ChIJAZ-Md489aTQR4isDjOh4X-Y'::text,'小北百貨-台中東榮店 SHOWBA'::text,'412臺中市大里區西榮里東榮路36號'::text,'台中市'::text,24.1102885::float8,120.68849209999999::float8,'OPERATIONAL'::text),
-(314,'ChIJFR-v8qkiaTQRjgQjcfso6Po'::text,'小北百貨-台中樹孝店 SHOWBA'::text,'411臺中市太平區新城里樹孝路272號'::text,'台中市'::text,24.153557799999998::float8,120.71844099999998::float8,'OPERATIONAL'::text),
-(314,'ChIJQ_3DQQ4XaTQR1R4Kwz_0stA'::text,'小北百貨-台中水湳店 SHOWBA'::text,'406臺中市北屯區水湳里中清西二街29號'::text,'台中市'::text,24.1744164::float8,120.66824799999999::float8,'OPERATIONAL'::text),
-(314,'ChIJk6YcxAcWaTQROhNQZ1rRxKc'::text,'小北百貨-台中永福店 SHOWBA'::text,'407臺中市西屯區福雅里永福路168號'::text,'台中市'::text,24.185467499999998::float8,120.62158259999998::float8,'OPERATIONAL'::text),
-(314,'ChIJy3rnTUY9aTQRKyD01Lw0rgQ'::text,'小北百貨-台中精誠店 SHOWBA'::text,'403臺中市西區公德里精誠路187號'::text,'台中市'::text,24.148745899999998::float8,120.6551945::float8,'OPERATIONAL'::text),
-(314,'ChIJkb3DYRkWaTQRBcga4-SSzho'::text,'小北百貨-台中逢甲店 SHOWBA'::text,'407臺中市西屯區西墩里黎明路三段325號'::text,'台中市'::text,24.1797579::float8,120.63730699999999::float8,'OPERATIONAL'::text),
-(314,'ChIJdy8BRWupQjQRXL2RubrAvYs'::text,'小北百貨-台北寧夏店 SHOWBA'::text,'103臺北市大同區星明里寧夏路11號'::text,'台北市'::text,25.054693699999998::float8,121.51506470000001::float8,'OPERATIONAL'::text)
+(314,'ChIJp-MEd5Z2bjQRApG9WQCU5i0'::text,'SHOWBA小北百貨-台南新東安店'::text,'701臺南市東區東明里東安路16號'::text,'台南市'::text,22.9911963::float8,120.2262468::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

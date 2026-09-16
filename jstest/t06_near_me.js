@@ -182,5 +182,19 @@ function setGeo(win, mode) {
   const stored = Object.keys(win.localStorage).map((k) => `${k}=${win.localStorage.getItem(k)}`).join('|');
   t.ok('localStorage 裡找不到座標', !/25\.04|121\.5/.test(stored), stored);
 
+  /* ================= 地圖圖磚（celine：要能承受大流量）================= */
+  const tiles = () => win.mapTileConfig();
+  t.ok('預設不是 OSM 官方圖磚（使用政策不適合大流量）', !/tile\.openstreetmap\.org/.test(tiles().url), tiles().url);
+  t.ok('預設圖磚有標示出處', /OpenStreetMap/.test(tiles().attribution) && /CARTO/.test(tiles().attribution));
+  t.ok('預設放大到 20 級', tiles().maxZoom >= 19);
+  win.MAPTILER_KEY = 'k e y/1';
+  t.ok('設了 MapTiler 金鑰就改用 MapTiler', /api\.maptiler\.com/.test(tiles().url), tiles().url);
+  t.ok('金鑰有做網址跳脫', tiles().url.includes('k%20e%20y%2F1'), tiles().url);
+  t.ok('MapTiler 也有標示出處', /MapTiler/.test(tiles().attribution));
+  win.MAP_TILES = { url: 'https://example.com/{z}/{x}/{y}.png', attribution: '自家圖磚' };
+  t.eq('config.js 直接指定圖磚時優先用它', tiles().url, 'https://example.com/{z}/{x}/{y}.png');
+  t.ok('沒指定的欄位用預設值補上', tiles().maxZoom >= 19);
+  delete win.MAP_TILES; delete win.MAPTILER_KEY;
+
   process.exit(t.done() ? 0 : 1);
 })().catch((e) => { console.error(e); process.exit(1); });

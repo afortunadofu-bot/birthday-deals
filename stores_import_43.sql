@@ -1,11 +1,24 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 43/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 43/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(333,'ChIJdw-KU8AlaDQRsJZRuGsUGC4'::text,'麥味登 楊梅新農店'::text,'326桃園市楊梅區楊明里新農街372號'::text,'桃園市'::text,24.9115903::float8,121.15685620000001::float8,'OPERATIONAL'::text),
+(333,'ChIJS8KEndAjaDQRYWU1XmsFDew'::text,'麥味登 楊梅金龍店'::text,'326桃園市楊梅區金龍里金龍三路11號'::text,'桃園市'::text,24.911951499999997::float8,121.18680119999999::float8,'OPERATIONAL'::text),
+(333,'ChIJ5ckPZC0PbjQRfpUNFshSsfk'::text,'麥味登 楠梓創新店'::text,'811高雄市楠梓區清豐里創新路888號'::text,'高雄市'::text,22.7498693::float8,120.3317888::float8,'OPERATIONAL'::text),
+(333,'ChIJsebMUrsPbjQRoZ_eG17ptQo'::text,'麥味登 楠梓德賢店'::text,'811高雄市楠梓區翠屏里德賢路162號'::text,'高雄市'::text,22.727125599999997::float8,120.30744319999998::float8,'OPERATIONAL'::text),
+(333,'ChIJsbtg7DgPbjQRBnv26wMw1vA'::text,'麥味登 楠梓惠豐店'::text,'811高雄市楠梓區惠豐里惠豐街286號'::text,'高雄市'::text,22.7301106::float8,120.316639::float8,'OPERATIONAL'::text),
+(333,'ChIJYYsO0EgPbjQRIpWJEo7NlPs'::text,'麥味登 楠梓金和店'::text,'811高雄市楠梓區金田里金和街137號'::text,'高雄市'::text,22.7256882::float8,120.31850969999999::float8,'OPERATIONAL'::text),
+(333,'ChIJ3WIogiIdaDQRhBhsrPf8Hd4'::text,'麥味登 樹林中華店'::text,'238新北市樹林區和平里中華路39號1樓'::text,'新北市'::text,24.983420199999998::float8,121.423834::float8,'OPERATIONAL'::text),
+(333,'ChIJpfy4ZQAdaDQRCz8GMSyomug'::text,'麥味登 樹林學勤店'::text,'238新北市樹林區南園里學勤路527號'::text,'新北市'::text,24.9487491::float8,121.38133479999999::float8,'OPERATIONAL'::text),
+(333,'ChIJ4cOjt3kdaDQRSrFUOF_Np6Q'::text,'麥味登 樹林會贏店'::text,'238新北市树林区彭福里国凯街102號彭厝派出所對面1樓'::text,'新北市'::text,24.979784199999997::float8,121.42238169999999::float8,'OPERATIONAL'::text),
+(333,'ChIJ-z375jodaDQRHiBOEYT57I0'::text,'麥味登 樹林秀泰店'::text,'220新北市板橋區崑崙里大觀路三段160巷46號'::text,'新北市'::text,24.9941843::float8,121.42976759999999::float8,'OPERATIONAL'::text),
+(333,'ChIJHWFiGvkPbjQRpVFsRCytACY'::text,'麥味登 橋頭成功店'::text,'825高雄市橋頭區新莊里成功南路669號'::text,'高雄市'::text,22.743806799999998::float8,120.31640619999997::float8,'OPERATIONAL'::text),
+(333,'ChIJ8_-GfQC9bjQRRkMSI4sQpUg'::text,'麥味登 民雄葳新店'::text,'621嘉義縣民雄鄉東榮村文化路52號'::text,'嘉義縣'::text,23.554071099999998::float8,120.43018280000001::float8,'OPERATIONAL'::text),
+(333,'ChIJZeH_SuMqaTQR5yXov52OB50'::text,'麥味登 水里民族店'::text,'553南投縣水里鄉中央村民族路426號'::text,'南投縣'::text,23.814690499999998::float8,120.85439430000001::float8,'OPERATIONAL'::text),
 (333,'ChIJ8RaIS2xTXTQRO7_oIofOl0U'::text,'麥味登 汐止仁愛店'::text,'221新北市汐止區仁愛路23號'::text,'新北市'::text,25.063896099999997::float8,121.65946400000001::float8,'OPERATIONAL'::text),
 (333,'ChIJm2LDihFTXTQRpU2zu7PcJk8'::text,'麥味登 汐止建成店'::text,'221新北市汐止區城中里建成路59巷49號一樓'::text,'新北市'::text,25.072441599999998::float8,121.6612187::float8,'OPERATIONAL'::text),
 (333,'ChIJocq0ik5TXTQRg9_-teEP2Ek'::text,'麥味登 汐止福氣店'::text,'221新北市汐止區福德里福德一路201巷6號'::text,'新北市'::text,25.0654564::float8,121.63545219999999::float8,'OPERATIONAL'::text),
@@ -192,20 +205,7 @@ from (values
 (333,'ChIJWcxDnJt3bjQR_oPDd2DIRX4'::text,'麥味登東橋總圖店（最後接單時間13：30）'::text,'710臺南市永康區東橋八街210號'::text,'台南市'::text,23.022086299999998::float8,120.2362077::float8,'OPERATIONAL'::text),
 (333,'ChIJl0KrfQAfaDQR0yafEXKyMX4'::text,'麥味登 cafe&brunch 桃園小檜溪店'::text,'330桃園市桃園區青溪里中央街293號'::text,'桃園市'::text,25.003291299999997::float8,121.3145924::float8,'OPERATIONAL'::text),
 (333,'ChIJW7B3vLWrQjQR42-lCmlULFY'::text,'麥味登Cafe&Brunch 北市世貿莊敬店'::text,'110臺北市信義區景新里莊敬路203號'::text,'台北市'::text,25.030544::float8,121.56161050000001::float8,'OPERATIONAL'::text),
-(333,'ChIJPcoWsgoXbjQRXIsexLeuMys'::text,'麥味登屏東博愛店（鄰近崇蘭昌黎殿、環保公園）'::text,'900屏東縣屏東市崇蘭里博愛路436號'::text,'屏東縣'::text,22.6861188::float8,120.4808406::float8,'OPERATIONAL'::text),
-(333,'ChIJmaeu7yWtbjQRiM12x-FXBJQ'::text,'麥味登 彰化大城店（固定週二公休）6/22休息'::text,'527彰化縣大城鄉大城村北平一街2號'::text,'彰化縣'::text,23.8562419::float8,120.3209438::float8,'OPERATIONAL'::text),
-(333,'ChIJo4eiCrEdbjQRz2ufDk8WJL8'::text,'麥味登MWD早午餐 小港孔宅店 (近孔宅綠園)'::text,'812高雄市小港區孔宅里小港三路56巷26號'::text,'高雄市'::text,22.5781921::float8,120.3754276::float8,'OPERATIONAL'::text),
-(333,'ChIJRfcg2-OrQjQRRbjhSebk4L4'::text,'MWD 麥味登cafe&brunch 北市龍江店'::text,'10491臺北市中山區江山里龍江路244號'::text,'台北市'::text,25.0590427::float8,121.5405812::float8,'OPERATIONAL'::text),
-(333,'ChIJBxoWDD-rQjQR9Rt1h0TEaoQ'::text,'麥味登北市民生金控店-Coffee&Brunch'::text,'105017臺北市松山區精忠里民生東路四段54-2號'::text,'台北市'::text,25.0573575::float8,121.55093439999999::float8,'OPERATIONAL'::text),
-(333,'ChIJuWKmAxcnaTQRj2dJt1PeIPw'::text,'麥味登國姓成功店 Cafe＆Brunch 早午餐'::text,'544南投縣國姓鄉柑林村中正路二段344號'::text,'南投縣'::text,24.025430399999998::float8,120.84620559999998::float8,'OPERATIONAL'::text),
-(333,'ChIJ-aK8W_2pQjQRTUyxcOs3C9U'::text,'麥味登 三重霸子店 （6/19公休）早餐、寵物友善'::text,'241新北市三重區大園里大同北路97號'::text,'新北市'::text,25.0637382::float8,121.49457629999999::float8,'OPERATIONAL'::text),
-(333,'ChIJ-fHsWQAdaDQRL3s9ICqHzd4'::text,'麥味登 土城頂埔店（開幕於2023年12月24日）'::text,'236新北市土城區頂埔里中央路四段73號'::text,'新北市'::text,24.958138400000003::float8,121.4172163::float8,'OPERATIONAL'::text),
-(333,'ChIJ_3FnzIE1aDQRzoOK0nQLwkM'::text,'麥味登 新竹經國店（可以直接網路訂餐外帶要先結帳喔）'::text,'30069新竹市北區經國路二段276號'::text,'新竹市'::text,24.809124300000004::float8,120.959656::float8,'OPERATIONAL'::text),
-(333,'ChIJBV2v8tYxaTQRcHMTEkZXDmk'::text,'麥味登—草屯財神店 MWD Cafe & Brunch'::text,'542南投縣草屯鎮明正里忠孝街322號'::text,'南投縣'::text,23.9834438::float8,120.68036780000001::float8,'OPERATIONAL'::text),
-(333,'ChIJl8JkUbwjbjQRzAGfY7QsSos'::text,'麥味登 內埔新光店 (店休日請見FB粉專/官方LINE)'::text,'91241屏東縣內埔鄉內埔村光明路99號'::text,'屏東縣'::text,22.6162441::float8,120.57403559999999::float8,'OPERATIONAL'::text),
-(333,'ChIJszDe37uXbjQRFzq4XN1mmrs'::text,'嘉義麥味登友愛店 - 嘉義早午餐（07:00-14:30）'::text,'600嘉義市西區福全里友愛路154號'::text,'嘉義市'::text,23.4796709::float8,120.43433549999999::float8,'OPERATIONAL'::text),
-(333,'ChIJ40cRSgqrQjQRjIrcYiZ7ADg'::text,'麥味登 信義福德店cafe&brunch 洋食ブランチ 브런치'::text,'110臺北市信義區中行里福德街246號'::text,'台北市'::text,25.038746::float8,121.58522300000001::float8,'OPERATIONAL'::text),
-(333,'ChIJJTv4cJ1HaDQRIk4Rj0ZbkWc'::text,'麥味登 竹東幸福店 （最後點餐時間13:30，營業至14:00）'::text,'310新竹縣竹東鎮東寧里東寧路一段139號'::text,'新竹縣'::text,24.7252673::float8,121.0943934::float8,'OPERATIONAL'::text)
+(333,'ChIJPcoWsgoXbjQRXIsexLeuMys'::text,'麥味登屏東博愛店（鄰近崇蘭昌黎殿、環保公園）'::text,'900屏東縣屏東市崇蘭里博愛路436號'::text,'屏東縣'::text,22.6861188::float8,120.4808406::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

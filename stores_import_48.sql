@@ -1,11 +1,24 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 48/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 48/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(353,'ChIJ9fOjOhKsQjQRL6BiIDTYm2M'::text,'豐 FOOD 海陸百匯'::text,'10491臺北市中山區成功里植福路8號1樓'::text,'台北市'::text,25.0836968::float8,121.5549291::float8,'OPERATIONAL'::text),
+(354,'ChIJx68zbZY9aTQROkzl9TdhjfQ'::text,'卡啡那 大墩館'::text,'40861臺中市南屯區大業里大墩路573號'::text,'台中市'::text,24.1502129::float8,120.6496806::float8,'OPERATIONAL'::text),
+(354,'ChIJO7qhn5F3bjQRcN_K-W1tOpQ'::text,'卡啡那 市府館'::text,'708臺南市安平區永華路二段141號'::text,'台南市'::text,22.9892221::float8,120.18341900000001::float8,'OPERATIONAL'::text),
+(354,'ChIJYbZhYes9aTQROJgxaI2qBlc'::text,'卡啡那 惠來館'::text,'407臺中市西屯區惠中路二段45號'::text,'台中市'::text,24.1556958::float8,120.6412135::float8,'OPERATIONAL'::text),
+(354,'ChIJHbPs228bbjQRH-dxGMJ7LgA'::text,'卡啡那 文濱館'::text,'830高雄市鳳山區文德里文濱路131號'::text,'高雄市'::text,22.6444142::float8,120.349891::float8,'OPERATIONAL'::text),
+(354,'ChIJueBRwRwFbjQRkS2789Vrdn8'::text,'卡啡那 明誠館'::text,'813高雄市左營區明誠二路243號'::text,'高雄市'::text,22.6608333::float8,120.31::float8,'OPERATIONAL'::text),
+(354,'ChIJgcLVcFAEbjQR07mcu9Bb1PM'::text,'卡啡那 美術館'::text,'804高雄市鼓山區龍水里美術東二路3號'::text,'高雄市'::text,22.651215::float8,120.28766850000001::float8,'OPERATIONAL'::text),
+(354,'ChIJHyIS44_hcTQRQd8eDCqNsdc'::text,'多那之東港門市'::text,'928屏東縣東港鎮朝安里中山路157號'::text,'屏東縣'::text,22.4684426::float8,120.4469723::float8,'OPERATIONAL'::text),
+(354,'ChIJN-86KZStQjQR2WUpchtrM6Q'::text,'卡啡那 內湖啟航館'::text,'114臺北市內湖區洲子街79號'::text,'台北市'::text,25.0802004::float8,121.5714038::float8,'OPERATIONAL'::text),
+(354,'ChIJ916Pti0FbjQRZD7D55UV1qU'::text,'卡啡那 文化探索館'::text,'802高雄市苓雅區凱旋里五福一路67號西苑'::text,'高雄市'::text,22.6257995::float8,120.3171704::float8,'OPERATIONAL'::text),
+(354,'ChIJuS8mHACjbjQRsBJEdGix7bo'::text,'多那之 雲林北港店'::text,'651雲林縣北港鎮華南路76號1樓'::text,'雲林縣'::text,23.5689401::float8,120.2996184::float8,'OPERATIONAL'::text),
+(354,'ChIJ6zd8DqIxaTQRuY3cynz28jk'::text,'多那之南投草屯門市'::text,'54242南投縣草屯鎮中山里中山街65號'::text,'南投縣'::text,23.975736899999998::float8,120.68242000000001::float8,'OPERATIONAL'::text),
+(354,'ChIJg_Srzrc9aTQRgN2tzGHIw9c'::text,'多那之台中向心門市'::text,'40855臺中市南屯區向心里向心南路960號'::text,'台中市'::text,24.1369769::float8,120.64396439999999::float8,'OPERATIONAL'::text),
 (354,'ChIJy7ttShE9aTQRdoA9_8hBACg'::text,'多那之台中復中門市'::text,'401臺中市東區新庄里台中路43號'::text,'台中市'::text,24.1347024::float8,120.6830131::float8,'OPERATIONAL'::text),
 (354,'ChIJb9ybXr89aTQRRcozwibEQ8c'::text,'多那之台中惠文門市'::text,'408臺中市南屯區惠中里惠文路491號'::text,'台中市'::text,24.1456013::float8,120.6433896::float8,'OPERATIONAL'::text),
 (354,'ChIJRQ3i6tuFbjQRlwelafyi9Yw'::text,'多那之台南新營門市'::text,'730臺南市新營區民權里三民路89-5號'::text,'台南市'::text,23.306866::float8,120.313456::float8,'OPERATIONAL'::text),
@@ -192,20 +205,7 @@ from (values
 (361,'ChIJdUoYSwBHaTQRJhTtJ79g_iQ'::text,'TEA TOP第一味 鹿港頂番店'::text,'50565彰化縣鹿港鎮廖厝里鹿和路三段124號1樓'::text,'彰化縣'::text,24.0785354::float8,120.4688207::float8,'OPERATIONAL'::text),
 (361,'ChIJq-IrGVw9aTQRrbMtzZ1GPWk'::text,'TEA TOP第一味 黎明酒廠店'::text,'408臺中市南屯區楓樹里黎明路一段34號'::text,'台中市'::text,24.113017199999998::float8,120.6262064::float8,'OPERATIONAL'::text),
 (361,'ChIJn_KYSC13bjQR6VSJm7EaEJs'::text,'TEA TOP第一味•安南海佃店'::text,'709臺南市安南區溪心里海佃路三段203-2號'::text,'台南市'::text,23.050695899999997::float8,120.18075599999999::float8,'OPERATIONAL'::text),
-(361,'ChIJLxAQV2CVbjQR0mIsZ7v7Xr4'::text,'TEA-TOP第一味 民雄建國店'::text,'621嘉義縣民雄鄉福樂村建國路三段152號1樓'::text,'嘉義縣'::text,23.523391699999998::float8,120.43973959999998::float8,'OPERATIONAL'::text),
-(361,'ChIJX4CU426zaTQRx-6vfGmhWTo'::text,'TEA-TOP第一味 竹南新生店'::text,'350苗栗縣竹南鎮中港里新生路66號'::text,'苗栗縣'::text,24.681622400000002::float8,120.86785580000002::float8,'OPERATIONAL'::text),
-(361,'ChIJjyndUQ09aTQRwbWDU7LcDqc'::text,'TEATOP 第一味 台中樂業店'::text,'401臺中市東區東信里樂業路456號'::text,'台中市'::text,24.1364695::float8,120.70652310000001::float8,'OPERATIONAL'::text),
-(361,'ChIJrb1V0Js9aTQRx6e4dfr_bqM'::text,'TEATOP第一味 台中忠明南店'::text,'403臺中市西區土庫里忠明南路443-2號'::text,'台中市'::text,24.1385366::float8,120.65750799999999::float8,'OPERATIONAL'::text),
-(361,'ChIJtS6Cd_AOaTQRMXzKQQlsJvo'::text,'TEATOP第一味(日南幼獅店)'::text,'437臺中市大甲區台中市大甲區黎明路3之18號'::text,'台中市'::text,24.391634::float8,120.65433200000001::float8,'OPERATIONAL'::text),
-(361,'ChIJ5Q4HH5I1aTQRINSTjjoovcQ'::text,'Tea Top 第一味彰化田中店'::text,'520彰化縣田中鎮東路里中州路一段224號'::text,'彰化縣'::text,23.857988199999998::float8,120.5859335::float8,'OPERATIONAL'::text),
-(361,'ChIJoW8dVzQjaTQRaUjFzRlwugU'::text,'Tea top第一味 大里成功店'::text,'412臺中市大里區仁德里成功二路118號'::text,'台中市'::text,24.0949805::float8,120.7043829::float8,'OPERATIONAL'::text),
-(361,'ChIJAwosfg-5bjQRt_oS14MFhvQ'::text,'TeaTop 第一味 斗南中山店'::text,'630雲林縣斗南鎮南昌里中山路64號'::text,'雲林縣'::text,23.6749711::float8,120.47963299999999::float8,'OPERATIONAL'::text),
-(361,'ChIJCUgK0scjaDQRofbz6WzAbQg'::text,'TEA TOP 第一味 中壢中美店'::text,'32086桃園市中壢區興國里中美路二段63號'::text,'桃園市'::text,24.959676400000003::float8,121.2224875::float8,'OPERATIONAL'::text),
-(361,'ChIJuSGCYR89aTQRVxnr1BdBLws'::text,'TEA TOP 第一味 台中永興店'::text,'40454臺中市北區建興里永興街54號'::text,'台中市'::text,24.159848099999998::float8,120.68252679999999::float8,'OPERATIONAL'::text),
-(361,'ChIJ463075k9aTQRyZD8IvbWg5M'::text,'TEA TOP 第一味 台中精誠店'::text,'403臺中市西區公平里精誠路75號'::text,'台中市'::text,24.1520768::float8,120.65523479999999::float8,'OPERATIONAL'::text),
-(361,'ChIJBQITZIs3aTQRmGwrlXZkuxo'::text,'TEA TOP 第一味 員林靜修店'::text,'510彰化縣員林市靜修路38-3號'::text,'彰化縣'::text,23.9626199::float8,120.571601::float8,'OPERATIONAL'::text),
-(361,'ChIJZfA15kM3aTQR50T_zlnyUos'::text,'TEA TOP 第一味 埔心員鹿店'::text,'513彰化縣埔心鄉東門村員鹿路二段249號'::text,'彰化縣'::text,23.952705899999998::float8,120.5454647::float8,'OPERATIONAL'::text),
-(361,'ChIJLdr_Brs4aTQRfhHIECumlN0'::text,'TEA TOP 第一味 彰化家福店'::text,'500彰化縣彰化市茄南里永安街480號'::text,'彰化縣'::text,24.094295100000004::float8,120.54187749999998::float8,'OPERATIONAL'::text)
+(361,'ChIJLxAQV2CVbjQR0mIsZ7v7Xr4'::text,'TEA-TOP第一味 民雄建國店'::text,'621嘉義縣民雄鄉福樂村建國路三段152號1樓'::text,'嘉義縣'::text,23.523391699999998::float8,120.43973959999998::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

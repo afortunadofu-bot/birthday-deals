@@ -1,11 +1,24 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 33/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 33/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(178,'ChIJtUPMHwo_aTQRwpZpiRJ2HPQ'::text,'老賴茶棧烏日林新店'::text,'414臺中市烏日區榮泉里榮和路206號'::text,'台中市'::text,24.110488699999998::float8,120.59809699999998::float8,'OPERATIONAL'::text),
+(178,'ChIJlVD7u0qjbjQRg66M2XZ2ZBM'::text,'老賴茶棧雲林北港店'::text,'65142雲林縣北港鎮共榮里民主路25號'::text,'雲林縣'::text,23.567971699999998::float8,120.30371830000001::float8,'OPERATIONAL'::text),
+(178,'ChIJh5Fr6UsDbjQRjZNFZMOkUcM'::text,'老賴茶棧高雄五甲店'::text,'83087高雄市鳳山區龍成里自強二路164號'::text,'高雄市'::text,22.596879299999998::float8,120.32732219999998::float8,'OPERATIONAL'::text),
+(178,'ChIJA5tqL6QFbjQRWMIDd-t6XB4'::text,'老賴茶棧高雄六合店'::text,'801高雄市前金區長興里六合二路105號'::text,'高雄市'::text,22.6316347::float8,120.2981565::float8,'OPERATIONAL'::text),
+(178,'ChIJTf9mTEYNbjQR0AaCq3dr-fU'::text,'老賴茶棧高雄岡山店'::text,'820高雄市岡山區忠孝里柳橋東路25號'::text,'高雄市'::text,22.7909372::float8,120.29336079999999::float8,'OPERATIONAL'::text),
+(178,'ChIJ5bxdeRsPbjQRW1oktpE9YHE'::text,'老賴茶棧高雄後昌店'::text,'813高雄市左營區光輝里後昌路691號'::text,'高雄市'::text,22.7087717::float8,120.2974086::float8,'OPERATIONAL'::text),
+(178,'ChIJEbhW43wFbjQRlMqUfULLNm0'::text,'老賴茶棧高雄忠孝店'::text,'80242高雄市苓雅區忠孝二路107號'::text,'高雄市'::text,22.6204565::float8,120.30778269999999::float8,'OPERATIONAL'::text),
+(178,'ChIJpYtH_K4FbjQRA7XDQ_LiGv0'::text,'老賴茶棧高雄武廟店'::text,'80282高雄市苓雅區正言里福德二路23號'::text,'高雄市'::text,22.6303998::float8,120.3277027::float8,'OPERATIONAL'::text),
+(178,'ChIJq6Lo4dcFbjQRI-Zi_rprbb8'::text,'老賴茶棧高雄熱河店'::text,'807高雄市三民區達明里熱河一街352號'::text,'高雄市'::text,22.6438585::float8,120.3065378::float8,'OPERATIONAL'::text),
+(178,'ChIJEdE2Ti4NbjQRoo_ofpwOR3Y'::text,'老賴茶棧高雄路竹店'::text,'821高雄市路竹區竹南里中正路205號'::text,'高雄市'::text,22.8545321::float8,120.2640541::float8,'OPERATIONAL'::text),
+(178,'ChIJzfK3oGipQjQR8Ty3uOGI3fg'::text,'老賴茶棧 三重三和店'::text,'241新北市三重區長元里三和路二段67號'::text,'新北市'::text,25.0679452::float8,121.5001647::float8,'OPERATIONAL'::text),
+(178,'ChIJhdRiLwYhaDQRkpr7_JW_rLU'::text,'老賴茶棧 內壢忠孝店'::text,'320桃園市中壢區忠孝路42號'::text,'桃園市'::text,24.973565699999998::float8,121.25647300000001::float8,'OPERATIONAL'::text),
+(178,'ChIJT6FEK7_NbjQRFeoGQ6HUGQ0'::text,'老賴茶棧 南投竹山店'::text,'557南投縣竹山鎮集山路三段1014號'::text,'南投縣'::text,23.756117699999997::float8,120.6817012::float8,'OPERATIONAL'::text),
 (178,'ChIJaTxswXI9aTQRDL6LN69W3vo'::text,'老賴茶棧 台中中華店'::text,'400臺中市中區中華里中華路一段84號'::text,'台中市'::text,24.144130099999998::float8,120.6758098::float8,'OPERATIONAL'::text),
 (178,'ChIJUYqs6_89aTQR4cVgiTFZfZk'::text,'老賴茶棧 台中向上店'::text,'403臺中市西區向上路一段411號'::text,'台中市'::text,24.1465794::float8,120.6549448::float8,'OPERATIONAL'::text),
 (178,'ChIJ78RIsSs9aTQRhRos-3E5hkw'::text,'老賴茶棧 台中塗城店'::text,'412臺中市大里區金城里塗城路749號'::text,'台中市'::text,24.0890751::float8,120.699311::float8,'OPERATIONAL'::text),
@@ -192,20 +205,7 @@ from (values
 (199,'ChIJI93HIgt3bjQRAVr1mAqTqfk'::text,'饗翻天臭臭鍋（安南海佃店）'::text,'709臺南市安南區溪心里海佃路三段108-1號'::text,'台南市'::text,23.049283::float8,120.18225849999999::float8,'OPERATIONAL'::text),
 (199,'ChIJa70JgOV1bjQRVWGu5UmXZWU'::text,'饗翻天臭臭鍋【南區中華南店】'::text,'70264臺南市南區建南里中華南路二段101-1號'::text,'台南市'::text,22.9615555::float8,120.19291249999998::float8,'OPERATIONAL'::text),
 (199,'ChIJDWhCUxdxbjQRJ42w8hjWvPM'::text,'饗翻天臭臭鍋【關廟店】*無預約訂位服務*'::text,'718臺南市關廟區五甲里東興路1號'::text,'台南市'::text,22.9555983::float8,120.3290929::float8,'OPERATIONAL'::text),
-(200,'ChIJeY5CYgA1aDQRreWZ7zGRahQ'::text,'湯姆熊歡樂世界巨城店'::text,'300新竹市東區復中里中央路229號8F'::text,'新竹市'::text,24.8095562::float8,120.97472760000001::float8,'OPERATIONAL'::text),
-(200,'ChIJYzATt752bjQRitbDFEQrpY0'::text,'湯姆熊歡樂世界 南紡店'::text,'701臺南市東區東光里中華東路一段366號B1'::text,'台南市'::text,22.990829100000003::float8,120.23332789999998::float8,'OPERATIONAL'::text),
-(200,'ChIJia_Xkj65bzQRfOhc-C5LLq0'::text,'湯姆熊歡樂世界 台東店'::text,'950臺東縣臺東市中山里中華路一段437號'::text,'台東縣'::text,22.7528622::float8,121.1518655::float8,'OPERATIONAL'::text),
-(200,'ChIJb-5W_0YbbjQRiULZEuAHXas'::text,'湯姆熊歡樂世界 鳳山店'::text,'830高雄市鳳山區興仁里中山路149號號地下一樓'::text,'高雄市'::text,22.622595::float8,120.35812999999997::float8,'OPERATIONAL'::text),
-(200,'ChIJVVVVVRWsQjQRR-fXmz878Iw'::text,'湯姆熊歡樂世界 美麗華店'::text,'10466臺北市中山區金泰里敬業三路20號'::text,'台北市'::text,25.0833072::float8,121.55716479999998::float8,'OPERATIONAL'::text),
-(200,'ChIJC_QSTHnmZzQR-9uxpoUHk48'::text,'湯姆熊歡樂世界羅東民生店'::text,'2樓, No. 6號民生路集祥里羅東鎮宜蘭縣265'::text,'宜蘭縣'::text,24.6770763::float8,121.7710647::float8,'OPERATIONAL'::text),
-(200,'ChIJgeUVV3U9aTQRcaHBLB68WEc'::text,'湯姆熊歡樂世界 台中新光店'::text,'407臺中市西屯區惠來里臺灣大道三段301號13 樓'::text,'台中市'::text,24.1652572::float8,120.6437083::float8,'OPERATIONAL'::text),
-(200,'ChIJQWeH4lUXaTQReUdJBoj3gAo'::text,'湯姆熊歡樂世界 台中漢神店'::text,'406臺中市北屯區仁美里崇德路三段865 號6 F'::text,'台中市'::text,24.198321::float8,120.68621890000001::float8,'OPERATIONAL'::text),
-(200,'ChIJQ9K2cF0RaTQRZYQfC5Ece3k'::text,'湯姆熊歡樂世界 台中麗寶店'::text,'421臺中市后里區福容路201號D區3樓之2'::text,'台中市'::text,24.324824800000002::float8,120.70029559999998::float8,'OPERATIONAL'::text),
-(200,'ChIJq2xgq9xzbjQRZnrV2gShhYg'::text,'湯姆熊歡樂世界 台南三井店'::text,'711臺南市歸仁區武東里歸仁大道101號三樓'::text,'台南市'::text,22.9254189::float8,120.28687349999998::float8,'OPERATIONAL'::text),
-(200,'ChIJP3zB17J3bjQRYJpIz1_qGuM'::text,'湯姆熊歡樂世界 台南海佃店'::text,'709臺南市安南區海佃里海佃路一段329號'::text,'台南市'::text,23.026178899999998::float8,120.19081529999998::float8,'OPERATIONAL'::text),
-(200,'ChIJ62tCWaJ2bjQRBHB5B2zCBj0'::text,'湯姆熊歡樂世界 台南真光店'::text,'701臺南市東區富強里中華東路二段236號'::text,'台南市'::text,22.981935699999998::float8,120.2299235::float8,'OPERATIONAL'::text),
-(200,'ChIJ29w3oRVOXTQRNjk8fLoRRUM'::text,'湯姆熊歡樂世界 基隆東岸店'::text,'200基隆市仁愛區仁德里仁二路236號3樓'::text,'基隆市'::text,25.129963::float8,121.743219::float8,'OPERATIONAL'::text),
-(200,'ChIJm5-rBxw5aTQR61u88fj4Xf4'::text,'湯姆熊歡樂世界 彰化金馬店'::text,'500彰化縣彰化市茄南里金馬路二段321號2樓'::text,'彰化縣'::text,24.094606799999998::float8,120.54241390000001::float8,'OPERATIONAL'::text)
+(200,'ChIJeY5CYgA1aDQRreWZ7zGRahQ'::text,'湯姆熊歡樂世界巨城店'::text,'300新竹市東區復中里中央路229號8F'::text,'新竹市'::text,24.8095562::float8,120.97472760000001::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

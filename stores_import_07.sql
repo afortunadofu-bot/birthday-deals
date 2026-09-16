@@ -1,10 +1,10 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 7/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 7/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
 (3,'ChIJkYMzdN08aTQRQWcnAQybXsA'::text,'肯德基KFC-大里中興二餐廳'::text,'412臺中市大里區內新里中興路二段478號'::text,'台中市'::text,24.110169::float8,120.690149::float8,'OPERATIONAL'::text),
 (3,'ChIJY57uvh2oQjQR_uwMfYcUznQ'::text,'肯德基KFC-板橋中山二餐廳'::text,'220新北市板橋區中山路一段65號'::text,'新北市'::text,25.009722399999998::float8,121.4611131::float8,'OPERATIONAL'::text),

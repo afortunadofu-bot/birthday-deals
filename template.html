@@ -3141,6 +3141,33 @@ function pulseText(o){
    只有「距離範圍」會記住。
    地圖用 Leaflet＋OpenStreetMap 圖磚，點了「地圖」才動態載入，沒用到的人不用多下載。 ---- */
 const NEAR_DEFAULT_CENTER={lat:25.0478, lng:121.5170};   // 台北車站：定位失敗時地圖先開在這
+/* ---- 地圖圖磚 ----
+   OpenStreetMap 官方圖磚的使用政策明文寫「不適合流量大的應用」，所以預設改用
+   CARTO 的 Voyager 底圖 CDN：一樣是 OSM 的資料、不用金鑰、專門做給網站/App 用，
+   標示出處就可以。（celine：圖磚改成可以承受大流量的。）
+
+   之後流量再大、或想要有 SLA 的服務（MapTiler、Stadia…），在 config.js 加：
+     window.MAP_TILES = { url:'https://…/{z}/{x}/{y}.png', attribution:'…', maxZoom:20 };
+   只用 MapTiler 的話填 window.MAPTILER_KEY = '你的金鑰' 就好，網址會自動組。
+   兩個都沒設就用下面的預設值。 ---- */
+const MAP_TILE_DEFAULT={
+  url:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+  attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
+    +' &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>',
+  maxZoom:20, subdomains:'abcd'
+};
+function mapTileConfig(){
+  const c=window.MAP_TILES;
+  if(c && c.url) return {...MAP_TILE_DEFAULT, ...c};
+  const k=window.MAPTILER_KEY;
+  if(k) return {
+    url:`https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=${encodeURIComponent(k)}`,
+    attribution:'&copy; <a href="https://www.maptiler.com/copyright/" target="_blank" rel="noopener">MapTiler</a>'
+      +' &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
+    maxZoom:20, subdomains:''
+  };
+  return MAP_TILE_DEFAULT;
+}
 const NEAR={active:false, lat:null, lng:null, label:'', km:3, byOffer:null, loading:false,
   reqSeq:0, sortTouched:false};
 try{ const k=Number(localStorage.getItem('sxr_near_km')); if([1,3,5,10,30].includes(k)) NEAR.km=k; }catch{}
@@ -3238,9 +3265,9 @@ async function openNearMap(){
   }
   const c=NEAR.lat!=null?{lat:NEAR.lat,lng:NEAR.lng}:NEAR_DEFAULT_CENTER;
   NEAR_MAP=L.map($('#nearMap')).setView([c.lat,c.lng], 15);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,
-    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'})
-    .addTo(NEAR_MAP);
+  const tiles=mapTileConfig();
+  L.tileLayer(tiles.url,{maxZoom:tiles.maxZoom||20, subdomains:tiles.subdomains||'abc',
+    attribution:tiles.attribution}).addTo(NEAR_MAP);
   NEAR_MAP_PINS=L.layerGroup().addTo(NEAR_MAP);
   NEAR_MAP.on('click', e=>setNearCenter(e.latlng.lat, e.latlng.lng, '地圖上選的位置'));
   NEAR_MAP.on('moveend', ()=>{ clearTimeout(NEAR_PIN_TIMER); NEAR_PIN_TIMER=setTimeout(loadNearPins, 300); });

@@ -19965,6 +19965,94 @@
   "business_status": "OPERATIONAL"
  },
  {
+  "offer_id": 15,
+  "brand": "薄多義 BoDeGi",
+  "place_id": "ChIJA7wegIAEbjQRnlXRXTUuSW8",
+  "name": "薄多義Bite2Eat 高雄文橫店",
+  "address": "80241高雄市苓雅區仁政里文橫二路105號",
+  "county": "高雄市",
+  "lat": 22.619513899999998,
+  "lng": 120.30490850000001,
+  "business_status": "OPERATIONAL"
+ },
+ {
+  "offer_id": 15,
+  "brand": "薄多義 BoDeGi",
+  "place_id": "ChIJWZdc4JBzbjQR9pF_cLwGEas",
+  "name": "薄多義 Bite2Eat 台南三井店",
+  "address": "711臺南市歸仁區武東里歸仁大道101號2樓",
+  "county": "台南市",
+  "lat": 22.925163899999998,
+  "lng": 120.28749429999998,
+  "business_status": "OPERATIONAL"
+ },
+ {
+  "offer_id": 15,
+  "brand": "薄多義 BoDeGi",
+  "place_id": "ChIJE4qFuZ52bjQR_JyrAKxuLzg",
+  "name": "薄多義 Bite2Eat 台南崇學店",
+  "address": "701臺南市東區德光里崇學路171號",
+  "county": "台南市",
+  "lat": 22.980315899999997,
+  "lng": 120.2234596,
+  "business_status": "OPERATIONAL"
+ },
+ {
+  "offer_id": 15,
+  "brand": "薄多義 BoDeGi",
+  "place_id": "ChIJA2G0TYvlZzQRB_cJo9slm6A",
+  "name": "薄多義 Bite2Eat 宜蘭新月店",
+  "address": "260宜蘭縣宜蘭市民權路二段38巷6號1樓",
+  "county": "宜蘭縣",
+  "lat": 24.754043,
+  "lng": 121.75082900000001,
+  "business_status": "OPERATIONAL"
+ },
+ {
+  "offer_id": 15,
+  "brand": "薄多義 BoDeGi",
+  "place_id": "ChIJweTZLl2rQjQRcPtOFR7TP4Q",
+  "name": "薄多義 Bite2Eat 微風南山店",
+  "address": "110臺北市信義區西村里松智路17號5 樓",
+  "county": "台北市",
+  "lat": 25.0343166,
+  "lng": 121.56620199999999,
+  "business_status": "OPERATIONAL"
+ },
+ {
+  "offer_id": 15,
+  "brand": "薄多義 BoDeGi",
+  "place_id": "ChIJp4Bvjx2oQjQRhIhKsYqWLqA",
+  "name": "薄多義 Bite2Eat 新北板橋店",
+  "address": "220新北市板橋區景星里中山路一段46號5樓",
+  "county": "新北市",
+  "lat": 25.0089188,
+  "lng": 121.46084150000002,
+  "business_status": "OPERATIONAL"
+ },
+ {
+  "offer_id": 15,
+  "brand": "薄多義 BoDeGi",
+  "place_id": "ChIJPVMug-s2aDQRJ7xkkPrJds8",
+  "name": "薄多義 Bite2Eat 新竹竹北店",
+  "address": "302新竹縣竹北市文化里光明一路127號",
+  "county": "新竹縣",
+  "lat": 24.830238299999998,
+  "lng": 121.0158283,
+  "business_status": "OPERATIONAL"
+ },
+ {
+  "offer_id": 15,
+  "brand": "薄多義 BoDeGi",
+  "place_id": "ChIJp0crIf0eaDQR9VpUg8YKakg",
+  "name": "薄多義 Bite2Eat 桃園站前店",
+  "address": "330桃園市桃園區文化里中華路26號",
+  "county": "桃園市",
+  "lat": 24.991131799999998,
+  "lng": 121.31113889999999,
+  "business_status": "OPERATIONAL"
+ },
+ {
   "offer_id": 16,
   "brand": "鍋泰暖",
   "place_id": "ChIJbavd6fg3aTQR5hMU5gekxyo",
@@ -46664,12 +46752,34 @@
  {
   "offer_id": 58,
   "brand": "微兜 Vino Vino",
-  "place_id": "ChIJYwytno-pQjQRKSSTLHtRuhY",
-  "name": "Vino Vino Caf'e",
-  "address": "106臺北市大安區古莊里師大路80巷2號",
+  "place_id": "ChIJ2_TufYWpQjQR7ceufMkp3-I",
+  "name": "petit doux 微兜 京站店",
+  "address": "103臺北市大同區承德路一段1號Qsquare京站時尚廣場1樓承德路出口側",
   "county": "台北市",
-  "lat": 25.0232492,
-  "lng": 121.52809629999999,
+  "lat": 25.049308,
+  "lng": 121.51719349999998,
+  "business_status": "OPERATIONAL"
+ },
+ {
+  "offer_id": 58,
+  "brand": "微兜 Vino Vino",
+  "place_id": "ChIJ9Y1eI4KpQjQRO9xqg1e_1oA",
+  "name": "petit doux 微兜 永康店",
+  "address": "106臺北市大安區福住里信義路二段198巷7之3號",
+  "county": "台北市",
+  "lat": 25.0326374,
+  "lng": 121.5306298,
+  "business_status": "OPERATIONAL"
+ },
+ {
+  "offer_id": 58,
+  "brand": "微兜 Vino Vino",
+  "place_id": "ChIJ8S5JfRarQjQRaozhjBf86Ps",
+  "name": "petit doux 微兜 PD SOGO 忠孝店",
+  "address": "106臺北市大安區忠孝東路四段45號遠東SOGO百貨忠孝館11F11樓",
+  "county": "台北市",
+  "lat": 25.0421272,
+  "lng": 121.54493930000001,
   "business_status": "OPERATIONAL"
  },
  {
@@ -51917,6 +52027,39 @@
   "county": "台北市",
   "lat": 25.045076899999998,
   "lng": 121.51702780000001,
+  "business_status": "OPERATIONAL"
+ },
+ {
+  "offer_id": 84,
+  "brand": "波記 BO KEE",
+  "place_id": "ChIJc6Pzc5irQjQRaeLUDS9I4FM",
+  "name": "波記冰室",
+  "address": "106臺北市大安區華聲里延吉街123號",
+  "county": "台北市",
+  "lat": 25.0426352,
+  "lng": 121.55426949999999,
+  "business_status": "OPERATIONAL"
+ },
+ {
+  "offer_id": 84,
+  "brand": "波記 BO KEE",
+  "place_id": "ChIJzzXuMcSrQjQRG5ig5eeROuQ",
+  "name": "波記茶餐廳",
+  "address": "106臺北市大安區車層里延吉街70巷8號",
+  "county": "台北市",
+  "lat": 25.0425619,
+  "lng": 121.55339010000002,
+  "business_status": "OPERATIONAL"
+ },
+ {
+  "offer_id": 84,
+  "brand": "波記 BO KEE",
+  "place_id": "ChIJN42H18urQjQR7vnnHN77da8",
+  "name": "波記私宅打邊爐",
+  "address": "106臺北市大安區建安里敦化南路一段187巷46號2樓",
+  "county": "台北市",
+  "lat": 25.042397599999997,
+  "lng": 121.5513968,
   "business_status": "OPERATIONAL"
  },
  {
@@ -105685,17 +105828,6 @@
   "county": "台中市",
   "lat": 24.212674,
   "lng": 120.5512612,
-  "business_status": "OPERATIONAL"
- },
- {
-  "offer_id": 361,
-  "brand": "Tea top",
-  "place_id": "ChIJQ2W39GDLbjQRD7M32F5pbkE",
-  "name": "TeaTop台灣第一味 彰化二水店",
-  "address": "530彰化縣二水鄉光化村光文路68號",
-  "county": "彰化縣",
-  "lat": 23.812147000000003,
-  "lng": 120.61684220000001,
   "business_status": "OPERATIONAL"
  },
  {

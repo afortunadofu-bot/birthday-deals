@@ -1,11 +1,24 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 31/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 31/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(143,'ChIJLzQhY4IFbjQRjiezlu390-I'::text,'三商炸雞 林森店'::text,'800002高雄市新興區成功里林森一路188號'::text,'高雄市'::text,22.631726::float8,120.304858::float8,'OPERATIONAL'::text),
+(143,'ChIJ92j-9JWpQjQRZiBw_kvS9_w'::text,'三商炸雞 農安店'::text,'104029臺北市中山區晴光里農安街13號'::text,'台北市'::text,25.065084900000002::float8,121.52348489999999::float8,'OPERATIONAL'::text),
+(143,'ChIJUeaeGNWvQjQROUCB1CE_a24'::text,'三商炸雞北投光明店'::text,'11246臺北市北投區中心里光明路223-1號'::text,'台北市'::text,25.136456::float8,121.50412399999999::float8,'OPERATIONAL'::text),
+(143,'ChIJR5R4DAABaDQR2mqrhVt4vBo'::text,'三商炸雞新店中正店'::text,'231新北市新店區中正里中正路173號'::text,'新北市'::text,24.9720059::float8,121.540888::float8,'OPERATIONAL'::text),
+(143,'ChIJNzJo9hYjaDQRRW7YIuR_H_8'::text,'三商炸雞 中壢新生店'::text,'320029桃園市中壢區金華里新生路311號'::text,'桃園市'::text,24.9644181::float8,121.22307190000001::float8,'OPERATIONAL'::text),
+(143,'ChIJsXsKdwCrQjQRdbUUxz4Ys2c'::text,'三商炸雞 信義莊敬店'::text,'110臺北市信義區三張里莊敬路461號1樓'::text,'台北市'::text,25.026966599999998::float8,121.5678157::float8,'OPERATIONAL'::text),
+(143,'ChIJ2XTb8IAXaTQRVS-gUtu2nH0'::text,'三商炸雞 台中山西店'::text,'404035臺中市北區賴興里山西路二段212號'::text,'台中市'::text,24.1725845::float8,120.676255::float8,'OPERATIONAL'::text),
+(143,'ChIJJYSnYgCVbjQRvUVcjzxgurs'::text,'三商炸雞 嘉義中山店'::text,'600嘉義市西區西榮里中山路417號'::text,'嘉義市'::text,23.4795682::float8,120.4469813::float8,'OPERATIONAL'::text),
+(143,'ChIJ3XITYwWoQjQR3aeJcXBWVpQ'::text,'三商炸雞 板橋中正店'::text,'220046新北市板橋區香社里中正路321號'::text,'新北市'::text,25.0199757::float8,121.45497379999998::float8,'OPERATIONAL'::text),
+(143,'ChIJ6S4rdAADbjQRAlIFDMHI31w'::text,'三商炸雞 高雄五甲店'::text,'830高雄市鳳山區富榮里林森路291號'::text,'高雄市'::text,22.597166599999998::float8,120.33648629999999::float8,'OPERATIONAL'::text),
+(143,'ChIJz1_x3gQFbjQRWGCihgZIQVY'::text,'三商炸雞 高雄裕誠店'::text,'813019高雄市左營區新上里裕誠路340號'::text,'高雄市'::text,22.665387199999998::float8,120.30769719999999::float8,'OPERATIONAL'::text),
+(143,'ChIJZUKalbU9aTQR70LuZE4mOAw'::text,'三商炸雞-站前秀泰店'::text,'401004台中市东区東區南京路76號2樓'::text,'台中市'::text,24.1404753::float8,120.6896033::float8,'OPERATIONAL'::text),
+(143,'ChIJSZ23VwCpQjQRbfde9Z1Uk9E'::text,'三商炸雞脆皮專賣店北車k區'::text,'100230臺北市中正區忠孝西路一段47號m3m4出口b1(近'::text,'台北市'::text,25.046878399999997::float8,121.51553219999998::float8,'OPERATIONAL'::text),
 (143,'ChIJd6C8FQARbjQRS3Vd1rUSvCY'::text,'三商炸雞'::text,'840403高雄市大樹區三和里學城路一段12號C區4樓'::text,'高雄市'::text,22.729022399999998::float8,120.4058639::float8,'OPERATIONAL'::text),
 (143,'ChIJxVPtMAB3bjQRaDo8EExaC_E'::text,'三商炸雞台南公園'::text,'700臺南市中西區赤嵌里公園路60號1樓'::text,'台南市'::text,22.9953279::float8,120.205918::float8,'OPERATIONAL'::text),
 (144,'ChIJi_WVWLtHaTQRVqwcub8YnRc'::text,'拿坡里披薩和美店'::text,'508彰化縣和美鎮和東里仁安路92號'::text,'彰化縣'::text,24.108528399999997::float8,120.50064090000001::float8,'OPERATIONAL'::text),
@@ -192,20 +205,7 @@ from (values
 (146,'ChIJM5UhdhufaDQRADKduilhuaE'::text,'爭鮮gogo-花蓮中山店'::text,'970花蓮縣花蓮市國華里中山路373號'::text,'花蓮縣'::text,23.9815938::float8,121.60549749999998::float8,'OPERATIONAL'::text),
 (146,'ChIJn_8YMwAFbjQR3kEJgvihlpQ'::text,'爭鮮gogo-高雄復興店'::text,'800高雄市新興區中東里復興一路66號'::text,'高雄市'::text,22.631653399999998::float8,120.3083517::float8,'OPERATIONAL'::text),
 (146,'ChIJp98v6KsFbjQR6IFZZPKTNcY'::text,'爭鮮 gogo 左營高鐵店'::text,'813高雄市左營區菜公里高鐵路105號'::text,'高雄市'::text,22.6868716::float8,120.3078829::float8,'OPERATIONAL'::text),
-(146,'ChIJyWkVCuepQjQR1ZuVy3VUXiw'::text,'爭鮮gogo -中和環球店'::text,'23544新北市中和區民有里中山路三段109號'::text,'新北市'::text,25.005923799999998::float8,121.4748736::float8,'OPERATIONAL'::text),
-(146,'ChIJ25IK4KQXaTQRK2YxULBshvo'::text,'爭鮮gogo 北屯大買家店'::text,'40654台中市北屯区北屯路370號1F'::text,'台中市'::text,24.176386599999997::float8,120.69979769999999::float8,'OPERATIONAL'::text),
-(146,'ChIJgfvjQfABaDQR20Y0f4QWKxw'::text,'爭鮮gogo 新店萬家福店'::text,'231新北市新店區中興路三段1號3F'::text,'新北市'::text,24.9761493::float8,121.5466649::float8,'OPERATIONAL'::text),
-(146,'ChIJxQpBa4AXbjQR151YU1fNmck'::text,'爭鮮 gogo -屏東台鐵店'::text,'90081屏東縣屏東市公勇路62號車站內1F'::text,'屏東縣'::text,22.668955099999998::float8,120.4857489::float8,'OPERATIONAL'::text),
-(146,'ChIJR1Jmxp4FbjQR5toUoSPmgCk'::text,'爭鮮 gogo -左營環球店'::text,'81354高雄市左營區菜公里站前北路1號台鐵入口旁2F'::text,'高雄市'::text,22.687932699999998::float8,120.3075671::float8,'OPERATIONAL'::text),
-(146,'ChIJaahj6Ok1aDQRsT7-IhTd1Do'::text,'爭鮮 gogo -新竹台鐵店'::text,'30060新竹市东区中华路二段445號1F(售票處旁'::text,'新竹市'::text,24.801626::float8,120.97169199999998::float8,'OPERATIONAL'::text),
-(146,'ChIJnwlFrwqrQjQRIeHooKJcHoE'::text,'爭鮮 gogo -景美愛買店'::text,'11684臺北市文山區景中街30巷12號1F'::text,'台北市'::text,24.992196099999997::float8,121.54226329999999::float8,'OPERATIONAL'::text),
-(146,'ChIJISNmuWurQjQRrGqf-dEOxt4'::text,'爭鮮 gogo -松山台鐵店'::text,'11088臺北市信義區慈祐里松山路11號松山車站內B1'::text,'台北市'::text,25.0491901::float8,121.5782994::float8,'OPERATIONAL'::text),
-(146,'ChIJ-yO-aD4daDQR0UOkxqzDJRk'::text,'爭鮮 gogo -樹林台鐵店'::text,'23845新北市樹林區鎮前街112號樹林車站內3F'::text,'新北市'::text,24.9913202::float8,121.42444529999999::float8,'OPERATIONAL'::text),
-(146,'ChIJc4LRQjobaTQRXbQpl0lAM30'::text,'爭鮮 gogo -豐原台鐵店'::text,'42056臺中市豐原區中正路1-1號豐原車站內號1F'::text,'台中市'::text,24.2546881::float8,120.72363560000001::float8,'OPERATIONAL'::text),
-(146,'ChIJD54MxNEYaDQR5qwkMKX9UKk'::text,'爭鮮 gogo-八德大全聯店'::text,'33445桃園市八德區介壽路二段148號1F'::text,'桃園市'::text,24.9538391::float8,121.2978613::float8,'OPERATIONAL'::text),
-(146,'ChIJyyYLH16rQjQRativowdJkI0'::text,'爭鮮gogo 市政府轉運站店'::text,'110台北市信义区忠孝東路五段6號1F'::text,'台北市'::text,25.040627200000003::float8,121.5650447::float8,'OPERATIONAL'::text),
-(146,'ChIJtf8ZKdk1aDQRe0sjfeMK-1I'::text,'爭鮮 gogo -忠孝大全聯店'::text,'30069新竹市東區忠孝路300號1F'::text,'新竹市'::text,24.8052292::float8,120.98451659999999::float8,'OPERATIONAL'::text),
-(146,'ChIJHcpMzYcVaTQRk8smfFozJ-g'::text,'爭鮮 gogo - 西屯萬家福店'::text,'407臺中市西屯區台灣大道四段1086號1F'::text,'台中市'::text,24.1841406::float8,120.61497969999998::float8,'OPERATIONAL'::text)
+(146,'ChIJyWkVCuepQjQR1ZuVy3VUXiw'::text,'爭鮮gogo -中和環球店'::text,'23544新北市中和區民有里中山路三段109號'::text,'新北市'::text,25.005923799999998::float8,121.4748736::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

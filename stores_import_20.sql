@@ -1,11 +1,19 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 20/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 20/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(51,'ChIJAfmAF3ypQjQRs3gusC8KuqI'::text,'屈臣氏 新生門市'::text,'100臺北市中正區幸市里新生南路一段104號'::text,'台北市'::text,25.0398379::float8,121.5325583::float8,'OPERATIONAL'::text),
+(51,'ChIJ0y-9Jn2oQjQRAAVqIub4ZzY'::text,'屈臣氏 新福門市'::text,'242新北市新莊區信義里幸福路524號'::text,'新北市'::text,25.049475899999997::float8,121.45605569999998::float8,'OPERATIONAL'::text),
+(51,'ChIJWRJ57cE1aDQROoOXkO2gbTM'::text,'屈臣氏 新竹門市'::text,'300新竹市東區成功里文昌街6號'::text,'新竹市'::text,24.8039861::float8,120.96967599999999::float8,'OPERATIONAL'::text),
+(51,'ChIJM0XuznWoQjQR4yU6F6HZPAo'::text,'屈臣氏 新莊門市'::text,'242新北市新莊區文聖里新泰路132號'::text,'新北市'::text,25.0367386::float8,121.4480868::float8,'OPERATIONAL'::text),
+(51,'ChIJecUliVAxaDQR2_rPZxBHTdc'::text,'屈臣氏 新豐門市'::text,'304新竹縣新豐鄉山崎村建興路一段19號'::text,'新竹縣'::text,24.870446599999998::float8,120.99591129999999::float8,'OPERATIONAL'::text),
+(51,'ChIJQ4mePVNqbjQRiHs37mrOCgQ'::text,'屈臣氏 旗山門市'::text,'842高雄市旗山區大德里延平一路617號'::text,'高雄市'::text,22.885442899999997::float8,120.4832129::float8,'OPERATIONAL'::text),
+(51,'ChIJ2XWVHvIDbjQRc5eBiMHTwCE'::text,'屈臣氏 旗津門市'::text,'805高雄市旗津區振興里通山路18號'::text,'高雄市'::text,22.613035999999997::float8,120.268846::float8,'OPERATIONAL'::text),
+(51,'ChIJRZPKp444aTQRsj5_ulOgqX8'::text,'屈臣氏 旭光門市'::text,'500彰化縣彰化市光南里旭光路255號'::text,'彰化縣'::text,24.070887499999998::float8,120.5449969::float8,'OPERATIONAL'::text),
 (51,'ChIJqZHAHnCrQjQRuS_ST0vZq4E'::text,'屈臣氏 昆陽門市'::text,'號1樓, No. 440忠孝東路六段新光里南港區臺北市115'::text,'台北市'::text,25.0501661::float8,121.59379530000001::float8,'OPERATIONAL'::text),
 (51,'ChIJ9QUO7ukXaTQR3zwqJkEQReE'::text,'屈臣氏 昌平門市'::text,'406臺中市北屯區平福里昌平路一段157號'::text,'台中市'::text,24.176465399999998::float8,120.6900642::float8,'OPERATIONAL'::text),
 (51,'ChIJi0y2DxwFbjQRJdCbFf3PZbk'::text,'屈臣氏 明哲門市'::text,'807高雄市三民區鼎泰里明哲路1號'::text,'高雄市'::text,22.661033::float8,120.31407949999998::float8,'OPERATIONAL'::text),
@@ -197,15 +205,7 @@ from (values
 (51,'ChIJF2gGjnSgQjQRtIvBivsacmA'::text,'屈臣氏 新台茂門市'::text,'338桃園市蘆竹區錦中里南崁路一段112號5樓'::text,'桃園市'::text,25.053586199999998::float8,121.28842949999999::float8,'OPERATIONAL'::text),
 (51,'ChIJq6ENKPAEbjQRJoc2UlD-3o0'::text,'屈臣氏 新坎城門市'::text,'807高雄市三民區德智里自由一路105號'::text,'高雄市'::text,22.6437124::float8,120.30854269999999::float8,'OPERATIONAL'::text),
 (51,'ChIJR6oZGJY9aTQRDMw3Vz1POFQ'::text,'屈臣氏 新大墩門市'::text,'408臺中市南屯區大業里大墩路556號'::text,'台中市'::text,24.1493675::float8,120.64998759999999::float8,'OPERATIONAL'::text),
-(51,'ChIJe0FdJE8eaDQRNVfsPXH6apk'::text,'屈臣氏 新大有門市'::text,'330桃園市桃園區會稽里大有路511號'::text,'桃園市'::text,25.0142909::float8,121.31748540000001::float8,'OPERATIONAL'::text),
-(51,'ChIJicrTJ4QEbjQRKRBngfp9ZeA'::text,'屈臣氏 新崛江門市'::text,'80044高雄市新興區振成里文橫二路149-1號151、151-1'::text,'高雄市'::text,22.6228584::float8,120.3036372::float8,'OPERATIONAL'::text),
-(51,'ChIJ59I7Y5A4aTQRQlLYLngZMbk'::text,'屈臣氏 新彰化門市'::text,'500彰化縣彰化市長樂里和平路35號1樓'::text,'彰化縣'::text,24.079589000000002::float8,120.540273::float8,'OPERATIONAL'::text),
-(51,'ChIJ5TBh73SoQjQRPTWNGKXsOJs'::text,'屈臣氏 新泰二門市'::text,'242新北市新莊區文衡里新泰路55號'::text,'新北市'::text,25.033958199999997::float8,121.44941589999999::float8,'OPERATIONAL'::text),
-(51,'ChIJC8ozfZU2aDQRQ_TYu6FyoaQ'::text,'屈臣氏 新竹北門市'::text,'302新竹縣竹北市福德里博愛街359號'::text,'新竹縣'::text,24.8364652::float8,121.0084754::float8,'OPERATIONAL'::text),
-(51,'ChIJ9wcRkDsJaTQRtqTYvLkR8ao'::text,'屈臣氏 新苑裡門市'::text,'358苗栗縣苑裡鎮西勢里中山路123號'::text,'苗栗縣'::text,24.4412093::float8,120.65063239999999::float8,'OPERATIONAL'::text),
-(51,'ChIJsQois3aqQjQRQdHuF1UmrQo'::text,'屈臣氏 木柵3門市'::text,'116臺北市文山區木柵里木柵路三段59號、61號1-2F'::text,'台北市'::text,24.9886691::float8,121.5665712::float8,'OPERATIONAL'::text),
-(51,'ChIJxXmAD2ipQjQRUQf-6BA4a9Y'::text,'屈臣氏 林森北門市'::text,'10491臺北市中山區正義里林森北路131號'::text,'台北市'::text,25.051016999999998::float8,121.525232::float8,'OPERATIONAL'::text),
-(51,'ChIJyZPb6OUeaDQRcYqPnLZ6QFc'::text,'屈臣氏 桃鶯2門市'::text,'330桃園市桃園區雲林里桃鶯路253號'::text,'桃園市'::text,24.9838089::float8,121.31872990000001::float8,'OPERATIONAL'::text)
+(51,'ChIJe0FdJE8eaDQRNVfsPXH6apk'::text,'屈臣氏 新大有門市'::text,'330桃園市桃園區會稽里大有路511號'::text,'桃園市'::text,25.0142909::float8,121.31748540000001::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

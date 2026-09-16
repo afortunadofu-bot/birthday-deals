@@ -1,11 +1,24 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 32/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 32/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(146,'ChIJ25IK4KQXaTQRK2YxULBshvo'::text,'爭鮮gogo 北屯大買家店'::text,'40654台中市北屯区北屯路370號1F'::text,'台中市'::text,24.176386599999997::float8,120.69979769999999::float8,'OPERATIONAL'::text),
+(146,'ChIJgfvjQfABaDQR20Y0f4QWKxw'::text,'爭鮮gogo 新店萬家福店'::text,'231新北市新店區中興路三段1號3F'::text,'新北市'::text,24.9761493::float8,121.5466649::float8,'OPERATIONAL'::text),
+(146,'ChIJxQpBa4AXbjQR151YU1fNmck'::text,'爭鮮 gogo -屏東台鐵店'::text,'90081屏東縣屏東市公勇路62號車站內1F'::text,'屏東縣'::text,22.668955099999998::float8,120.4857489::float8,'OPERATIONAL'::text),
+(146,'ChIJR1Jmxp4FbjQR5toUoSPmgCk'::text,'爭鮮 gogo -左營環球店'::text,'81354高雄市左營區菜公里站前北路1號台鐵入口旁2F'::text,'高雄市'::text,22.687932699999998::float8,120.3075671::float8,'OPERATIONAL'::text),
+(146,'ChIJaahj6Ok1aDQRsT7-IhTd1Do'::text,'爭鮮 gogo -新竹台鐵店'::text,'30060新竹市东区中华路二段445號1F(售票處旁'::text,'新竹市'::text,24.801626::float8,120.97169199999998::float8,'OPERATIONAL'::text),
+(146,'ChIJnwlFrwqrQjQRIeHooKJcHoE'::text,'爭鮮 gogo -景美愛買店'::text,'11684臺北市文山區景中街30巷12號1F'::text,'台北市'::text,24.992196099999997::float8,121.54226329999999::float8,'OPERATIONAL'::text),
+(146,'ChIJISNmuWurQjQRrGqf-dEOxt4'::text,'爭鮮 gogo -松山台鐵店'::text,'11088臺北市信義區慈祐里松山路11號松山車站內B1'::text,'台北市'::text,25.0491901::float8,121.5782994::float8,'OPERATIONAL'::text),
+(146,'ChIJ-yO-aD4daDQR0UOkxqzDJRk'::text,'爭鮮 gogo -樹林台鐵店'::text,'23845新北市樹林區鎮前街112號樹林車站內3F'::text,'新北市'::text,24.9913202::float8,121.42444529999999::float8,'OPERATIONAL'::text),
+(146,'ChIJc4LRQjobaTQRXbQpl0lAM30'::text,'爭鮮 gogo -豐原台鐵店'::text,'42056臺中市豐原區中正路1-1號豐原車站內號1F'::text,'台中市'::text,24.2546881::float8,120.72363560000001::float8,'OPERATIONAL'::text),
+(146,'ChIJD54MxNEYaDQR5qwkMKX9UKk'::text,'爭鮮 gogo-八德大全聯店'::text,'33445桃園市八德區介壽路二段148號1F'::text,'桃園市'::text,24.9538391::float8,121.2978613::float8,'OPERATIONAL'::text),
+(146,'ChIJyyYLH16rQjQRativowdJkI0'::text,'爭鮮gogo 市政府轉運站店'::text,'110台北市信义区忠孝東路五段6號1F'::text,'台北市'::text,25.040627200000003::float8,121.5650447::float8,'OPERATIONAL'::text),
+(146,'ChIJtf8ZKdk1aDQRe0sjfeMK-1I'::text,'爭鮮 gogo -忠孝大全聯店'::text,'30069新竹市東區忠孝路300號1F'::text,'新竹市'::text,24.8052292::float8,120.98451659999999::float8,'OPERATIONAL'::text),
+(146,'ChIJHcpMzYcVaTQRk8smfFozJ-g'::text,'爭鮮 gogo - 西屯萬家福店'::text,'407臺中市西屯區台灣大道四段1086號1F'::text,'台中市'::text,24.1841406::float8,120.61497969999998::float8,'OPERATIONAL'::text),
 (146,'ChIJ-1rHrharQjQR6loQ1XH5tq4'::text,'爭鮮 gogo -CITYLINK南港店'::text,'11561臺北市南港區新光里忠孝東路七段369號B棟1F'::text,'台北市'::text,25.0524417::float8,121.60355209999999::float8,'OPERATIONAL'::text),
 (146,'ChIJiY_QmR49aTQRo8FVSo3VKDI'::text,'爭鮮gogo-國光大買家'::text,'1f, No. 710號國光路二段大明里大里區臺中市412'::text,'台中市'::text,24.115802799999997::float8,120.6798415::float8,'OPERATIONAL'::text),
 (147,'ChIJkTlkTz5OXTQR0yQzF7HACVM'::text,'定食8 基隆店'::text,'200基隆市仁愛區仁德里愛三路128號2F'::text,'基隆市'::text,25.129874599999997::float8,121.74379700000001::float8,'OPERATIONAL'::text),
@@ -192,20 +205,7 @@ from (values
 (178,'ChIJHY9vIjWpQjQRszUERF1pjGs'::text,'老賴茶棧板橋莒光店'::text,'220新北市板橋區莒光里莒光路7號'::text,'新北市'::text,25.0249596::float8,121.46974759999998::float8,'OPERATIONAL'::text),
 (178,'ChIJYRD2oYMZaDQRx1iDguFADOk'::text,'老賴茶棧桃園廣福店'::text,'334桃園市八德區大成里廣福路159號'::text,'桃園市'::text,24.9593651::float8,121.2952067::float8,'OPERATIONAL'::text),
 (178,'ChIJBZN18ZcfaDQR27hUUiFrKIU'::text,'老賴茶棧桃園桃鶯店'::text,'33067桃園市桃園區雲林里桃鶯路213號'::text,'桃園市'::text,24.9848044::float8,121.3183787::float8,'OPERATIONAL'::text),
-(178,'ChIJPeuhVX4PbjQRDZxul7VRq9M'::text,'老賴茶棧楠梓站前店'::text,'811高雄市楠梓區惠楠里楠梓新路171號'::text,'高雄市'::text,22.726664799999998::float8,120.32483679999999::float8,'OPERATIONAL'::text),
-(178,'ChIJtUPMHwo_aTQRwpZpiRJ2HPQ'::text,'老賴茶棧烏日林新店'::text,'414臺中市烏日區榮泉里榮和路206號'::text,'台中市'::text,24.110488699999998::float8,120.59809699999998::float8,'OPERATIONAL'::text),
-(178,'ChIJlVD7u0qjbjQRg66M2XZ2ZBM'::text,'老賴茶棧雲林北港店'::text,'65142雲林縣北港鎮共榮里民主路25號'::text,'雲林縣'::text,23.567971699999998::float8,120.30371830000001::float8,'OPERATIONAL'::text),
-(178,'ChIJh5Fr6UsDbjQRjZNFZMOkUcM'::text,'老賴茶棧高雄五甲店'::text,'83087高雄市鳳山區龍成里自強二路164號'::text,'高雄市'::text,22.596879299999998::float8,120.32732219999998::float8,'OPERATIONAL'::text),
-(178,'ChIJA5tqL6QFbjQRWMIDd-t6XB4'::text,'老賴茶棧高雄六合店'::text,'801高雄市前金區長興里六合二路105號'::text,'高雄市'::text,22.6316347::float8,120.2981565::float8,'OPERATIONAL'::text),
-(178,'ChIJTf9mTEYNbjQR0AaCq3dr-fU'::text,'老賴茶棧高雄岡山店'::text,'820高雄市岡山區忠孝里柳橋東路25號'::text,'高雄市'::text,22.7909372::float8,120.29336079999999::float8,'OPERATIONAL'::text),
-(178,'ChIJ5bxdeRsPbjQRW1oktpE9YHE'::text,'老賴茶棧高雄後昌店'::text,'813高雄市左營區光輝里後昌路691號'::text,'高雄市'::text,22.7087717::float8,120.2974086::float8,'OPERATIONAL'::text),
-(178,'ChIJEbhW43wFbjQRlMqUfULLNm0'::text,'老賴茶棧高雄忠孝店'::text,'80242高雄市苓雅區忠孝二路107號'::text,'高雄市'::text,22.6204565::float8,120.30778269999999::float8,'OPERATIONAL'::text),
-(178,'ChIJpYtH_K4FbjQRA7XDQ_LiGv0'::text,'老賴茶棧高雄武廟店'::text,'80282高雄市苓雅區正言里福德二路23號'::text,'高雄市'::text,22.6303998::float8,120.3277027::float8,'OPERATIONAL'::text),
-(178,'ChIJq6Lo4dcFbjQRI-Zi_rprbb8'::text,'老賴茶棧高雄熱河店'::text,'807高雄市三民區達明里熱河一街352號'::text,'高雄市'::text,22.6438585::float8,120.3065378::float8,'OPERATIONAL'::text),
-(178,'ChIJEdE2Ti4NbjQRoo_ofpwOR3Y'::text,'老賴茶棧高雄路竹店'::text,'821高雄市路竹區竹南里中正路205號'::text,'高雄市'::text,22.8545321::float8,120.2640541::float8,'OPERATIONAL'::text),
-(178,'ChIJzfK3oGipQjQR8Ty3uOGI3fg'::text,'老賴茶棧 三重三和店'::text,'241新北市三重區長元里三和路二段67號'::text,'新北市'::text,25.0679452::float8,121.5001647::float8,'OPERATIONAL'::text),
-(178,'ChIJhdRiLwYhaDQRkpr7_JW_rLU'::text,'老賴茶棧 內壢忠孝店'::text,'320桃園市中壢區忠孝路42號'::text,'桃園市'::text,24.973565699999998::float8,121.25647300000001::float8,'OPERATIONAL'::text),
-(178,'ChIJT6FEK7_NbjQRFeoGQ6HUGQ0'::text,'老賴茶棧 南投竹山店'::text,'557南投縣竹山鎮集山路三段1014號'::text,'南投縣'::text,23.756117699999997::float8,120.6817012::float8,'OPERATIONAL'::text)
+(178,'ChIJPeuhVX4PbjQRDZxul7VRq9M'::text,'老賴茶棧楠梓站前店'::text,'811高雄市楠梓區惠楠里楠梓新路171號'::text,'高雄市'::text,22.726664799999998::float8,120.32483679999999::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

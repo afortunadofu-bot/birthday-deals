@@ -1,11 +1,24 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 35/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 35/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(226,'ChIJW6qZLQCvQjQR_iCjIK_Ep3c'::text,'Mateas鮮奶茶沙龍·台北石牌店'::text,'112臺北市北投區振華里石牌路二段108號'::text,'台北市'::text,25.117647899999998::float8,121.51698449999999::float8,'OPERATIONAL'::text),
+(226,'ChIJe46dA5cXaTQR6MqiMT8uiSM'::text,'Mateas鮮奶茶沙龍．台中大雅店'::text,'428臺中市大雅區民生路一段189號'::text,'台中市'::text,24.2274712::float8,120.65041339999999::float8,'OPERATIONAL'::text),
+(226,'ChIJ52qXGAAXaTQRgyTHNSQNk6A'::text,'Mateas鮮奶茶沙龍．台中水湳店'::text,'406臺中市北屯區新平里中清路二段331號'::text,'台中市'::text,24.179004::float8,120.6678071::float8,'OPERATIONAL'::text),
+(226,'ChIJMfzajb0XaTQRJoruHjfYWqo'::text,'Mateas鮮奶茶沙龍．台中洲際店'::text,'406034臺中市北屯區崇德路三段681號'::text,'台中市'::text,24.195284200000003::float8,120.6862833::float8,'OPERATIONAL'::text),
+(226,'ChIJu0_3s8mnQjQR3LYHbkVo-A4'::text,'Mateas 鮮奶茶沙龍． 桃園林口店'::text,'333桃園市龜山區大湖里文化二路38-2號'::text,'桃園市'::text,25.0589865::float8,121.36512769999999::float8,'OPERATIONAL'::text),
+(226,'ChIJUe-3lZwXaTQRUmqfyK6jZJ0'::text,'Mateas鮮奶茶沙龍 ‧ 台中旗艦店'::text,'407臺中市西屯區福雅里永福路86號'::text,'台中市'::text,24.183605999999997::float8,120.6205387::float8,'OPERATIONAL'::text),
+(226,'ChIJX2vUGUs3aTQRf6uErgCa6fY'::text,'Mateas鮮奶茶沙龍 ‧ 員林中山店'::text,'510彰化縣員林市和平里中山路二段31號'::text,'彰化縣'::text,23.9602365::float8,120.57048180000001::float8,'OPERATIONAL'::text),
+(226,'ChIJzUmW1PlFaTQRUM5fYoaUN8Q'::text,'Mateas鮮奶茶沙龍 ‧ 鹿港天后店'::text,'505彰化縣鹿港鎮洛津里中山路345號'::text,'彰化縣'::text,24.057838900000004::float8,120.4323524::float8,'OPERATIONAL'::text),
+(226,'ChIJV4U_VACtQjQR7wnYAuzHFQs'::text,'Mateas鮮奶茶沙龍·台北內湖江南店'::text,'No. 110號, 江南街港墘里內湖區臺北市114'::text,'台北市'::text,25.0767669::float8,121.5765507::float8,'OPERATIONAL'::text),
+(227,'ChIJQ2CBmm-sQjQRS_oeQ54rbA4'::text,'客意直火比薩 (內科西湖店)'::text,'114臺北市內湖區港墘里瑞光路513巷37號1樓'::text,'台北市'::text,25.0799818::float8,121.5703927::float8,'OPERATIONAL'::text),
+(227,'ChIJCcyDU6-nQjQRCw-gdiuM4RQ'::text,'Kitchen CreAfe''客意直火林口忠孝店'::text,'24447新北市林口區忠孝路122-2號'::text,'新北市'::text,25.0739102::float8,121.3662176::float8,'OPERATIONAL'::text),
+(227,'ChIJG0SVP0qpQjQRF4mVA_HcTaw'::text,'Kitchen CreAfe''客意直火(新莊中原店)最後出餐21:00'::text,'242034新北市新莊區昌平里中原路228號'::text,'新北市'::text,25.0547524::float8,121.45304329999999::float8,'OPERATIONAL'::text),
+(227,'ChIJnyEz5BGpQjQRvd0oOVhaiMA'::text,'Kitchen CreAfe''客意直火(蘆洲長興店)最後出餐21:00'::text,'247新北市蘆洲區中原里長興路35號'::text,'新北市'::text,25.0836114::float8,121.4632654::float8,'OPERATIONAL'::text),
 (228,'ChIJJ68HzowBaDQRCDWSbRo3GK0'::text,'圍樂鮮境精緻涮涮鍋 中興店'::text,'231新北市新店區五峯里中興路一段256號'::text,'新北市'::text,24.9668535::float8,121.54474959999999::float8,'OPERATIONAL'::text),
 (228,'ChIJcYMwG_IBaDQRufj4uuxj-Vc'::text,'圍樂鮮境精緻涮涮鍋'::text,'231新北市新店區寶安里民權路15號'::text,'新北市'::text,24.982713::float8,121.5422::float8,'OPERATIONAL'::text),
 (229,'ChIJ6U6HVjGqQjQR7_kX3YwXTzA'::text,'亨利客 原味炭烤牛排'::text,'11056臺北市信義區黎平里和平東路三段215號'::text,'台北市'::text,25.023422::float8,121.55380729999997::float8,'OPERATIONAL'::text),
@@ -192,20 +205,7 @@ from (values
 (247,'ChIJS_fUoeIjaDQR7KPl2_Ltbjw'::text,'寶雅 中壢龍東店'::text,'320桃園市中壢區龍東里龍東路43號'::text,'桃園市'::text,24.9286786::float8,121.25006029999999::float8,'OPERATIONAL'::text),
 (247,'ChIJGzFurjpNaTQRf-xtbHkngig'::text,'寶雅 二林斗苑店'::text,'52653彰化縣二林鎮後厝里長青路2號'::text,'彰化縣'::text,23.899331::float8,120.37757440000001::float8,'OPERATIONAL'::text),
 (247,'ChIJg_3hrhgZaDQRPsaMUSATBBw'::text,'寶雅 八德興豐店'::text,'334桃園市八德區瑞豐里興豐路500號'::text,'桃園市'::text,24.9300285::float8,121.2914296::float8,'OPERATIONAL'::text),
-(247,'ChIJG_zcPjqvQjQRPFmys3urBRQ'::text,'寶雅 八里龍米店'::text,'249新北市八里區龍米路一段189號'::text,'新北市'::text,25.1307223::float8,121.45122619999998::float8,'OPERATIONAL'::text),
-(247,'ChIJ_SZn39QdaDQRncmodJzzaVk'::text,'寶雅 北大學成店'::text,'238新北市樹林區南園里學成路540號'::text,'新北市'::text,24.94559::float8,121.380822::float8,'OPERATIONAL'::text),
-(247,'ChIJeVSxASAyaTQRQIcGaF8aeYE'::text,'寶雅 南投大同店'::text,'540南投縣南投市三和里大同南街70號'::text,'南投縣'::text,23.9045751::float8,120.68889229999999::float8,'OPERATIONAL'::text),
-(247,'ChIJcfPwE2k9aTQRKvpBccdUcVY'::text,'寶雅 台中一中店'::text,'404臺中市北區新北里太平路22-4號'::text,'台中市'::text,24.1478347::float8,120.68521530000001::float8,'OPERATIONAL'::text),
-(247,'ChIJ5xqLarM9aTQRASEE57Lszt0'::text,'寶雅 台中公益店'::text,'403臺中市西區中興里公益路183號'::text,'台中市'::text,24.1507032::float8,120.6612339::float8,'OPERATIONAL'::text),
-(247,'ChIJhSICt4YbaTQR5mHpUrmDIQw'::text,'寶雅 台中后里店'::text,'421臺中市后里區厚里里甲后路一段567號'::text,'台中市'::text,24.3092228::float8,120.71951980000001::float8,'OPERATIONAL'::text),
-(247,'ChIJ7QTo6r09aTQRXR3v3xUIvzM'::text,'寶雅 台中大墩店'::text,'408臺中市南屯區惠中里大墩路466號'::text,'台中市'::text,24.147216999999998::float8,120.650044::float8,'OPERATIONAL'::text),
-(247,'ChIJWaXERlk_aTQRVNKXc8LvzjE'::text,'寶雅 台中大肚店'::text,'432臺中市大肚區頂街里沙田路二段747號'::text,'台中市'::text,24.153594899999998::float8,120.54436550000001::float8,'OPERATIONAL'::text),
-(247,'ChIJ33fKBgA9aTQRg-g8FRmi1GU'::text,'寶雅 台中市政店'::text,'407臺中市西屯區潮洋里市政路688號'::text,'台中市'::text,24.1627989::float8,120.630489::float8,'OPERATIONAL'::text),
-(247,'ChIJyXkpUPUcaTQRfGRTvl_CXYc'::text,'寶雅 台中東勢店'::text,'423臺中市東勢區北興里豐勢路558號'::text,'台中市'::text,24.2595511::float8,120.82745109999999::float8,'OPERATIONAL'::text),
-(247,'ChIJC5Jg6woVaTQRW4WIAdJKXNg'::text,'寶雅 台中清水店'::text,'436臺中市清水區南寧里中山路243-3號1樓'::text,'台中市'::text,24.268959000000002::float8,120.575198::float8,'OPERATIONAL'::text),
-(247,'ChIJIUpB3h09aTQRhubcCNgZ29A'::text,'寶雅 台中烏日店'::text,'40256臺中市南區樹義里復興路一段1-1號'::text,'台中市'::text,24.1100247::float8,120.6448382::float8,'OPERATIONAL'::text),
-(247,'ChIJd3D6G0EXaTQRjuVRDZtHdrY'::text,'寶雅 台中神岡店'::text,'429臺中市神岡區社南里民生路29-2號'::text,'台中市'::text,24.2452979::float8,120.6815276::float8,'OPERATIONAL'::text),
-(247,'ChIJmZzCTWkVaTQRJLnMnnCpu4s'::text,'寶雅 台中福科店'::text,'407臺中市西屯區福林里福科路495號'::text,'台中市'::text,24.184412599999998::float8,120.6190956::float8,'OPERATIONAL'::text)
+(247,'ChIJG_zcPjqvQjQRPFmys3urBRQ'::text,'寶雅 八里龍米店'::text,'249新北市八里區龍米路一段189號'::text,'新北市'::text,25.1307223::float8,121.45122619999998::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

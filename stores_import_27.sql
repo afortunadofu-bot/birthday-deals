@@ -1,11 +1,24 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 27/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 27/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(111,'ChIJZ4O0V2FxbjQRHT1YxloY8og'::text,'遠傳台南歸仁加盟門市'::text,'711臺南市歸仁區後市里中山路二段251號'::text,'台南市'::text,22.9672791::float8,120.28827989999999::float8,'OPERATIONAL'::text),
+(111,'ChIJ4yiJDep3bjQRyY06_Dl9pIE'::text,'遠傳台南民生直營門市'::text,'700臺南市中西區南美里民生路一段176-178號'::text,'台南市'::text,22.9944071::float8,120.199736::float8,'OPERATIONAL'::text),
+(111,'ChIJZeFJCe93bjQR7-ORtyieANs'::text,'遠傳台南永康直營門市'::text,'710臺南市永康區五王里中山南路２９０號'::text,'台南市'::text,23.014799099999998::float8,120.2350858::float8,'OPERATIONAL'::text),
+(111,'ChIJhXwP3bJ3bjQRyNXu1Y3X50s'::text,'遠傳台南海佃加盟門市'::text,'709臺南市安南區溪墘里海佃路一段286號'::text,'台南市'::text,23.026511499999998::float8,120.1912992::float8,'OPERATIONAL'::text),
+(111,'ChIJAcYA1093bjQRMNT8QG6ugyY'::text,'遠傳台南華平加盟門市'::text,'489號, No. 489號華平路華平里安平區臺南市708'::text,'台南市'::text,22.9933275::float8,120.175242::float8,'OPERATIONAL'::text),
+(111,'ChIJaXNlch95bjQR3onXGofN_zw'::text,'遠傳台南西港加盟門市'::text,'723臺南市西港區慶安里中山路331號'::text,'台南市'::text,23.122333899999997::float8,120.2030594::float8,'OPERATIONAL'::text),
+(111,'ChIJP1qxw4N3bjQRXTYwtIjVOsQ'::text,'遠傳台南西門直營門市'::text,'700臺南市中西區南廠里西門路一段719號'::text,'台南市'::text,22.9889697::float8,120.19736259999999::float8,'OPERATIONAL'::text),
+(111,'ChIJg4OFFRV1bjQRYEtNEzZNguo'::text,'遠傳台南鹽埕加盟門市'::text,'702臺南市南區明亮里金華路一段442號1樓'::text,'台南市'::text,22.9721235::float8,120.1907946::float8,'OPERATIONAL'::text),
+(111,'ChIJkxjfPlZ_bjQRp4TGB1qke-Q'::text,'遠傳台南麻豆加盟門市'::text,'721臺南市麻豆區巷口里興中路3號'::text,'台南市'::text,23.183835::float8,120.24869449999998::float8,'OPERATIONAL'::text),
+(111,'ChIJf9kVMz-5bzQRLe2znfLqU1k'::text,'遠傳台東中華直營門市'::text,'950臺東縣臺東市中正里中華路一段342號'::text,'台東縣'::text,22.7549141::float8,121.15362189999999::float8,'OPERATIONAL'::text),
+(111,'ChIJBYrSo2q5bzQRUtE_Nl4d9Dk'::text,'遠傳台東更生加盟門市'::text,'950臺東縣臺東市民生里更生路186號'::text,'台東縣'::text,22.7592042::float8,121.1477056::float8,'OPERATIONAL'::text),
+(111,'ChIJi2soU4sJbzQRMbpv5i_DwHk'::text,'遠傳台東關山加盟門市'::text,'956臺東縣關山鎮和平路1號1樓'::text,'台東縣'::text,23.0452774::float8,121.1629786::float8,'OPERATIONAL'::text),
+(111,'ChIJjRqOT-c3aTQRhvfn1-nlywk'::text,'遠傳員林中正直營門市'::text,'510彰化縣員林市民生里中正路120號'::text,'彰化縣'::text,23.9521622::float8,120.5758362::float8,'OPERATIONAL'::text),
 (111,'ChIJ3WmxV5E3aTQRexiYtrttvts'::text,'遠傳員林民權直營門市'::text,'510彰化縣員林市光明里民權街1號'::text,'彰化縣'::text,23.959319699999998::float8,120.571676::float8,'OPERATIONAL'::text),
 (111,'ChIJJU0xGVo2aTQRLe-4C-KjdIc'::text,'遠傳員林靜修直營門市'::text,'510彰化縣員林市南平里靜修路52-16號'::text,'彰化縣'::text,23.9623972::float8,120.5678669::float8,'OPERATIONAL'::text),
 (111,'ChIJGSqTc_97bjQRHhiCrMKdq9Q'::text,'遠傳善化中正加盟門市'::text,'741臺南市善化區坐駕里中正路462號'::text,'台南市'::text,23.1312773::float8,120.29404579999999::float8,'OPERATIONAL'::text),
@@ -192,20 +205,7 @@ from (values
 (111,'ChIJ4SoLlySxbjQRLKUiOsozCVg'::text,'遠傳雲林崙背加盟門市'::text,'637雲林縣崙背鄉南陽村建國路42號'::text,'雲林縣'::text,23.759988399999997::float8,120.3545949::float8,'OPERATIONAL'::text),
 (111,'ChIJO2l0QnvJbjQRL7MSz0Ee00c'::text,'遠傳雲林斗六加盟門市'::text,'640雲林縣斗六市中和里雲林路一段112號1樓'::text,'雲林縣'::text,23.708201499999998::float8,120.53895059999999::float8,'OPERATIONAL'::text),
 (111,'ChIJf4fcJkq5bjQRVC2f-GMjNHs'::text,'遠傳雲林斗南加盟門市'::text,'630雲林縣斗南鎮南昌里延平路二段417號'::text,'雲林縣'::text,23.6736793::float8,120.4765608::float8,'OPERATIONAL'::text),
-(111,'ChIJ7XJm0Gu2bjQRRzIvukN9mrk'::text,'遠傳雲林莿桐加盟門市'::text,'647雲林縣莿桐鄉莿桐村中山路87號'::text,'雲林縣'::text,23.7567317::float8,120.4996798::float8,'OPERATIONAL'::text),
-(111,'ChIJezNjQEG3bjQRPfnE3xj6Akk'::text,'遠傳雲林虎尾直營門市'::text,'632雲林縣虎尾鎮新興里中正路37號'::text,'雲林縣'::text,23.709450699999998::float8,120.4365871::float8,'OPERATIONAL'::text),
-(111,'ChIJ-TxsIEuvbjQR-Pmg-CaHcqw'::text,'遠傳雲林麥寮加盟門市'::text,'638雲林縣麥寮鄉麥豐村光復南路348號'::text,'雲林縣'::text,23.746568::float8,120.2560115::float8,'OPERATIONAL'::text),
-(111,'ChIJ357A29IYaDQR0KCOTpPNYjg'::text,'遠傳電信八德直營門市'::text,'334桃園市八德區大忠里介壽路一段933號'::text,'桃園市'::text,24.959669899999998::float8,121.29986400000001::float8,'OPERATIONAL'::text),
-(111,'ChIJZUn21Z87aTQRRn755UQZfNI'::text,'遠傳霧峰中正加盟門市'::text,'413臺中市霧峰區中正里中正路966號'::text,'台中市'::text,24.065898400000002::float8,120.6989616::float8,'OPERATIONAL'::text),
-(111,'ChIJL3C8wwc7aTQRArSilIb7RDA'::text,'遠傳霧峰樹仁直營門市'::text,'413臺中市霧峰區本堂里樹仁路41號'::text,'台中市'::text,24.063795499999998::float8,120.6970688::float8,'OPERATIONAL'::text),
-(111,'ChIJ9xRUTLsEbjQRGSMktlVeRs4'::text,'遠傳高雄三信直營門市'::text,'802高雄市苓雅區林靖里三多二路78號'::text,'高雄市'::text,22.621509099999997::float8,120.32717199999999::float8,'OPERATIONAL'::text),
-(111,'ChIJwe3TnwUFbjQRfPBEnSqKiWg'::text,'遠傳高雄三多直營門市'::text,'806高雄市前鎮區盛興里三多三路171號'::text,'高雄市'::text,22.6151905::float8,120.30870589999999::float8,'OPERATIONAL'::text),
-(111,'ChIJp4mcwZkEbjQRVVfRnsm740k'::text,'遠傳高雄光華直營門市'::text,'802高雄市苓雅區中正里光華一路148之76號'::text,'高雄市'::text,22.624755399999998::float8,120.31547450000001::float8,'OPERATIONAL'::text),
-(111,'ChIJbyr_JAwFbjQRUW6FuGYWlx0'::text,'遠傳高雄博愛直營門市'::text,'813高雄市左營區菜公里博愛三路257號'::text,'高雄市'::text,22.674709999999997::float8,120.3051479::float8,'OPERATIONAL'::text),
-(111,'ChIJU8KbCIIPbjQRmGTEGjqXcSU'::text,'遠傳高雄右昌加盟門市'::text,'811高雄市楠梓區和昌里後昌路755號'::text,'高雄市'::text,22.709950499999998::float8,120.296292::float8,'OPERATIONAL'::text),
-(111,'ChIJ68c3sAocbjQRYg6GMY3C1t8'::text,'遠傳高雄大寮直營門市'::text,'831高雄市大寮區大寮里大寮路612號'::text,'高雄市'::text,22.591877099999998::float8,120.41286629999999::float8,'OPERATIONAL'::text),
-(111,'ChIJy401b9gEbjQRRjmj6Uhq_Bg'::text,'遠傳高雄大昌直營門市'::text,'807高雄市三民區本武里大昌二路552號'::text,'高雄市'::text,22.652046799999997::float8,120.32988549999999::float8,'OPERATIONAL'::text),
-(111,'ChIJQSmMjJ0bbjQRzcv-kKAw5L8'::text,'遠傳高雄大樹加盟門市'::text,'840高雄市大樹區久堂里久堂路143號'::text,'高雄市'::text,22.6579408::float8,120.41641589999999::float8,'OPERATIONAL'::text)
+(111,'ChIJ7XJm0Gu2bjQRRzIvukN9mrk'::text,'遠傳雲林莿桐加盟門市'::text,'647雲林縣莿桐鄉莿桐村中山路87號'::text,'雲林縣'::text,23.7567317::float8,120.4996798::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

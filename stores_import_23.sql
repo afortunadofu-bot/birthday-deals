@@ -1,11 +1,21 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 23/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 23/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(72,'ChIJhbIFE3Z1bjQRwAJq8Taw9S0'::text,'Mövenpick Café-莫凡彼台南誠品生活店'::text,'702臺南市南區彰南里中華西路一段76號誠品生活台南3F3樓'::text,'台南市'::text,22.9723468::float8,120.184198::float8,'OPERATIONAL'::text),
+(72,'ChIJMx0l0Cg9aTQRN3M0cAFPFNw'::text,'Mövenpick Café -莫凡彼台中文心秀泰店'::text,'2f, No. 289號文心南路豐樂里南屯區臺中市408'::text,'台中市'::text,24.1297616::float8,120.64576549999998::float8,'OPERATIONAL'::text),
+(72,'ChIJ59nGlBU9aTQR87e0vTl_u0M'::text,'Mövenpick Café-莫凡彼台中iFG遠雄店'::text,'401台中市东区新庄里复兴路四段186號7F'::text,'台中市'::text,24.1357726::float8,120.68774769999997::float8,'OPERATIONAL'::text),
+(72,'ChIJ08kNuJw9aTQRRCaFRijbUmE'::text,'Mövenpick Café-莫凡彼台中廣三SOGO店'::text,'403臺中市西區忠明里臺灣大道二段459號4 樓'::text,'台中市'::text,24.15531::float8,120.6617994::float8,'OPERATIONAL'::text),
+(73,'ChIJJ8gtSLqrQjQRXrSvKqkMReE'::text,'gelato pique cafe Creperie 台北A8店'::text,'110臺北市信義區信義連通空橋'::text,'台北市'::text,25.0384896::float8,121.56700509999999::float8,'OPERATIONAL'::text),
+(73,'ChIJL9TNdgCrQjQRI4naWGEzwjc'::text,'Gelato Pique cafe 遠東Garden City大巨蛋店'::text,'110臺北市信義區忠孝東路四段515號3樓'::text,'台北市'::text,25.043364999999998::float8,121.557936::float8,'OPERATIONAL'::text),
+(74,'ChIJVVVVVe4OaTQREULxZVW2_9U'::text,'裕珍馨 外埔店'::text,'438臺中市外埔區大東里甲后路四段527號'::text,'台中市'::text,24.3398859::float8,120.6418209::float8,'OPERATIONAL'::text),
+(74,'ChIJr0Jb-f4RaTQR-ho4EOtfdMs'::text,'裕珍馨 蔣公店'::text,'43745臺中市大甲區順天里蔣公路131號'::text,'台中市'::text,24.3458815::float8,120.62260209999998::float8,'OPERATIONAL'::text),
+(74,'ChIJr0Jb-f4RaTQR68QBgv6qsFM'::text,'裕珍馨 光明旗艦店'::text,'43746臺中市大甲區薰風里光明路67號2樓'::text,'台中市'::text,24.3439907::float8,120.6233885::float8,'OPERATIONAL'::text),
+(74,'ChIJ73Tw9-qrQjQR0XFjD8ysAHk'::text,'裕珍馨 台北旗艦店'::text,'10553臺北市松山區復勢里南京東路四段180號'::text,'台北市'::text,25.051261999999998::float8,121.557026::float8,'OPERATIONAL'::text),
 (74,'ChIJMxk3oQY9aTQR7oYLM-ji8Jk'::text,'裕珍馨 台中大遠百專櫃'::text,'407臺中市西屯區惠來里臺灣大道三段251號號B2'::text,'台中市'::text,24.164469999999998::float8,120.64474599999998::float8,'OPERATIONAL'::text),
 (74,'ChIJgXbd1FirQjQRtoNfMOCo92g'::text,'裕珍馨 遠東大巨蛋專櫃'::text,'110臺北市信義區忠孝東路四段505號b2'::text,'台北市'::text,25.042717::float8,121.5583566::float8,'OPERATIONAL'::text),
 (74,'ChIJ90CPqHw_aTQR6R62yMQghnA'::text,'裕珍馨 台中烏日高鐵專櫃'::text,'41456臺中市烏日區站區二路8號2F'::text,'台中市'::text,24.110332099999997::float8,120.6154418::float8,'OPERATIONAL'::text),
@@ -195,17 +205,7 @@ from (values
 (82,'ChIJbbMeUAcFbjQRV8mlwkd7iSw'::text,'茶湯會明倫店'::text,'804高雄市鼓山區明誠里明倫路135號'::text,'高雄市'::text,22.6654229::float8,120.2981837::float8,'OPERATIONAL'::text),
 (82,'ChIJb7KKkb-faDQRbxWaPkM_dPI'::text,'茶湯會民國店'::text,'970花蓮縣花蓮市國威里民國路89號'::text,'花蓮縣'::text,23.9783564::float8,121.6047442::float8,'OPERATIONAL'::text),
 (82,'ChIJ_a8DDz60bjQRcxGZL0i3zUs'::text,'茶湯會西螺店'::text,'648雲林縣西螺鎮福興里中山路142-1號'::text,'雲林縣'::text,23.800096999999997::float8,120.45969199999999::float8,'OPERATIONAL'::text),
-(82,'ChIJc7sZpZ49aTQR5G3cEPfi3z0'::text,'茶湯會 公益店'::text,'403臺中市西區中興里公益路122號'::text,'台中市'::text,24.150959::float8,120.66105110000001::float8,'OPERATIONAL'::text),
-(82,'ChIJwfBA66NKaTQRtCLuNNx-G1I'::text,'茶湯會 北斗店'::text,'521彰化縣北斗鎮西安里中華路306號'::text,'彰化縣'::text,23.873098::float8,120.52079::float8,'OPERATIONAL'::text),
-(82,'ChIJPdi8tFE9aTQRzy-SsZcfjlI'::text,'茶湯會 南屯店'::text,'408臺中市南屯區同心里南屯路二段220號'::text,'台中市'::text,24.1368345::float8,120.64974099999999::float8,'OPERATIONAL'::text),
-(82,'ChIJ-T5lM7Y9aTQRXQVlDaE5giA'::text,'茶湯會 向心店'::text,'408臺中市南屯區向心里向心南路941號'::text,'台中市'::text,24.1364566::float8,120.64369719999999::float8,'OPERATIONAL'::text),
-(82,'ChIJp7Dvm2M9aTQRKoqzJY6SSc8'::text,'茶湯會 學士店'::text,'404臺中市北區育德里學士路161號'::text,'台中市'::text,24.158815399999998::float8,120.68079379999999::float8,'OPERATIONAL'::text),
-(82,'ChIJ2R0M_3w-aTQR8UqPAYwtVGQ'::text,'茶湯會 嶺東店'::text,'408臺中市南屯區春社里永春南路68號'::text,'台中市'::text,24.138663599999997::float8,120.6112823::float8,'OPERATIONAL'::text),
-(82,'ChIJra8wovg8aTQRIVp5rm27FSg'::text,'茶湯會 工學店'::text,'402臺中市南區南和里工學路26號'::text,'台中市'::text,24.117017699999998::float8,120.6664481::float8,'OPERATIONAL'::text),
-(82,'ChIJnRJf4vM9aTQRxUF1uPaEMHo'::text,'茶湯會 朝富店'::text,'407臺中市西屯區潮洋里朝富路40號'::text,'台中市'::text,24.1666395::float8,120.6374569::float8,'OPERATIONAL'::text),
-(82,'ChIJr_B2GCEWaTQRjdvb0Nkjqsc'::text,'茶湯會 河南店'::text,'407臺中市西屯區逢甲里河南路二段354號'::text,'台中市'::text,24.173797::float8,120.64712699999998::float8,'OPERATIONAL'::text),
-(82,'ChIJN663sd4XaTQRHjJ3gwYE0KE'::text,'茶湯會 漢口店'::text,'404臺中市北區頂厝里漢口路四段377號'::text,'台中市'::text,24.167137999999998::float8,120.68375900000001::float8,'OPERATIONAL'::text),
-(82,'ChIJXfqXFqY9aTQROdNGFvBmZrU'::text,'茶湯會 美村店'::text,'403臺中市西區吉龍里美村路一段638號'::text,'台中市'::text,24.136375899999997::float8,120.66142400000001::float8,'OPERATIONAL'::text)
+(82,'ChIJc7sZpZ49aTQR5G3cEPfi3z0'::text,'茶湯會 公益店'::text,'403臺中市西區中興里公益路122號'::text,'台中市'::text,24.150959::float8,120.66105110000001::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

@@ -1,11 +1,24 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 40/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 40/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(314,'ChIJEdrRf9wxaTQRdqlz-SPq2Bs'::text,'小北百貨-南投草屯店 SHOWBA'::text,'542南投縣草屯鎮和平里中山街210號'::text,'南投縣'::text,23.9784172::float8,120.6830393::float8,'OPERATIONAL'::text),
+(314,'ChIJNUE8U8g8aTQRtyspk7ShmGE'::text,'小北百貨-台中仁化店 SHOWBA'::text,'412臺中市大里區仁德里仁化路466號'::text,'台中市'::text,24.096158199999998::float8,120.7034026::float8,'OPERATIONAL'::text),
+(314,'ChIJ2y53m-8WaTQRj76vlu6WNEc'::text,'小北百貨-台中大雅店 SHOWBA'::text,'428臺中市大雅區上雅里雅環路二段28號'::text,'台中市'::text,24.224888699999997::float8,120.6536267::float8,'OPERATIONAL'::text),
+(314,'ChIJyexB89sXaTQR1A0JYo6OqEA'::text,'小北百貨-台中天津店 SHOWBA'::text,'406臺中市北屯區平德里天津路三段108號'::text,'台中市'::text,24.169497::float8,120.6829574::float8,'OPERATIONAL'::text),
+(314,'ChIJwVJCw4kXaTQRJjU_guUbSWk'::text,'小北百貨-台中旅順店 SHOWBA'::text,'406臺中市北屯區平田里旅順路二段351號'::text,'台中市'::text,24.1736382::float8,120.6952842::float8,'OPERATIONAL'::text),
+(314,'ChIJQY0GHfcXaTQRJvGHTGnMnds'::text,'小北百貨-台中東山店 SHOWBA'::text,'406臺中市北屯區水景里東山路一段173-1號'::text,'台中市'::text,24.17036::float8,120.7081601::float8,'OPERATIONAL'::text),
+(314,'ChIJAZ-Md489aTQR4isDjOh4X-Y'::text,'小北百貨-台中東榮店 SHOWBA'::text,'412臺中市大里區西榮里東榮路36號'::text,'台中市'::text,24.1102885::float8,120.68849209999999::float8,'OPERATIONAL'::text),
+(314,'ChIJFR-v8qkiaTQRjgQjcfso6Po'::text,'小北百貨-台中樹孝店 SHOWBA'::text,'411臺中市太平區新城里樹孝路272號'::text,'台中市'::text,24.153557799999998::float8,120.71844099999998::float8,'OPERATIONAL'::text),
+(314,'ChIJQ_3DQQ4XaTQR1R4Kwz_0stA'::text,'小北百貨-台中水湳店 SHOWBA'::text,'406臺中市北屯區水湳里中清西二街29號'::text,'台中市'::text,24.1744164::float8,120.66824799999999::float8,'OPERATIONAL'::text),
+(314,'ChIJk6YcxAcWaTQROhNQZ1rRxKc'::text,'小北百貨-台中永福店 SHOWBA'::text,'407臺中市西屯區福雅里永福路168號'::text,'台中市'::text,24.185467499999998::float8,120.62158259999998::float8,'OPERATIONAL'::text),
+(314,'ChIJy3rnTUY9aTQRKyD01Lw0rgQ'::text,'小北百貨-台中精誠店 SHOWBA'::text,'403臺中市西區公德里精誠路187號'::text,'台中市'::text,24.148745899999998::float8,120.6551945::float8,'OPERATIONAL'::text),
+(314,'ChIJkb3DYRkWaTQRBcga4-SSzho'::text,'小北百貨-台中逢甲店 SHOWBA'::text,'407臺中市西屯區西墩里黎明路三段325號'::text,'台中市'::text,24.1797579::float8,120.63730699999999::float8,'OPERATIONAL'::text),
+(314,'ChIJdy8BRWupQjQRXL2RubrAvYs'::text,'小北百貨-台北寧夏店 SHOWBA'::text,'103臺北市大同區星明里寧夏路11號'::text,'台北市'::text,25.054693699999998::float8,121.51506470000001::float8,'OPERATIONAL'::text),
 (314,'ChIJMwA3gy3RDRQRKuRcSmShGAE'::text,'小北百貨-台北康定店 SHOWBA'::text,'108臺北市萬華區富民里康定路338號'::text,'台北市'::text,25.0354222::float8,121.50110509999999::float8,'OPERATIONAL'::text),
 (314,'ChIJJZPS2pesQjQRIHLK3YqYs9E'::text,'小北百貨-台北東湖店 SHOWBA'::text,'114臺北市內湖區葫洲里民權東路六段268號'::text,'台北市'::text,25.071711000000004::float8,121.60484400000001::float8,'OPERATIONAL'::text),
 (314,'ChIJ4dSZlDl1bjQRCvD182uUk0s'::text,'小北百貨-台南仁和店 SHOWBA'::text,'701臺南市東區仁和路77 之 18 號77 之 19及 77 之 23 號'::text,'台南市'::text,22.9737983::float8,120.23169829999999::float8,'OPERATIONAL'::text),
@@ -192,20 +205,7 @@ from (values
 (316,'ChIJSWfA6HQ2aDQRIHj_iixMSdI'::text,'孔金涮涮鍋-新竹光復店 KONG JIN 個人鍋物'::text,'300新竹市東區光復里光復路二段728號'::text,'新竹市'::text,24.8005322::float8,120.9892921::float8,'OPERATIONAL'::text),
 (316,'ChIJR8L9bVAwaDQRAyjkia_ryjo'::text,'孔金涮涮鍋-新竹湖口店 KONG JIN 個人鍋物'::text,'303新竹縣湖口鄉孝勢村忠孝路13號'::text,'新竹縣'::text,24.9012928::float8,121.0442047::float8,'OPERATIONAL'::text),
 (316,'ChIJqw_8sJQ2aDQRfnBFXY88avk'::text,'孔金涮涮鍋-竹北光明店 KONG JIN 個人鍋物'::text,'302新竹縣竹北市文化里光明一路285號'::text,'新竹縣'::text,24.8316779::float8,121.01009769999999::float8,'OPERATIONAL'::text),
-(316,'ChIJUYE5gwo3aDQR-KcweWg5yBE'::text,'孔金涮涮鍋-竹北莊敬店 KONG JIN 個人鍋物'::text,'302新竹縣竹北市鹿場里莊敬南路5號'::text,'新竹縣'::text,24.8208903::float8,121.02246980000001::float8,'OPERATIONAL'::text),
-(317,'ChIJYcy7n6I1aDQRkYA6bnZba6w'::text,'JerryBrunch & Night｜Fine Brunch 奢華早午餐'::text,'300新竹市東區中央路261號'::text,'新竹市'::text,24.81017::float8,120.97761019999999::float8,'OPERATIONAL'::text),
-(318,'ChIJ_-dqe3U9aTQR4Jy50r8M5cs'::text,'模範貝果MOFAN BAGELS'::text,'403臺中市西區雙龍里模範街1巷1號'::text,'台中市'::text,24.147082599999997::float8,120.66645810000001::float8,'OPERATIONAL'::text),
-(319,'ChIJi616FWGrQjQRBw77GqcgEzI'::text,'御私藏X Bye bye blues生乳捲南港環球百貨'::text,'115臺北市南港區新光里忠孝東路七段371號B1'::text,'台北市'::text,25.052895499999998::float8,121.6072597::float8,'OPERATIONAL'::text),
-(320,'ChIJFZifB7QXaTQRLwa4qvW8wBI'::text,'MAGEASY SwitchEasy 魚骨牌 台中漢神洲際店'::text,'406臺中市北屯區崇德路三段865號B1F'::text,'台中市'::text,24.1980078::float8,120.68523180000001::float8,'OPERATIONAL'::text),
-(320,'ChIJxUHG_EypQjQRy4taT_MSJEw'::text,'MAGEASY | SwitchEasy 魚骨牌 台北京站店 (B2F)'::text,'103臺北市大同區建明里承德路一段1號B2F'::text,'台北市'::text,25.049257599999997::float8,121.51719589999998::float8,'OPERATIONAL'::text),
-(320,'ChIJE6nTpWCpQjQRhZBXUltLpck'::text,'MAGEASY | SwitchEasy 魚骨牌 板橋大遠百店 (8F)'::text,'8F, No. 28號新站路福丘里板橋區新北市220'::text,'新北市'::text,25.0140651::float8,121.46733320000001::float8,'OPERATIONAL'::text),
-(320,'ChIJYTWnrIQ3aDQRVGDNwdn3MCA'::text,'MAGEASY | SwitchEasy 魚骨牌 遠東百貨竹北店 (4F)'::text,'302新竹縣竹北市十興里莊敬北路18號'::text,'新竹縣'::text,24.822509::float8,121.0237405::float8,'OPERATIONAL'::text),
-(320,'ChIJaSFmi2oFbjQRZ37kc0HFx_4'::text,'MAGEASY | SwitchEasy 魚骨牌 高雄漢神巨蛋店(B1F)'::text,'813高雄市左營區新下里博愛二路777號B1F'::text,'高雄市'::text,22.669592599999998::float8,120.30228600000001::float8,'OPERATIONAL'::text),
-(320,'ChIJ41ZeWBA9aTQRwtf-Vo4GcXo'::text,'MAGEASY | SwitchEasy 魚骨牌 新光三越 台中中港店 (B1F)'::text,'407台中市西屯区惠来里臺灣大道三段301號B1F'::text,'台中市'::text,24.164767299999998::float8,120.6434748::float8,'OPERATIONAL'::text),
-(320,'ChIJqZbDY7KrQjQRCxdkWZf7SYI'::text,'MAGEASY | SwitchEasy 魚骨牌 新光三越信義 A11 店 (3F)'::text,'110臺北市信義區西村里松壽路11號3樓'::text,'台北市'::text,25.036127999999998::float8,121.56739359999997::float8,'OPERATIONAL'::text),
-(320,'ChIJv-L8hHOVbjQRrMZWnO7gtBo'::text,'嘉義 SNOW精品手機配件店（imos經銷店/hoda經銷店/MAGEASY經銷店/iPhone/Samsung/三星/手機維修/UAG/軍規防摔殼/玻璃貼/藍寶石鏡頭環/犀牛盾/Navjack/換電池/空機買賣/二手機買賣/資料轉移）'::text,'600嘉義市西區獅子里南京路9號'::text,'嘉義市'::text,23.455928999999998::float8,120.44311270000001::float8,'OPERATIONAL'::text),
-(321,'ChIJS-hvGQAXaTQR7dqnSZj6pIE'::text,'DONQ東客麵包 漢神洲際店'::text,'406臺中市北屯區仁美里崇德路三段865號B1'::text,'台中市'::text,24.2006224::float8,120.6862964::float8,'OPERATIONAL'::text),
-(321,'ChIJq6qqqvd2bjQRjWohwj4fwcY'::text,'DONQ東客麵包 新光三越中山店'::text,'B2, No. 162號中山路城隍里中西區臺南市700'::text,'台南市'::text,22.995528999999998::float8,120.20984220000001::float8,'OPERATIONAL'::text)
+(316,'ChIJUYE5gwo3aDQR-KcweWg5yBE'::text,'孔金涮涮鍋-竹北莊敬店 KONG JIN 個人鍋物'::text,'302新竹縣竹北市鹿場里莊敬南路5號'::text,'新竹縣'::text,24.8208903::float8,121.02246980000001::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

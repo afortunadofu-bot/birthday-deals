@@ -1,10 +1,10 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 4/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 4/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
 (2,'ChIJqewRyfweaDQRAw3QKv9FVTI'::text,'摩斯漢堡 桃園復興店'::text,'330桃園市桃園區文化里復興路129號'::text,'桃園市'::text,24.990330399999998::float8,121.31284730000002::float8,'OPERATIONAL'::text),
 (2,'ChIJ6aovw90faDQRuiy7dQJFUsg'::text,'摩斯漢堡 桃園桃鶯店'::text,'330桃園市桃園區大樹里桃鶯路313號'::text,'桃園市'::text,24.982486700000003::float8,121.31921609999999::float8,'OPERATIONAL'::text),

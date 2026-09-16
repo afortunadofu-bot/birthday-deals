@@ -1,11 +1,19 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 18/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 18/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(42,'ChIJiSW6BcnWDRQR3YRvw6UFzHE'::text,'Starbucks星巴克 新莊雙鳳門市'::text,'242新北市新莊區雙鳳里中正路702號'::text,'新北市'::text,25.026578999999998::float8,121.41752029999999::float8,'OPERATIONAL'::text),
+(42,'ChIJi45hzWipQjQRatpOkgxPjRA'::text,'Starbucks星巴克 時代寓所門市'::text,'100024臺北市中正區幸福里林森南路7-1號'::text,'台北市'::text,25.043700299999998::float8,121.5239036::float8,'OPERATIONAL'::text),
+(42,'ChIJXd9DqPGrQjQRV4eZCMc79Uo'::text,'Starbucks星巴克 松山機場門市'::text,'105臺北市松山區精忠里敦化北路340之9號2F'::text,'台北市'::text,25.0640733::float8,121.5522553::float8,'OPERATIONAL'::text),
+(42,'ChIJaQL2pJ6rQjQRNvc9eThhJaQ'::text,'Starbucks星巴克 松山車站門市'::text,'110臺北市信義區永吉里松山路11號'::text,'台北市'::text,25.049119100000002::float8,121.57870890000001::float8,'OPERATIONAL'::text),
+(42,'ChIJI4E_XuKrQjQRgR-Zh4HMRbk'::text,'Starbucks星巴克 松機T2門市'::text,'105臺北市松山區精忠里敦化北路340之10號2f'::text,'台北市'::text,25.0639903::float8,121.5504021::float8,'OPERATIONAL'::text),
+(42,'ChIJs_lx6mOpQjQRhXXSmtudyPw'::text,'Starbucks星巴克 松江長安門市'::text,'10491臺北市中山區興亞里松江路54號1樓'::text,'台北市'::text,25.0485746::float8,121.53269019999999::float8,'OPERATIONAL'::text),
+(42,'ChIJS0bLQwAXaTQRPl1c9D07n2I'::text,'Starbucks星巴克 松竹安順門市'::text,'406臺中市北屯區仁和里松竹路三段128號'::text,'台中市'::text,24.1825789::float8,120.6803978::float8,'OPERATIONAL'::text),
+(42,'ChIJIyPcgegXaTQRM63U0Z_ZOKU'::text,'Starbucks星巴克 松竹洲際門市'::text,'406臺中市北屯區同榮里松竹路三段1133號'::text,'台中市'::text,24.1998204::float8,120.67068939999999::float8,'OPERATIONAL'::text),
 (42,'ChIJ8_w6OqQCaDQRVMmgfgfrMNM'::text,'Starbucks星巴克 板橋忠孝門市'::text,'220新北市板橋區福星里忠孝路31號'::text,'新北市'::text,25.0021471::float8,121.4605376::float8,'OPERATIONAL'::text),
 (42,'ChIJob_0Hr-pQjQRvjs4UOw1oTA'::text,'Starbucks星巴克 板橋民生門市'::text,'220新北市板橋區民生路二段251號'::text,'新北市'::text,25.022101799999998::float8,121.46814180000001::float8,'OPERATIONAL'::text),
 (42,'ChIJQZczkD6oQjQRtpQjRCvavz0'::text,'Starbucks星巴克 板橋萬板門市'::text,'220新北市板橋區埤墘里萬板路32號'::text,'新北市'::text,25.022371999999997::float8,121.4720992::float8,'OPERATIONAL'::text),
@@ -197,15 +205,7 @@ from (values
 (46,'ChIJ6zDHTJeuQjQRXipiO6LYu3Q'::text,'【beard papa''s日本No.1泡芙品牌】SOGO天母店'::text,'111臺北市士林區德行里中山北路六段77號B1'::text,'台北市'::text,25.105306::float8,121.52459429999999::float8,'OPERATIONAL'::text),
 (46,'ChIJVVVVVRWsQjQRibBSv0PCVNs'::text,'【beard papa''s日本No.1泡芙品牌】微風台北車站店'::text,'100臺北市中正區黎明里北平西路3號1F'::text,'台北市'::text,25.047472900000002::float8,121.51663049999999::float8,'OPERATIONAL'::text),
 (46,'ChIJI5rsRFCpQjQRcaIepNV1aSc'::text,'【beard papa''s日本No.1泡芙品牌】新莊宏匯廣場店'::text,'242新北市新莊區中原里新北大道四段3號7樓'::text,'新北市'::text,25.059717199999998::float8,121.44981929999999::float8,'OPERATIONAL'::text),
-(46,'ChIJHyhq67mrQjQREoiXwSxhcAg'::text,'【beard papa''s日本No.1泡芙品牌】環球南港車站店'::text,'B1 No. 371號, 忠孝東路七段新光里南港區臺北市115'::text,'台北市'::text,25.052895499999998::float8,121.6072597::float8,'OPERATIONAL'::text),
-(46,'ChIJTy2auCMXaTQRBdGOlb6lDW8'::text,'【beard papa''s日本No.1泡芙品牌】漢神洲際購物廣場店'::text,'406057臺中市北屯區仁美里崇德路三段865號B1F'::text,'台中市'::text,24.198321::float8,120.68621890000001::float8,'OPERATIONAL'::text),
-(46,'ChIJS143luRraTQRJb4jYZfW3FQ'::text,'【beard papa''s日本No.1泡芙品牌】三井OUTLET台中港店'::text,'435臺中市梧棲區安仁里臺灣大道十段168號2樓'::text,'台中市'::text,24.2589184::float8,120.5184037::float8,'OPERATIONAL'::text),
-(46,'ChIJfdacgp6rQjQR_0YFtDLoiMg'::text,'【beard papa''s日本No.1泡芙品牌】CityLink松山車站店'::text,'110臺北市信義區永吉里松山路11號1樓'::text,'台北市'::text,25.0491901::float8,121.5782994::float8,'OPERATIONAL'::text),
-(46,'ChIJBwDl9bQ9aTQRNpNjCFlBPTA'::text,'【beard papa''s日本No.1泡芙品牌】台中三井LaLaport店'::text,'401004臺中市東區泉源里進德路600號5F (北館'::text,'台中市'::text,24.135762::float8,120.69255099999998::float8,'OPERATIONAL'::text),
-(46,'ChIJqcWYH2ynQjQR0pF03_heCXc'::text,'【beard papa''s日本No.1泡芙品牌】三井OUTLET林口店(二館)'::text,'244新北市林口區南勢里文化二路一段123號3樓(二館'::text,'新北市'::text,25.0690895::float8,121.36535409999998::float8,'OPERATIONAL'::text),
-(47,'ChIJ_0lxHwCpQjQRoFRMu1ao01k'::text,'順成蛋糕永和店'::text,'234新北市永和區福和里中正路606號'::text,'新北市'::text,25.0070768::float8,121.51725640000001::float8,'OPERATIONAL'::text),
-(47,'ChIJZ3Bl622pQjQRnKHH87nPu4Q'::text,'順成蛋糕-京站店'::text,'103臺北市大同區建明里市民大道一段209號1樓'::text,'台北市'::text,25.0490982::float8,121.5185758::float8,'OPERATIONAL'::text),
-(47,'ChIJI-37tbSrQjQRBb4PtEte8Ao'::text,'順成蛋糕-信義店'::text,'110臺北市信義區景聯里基隆路二段91號'::text,'台北市'::text,25.02987::float8,121.55791900000001::float8,'OPERATIONAL'::text)
+(46,'ChIJHyhq67mrQjQREoiXwSxhcAg'::text,'【beard papa''s日本No.1泡芙品牌】環球南港車站店'::text,'B1 No. 371號, 忠孝東路七段新光里南港區臺北市115'::text,'台北市'::text,25.052895499999998::float8,121.6072597::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

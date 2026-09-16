@@ -1,11 +1,19 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 19/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 19/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(46,'ChIJTy2auCMXaTQRBdGOlb6lDW8'::text,'【beard papa''s日本No.1泡芙品牌】漢神洲際購物廣場店'::text,'406057臺中市北屯區仁美里崇德路三段865號B1F'::text,'台中市'::text,24.198321::float8,120.68621890000001::float8,'OPERATIONAL'::text),
+(46,'ChIJS143luRraTQRJb4jYZfW3FQ'::text,'【beard papa''s日本No.1泡芙品牌】三井OUTLET台中港店'::text,'435臺中市梧棲區安仁里臺灣大道十段168號2樓'::text,'台中市'::text,24.2589184::float8,120.5184037::float8,'OPERATIONAL'::text),
+(46,'ChIJfdacgp6rQjQR_0YFtDLoiMg'::text,'【beard papa''s日本No.1泡芙品牌】CityLink松山車站店'::text,'110臺北市信義區永吉里松山路11號1樓'::text,'台北市'::text,25.0491901::float8,121.5782994::float8,'OPERATIONAL'::text),
+(46,'ChIJBwDl9bQ9aTQRNpNjCFlBPTA'::text,'【beard papa''s日本No.1泡芙品牌】台中三井LaLaport店'::text,'401004臺中市東區泉源里進德路600號5F (北館'::text,'台中市'::text,24.135762::float8,120.69255099999998::float8,'OPERATIONAL'::text),
+(46,'ChIJqcWYH2ynQjQR0pF03_heCXc'::text,'【beard papa''s日本No.1泡芙品牌】三井OUTLET林口店(二館)'::text,'244新北市林口區南勢里文化二路一段123號3樓(二館'::text,'新北市'::text,25.0690895::float8,121.36535409999998::float8,'OPERATIONAL'::text),
+(47,'ChIJ_0lxHwCpQjQRoFRMu1ao01k'::text,'順成蛋糕永和店'::text,'234新北市永和區福和里中正路606號'::text,'新北市'::text,25.0070768::float8,121.51725640000001::float8,'OPERATIONAL'::text),
+(47,'ChIJZ3Bl622pQjQRnKHH87nPu4Q'::text,'順成蛋糕-京站店'::text,'103臺北市大同區建明里市民大道一段209號1樓'::text,'台北市'::text,25.0490982::float8,121.5185758::float8,'OPERATIONAL'::text),
+(47,'ChIJI-37tbSrQjQRBb4PtEte8Ao'::text,'順成蛋糕-信義店'::text,'110臺北市信義區景聯里基隆路二段91號'::text,'台北市'::text,25.02987::float8,121.55791900000001::float8,'OPERATIONAL'::text),
 (47,'ChIJsWMRyH2rQjQRLNaLFCwllA0'::text,'順成蛋糕-松車店'::text,'11088臺北市信義區永吉里松山路11號B1'::text,'台北市'::text,25.0491901::float8,121.5782994::float8,'OPERATIONAL'::text),
 (47,'ChIJCSjNyV6pQjQRY3C9VbiOaac'::text,'順成蛋糕-錦州店'::text,'10491臺北市中山區中庄里松江路276號'::text,'台北市'::text,25.0598223::float8,121.53284329999998::float8,'OPERATIONAL'::text),
 (47,'ChIJUaLMVMWrQjQRhaFexelZZ-c'::text,'順成蛋糕 忠孝一店'::text,'106臺北市大安區仁愛里敦化南路1段212號'::text,'台北市'::text,25.0413158::float8,121.5484663::float8,'OPERATIONAL'::text),
@@ -197,15 +205,7 @@ from (values
 (51,'ChIJnTSta_QBaDQRSjPKtb1LlvQ'::text,'屈臣氏 新店門市'::text,'231新北市新店區仁愛里中正路156號'::text,'新北市'::text,24.9718387::float8,121.54157389999999::float8,'OPERATIONAL'::text),
 (51,'ChIJ81Mirdo1aDQRR4bLL1HhE5M'::text,'屈臣氏 新民門市'::text,'300新竹市東區復中里民生路194號'::text,'新竹市'::text,24.8114271::float8,120.97623480000001::float8,'OPERATIONAL'::text),
 (51,'ChIJDSqwZBGoQjQRsxe3AX4sZ8M'::text,'屈臣氏 新海門市'::text,'220新北市板橋區新翠里新海路150號'::text,'新北市'::text,25.023795600000003::float8,121.4606429::float8,'OPERATIONAL'::text),
-(51,'ChIJJdRLw9iFbjQRwoAWEIK97JQ'::text,'屈臣氏 新營門市'::text,'730臺南市新營區永平里延平路2號'::text,'台南市'::text,23.302239399999998::float8,120.31356199999999::float8,'OPERATIONAL'::text),
-(51,'ChIJAfmAF3ypQjQRs3gusC8KuqI'::text,'屈臣氏 新生門市'::text,'100臺北市中正區幸市里新生南路一段104號'::text,'台北市'::text,25.0398379::float8,121.5325583::float8,'OPERATIONAL'::text),
-(51,'ChIJ0y-9Jn2oQjQRAAVqIub4ZzY'::text,'屈臣氏 新福門市'::text,'242新北市新莊區信義里幸福路524號'::text,'新北市'::text,25.049475899999997::float8,121.45605569999998::float8,'OPERATIONAL'::text),
-(51,'ChIJWRJ57cE1aDQROoOXkO2gbTM'::text,'屈臣氏 新竹門市'::text,'300新竹市東區成功里文昌街6號'::text,'新竹市'::text,24.8039861::float8,120.96967599999999::float8,'OPERATIONAL'::text),
-(51,'ChIJM0XuznWoQjQR4yU6F6HZPAo'::text,'屈臣氏 新莊門市'::text,'242新北市新莊區文聖里新泰路132號'::text,'新北市'::text,25.0367386::float8,121.4480868::float8,'OPERATIONAL'::text),
-(51,'ChIJecUliVAxaDQR2_rPZxBHTdc'::text,'屈臣氏 新豐門市'::text,'304新竹縣新豐鄉山崎村建興路一段19號'::text,'新竹縣'::text,24.870446599999998::float8,120.99591129999999::float8,'OPERATIONAL'::text),
-(51,'ChIJQ4mePVNqbjQRiHs37mrOCgQ'::text,'屈臣氏 旗山門市'::text,'842高雄市旗山區大德里延平一路617號'::text,'高雄市'::text,22.885442899999997::float8,120.4832129::float8,'OPERATIONAL'::text),
-(51,'ChIJ2XWVHvIDbjQRc5eBiMHTwCE'::text,'屈臣氏 旗津門市'::text,'805高雄市旗津區振興里通山路18號'::text,'高雄市'::text,22.613035999999997::float8,120.268846::float8,'OPERATIONAL'::text),
-(51,'ChIJRZPKp444aTQRsj5_ulOgqX8'::text,'屈臣氏 旭光門市'::text,'500彰化縣彰化市光南里旭光路255號'::text,'彰化縣'::text,24.070887499999998::float8,120.5449969::float8,'OPERATIONAL'::text)
+(51,'ChIJJdRLw9iFbjQRwoAWEIK97JQ'::text,'屈臣氏 新營門市'::text,'730臺南市新營區永平里延平路2號'::text,'台南市'::text,23.302239399999998::float8,120.31356199999999::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

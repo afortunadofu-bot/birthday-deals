@@ -1,10 +1,10 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 3/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 3/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
 (1,'ChIJr4Tenfw2aDQRykq8BANNbu4'::text,'麥當勞-竹北自強南餐廳－設有得來速'::text,'302新竹縣竹北市中興里自強南路19號'::text,'新竹縣'::text,24.8190222::float8,121.02792489999999::float8,'OPERATIONAL'::text),
 (1,'ChIJpcuoGqkQaTQRvJk0GKvIb6A'::text,'麥當勞-豐原中正二餐廳－設有得來速'::text,'420臺中市豐原區社皮里中正路569號'::text,'台中市'::text,24.250056999999998::float8,120.7084559::float8,'OPERATIONAL'::text),

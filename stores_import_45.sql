@@ -1,11 +1,24 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 45/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 45/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(345,'ChIJJaXYoOupQjQRPGQLqDzYcVQ'::text,'焼肉スマイル（燒肉Smile）新北三重店'::text,'241新北市三重區重新路二段100號1樓'::text,'新北市'::text,25.0616766::float8,121.49690090000001::float8,'OPERATIONAL'::text),
+(345,'ChIJsR40Ju4daDQR6DBilce8S00'::text,'焼肉スマイル（燒肉Smile）樹林秀泰店'::text,'238新北市樹林區保安里樹新路40-6號7樓'::text,'新北市'::text,24.995362999999998::float8,121.42831939999999::float8,'OPERATIONAL'::text),
+(345,'ChIJvflU1aEDbjQR7oorErkO_5s'::text,'焼肉スマイル（燒肉Smile）高雄台鋁店'::text,'806高雄市前鎮區忠純里忠勤路8號'::text,'高雄市'::text,22.6036525::float8,120.30293929999998::float8,'OPERATIONAL'::text),
+(345,'ChIJG5QNt0c9aTQRy0TzGpMgB14'::text,'焼肉スマイル（燒肉Smile） 台中高工店'::text,'402臺中市南區永和里高工路388之9號'::text,'台中市'::text,24.114279::float8,120.6680261::float8,'OPERATIONAL'::text),
+(345,'ChIJ6S7LlmGnQjQRtyZDGPtGPV8'::text,'焼肉スマイル（燒肉Smile） 林口長庚店'::text,'333桃園市龜山區復興一路128-2號2樓'::text,'桃園市'::text,25.058683199999997::float8,121.3673031::float8,'OPERATIONAL'::text),
+(345,'ChIJGcJKNwsVaTQRbgIZtdu2QNA'::text,'焼肉スマイル（燒肉Smile） 梧棲大智店'::text,'435臺中市梧棲區頂寮里大智路二段222號'::text,'台中市'::text,24.2588433::float8,120.53704959999997::float8,'OPERATIONAL'::text),
+(345,'ChIJyfBHrFw3aDQRghkpN8x5IO4'::text,'焼肉スマイル（燒肉Smile）竹北享平方店'::text,'302新竹縣竹北市鹿場里自強南路36號1樓'::text,'新竹縣'::text,24.8190174::float8,121.02680199999998::float8,'OPERATIONAL'::text),
+(345,'ChIJj8lhNThPXTQRisIr816gauo'::text,'焼肉スマイル（燒肉Smile）基隆潮境公園店'::text,'202基隆市中正區北寧路369巷61號2樓'::text,'基隆市'::text,25.1448841::float8,121.8037948::float8,'OPERATIONAL'::text),
+(345,'ChIJzajrXpQ9aTQR1uXWnulDOGo'::text,'焼肉スマイル（燒肉Smile）市政店（自助吧）'::text,'407臺中市西屯區惠來里文心路二段215號'::text,'台中市'::text,24.1601359::float8,120.64751::float8,'OPERATIONAL'::text),
+(345,'ChIJi0MSBLOVbjQRIEJk7LEv8Kw'::text,'焼肉スマイル（燒肉Smile）嘉義秀泰店（自助吧）'::text,'600嘉義市西區湖邊里文化路299號3樓'::text,'嘉義市'::text,23.4853918::float8,120.44777::float8,'OPERATIONAL'::text),
+(345,'ChIJg2Ffm8obaTQRUnUHWNh8TsQ'::text,'焼肉スマイル（燒肉Smile） 台中豐原店(自助吧)'::text,'420臺中市豐原區向陽路188號1f'::text,'台中市'::text,24.252235100000004::float8,120.7257541::float8,'OPERATIONAL'::text),
+(345,'ChIJFfDNDgADbjQRfWpoF_jSsQA'::text,'焼肉スマイル（燒肉Smile）高雄SKM Park店'::text,'806高雄市前鎮區明正里中安路1-1號3樓'::text,'高雄市'::text,22.582630599999998::float8,120.32906200000001::float8,'OPERATIONAL'::text),
+(345,'ChIJx0k55kQ9aTQRrBuuDJuFa7Y'::text,'焼肉スマイル（燒肉Smile）台中文心秀泰店(自助吧)'::text,'408臺中市南屯區豐樂里文心南路289號6樓'::text,'台中市'::text,24.1298821::float8,120.64576690000001::float8,'OPERATIONAL'::text),
 (346,'ChIJf_O1FPKpQjQRRZjEng5Ux5M'::text,'Hsuan Ri Fen 炫日芬 台北門市'::text,'111013臺北市士林區承德里基河路16-8號1F'::text,'台北市'::text,25.082796199999997::float8,121.5241094::float8,'OPERATIONAL'::text),
 (346,'ChIJ-ZQUu4s9aTQRNCMuxLpHLL4'::text,'澄逸行銷·Hsuan Ri Fen炫日芬'::text,'407臺中市西屯區何厝里四川路87巷47號'::text,'台中市'::text,24.161507999999998::float8,120.6552369::float8,'OPERATIONAL'::text),
 (347,'ChIJFwRBaD0BaDQRjVItcveAh10'::text,'呼穀壽喜燒 | 新店北新店'::text,'231新北市新店區新生里北新路一段231號2樓'::text,'新北市'::text,24.9655183::float8,121.54046819999999::float8,'OPERATIONAL'::text),
@@ -192,20 +205,7 @@ from (values
 (348,'ChIJ4_zpPgWoQjQRhs27nAt2K1Q'::text,'屈臣氏 板七門市'::text,'220新北市板橋區港德里中正路222號'::text,'新北市'::text,25.018535999999997::float8,121.4558536::float8,'OPERATIONAL'::text),
 (348,'ChIJzW4Gf6cCaDQR5mAqf_BB6W4'::text,'屈臣氏 板中門市'::text,'220新北市板橋區鄉雲里中山路一段19號1-2F'::text,'新北市'::text,25.0084548::float8,121.45988229999999::float8,'OPERATIONAL'::text),
 (348,'ChIJzSPmcDsdaDQRSDceZ99YO0E'::text,'屈臣氏 板金門市'::text,'220新北市板橋區溪福里金門街286號'::text,'新北市'::text,24.985990899999997::float8,121.4294091::float8,'OPERATIONAL'::text),
-(348,'ChIJW5jMfz7ccTQRW5-Su5AHuj8'::text,'屈臣氏 枋寮門市'::text,'940屏東縣枋寮鄉隆山村中山路156號'::text,'屏東縣'::text,22.3644546::float8,120.5967005::float8,'OPERATIONAL'::text),
-(348,'ChIJJ4wRdHzicTQR76Pb0VPEa30'::text,'屈臣氏 林園門市'::text,'832高雄市林園區文賢里東林西路29號'::text,'高雄市'::text,22.5036201::float8,120.395028::float8,'OPERATIONAL'::text),
-(348,'ChIJlzKXy0KpQjQRfGlZTUBL0Qc'::text,'屈臣氏 林森門市'::text,'104臺北市中山區聚盛里林森北路380號'::text,'台北市'::text,25.058215300000004::float8,121.52540920000001::float8,'OPERATIONAL'::text),
-(348,'ChIJfddu2tgfaDQR5Y_ll0EAmzc'::text,'屈臣氏 桃園門市'::text,'330桃園市桃園區民生里中正路146號'::text,'桃園市'::text,24.9941109::float8,121.31171429999999::float8,'OPERATIONAL'::text),
-(348,'ChIJCfw3N8EeaDQRk5XgGvK69As'::text,'屈臣氏 桃鶯門市'::text,'334桃園市八德區大明里桃鶯路53號'::text,'桃園市'::text,24.9710397::float8,121.32727910000001::float8,'OPERATIONAL'::text),
-(348,'ChIJT_QS3MUPbjQRQmkZzacpPLs'::text,'屈臣氏 楠梓門市'::text,'811高雄市楠梓區惠楠里建楠路156號'::text,'高雄市'::text,22.7271394::float8,120.32667459999999::float8,'OPERATIONAL'::text),
-(348,'ChIJ42AiKuipQjQRdJIyOmOGb3E'::text,'屈臣氏 樂華門市'::text,'234新北市永和區大新里永和路一段164、166號'::text,'新北市'::text,25.0085186::float8,121.5142236::float8,'OPERATIONAL'::text),
-(348,'ChIJUWcDYT4daDQR-yBT8ryvuOI'::text,'屈臣氏 樹二門市'::text,'238新北市樹林區樹北里博愛一街9號'::text,'新北市'::text,24.991159::float8,121.4253351::float8,'OPERATIONAL'::text),
-(348,'ChIJw7pzXSGpQjQRjfKkpT8KCdQ'::text,'屈臣氏 正義門市'::text,'241新北市三重區雙園里正義北路179號'::text,'新北市'::text,25.067630299999998::float8,121.4965473::float8,'OPERATIONAL'::text),
-(348,'ChIJNcyOlLgEbjQR6rPz7zqu5uU'::text,'屈臣氏 武廟門市'::text,'802高雄市苓雅區正言里福德二路20-1號'::text,'高雄市'::text,22.6307087::float8,120.32807509999999::float8,'OPERATIONAL'::text),
-(348,'ChIJgSQETgmpQjQR16RWEAMa7NU'::text,'屈臣氏 武昌門市'::text,'108臺北市萬華區萬壽里武昌街二段37號'::text,'台北市'::text,25.0446766::float8,121.50773559999999::float8,'OPERATIONAL'::text),
-(348,'ChIJk2WnDfOnQjQRo3KAYgqK7K0'::text,'屈臣氏 民安門市'::text,'242新北市新莊區八德里民安路188巷6號'::text,'新北市'::text,25.023492899999997::float8,121.4250181::float8,'OPERATIONAL'::text),
-(348,'ChIJlTI640OpQjQRx0FZAQJ6O1M'::text,'屈臣氏 民捷門市'::text,'104臺北市中山區集英里民權西路64號'::text,'台北市'::text,25.0626592::float8,121.52010600000001::float8,'OPERATIONAL'::text),
-(348,'ChIJEYU9ms2oQjQR-08a00HYlSs'::text,'屈臣氏 民族門市'::text,'247新北市蘆洲區信義里民族路59號'::text,'新北市'::text,25.085691::float8,121.47885529999999::float8,'OPERATIONAL'::text)
+(348,'ChIJW5jMfz7ccTQRW5-Su5AHuj8'::text,'屈臣氏 枋寮門市'::text,'940屏東縣枋寮鄉隆山村中山路156號'::text,'屏東縣'::text,22.3644546::float8,120.5967005::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

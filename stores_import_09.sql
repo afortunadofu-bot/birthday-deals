@@ -1,10 +1,10 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 9/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 9/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
 (9,'ChIJC-FjSvUxaTQRauYesXtJbrA'::text,'爭鮮迴轉壽司-南投萬家福店'::text,'540南投縣南投市三和里三和三路21號2樓'::text,'南投縣'::text,23.905929399999998::float8,120.6891994::float8,'OPERATIONAL'::text),
 (9,'ChIJycbzkKYfaDQRejb7mmzRZJw'::text,'爭鮮迴轉壽司-南竹樂家康店'::text,'338桃園市蘆竹區興榮里桃園街118號B1'::text,'桃園市'::text,25.047628399999997::float8,121.29165189999998::float8,'OPERATIONAL'::text),

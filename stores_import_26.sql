@@ -1,11 +1,24 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 26/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 26/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(102,'ChIJCyKuHW-sQjQRLbLgae6QWSU'::text,'Second Floor 貳樓西湖店'::text,'114臺北市內湖區西湖里內湖路一段300號'::text,'台北市'::text,25.0818802::float8,121.5687222::float8,'OPERATIONAL'::text),
+(102,'ChIJHdyrxrWpQjQRVUx2nUhAuPs'::text,'Second Floor 貳樓中山南西店'::text,'104臺北市中山區民安里中山北路二段16巷22號'::text,'台北市'::text,25.052991199999997::float8,121.5210538::float8,'OPERATIONAL'::text),
+(102,'ChIJyWRT3mWrQjQRFOM_DSk68CE'::text,'Second Floor 貳樓南港車站店'::text,'115臺北市南港區忠孝東路七段359號 City LinkB棟 2樓'::text,'台北市'::text,25.0528418::float8,121.60619349999999::float8,'OPERATIONAL'::text),
+(102,'ChIJneUTn3KpQjQR8_eBLgiNFMU'::text,'Second Floor 貳樓台北車站店'::text,'100臺北市中正區黎明里北平西路3號2樓'::text,'台北市'::text,25.047749::float8,121.51704399999998::float8,'OPERATIONAL'::text),
+(102,'ChIJS4LqBdGVbjQRCiorgYJ1RnE'::text,'Second Floor 貳樓嘉義秀泰店'::text,'600嘉義市西區湖邊里文化路299號一樓'::text,'嘉義市'::text,23.4855181::float8,120.44776549999999::float8,'OPERATIONAL'::text),
+(102,'ChIJiwbs0gGrQjQRHo5yLLB1zH8'::text,'Second Floor 貳樓微風南山店'::text,'110臺北市信義區西村里松智路17號7樓'::text,'台北市'::text,25.0342834::float8,121.56598429999998::float8,'OPERATIONAL'::text),
+(102,'ChIJbVdk5x01aDQR4Mnm8xnJ4V4'::text,'Second Floor 貳樓新竹巨城店'::text,'300新竹市東區復中里中央路229 號1 樓'::text,'新竹市'::text,24.8099088::float8,120.9742285::float8,'OPERATIONAL'::text),
+(102,'ChIJiUmzzDehQjQRilMKDrml7cw'::text,'Second Floor 貳樓桃園台茂店'::text,'338桃園市蘆竹區錦中里南崁路一段112號1樓'::text,'桃園市'::text,25.0532915::float8,121.2881557::float8,'OPERATIONAL'::text),
+(102,'ChIJC9Y_wcMhaDQRi-YzvFPGlY8'::text,'Second Floor 貳樓桃園華泰店'::text,'320桃園市中壢區青埔里春德路189號一期3樓'::text,'桃園市'::text,25.0145829::float8,121.21286800000001::float8,'OPERATIONAL'::text),
+(102,'ChIJBbb-oBKlQjQRTfeKzhXaMuc'::text,'Second Floor 貳樓淡水站前店'::text,'251新北市淡水區長庚里中山路8號6樓'::text,'新北市'::text,25.169176999999998::float8,121.44491000000001::float8,'OPERATIONAL'::text),
+(102,'ChIJEcolBwABaDQRGsMqbv9IJhA'::text,'Second Floor 貳樓新店裕隆城店'::text,'231新北市新店區寶福里中興路三段70號2樓'::text,'新北市'::text,24.978061::float8,121.546478::float8,'OPERATIONAL'::text),
+(102,'ChIJu78RSgADbjQRURTPiHuywKk'::text,'Second Floor 貳樓高雄夢時代店'::text,'806高雄市前鎮區興邦里中華五路789號B1F'::text,'高雄市'::text,22.595321400000003::float8,120.30788260000001::float8,'OPERATIONAL'::text),
+(102,'ChIJmVp9uxM9aTQRLbb1WV3Nl_8'::text,'Second Floor 貳樓台中秀泰文心店'::text,'40854臺中市南屯區豐樂里文心南路289號秀泰生活台中文心店1樓'::text,'台中市'::text,24.1297835::float8,120.64577050000001::float8,'OPERATIONAL'::text),
 (102,'ChIJwQ7syDsDbjQRopBo4Lyep0Y'::text,'Second Floor 貳樓高雄SKM Park店'::text,'806高雄市前鎮區中安路1 之1號2樓SKM Park 大道西2F'::text,'高雄市'::text,22.5823483::float8,120.3296129::float8,'OPERATIONAL'::text),
 (104,'ChIJaWiVyMo9aTQRJwKDR16Vy-Y'::text,'beard papa''s 台中勤美店'::text,'B1F, No. 68號公益路民龍里西區臺中市40360'::text,'台中市'::text,24.1510538::float8,120.6637085::float8,'OPERATIONAL'::text),
 (104,'ChIJUbZEVLJ3bjQRcsGeD_Dor-0'::text,'beard papa''s 台南南紡店'::text,'70155臺南市東區中華東路一段366號A1館B1F'::text,'台南市'::text,22.9908334::float8,120.23296979999999::float8,'OPERATIONAL'::text),
@@ -192,20 +205,7 @@ from (values
 (111,'ChIJ_0Wumd53bjQRlxky7mB2f14'::text,'遠傳台南崇學直營門市'::text,'701臺南市東區德光里崇學路169號'::text,'台南市'::text,22.9802121::float8,120.22340949999999::float8,'OPERATIONAL'::text),
 (111,'ChIJS7NlIyB0bjQRgB8E1P6BWpM'::text,'遠傳台南崇德直營門市'::text,'70161臺南市東區崇德里崇德路557號'::text,'台南市'::text,22.973232::float8,120.227592::float8,'OPERATIONAL'::text),
 (111,'ChIJURJtzVx2bjQRITWaZDWc9CM'::text,'遠傳台南文賢直營門市'::text,'704臺南市北區文成里文賢路512號'::text,'台南市'::text,23.0069041::float8,120.19378259999998::float8,'OPERATIONAL'::text),
-(111,'ChIJZ9MJmJZ2bjQRsiUezfl1sYs'::text,'遠傳台南東寧直營門市'::text,'701臺南市東區崇誨里東寧路226號'::text,'台南市'::text,22.990767599999998::float8,120.22496769999998::float8,'OPERATIONAL'::text),
-(111,'ChIJZ4O0V2FxbjQRHT1YxloY8og'::text,'遠傳台南歸仁加盟門市'::text,'711臺南市歸仁區後市里中山路二段251號'::text,'台南市'::text,22.9672791::float8,120.28827989999999::float8,'OPERATIONAL'::text),
-(111,'ChIJ4yiJDep3bjQRyY06_Dl9pIE'::text,'遠傳台南民生直營門市'::text,'700臺南市中西區南美里民生路一段176-178號'::text,'台南市'::text,22.9944071::float8,120.199736::float8,'OPERATIONAL'::text),
-(111,'ChIJZeFJCe93bjQR7-ORtyieANs'::text,'遠傳台南永康直營門市'::text,'710臺南市永康區五王里中山南路２９０號'::text,'台南市'::text,23.014799099999998::float8,120.2350858::float8,'OPERATIONAL'::text),
-(111,'ChIJhXwP3bJ3bjQRyNXu1Y3X50s'::text,'遠傳台南海佃加盟門市'::text,'709臺南市安南區溪墘里海佃路一段286號'::text,'台南市'::text,23.026511499999998::float8,120.1912992::float8,'OPERATIONAL'::text),
-(111,'ChIJAcYA1093bjQRMNT8QG6ugyY'::text,'遠傳台南華平加盟門市'::text,'489號, No. 489號華平路華平里安平區臺南市708'::text,'台南市'::text,22.9933275::float8,120.175242::float8,'OPERATIONAL'::text),
-(111,'ChIJaXNlch95bjQR3onXGofN_zw'::text,'遠傳台南西港加盟門市'::text,'723臺南市西港區慶安里中山路331號'::text,'台南市'::text,23.122333899999997::float8,120.2030594::float8,'OPERATIONAL'::text),
-(111,'ChIJP1qxw4N3bjQRXTYwtIjVOsQ'::text,'遠傳台南西門直營門市'::text,'700臺南市中西區南廠里西門路一段719號'::text,'台南市'::text,22.9889697::float8,120.19736259999999::float8,'OPERATIONAL'::text),
-(111,'ChIJg4OFFRV1bjQRYEtNEzZNguo'::text,'遠傳台南鹽埕加盟門市'::text,'702臺南市南區明亮里金華路一段442號1樓'::text,'台南市'::text,22.9721235::float8,120.1907946::float8,'OPERATIONAL'::text),
-(111,'ChIJkxjfPlZ_bjQRp4TGB1qke-Q'::text,'遠傳台南麻豆加盟門市'::text,'721臺南市麻豆區巷口里興中路3號'::text,'台南市'::text,23.183835::float8,120.24869449999998::float8,'OPERATIONAL'::text),
-(111,'ChIJf9kVMz-5bzQRLe2znfLqU1k'::text,'遠傳台東中華直營門市'::text,'950臺東縣臺東市中正里中華路一段342號'::text,'台東縣'::text,22.7549141::float8,121.15362189999999::float8,'OPERATIONAL'::text),
-(111,'ChIJBYrSo2q5bzQRUtE_Nl4d9Dk'::text,'遠傳台東更生加盟門市'::text,'950臺東縣臺東市民生里更生路186號'::text,'台東縣'::text,22.7592042::float8,121.1477056::float8,'OPERATIONAL'::text),
-(111,'ChIJi2soU4sJbzQRMbpv5i_DwHk'::text,'遠傳台東關山加盟門市'::text,'956臺東縣關山鎮和平路1號1樓'::text,'台東縣'::text,23.0452774::float8,121.1629786::float8,'OPERATIONAL'::text),
-(111,'ChIJjRqOT-c3aTQRhvfn1-nlywk'::text,'遠傳員林中正直營門市'::text,'510彰化縣員林市民生里中正路120號'::text,'彰化縣'::text,23.9521622::float8,120.5758362::float8,'OPERATIONAL'::text)
+(111,'ChIJZ9MJmJZ2bjQRsiUezfl1sYs'::text,'遠傳台南東寧直營門市'::text,'701臺南市東區崇誨里東寧路226號'::text,'台南市'::text,22.990767599999998::float8,120.22496769999998::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

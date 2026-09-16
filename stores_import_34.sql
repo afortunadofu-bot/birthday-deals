@@ -1,11 +1,24 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 34/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 34/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(200,'ChIJYzATt752bjQRitbDFEQrpY0'::text,'湯姆熊歡樂世界 南紡店'::text,'701臺南市東區東光里中華東路一段366號B1'::text,'台南市'::text,22.990829100000003::float8,120.23332789999998::float8,'OPERATIONAL'::text),
+(200,'ChIJia_Xkj65bzQRfOhc-C5LLq0'::text,'湯姆熊歡樂世界 台東店'::text,'950臺東縣臺東市中山里中華路一段437號'::text,'台東縣'::text,22.7528622::float8,121.1518655::float8,'OPERATIONAL'::text),
+(200,'ChIJb-5W_0YbbjQRiULZEuAHXas'::text,'湯姆熊歡樂世界 鳳山店'::text,'830高雄市鳳山區興仁里中山路149號號地下一樓'::text,'高雄市'::text,22.622595::float8,120.35812999999997::float8,'OPERATIONAL'::text),
+(200,'ChIJVVVVVRWsQjQRR-fXmz878Iw'::text,'湯姆熊歡樂世界 美麗華店'::text,'10466臺北市中山區金泰里敬業三路20號'::text,'台北市'::text,25.0833072::float8,121.55716479999998::float8,'OPERATIONAL'::text),
+(200,'ChIJC_QSTHnmZzQR-9uxpoUHk48'::text,'湯姆熊歡樂世界羅東民生店'::text,'2樓, No. 6號民生路集祥里羅東鎮宜蘭縣265'::text,'宜蘭縣'::text,24.6770763::float8,121.7710647::float8,'OPERATIONAL'::text),
+(200,'ChIJgeUVV3U9aTQRcaHBLB68WEc'::text,'湯姆熊歡樂世界 台中新光店'::text,'407臺中市西屯區惠來里臺灣大道三段301號13 樓'::text,'台中市'::text,24.1652572::float8,120.6437083::float8,'OPERATIONAL'::text),
+(200,'ChIJQWeH4lUXaTQReUdJBoj3gAo'::text,'湯姆熊歡樂世界 台中漢神店'::text,'406臺中市北屯區仁美里崇德路三段865 號6 F'::text,'台中市'::text,24.198321::float8,120.68621890000001::float8,'OPERATIONAL'::text),
+(200,'ChIJQ9K2cF0RaTQRZYQfC5Ece3k'::text,'湯姆熊歡樂世界 台中麗寶店'::text,'421臺中市后里區福容路201號D區3樓之2'::text,'台中市'::text,24.324824800000002::float8,120.70029559999998::float8,'OPERATIONAL'::text),
+(200,'ChIJq2xgq9xzbjQRZnrV2gShhYg'::text,'湯姆熊歡樂世界 台南三井店'::text,'711臺南市歸仁區武東里歸仁大道101號三樓'::text,'台南市'::text,22.9254189::float8,120.28687349999998::float8,'OPERATIONAL'::text),
+(200,'ChIJP3zB17J3bjQRYJpIz1_qGuM'::text,'湯姆熊歡樂世界 台南海佃店'::text,'709臺南市安南區海佃里海佃路一段329號'::text,'台南市'::text,23.026178899999998::float8,120.19081529999998::float8,'OPERATIONAL'::text),
+(200,'ChIJ62tCWaJ2bjQRBHB5B2zCBj0'::text,'湯姆熊歡樂世界 台南真光店'::text,'701臺南市東區富強里中華東路二段236號'::text,'台南市'::text,22.981935699999998::float8,120.2299235::float8,'OPERATIONAL'::text),
+(200,'ChIJ29w3oRVOXTQRNjk8fLoRRUM'::text,'湯姆熊歡樂世界 基隆東岸店'::text,'200基隆市仁愛區仁德里仁二路236號3樓'::text,'基隆市'::text,25.129963::float8,121.743219::float8,'OPERATIONAL'::text),
+(200,'ChIJm5-rBxw5aTQR61u88fj4Xf4'::text,'湯姆熊歡樂世界 彰化金馬店'::text,'500彰化縣彰化市茄南里金馬路二段321號2樓'::text,'彰化縣'::text,24.094606799999998::float8,120.54241390000001::float8,'OPERATIONAL'::text),
 (200,'ChIJ4ebQFOo1aDQRATgygKNp5xI'::text,'湯姆熊歡樂世界 新竹中興店'::text,'300新竹市東區成功里林森路32號'::text,'新竹市'::text,24.801824600000003::float8,120.96882269999999::float8,'OPERATIONAL'::text),
 (200,'ChIJB1a-27g1aDQR1hXhpRofc5s'::text,'湯姆熊歡樂世界 新竹凱撒店'::text,'300新竹市北區經國路二段184號'::text,'新竹市'::text,24.810731::float8,120.96227899999998::float8,'OPERATIONAL'::text),
 (200,'ChIJgyEVYwA1aDQROptY27MpB0g'::text,'湯姆熊歡樂世界 新竹湳雅店'::text,'300新竹市北区湳雅里大雅路88號B1'::text,'新竹市'::text,24.819554999999998::float8,120.96991419999999::float8,'OPERATIONAL'::text),
@@ -192,20 +205,7 @@ from (values
 (226,'ChIJZWFXgCM3aDQR7w1LTFaA0kw'::text,'Mateas鮮奶茶沙龍 新竹光復店'::text,'300新竹市東區仙水里光復路一段461號'::text,'新竹市'::text,24.7841073::float8,121.01518679999998::float8,'OPERATIONAL'::text),
 (226,'ChIJlX30Mp83aDQRSb2nnIQnJSs'::text,'Mateas鮮奶茶沙龍 竹北三民店'::text,'302新竹縣竹北市福德里三民路242號'::text,'新竹縣'::text,24.833689699999997::float8,121.0113408::float8,'OPERATIONAL'::text),
 (226,'ChIJsZj-8aI9aTQRIX8N0g_3y_Y'::text,'Mateas鮮奶茶沙龍·台中勤美店'::text,'403臺中市西區忠明里美村路一段36號1樓'::text,'台中市'::text,24.1537836::float8,120.66155510000002::float8,'OPERATIONAL'::text),
-(226,'ChIJ01AX094ZaTQRDxc2S5KidJ4'::text,'Mateas鮮奶茶沙龍·台中軍功店'::text,'406臺中市北屯區軍功里軍功路二段113號'::text,'台中市'::text,24.1783581::float8,120.71928989999999::float8,'OPERATIONAL'::text),
-(226,'ChIJW6qZLQCvQjQR_iCjIK_Ep3c'::text,'Mateas鮮奶茶沙龍·台北石牌店'::text,'112臺北市北投區振華里石牌路二段108號'::text,'台北市'::text,25.117647899999998::float8,121.51698449999999::float8,'OPERATIONAL'::text),
-(226,'ChIJe46dA5cXaTQR6MqiMT8uiSM'::text,'Mateas鮮奶茶沙龍．台中大雅店'::text,'428臺中市大雅區民生路一段189號'::text,'台中市'::text,24.2274712::float8,120.65041339999999::float8,'OPERATIONAL'::text),
-(226,'ChIJ52qXGAAXaTQRgyTHNSQNk6A'::text,'Mateas鮮奶茶沙龍．台中水湳店'::text,'406臺中市北屯區新平里中清路二段331號'::text,'台中市'::text,24.179004::float8,120.6678071::float8,'OPERATIONAL'::text),
-(226,'ChIJMfzajb0XaTQRJoruHjfYWqo'::text,'Mateas鮮奶茶沙龍．台中洲際店'::text,'406034臺中市北屯區崇德路三段681號'::text,'台中市'::text,24.195284200000003::float8,120.6862833::float8,'OPERATIONAL'::text),
-(226,'ChIJu0_3s8mnQjQR3LYHbkVo-A4'::text,'Mateas 鮮奶茶沙龍． 桃園林口店'::text,'333桃園市龜山區大湖里文化二路38-2號'::text,'桃園市'::text,25.0589865::float8,121.36512769999999::float8,'OPERATIONAL'::text),
-(226,'ChIJUe-3lZwXaTQRUmqfyK6jZJ0'::text,'Mateas鮮奶茶沙龍 ‧ 台中旗艦店'::text,'407臺中市西屯區福雅里永福路86號'::text,'台中市'::text,24.183605999999997::float8,120.6205387::float8,'OPERATIONAL'::text),
-(226,'ChIJX2vUGUs3aTQRf6uErgCa6fY'::text,'Mateas鮮奶茶沙龍 ‧ 員林中山店'::text,'510彰化縣員林市和平里中山路二段31號'::text,'彰化縣'::text,23.9602365::float8,120.57048180000001::float8,'OPERATIONAL'::text),
-(226,'ChIJzUmW1PlFaTQRUM5fYoaUN8Q'::text,'Mateas鮮奶茶沙龍 ‧ 鹿港天后店'::text,'505彰化縣鹿港鎮洛津里中山路345號'::text,'彰化縣'::text,24.057838900000004::float8,120.4323524::float8,'OPERATIONAL'::text),
-(226,'ChIJV4U_VACtQjQR7wnYAuzHFQs'::text,'Mateas鮮奶茶沙龍·台北內湖江南店'::text,'No. 110號, 江南街港墘里內湖區臺北市114'::text,'台北市'::text,25.0767669::float8,121.5765507::float8,'OPERATIONAL'::text),
-(227,'ChIJQ2CBmm-sQjQRS_oeQ54rbA4'::text,'客意直火比薩 (內科西湖店)'::text,'114臺北市內湖區港墘里瑞光路513巷37號1樓'::text,'台北市'::text,25.0799818::float8,121.5703927::float8,'OPERATIONAL'::text),
-(227,'ChIJCcyDU6-nQjQRCw-gdiuM4RQ'::text,'Kitchen CreAfe''客意直火林口忠孝店'::text,'24447新北市林口區忠孝路122-2號'::text,'新北市'::text,25.0739102::float8,121.3662176::float8,'OPERATIONAL'::text),
-(227,'ChIJG0SVP0qpQjQRF4mVA_HcTaw'::text,'Kitchen CreAfe''客意直火(新莊中原店)最後出餐21:00'::text,'242034新北市新莊區昌平里中原路228號'::text,'新北市'::text,25.0547524::float8,121.45304329999999::float8,'OPERATIONAL'::text),
-(227,'ChIJnyEz5BGpQjQRvd0oOVhaiMA'::text,'Kitchen CreAfe''客意直火(蘆洲長興店)最後出餐21:00'::text,'247新北市蘆洲區中原里長興路35號'::text,'新北市'::text,25.0836114::float8,121.4632654::float8,'OPERATIONAL'::text)
+(226,'ChIJ01AX094ZaTQRDxc2S5KidJ4'::text,'Mateas鮮奶茶沙龍·台中軍功店'::text,'406臺中市北屯區軍功里軍功路二段113號'::text,'台中市'::text,24.1783581::float8,120.71928989999999::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

@@ -1,11 +1,19 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 14/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 14/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(39,'ChIJlQyXEiUbbjQRdYS5y79O2zw'::text,'吳家紅茶冰 赤山店'::text,'830高雄市鳳山區文英里八德路263號'::text,'高雄市'::text,22.6382884::float8,120.3564773::float8,'OPERATIONAL'::text),
+(39,'ChIJAzqttJAMbjQRhgMBWBDK7Tg'::text,'吳家紅茶冰 路竹店'::text,'821高雄市路竹區竹南里中正路199號'::text,'高雄市'::text,22.854643199999998::float8,120.2639675::float8,'OPERATIONAL'::text),
+(39,'ChIJQ1XRaLoVbjQRIrhJI8HUvk8'::text,'吳家紅茶冰 里港店'::text,'905屏東縣里港鄉春林村中山路22-4號'::text,'屏東縣'::text,22.7756027::float8,120.4945073::float8,'OPERATIONAL'::text),
+(39,'ChIJEQcPDMtHaDQR-8f-EZ9-jxY'::text,'吳家紅茶冰 長春店'::text,'31048新竹縣竹東鎮五豐里長春路三段292號'::text,'新竹縣'::text,24.7457375::float8,121.0818365::float8,'OPERATIONAL'::text),
+(39,'ChIJ4Tm1Nbx3bjQRFM8ZiovdWKk'::text,'吳家紅茶冰 開元店'::text,'704台南市北区开元里開元路355之1號'::text,'台南市'::text,23.008839::float8,120.222573::float8,'OPERATIONAL'::text),
+(39,'ChIJHQ7anpEEbjQRRhgaYvBN0vY'::text,'吳家紅茶冰 開封店'::text,'800高雄市新兴区新興區光耀里開封路50號'::text,'高雄市'::text,22.628791::float8,120.3115249::float8,'OPERATIONAL'::text),
+(39,'ChIJN1EkFACvaDQROi03oDx-tS8'::text,'吳家紅茶冰 鳳林店'::text,'975花蓮縣鳳林鎮鳳林鎮鳳中正路二段168號'::text,'花蓮縣'::text,23.748206::float8,121.44971399999999::float8,'OPERATIONAL'::text),
+(39,'ChIJF7jVmVIDbjQRiLhAeOlNn_k'::text,'吳家紅茶冰 鳳甲店'::text,'830高雄市鳳山區二甲里南華一路26號'::text,'高雄市'::text,22.5974638::float8,120.34185089999998::float8,'OPERATIONAL'::text),
 (39,'ChIJy7aOKqTicTQRePZqO1BNP70'::text,'吳家紅茶冰 鳳鳴店'::text,'812台灣高雄市小港區'::text,'高雄市'::text,22.513685::float8,120.35916399999999::float8,'OPERATIONAL'::text),
 (39,'ChIJH7t4-3M-bjQRYSqatnVucLg'::text,'吳家紅茶冰 鹽埔店'::text,'907屏東縣鹽埔鄉新二村維新路131號'::text,'屏東縣'::text,22.7412209::float8,120.5570852::float8,'OPERATIONAL'::text),
 (39,'ChIJVaINPRqEbjQRuxM1chibYdo'::text,'吳家紅茶冰 鹽水店'::text,'737臺南市鹽水區月港里中正路73號'::text,'台南市'::text,23.3189779::float8,120.2676757::float8,'OPERATIONAL'::text),
@@ -197,15 +205,7 @@ from (values
 (39,'ChIJHTbxPT6VbjQRWSOeHMPpNHs'::text,'吳家紅茶冰-嘉義灣橋店'::text,'604嘉義縣竹崎鄉灣橋村灣橋212號'::text,'嘉義縣'::text,23.490994999999998::float8,120.50589699999999::float8,'OPERATIONAL'::text),
 (39,'ChIJQ0BHeWaXbjQRtV59inJTEU0'::text,'吳家紅茶冰-嘉義自強店'::text,'600嘉義市西區劉厝里自強街87號'::text,'嘉義市'::text,23.464870899999998::float8,120.4220727::float8,'OPERATIONAL'::text),
 (39,'ChIJ3zZYLRE2aTQRu3_5KFO28AU'::text,'吳家紅茶冰-埔心員鹿店'::text,'513彰化縣埔心鄉義民村員鹿路二段356號'::text,'彰化縣'::text,23.9529069::float8,120.5431132::float8,'OPERATIONAL'::text),
-(39,'ChIJn9xCTxVLaTQR6FcQ2HySaVw'::text,'吳家紅茶冰-埤頭斗苑店'::text,'523彰化縣埤頭鄉合興村斗苑西路257號'::text,'彰化縣'::text,23.891829599999998::float8,120.45954309999999::float8,'OPERATIONAL'::text),
-(39,'ChIJC-GvmxI3aTQRbWo6riPeQw0'::text,'吳家紅茶冰-大村山腳店'::text,'515彰化縣大村鄉南勢村福興村山腳路81號'::text,'彰化縣'::text,23.990065899999998::float8,120.5855602::float8,'OPERATIONAL'::text),
-(39,'ChIJ51Grp94ZaDQRj2W1YXexuDg'::text,'吳家紅茶冰-大溪埔頂店'::text,'335桃園市大溪區埔頂路二段48號'::text,'桃園市'::text,24.9081864::float8,121.2791202::float8,'OPERATIONAL'::text),
-(39,'ChIJ46OoWwAZaDQRLkuweomJAqQ'::text,'吳家紅茶冰-大溪慈湖店'::text,'335桃園市大溪區一心里慈湖路92號'::text,'桃園市'::text,24.8814384::float8,121.2887069::float8,'OPERATIONAL'::text),
-(39,'ChIJdXO6Hm4PaTQRppqgmWgLCUQ'::text,'吳家紅茶冰-大甲日南店'::text,'437臺中市大甲區孟春里通天路198號'::text,'台中市'::text,24.3814308::float8,120.65420039999998::float8,'OPERATIONAL'::text),
-(39,'ChIJo3M7jPgNaTQR2M8NxAlFJQA'::text,'吳家紅茶冰-大甲經國店'::text,'437021臺中市大甲區武曲里經國路573-2號'::text,'台中市'::text,24.3530525::float8,120.61796700000001::float8,'OPERATIONAL'::text),
-(39,'ChIJ3_ZISxUjaTQRI75l-vXmTcA'::text,'吳家紅茶冰-大里修平店'::text,'412臺中市大里區仁化里工業路13號'::text,'台中市'::text,24.095644699999998::float8,120.71400249999998::float8,'OPERATIONAL'::text),
-(39,'ChIJTc94JHMXbjQRn3puX0Jd9Ss'::text,'吳家紅茶冰-屏東夜市店'::text,'900屏東縣屏東市金泉里民族路29號'::text,'屏東縣'::text,22.669531799999998::float8,120.4907821::float8,'OPERATIONAL'::text),
-(39,'ChIJnwn7t28XbjQR2MZ2N_8xFXo'::text,'吳家紅茶冰-屏東民生店'::text,'900屏東縣屏東市瑞光里安心四橫巷477號'::text,'屏東縣'::text,22.659999::float8,120.51266499999998::float8,'OPERATIONAL'::text)
+(39,'ChIJn9xCTxVLaTQR6FcQ2HySaVw'::text,'吳家紅茶冰-埤頭斗苑店'::text,'523彰化縣埤頭鄉合興村斗苑西路257號'::text,'彰化縣'::text,23.891829599999998::float8,120.45954309999999::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

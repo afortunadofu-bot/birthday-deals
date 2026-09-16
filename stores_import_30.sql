@@ -1,11 +1,24 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 30/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 30/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(127,'ChIJOyyhHEFOXTQRfapreY3z9yI'::text,'陶板屋 基隆信一店'::text,'202基隆市中正区德义里信一路177號12F'::text,'基隆市'::text,25.130920399999997::float8,121.74480439999999::float8,'OPERATIONAL'::text),
+(127,'ChIJ5UOpCH44aTQRF3uDUqzucFQ'::text,'陶板屋 彰化東民店'::text,'500彰化縣彰化市東興里東民街39號'::text,'彰化縣'::text,24.075897299999998::float8,120.5456621::float8,'OPERATIONAL'::text),
+(127,'ChIJVYNTSPEBaDQRgzoDJJC3ftQ'::text,'陶板屋 新店北新店'::text,'231新北市新店区新安里北新路二段108號2 樓'::text,'新北市'::text,24.9741336::float8,121.54311069999999::float8,'OPERATIONAL'::text),
+(127,'ChIJdcmEgJ01aDQRYaYnPKu3ONQ'::text,'陶板屋 新竹食品店'::text,'300新竹市东区南大里食品路305-1號2F'::text,'新竹市'::text,24.7946699::float8,120.97288719999999::float8,'OPERATIONAL'::text),
+(127,'ChIJP9QZ2aanQjQRMbhWgogcISY'::text,'陶板屋 林口仁愛店'::text,'244新北市林口區湖南里仁愛路二段500號'::text,'新北市'::text,25.0763505::float8,121.37571630000001::float8,'OPERATIONAL'::text),
+(127,'ChIJUSNuAz4daDQRHTVMMv0DAWo'::text,'陶板屋 樹林中山店'::text,'238新北市樹林區樹西里中山路一段100號2樓'::text,'新北市'::text,24.991110499999998::float8,121.42300940000001::float8,'OPERATIONAL'::text),
+(127,'ChIJf_3grJapQjQRyMESRkFJ9r4'::text,'陶板屋 永和中正店'::text,'234新北市永和區潭安里中正路181號2F'::text,'新北市'::text,24.9990234::float8,121.51694549999999::float8,'OPERATIONAL'::text),
+(127,'ChIJFSKbhnhTXTQR7cFyBSV7hDU'::text,'陶板屋 汐止遠雄店'::text,'221新北市汐止區樟樹里新台五路一段99號iFG遠雄廣場2F'::text,'新北市'::text,25.0627297::float8,121.6498287::float8,'OPERATIONAL'::text),
+(127,'ChIJk2mE3fo2aDQRlYGXqgMZ2kk'::text,'陶板屋 竹北光明店'::text,'302新竹縣竹北市鹿場里光明六路東一段158號'::text,'新竹縣'::text,24.821306699999997::float8,121.02296::float8,'OPERATIONAL'::text),
+(127,'ChIJafMI_RAaaTQRvTy0F0h9UBI'::text,'陶板屋 豐原向陽店'::text,'420臺中市豐原區中陽里向陽路130號B1-2'::text,'台中市'::text,24.252077399999997::float8,120.7243195::float8,'OPERATIONAL'::text),
+(127,'ChIJWTK9OgQFbjQRbv4edJeFiEE'::text,'陶板屋 高雄裕誠店'::text,'813高雄市左營區新上里裕誠路475號2樓'::text,'高雄市'::text,22.665680200000004::float8,120.30384389999999::float8,'OPERATIONAL'::text),
+(127,'ChIJvctfSvUxaTQRmZAlDC38n9g'::text,'陶板屋 南投萬家福店'::text,'540南投縣南投市三和三路21號南投萬家福2樓'::text,'南投縣'::text,23.905849399999997::float8,120.68914470000001::float8,'OPERATIONAL'::text),
+(127,'ChIJT1w6Ay6qQjQRGGGPvH4mtwk'::text,'陶板屋 台北光復南店'::text,'106台北市大安区正声里光复南路286號B1'::text,'台北市'::text,25.0395506::float8,121.5574401::float8,'OPERATIONAL'::text),
 (127,'ChIJsaCgs2GpQjQRtzFg7ZFwbnk'::text,'陶板屋 台北南京東店'::text,'104台北市中山区朱园里南京东路二段178號2F'::text,'台北市'::text,25.051742899999997::float8,121.5351397::float8,'OPERATIONAL'::text),
 (127,'ChIJYdQSzOSrQjQRFIG6tSA9SYE'::text,'陶板屋 台北復興北店'::text,'105臺北市松山區民有里復興北路375號'::text,'台北市'::text,25.0627371::float8,121.5446623::float8,'OPERATIONAL'::text),
 (127,'ChIJd2lnDKCpQjQReTq7BQlF8Kc'::text,'陶板屋 台北重慶南店'::text,'100臺北市中正區光復里重慶南路一段58號2樓'::text,'台北市'::text,25.043917099999998::float8,121.5130594::float8,'OPERATIONAL'::text),
@@ -192,20 +205,7 @@ from (values
 (142,'ChIJuQZF7l-rQjQRT7muMvn22ko'::text,'福勝亭 科技大樓店'::text,'10667臺北市大安區群賢里復興南路二段277號'::text,'台北市'::text,25.025528800000004::float8,121.5436891::float8,'OPERATIONAL'::text),
 (142,'ChIJbcNLnumVbjQRYI0LBujd-2E'::text,'福勝亭_嘉義民族店'::text,'600嘉義市西區西榮里民族路608號'::text,'嘉義市'::text,23.475937899999998::float8,120.44616889999999::float8,'OPERATIONAL'::text),
 (143,'ChIJ-dK7q_13bjQRx7Y_UrlM54A'::text,'三商炸雞 崑大店'::text,'710臺南市永康區崑山里崑大路253號'::text,'台南市'::text,22.9983778::float8,120.25104249999998::float8,'OPERATIONAL'::text),
-(143,'ChIJE-NkTvupQjQRq1IhVsz_5AM'::text,'三商炸雞 得和店'::text,'234新北市永和區民富里得和路414號'::text,'新北市'::text,24.9990457::float8,121.52597239999999::float8,'OPERATIONAL'::text),
-(143,'ChIJLzQhY4IFbjQRjiezlu390-I'::text,'三商炸雞 林森店'::text,'800002高雄市新興區成功里林森一路188號'::text,'高雄市'::text,22.631726::float8,120.304858::float8,'OPERATIONAL'::text),
-(143,'ChIJ92j-9JWpQjQRZiBw_kvS9_w'::text,'三商炸雞 農安店'::text,'104029臺北市中山區晴光里農安街13號'::text,'台北市'::text,25.065084900000002::float8,121.52348489999999::float8,'OPERATIONAL'::text),
-(143,'ChIJUeaeGNWvQjQROUCB1CE_a24'::text,'三商炸雞北投光明店'::text,'11246臺北市北投區中心里光明路223-1號'::text,'台北市'::text,25.136456::float8,121.50412399999999::float8,'OPERATIONAL'::text),
-(143,'ChIJR5R4DAABaDQR2mqrhVt4vBo'::text,'三商炸雞新店中正店'::text,'231新北市新店區中正里中正路173號'::text,'新北市'::text,24.9720059::float8,121.540888::float8,'OPERATIONAL'::text),
-(143,'ChIJNzJo9hYjaDQRRW7YIuR_H_8'::text,'三商炸雞 中壢新生店'::text,'320029桃園市中壢區金華里新生路311號'::text,'桃園市'::text,24.9644181::float8,121.22307190000001::float8,'OPERATIONAL'::text),
-(143,'ChIJsXsKdwCrQjQRdbUUxz4Ys2c'::text,'三商炸雞 信義莊敬店'::text,'110臺北市信義區三張里莊敬路461號1樓'::text,'台北市'::text,25.026966599999998::float8,121.5678157::float8,'OPERATIONAL'::text),
-(143,'ChIJ2XTb8IAXaTQRVS-gUtu2nH0'::text,'三商炸雞 台中山西店'::text,'404035臺中市北區賴興里山西路二段212號'::text,'台中市'::text,24.1725845::float8,120.676255::float8,'OPERATIONAL'::text),
-(143,'ChIJJYSnYgCVbjQRvUVcjzxgurs'::text,'三商炸雞 嘉義中山店'::text,'600嘉義市西區西榮里中山路417號'::text,'嘉義市'::text,23.4795682::float8,120.4469813::float8,'OPERATIONAL'::text),
-(143,'ChIJ3XITYwWoQjQR3aeJcXBWVpQ'::text,'三商炸雞 板橋中正店'::text,'220046新北市板橋區香社里中正路321號'::text,'新北市'::text,25.0199757::float8,121.45497379999998::float8,'OPERATIONAL'::text),
-(143,'ChIJ6S4rdAADbjQRAlIFDMHI31w'::text,'三商炸雞 高雄五甲店'::text,'830高雄市鳳山區富榮里林森路291號'::text,'高雄市'::text,22.597166599999998::float8,120.33648629999999::float8,'OPERATIONAL'::text),
-(143,'ChIJz1_x3gQFbjQRWGCihgZIQVY'::text,'三商炸雞 高雄裕誠店'::text,'813019高雄市左營區新上里裕誠路340號'::text,'高雄市'::text,22.665387199999998::float8,120.30769719999999::float8,'OPERATIONAL'::text),
-(143,'ChIJZUKalbU9aTQR70LuZE4mOAw'::text,'三商炸雞-站前秀泰店'::text,'401004台中市东区東區南京路76號2樓'::text,'台中市'::text,24.1404753::float8,120.6896033::float8,'OPERATIONAL'::text),
-(143,'ChIJSZ23VwCpQjQRbfde9Z1Uk9E'::text,'三商炸雞脆皮專賣店北車k區'::text,'100230臺北市中正區忠孝西路一段47號m3m4出口b1(近'::text,'台北市'::text,25.046878399999997::float8,121.51553219999998::float8,'OPERATIONAL'::text)
+(143,'ChIJE-NkTvupQjQRq1IhVsz_5AM'::text,'三商炸雞 得和店'::text,'234新北市永和區民富里得和路414號'::text,'新北市'::text,24.9990457::float8,121.52597239999999::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

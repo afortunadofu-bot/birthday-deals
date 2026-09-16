@@ -1,10 +1,10 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 5/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 5/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
 (3,'ChIJsylGZZarQjQRkd8WJSN62N0'::text,'PIZZA HUT必勝客-台北八德店'::text,'10565臺北市松山區新聚里八德路四段293號'::text,'台北市'::text,25.0491991::float8,121.5663493::float8,'OPERATIONAL'::text),
 (3,'ChIJjarjS8CpQjQR2iVEG_7tc_g'::text,'PIZZA HUT必勝客-台北吉林店'::text,'10469臺北市中山區新生里吉林路310號'::text,'台北市'::text,25.0618259::float8,121.5301693::float8,'OPERATIONAL'::text),

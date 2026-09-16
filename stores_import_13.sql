@@ -1,11 +1,19 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 13/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 13/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(36,'ChIJi-lT5_urQjQRpEAEHMMfryA'::text,'茶聚CHAGE南港玉成店'::text,'115004臺北市南港區西新里南港路三段25號'::text,'台北市'::text,25.0537524::float8,121.5914183::float8,'OPERATIONAL'::text),
+(36,'ChIJwfHoMhypQjQRDjUK-WIHYow'::text,'茶聚CHAGE台北長安店'::text,'103臺北市大同區建功里長安西路129號'::text,'台北市'::text,25.051396::float8,121.51529069999998::float8,'OPERATIONAL'::text),
+(36,'ChIJWaUcfBMRaTQRbKjpTLru4TU'::text,'茶聚CHAGE大甲鎮瀾店'::text,'437臺中市大甲區鎮瀾街163號1樓'::text,'台中市'::text,24.3456947::float8,120.6239183::float8,'OPERATIONAL'::text),
+(36,'ChIJxRGYrooBaDQRgaew5qhIhpY'::text,'茶聚CHAGE文山木新店'::text,'116臺北市文山區順興里木新路二段262號'::text,'台北市'::text,24.983169399999998::float8,121.5660206::float8,'OPERATIONAL'::text),
+(36,'ChIJs_DMO16pQjQRB84p5v-2tGw'::text,'茶聚CHAGE板橋大仁店'::text,'220新北市板橋區社後里大仁街25號'::text,'新北市'::text,25.0167449::float8,121.455547::float8,'OPERATIONAL'::text),
+(36,'ChIJ_6fuqOupQjQRo001GERBZZg'::text,'茶聚CHAGE板橋莒光店'::text,'22042新北市板橋區埤墘里莒光路196巷1號'::text,'新北市'::text,25.0222816::float8,121.47411160000001::float8,'OPERATIONAL'::text),
+(36,'ChIJuUAieREfaDQRRJpL55qUfSE'::text,'茶聚CHAGE桃園中正店'::text,'330桃園市桃園區東埔里中正路534號'::text,'桃園市'::text,25.003069::float8,121.30581219999999::float8,'OPERATIONAL'::text),
+(36,'ChIJWQRwTZKpQjQR4ENL40d6Qjs'::text,'茶聚CHAGE永和竹林店'::text,'234新北市永和區竹林路41號'::text,'新北市'::text,25.014124::float8,121.51798900000001::float8,'OPERATIONAL'::text),
 (36,'ChIJG47_cHRTXTQRiwlX5ebTiqw'::text,'茶聚CHAGE汐止福德店'::text,'221新北市汐止區興福里福德一路165號'::text,'新北市'::text,25.0662561::float8,121.6362777::float8,'OPERATIONAL'::text),
 (36,'ChIJwSvWOOHnZzQRXA6DVUMDDQo'::text,'茶聚CHAGE羅東中華店'::text,'265宜蘭縣羅東鎮公正里中華路116號'::text,'宜蘭縣'::text,24.680381399999998::float8,121.7678216::float8,'OPERATIONAL'::text),
 (36,'ChIJS_nS46kfaDQRnoDeIqhyeTU'::text,'茶聚CHAGE蘆竹大竹店'::text,'338桃園市蘆竹區上興里大竹路413號1樓'::text,'桃園市'::text,25.0211994::float8,121.26318760000001::float8,'OPERATIONAL'::text),
@@ -197,15 +205,7 @@ from (values
 (39,'ChIJL9OsxL4daDQR3Rh9GXsmRG8'::text,'吳家紅茶冰 萬壽店'::text,'333桃園市龜山區龍華里萬壽路一段349號'::text,'桃園市'::text,25.016788::float8,121.40178::float8,'OPERATIONAL'::text),
 (39,'ChIJvQpONDIibjQRBkzxuUFevuI'::text,'吳家紅茶冰 萬巒店'::text,'923屏東縣萬巒鄉萬巒村褒忠路185號'::text,'屏東縣'::text,22.5738599::float8,120.56853890000001::float8,'OPERATIONAL'::text),
 (39,'ChIJm3zmA6sFbjQRE5xVe6tP8Ac'::text,'吳家紅茶冰 裕誠店'::text,'804高雄市鼓山區明誠里裕誠路1593號'::text,'高雄市'::text,22.6624783::float8,120.2945229::float8,'OPERATIONAL'::text),
-(39,'ChIJWaI65hSlbjQR1RbDdk37EFY'::text,'吳家紅茶冰 褒忠店'::text,'634雲林縣褒忠鄉埔姜村中勝路42-7號'::text,'雲林縣'::text,23.6965444::float8,120.3095173::float8,'OPERATIONAL'::text),
-(39,'ChIJlQyXEiUbbjQRdYS5y79O2zw'::text,'吳家紅茶冰 赤山店'::text,'830高雄市鳳山區文英里八德路263號'::text,'高雄市'::text,22.6382884::float8,120.3564773::float8,'OPERATIONAL'::text),
-(39,'ChIJAzqttJAMbjQRhgMBWBDK7Tg'::text,'吳家紅茶冰 路竹店'::text,'821高雄市路竹區竹南里中正路199號'::text,'高雄市'::text,22.854643199999998::float8,120.2639675::float8,'OPERATIONAL'::text),
-(39,'ChIJQ1XRaLoVbjQRIrhJI8HUvk8'::text,'吳家紅茶冰 里港店'::text,'905屏東縣里港鄉春林村中山路22-4號'::text,'屏東縣'::text,22.7756027::float8,120.4945073::float8,'OPERATIONAL'::text),
-(39,'ChIJEQcPDMtHaDQR-8f-EZ9-jxY'::text,'吳家紅茶冰 長春店'::text,'31048新竹縣竹東鎮五豐里長春路三段292號'::text,'新竹縣'::text,24.7457375::float8,121.0818365::float8,'OPERATIONAL'::text),
-(39,'ChIJ4Tm1Nbx3bjQRFM8ZiovdWKk'::text,'吳家紅茶冰 開元店'::text,'704台南市北区开元里開元路355之1號'::text,'台南市'::text,23.008839::float8,120.222573::float8,'OPERATIONAL'::text),
-(39,'ChIJHQ7anpEEbjQRRhgaYvBN0vY'::text,'吳家紅茶冰 開封店'::text,'800高雄市新兴区新興區光耀里開封路50號'::text,'高雄市'::text,22.628791::float8,120.3115249::float8,'OPERATIONAL'::text),
-(39,'ChIJN1EkFACvaDQROi03oDx-tS8'::text,'吳家紅茶冰 鳳林店'::text,'975花蓮縣鳳林鎮鳳林鎮鳳中正路二段168號'::text,'花蓮縣'::text,23.748206::float8,121.44971399999999::float8,'OPERATIONAL'::text),
-(39,'ChIJF7jVmVIDbjQRiLhAeOlNn_k'::text,'吳家紅茶冰 鳳甲店'::text,'830高雄市鳳山區二甲里南華一路26號'::text,'高雄市'::text,22.5974638::float8,120.34185089999998::float8,'OPERATIONAL'::text)
+(39,'ChIJWaI65hSlbjQR1RbDdk37EFY'::text,'吳家紅茶冰 褒忠店'::text,'634雲林縣褒忠鄉埔姜村中勝路42-7號'::text,'雲林縣'::text,23.6965444::float8,120.3095173::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

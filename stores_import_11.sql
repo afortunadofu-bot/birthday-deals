@@ -1,11 +1,19 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 11/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 11/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(29,'ChIJIdkxPgAXaTQR-cYLNrU4JAc'::text,'TGI FRIDAYS 崇德餐廳'::text,'406臺中市北屯區平德里崇德路二段63號'::text,'台中市'::text,24.170571499999998::float8,120.6851516::float8,'OPERATIONAL'::text),
+(29,'ChIJUQ5gApGhQjQR05hxp3KkuYM'::text,'TGI FRIDAYS星期五美式餐廳 台茂餐廳'::text,'338桃園市蘆竹區錦中里南崁路一段112號1樓'::text,'桃園市'::text,25.0532205::float8,121.28804059999999::float8,'OPERATIONAL'::text),
+(29,'ChIJG5r8JL0haDQRwLo4arM5WuA'::text,'TGI FRIDAYS 星期五美式餐廳 中壢餐廳'::text,'320桃園市中壢區內定里中園路二段501號4樓'::text,'桃園市'::text,25.0016279::float8,121.22855669999998::float8,'OPERATIONAL'::text),
+(29,'ChIJ_bpJRJqpQjQRXz73PDJ74XA'::text,'TGI FRIDAYS 星期五美式餐廳 古亭餐廳'::text,'100臺北市中正區南福里羅斯福路二段60號'::text,'台北市'::text,25.027577899999997::float8,121.52175299999999::float8,'OPERATIONAL'::text),
+(29,'ChIJhR-n2uIDaDQRlOsacXE-eW0'::text,'TGI FRIDAYS 星期五美式餐廳 松高餐廳'::text,'3樓, 微風松高3FNo. 16號松高路西村里信義區臺北市110'::text,'台北市'::text,25.038155399999997::float8,121.56731389999999::float8,'OPERATIONAL'::text),
+(29,'ChIJ0UB-1WepQjQRhSdjEUnly7A'::text,'TGI FRIDAYS 星期五美式餐廳 林森餐廳'::text,'10491台北市中山区康乐里林森北路247號1樓'::text,'台北市'::text,25.053975899999998::float8,121.5257614::float8,'OPERATIONAL'::text),
+(29,'ChIJo9S363IDbjQRMD82sbo2f30'::text,'TGI FRIDAYS 星期五美式餐廳 夢時代餐廳'::text,'806高雄市前鎮區興邦里中華五路789號藍鯨館三樓'::text,'高雄市'::text,22.595625700000003::float8,120.3073439::float8,'OPERATIONAL'::text),
+(29,'ChIJQypzveUBaDQRR9Tkk_lM70k'::text,'TGI FRIDAYS 星期五美式餐廳 裕隆城餐廳'::text,'23144新北市新店區寶福里中興路三段70號4樓'::text,'新北市'::text,24.978061::float8,121.546478::float8,'OPERATIONAL'::text),
 (29,'ChIJAb281lcDbjQRzKPUZ46qeD8'::text,'TGI FRIDAYS 星期五美式餐廳 SKM Park餐廳'::text,'806高雄市前鎮區明正里中安路1-1號3樓SKM Park大道西3樓'::text,'高雄市'::text,22.582741199999997::float8,120.3297238::float8,'OPERATIONAL'::text),
 (30,'ChIJY06RcWmpQjQR-pFGFmD6NR4'::text,'大師兄銷魂麵舖-中山店'::text,'10491臺北市中山區民安里中山北路二段42巷36號'::text,'台北市'::text,25.054610999999998::float8,121.520877::float8,'OPERATIONAL'::text),
 (30,'ChIJf0DRqdsFbjQRl7MdPsyGc3I'::text,'大師兄銷魂麵舖 左營環球店'::text,'813高雄市左營區菜公里站前北路1號2樓'::text,'高雄市'::text,22.687388::float8,120.30708919999998::float8,'OPERATIONAL'::text),
@@ -197,15 +205,7 @@ from (values
 (33,'ChIJL-5lbyqpQjQRnw0SBk0lvEM'::text,'鮮茶道（台北武昌店）'::text,'10843臺北市萬華區萬壽里西寧南路119號'::text,'台北市'::text,25.0448888::float8,121.5066884::float8,'OPERATIONAL'::text),
 (33,'ChIJ-c-LBRi5bzQRmzvQ4lSOCe4'::text,'鮮茶道（台東中正店）'::text,'950臺東縣臺東市文化里中正路329號'::text,'台東縣'::text,22.757198::float8,121.1514372::float8,'OPERATIONAL'::text),
 (33,'ChIJva9z-xi5bzQRT6EQ-it5LiI'::text,'鮮茶道（台東中華店）'::text,'950臺東縣臺東市豐盛里中華路二段103號'::text,'台東縣'::text,22.7451746::float8,121.1400543::float8,'OPERATIONAL'::text),
-(33,'ChIJr9GlX0W5bzQRdxoOaDUSFUo'::text,'鮮茶道（台東更生店）'::text,'950臺東縣臺東市民生里更生路386號'::text,'台東縣'::text,22.7617887::float8,121.1435433::float8,'OPERATIONAL'::text),
-(33,'ChIJXT9XBwG5bzQRdVaUYgVZpTw'::text,'鮮茶道（台東漢陽店）'::text,'950臺東縣臺東市豐榮里漢陽北路165號'::text,'台東縣'::text,22.7470255::float8,121.1345215::float8,'OPERATIONAL'::text),
-(33,'ChIJuWN7XBvJbzQRgk7IO2r4TaU'::text,'鮮茶道（台東知本店）'::text,'950臺東縣臺東市台東市富裕路105號'::text,'台東縣'::text,22.710851299999998::float8,121.0587012::float8,'OPERATIONAL'::text),
-(33,'ChIJM1dXq1K5bzQROyqnwgvHY9A'::text,'鮮茶道（台東秀泰店）'::text,'950臺東縣臺東市中山里新生路110號之1號'::text,'台東縣'::text,22.752387::float8,121.1485804::float8,'OPERATIONAL'::text),
-(33,'ChIJ42TNzl2lbzQRhph0l1RVPhg'::text,'鮮茶道（台東鹿野店）'::text,'955臺東縣鹿野鄉鹿野村中華路二段50號'::text,'台東縣'::text,22.9119492::float8,121.13614059999999::float8,'OPERATIONAL'::text),
-(33,'ChIJN7p_kiqUbjQRzfMMb3VA6_E'::text,'鮮茶道（嘉義北興店）'::text,'600嘉義市西區重興里北興街318號'::text,'嘉義市'::text,23.4857577::float8,120.4383266::float8,'OPERATIONAL'::text),
-(33,'ChIJhWHuujXoZzQR9V4hFmokfJ4'::text,'鮮茶道（宜蘭蘇澳店）'::text,'270宜蘭縣蘇澳鎮蘇南里中山路一段20號'::text,'宜蘭縣'::text,24.5961818::float8,121.85257569999999::float8,'OPERATIONAL'::text),
-(33,'ChIJs4FmMTIibjQRwKDyEY-FdTo'::text,'鮮茶道（屏東萬巒店）'::text,'923屏東縣萬巒鄉萬和村褒忠路157號'::text,'屏東縣'::text,22.573175::float8,120.56917000000001::float8,'OPERATIONAL'::text),
-(33,'ChIJ26BjCuRTaTQRKomVVA2ap5E'::text,'鮮茶道（彰化王功店）'::text,'528彰化縣芳苑鄉博愛村芳漢路王功段615號'::text,'彰化縣'::text,23.9658239::float8,120.3409397::float8,'OPERATIONAL'::text)
+(33,'ChIJr9GlX0W5bzQRdxoOaDUSFUo'::text,'鮮茶道（台東更生店）'::text,'950臺東縣臺東市民生里更生路386號'::text,'台東縣'::text,22.7617887::float8,121.1435433::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

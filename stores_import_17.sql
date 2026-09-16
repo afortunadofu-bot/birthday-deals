@@ -1,11 +1,19 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 17/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 17/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(42,'ChIJ8e7-YkytQjQRAH2hDuJkVlc'::text,'Starbucks星巴克 草山門市'::text,'111臺北市士林區陽明里國泰街5號'::text,'台北市'::text,25.136235199999998::float8,121.5429195::float8,'OPERATIONAL'::text),
+(42,'ChIJ3Tv9FOerQjQRttsoFFBkLIg'::text,'Starbucks星巴克 華視門市'::text,'106臺北市大安區華聲里光復南路180巷14號'::text,'台北市'::text,25.042452899999997::float8,121.5567119::float8,'OPERATIONAL'::text),
+(42,'ChIJwbaoahOqQjQR8UMWS835gGo'::text,'Starbucks星巴克 萬芳門市'::text,'116臺北市文山區興光里興隆路三段111號'::text,'台北市'::text,24.999832299999998::float8,121.55748089999999::float8,'OPERATIONAL'::text),
+(42,'ChIJ-RjXEQBNXTQRnPjposBApyg'::text,'Starbucks星巴克 萬里門市'::text,'207新北市萬里區龜吼里45之6號'::text,'新北市'::text,25.1887389::float8,121.6834805::float8,'OPERATIONAL'::text),
+(42,'ChIJg6NHz-o1aDQRFir5orlEqAE'::text,'Starbucks星巴克 西大門市'::text,'300新竹市東區南市里西大路323號'::text,'新竹市'::text,24.8019347::float8,120.9648374::float8,'OPERATIONAL'::text),
+(42,'ChIJDUmD13moQjQREo8j1iLK9HY'::text,'Starbucks星巴克 辛亥門市'::text,'106臺北市大安區辛亥路二段175號'::text,'台北市'::text,25.0217296::float8,121.54118810000001::float8,'OPERATIONAL'::text),
+(42,'ChIJfc7LQAupQjQRWvPQC-tAZbI'::text,'Starbucks星巴克 重慶門市'::text,'100臺北市中正區光復里重慶南路一段104號'::text,'台北市'::text,25.0424628::float8,121.51307440000001::float8,'OPERATIONAL'::text),
+(42,'ChIJEzwHJCSrQjQRg7SBxnkc0Y8'::text,'Starbucks星巴克 長興門市'::text,'106臺北市大安區學府里基隆路三段85號'::text,'台北市'::text,25.017345799999998::float8,121.54500159999999::float8,'OPERATIONAL'::text),
 (42,'ChIJ4W2klXKvQjQROVWqIYuP950'::text,'Starbucks星巴克 關渡門市'::text,'112臺北市北投區一德里大度路三段296巷45號'::text,'台北市'::text,25.1247272::float8,121.46696740000002::float8,'OPERATIONAL'::text),
 (42,'ChIJo5NwS9upQjQRN23WOydJE7M'::text,'Starbucks星巴克 雙和門市'::text,'234新北市永和區和平里中山路一段240號1樓'::text,'新北市'::text,25.0073641::float8,121.50713540000001::float8,'OPERATIONAL'::text),
 (42,'ChIJg-zri6weaDQRLpH6nWNSFoM'::text,'Starbucks星巴克 鶯歌門市'::text,'239新北市鶯歌區同慶里育英街67號'::text,'新北市'::text,24.952144699999998::float8,121.3473434::float8,'OPERATIONAL'::text),
@@ -197,15 +205,7 @@ from (values
 (42,'ChIJUWWAdbw1aDQRax5KGRoNK0E'::text,'Starbucks星巴克 新竹竹光門市'::text,'300新竹市北區磐石里西大路687號'::text,'新竹市'::text,24.8111504::float8,120.9563964::float8,'OPERATIONAL'::text),
 (42,'ChIJfaIRy7arQjQRWb3cNnEseWA'::text,'Starbucks星巴克 新莊中正門市'::text,'242新北市新莊區文聖里中正路178號一樓'::text,'新北市'::text,25.0357438::float8,121.4499853::float8,'OPERATIONAL'::text),
 (42,'ChIJobfM09ipQjQRL3dc0VxXF9M'::text,'Starbucks星巴克 新莊宏匯門市'::text,'242032新北市新莊區新北大道四段3號1樓'::text,'新北市'::text,25.0597986::float8,121.44961099999999::float8,'OPERATIONAL'::text),
-(42,'ChIJzaN4q4moQjQR_CqcFtwlGfI'::text,'Starbucks星巴克 新莊思源門市'::text,'242新北市新莊區頭前里思源路448號'::text,'新北市'::text,25.0535221::float8,121.46034619999999::float8,'OPERATIONAL'::text),
-(42,'ChIJiSW6BcnWDRQR3YRvw6UFzHE'::text,'Starbucks星巴克 新莊雙鳳門市'::text,'242新北市新莊區雙鳳里中正路702號'::text,'新北市'::text,25.026578999999998::float8,121.41752029999999::float8,'OPERATIONAL'::text),
-(42,'ChIJi45hzWipQjQRatpOkgxPjRA'::text,'Starbucks星巴克 時代寓所門市'::text,'100024臺北市中正區幸福里林森南路7-1號'::text,'台北市'::text,25.043700299999998::float8,121.5239036::float8,'OPERATIONAL'::text),
-(42,'ChIJXd9DqPGrQjQRV4eZCMc79Uo'::text,'Starbucks星巴克 松山機場門市'::text,'105臺北市松山區精忠里敦化北路340之9號2F'::text,'台北市'::text,25.0640733::float8,121.5522553::float8,'OPERATIONAL'::text),
-(42,'ChIJaQL2pJ6rQjQRNvc9eThhJaQ'::text,'Starbucks星巴克 松山車站門市'::text,'110臺北市信義區永吉里松山路11號'::text,'台北市'::text,25.049119100000002::float8,121.57870890000001::float8,'OPERATIONAL'::text),
-(42,'ChIJI4E_XuKrQjQRgR-Zh4HMRbk'::text,'Starbucks星巴克 松機T2門市'::text,'105臺北市松山區精忠里敦化北路340之10號2f'::text,'台北市'::text,25.0639903::float8,121.5504021::float8,'OPERATIONAL'::text),
-(42,'ChIJs_lx6mOpQjQRhXXSmtudyPw'::text,'Starbucks星巴克 松江長安門市'::text,'10491臺北市中山區興亞里松江路54號1樓'::text,'台北市'::text,25.0485746::float8,121.53269019999999::float8,'OPERATIONAL'::text),
-(42,'ChIJS0bLQwAXaTQRPl1c9D07n2I'::text,'Starbucks星巴克 松竹安順門市'::text,'406臺中市北屯區仁和里松竹路三段128號'::text,'台中市'::text,24.1825789::float8,120.6803978::float8,'OPERATIONAL'::text),
-(42,'ChIJIyPcgegXaTQRM63U0Z_ZOKU'::text,'Starbucks星巴克 松竹洲際門市'::text,'406臺中市北屯區同榮里松竹路三段1133號'::text,'台中市'::text,24.1998204::float8,120.67068939999999::float8,'OPERATIONAL'::text)
+(42,'ChIJzaN4q4moQjQR_CqcFtwlGfI'::text,'Starbucks星巴克 新莊思源門市'::text,'242新北市新莊區頭前里思源路448號'::text,'新北市'::text,25.0535221::float8,121.46034619999999::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

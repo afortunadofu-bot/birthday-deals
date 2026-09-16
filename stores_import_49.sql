@@ -1,11 +1,24 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 49/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 49/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(361,'ChIJX4CU426zaTQRx-6vfGmhWTo'::text,'TEA-TOP第一味 竹南新生店'::text,'350苗栗縣竹南鎮中港里新生路66號'::text,'苗栗縣'::text,24.681622400000002::float8,120.86785580000002::float8,'OPERATIONAL'::text),
+(361,'ChIJjyndUQ09aTQRwbWDU7LcDqc'::text,'TEATOP 第一味 台中樂業店'::text,'401臺中市東區東信里樂業路456號'::text,'台中市'::text,24.1364695::float8,120.70652310000001::float8,'OPERATIONAL'::text),
+(361,'ChIJrb1V0Js9aTQRx6e4dfr_bqM'::text,'TEATOP第一味 台中忠明南店'::text,'403臺中市西區土庫里忠明南路443-2號'::text,'台中市'::text,24.1385366::float8,120.65750799999999::float8,'OPERATIONAL'::text),
+(361,'ChIJtS6Cd_AOaTQRMXzKQQlsJvo'::text,'TEATOP第一味(日南幼獅店)'::text,'437臺中市大甲區台中市大甲區黎明路3之18號'::text,'台中市'::text,24.391634::float8,120.65433200000001::float8,'OPERATIONAL'::text),
+(361,'ChIJ5Q4HH5I1aTQRINSTjjoovcQ'::text,'Tea Top 第一味彰化田中店'::text,'520彰化縣田中鎮東路里中州路一段224號'::text,'彰化縣'::text,23.857988199999998::float8,120.5859335::float8,'OPERATIONAL'::text),
+(361,'ChIJoW8dVzQjaTQRaUjFzRlwugU'::text,'Tea top第一味 大里成功店'::text,'412臺中市大里區仁德里成功二路118號'::text,'台中市'::text,24.0949805::float8,120.7043829::float8,'OPERATIONAL'::text),
+(361,'ChIJAwosfg-5bjQRt_oS14MFhvQ'::text,'TeaTop 第一味 斗南中山店'::text,'630雲林縣斗南鎮南昌里中山路64號'::text,'雲林縣'::text,23.6749711::float8,120.47963299999999::float8,'OPERATIONAL'::text),
+(361,'ChIJCUgK0scjaDQRofbz6WzAbQg'::text,'TEA TOP 第一味 中壢中美店'::text,'32086桃園市中壢區興國里中美路二段63號'::text,'桃園市'::text,24.959676400000003::float8,121.2224875::float8,'OPERATIONAL'::text),
+(361,'ChIJuSGCYR89aTQRVxnr1BdBLws'::text,'TEA TOP 第一味 台中永興店'::text,'40454臺中市北區建興里永興街54號'::text,'台中市'::text,24.159848099999998::float8,120.68252679999999::float8,'OPERATIONAL'::text),
+(361,'ChIJ463075k9aTQRyZD8IvbWg5M'::text,'TEA TOP 第一味 台中精誠店'::text,'403臺中市西區公平里精誠路75號'::text,'台中市'::text,24.1520768::float8,120.65523479999999::float8,'OPERATIONAL'::text),
+(361,'ChIJBQITZIs3aTQRmGwrlXZkuxo'::text,'TEA TOP 第一味 員林靜修店'::text,'510彰化縣員林市靜修路38-3號'::text,'彰化縣'::text,23.9626199::float8,120.571601::float8,'OPERATIONAL'::text),
+(361,'ChIJZfA15kM3aTQR50T_zlnyUos'::text,'TEA TOP 第一味 埔心員鹿店'::text,'513彰化縣埔心鄉東門村員鹿路二段249號'::text,'彰化縣'::text,23.952705899999998::float8,120.5454647::float8,'OPERATIONAL'::text),
+(361,'ChIJLdr_Brs4aTQRfhHIECumlN0'::text,'TEA TOP 第一味 彰化家福店'::text,'500彰化縣彰化市茄南里永安街480號'::text,'彰化縣'::text,24.094295100000004::float8,120.54187749999998::float8,'OPERATIONAL'::text),
 (361,'ChIJk57ZnnlJaTQRQEd4E7e2eAA'::text,'TEA TOP 第一味 溪湖二溪店'::text,'514彰化縣溪湖鎮光華里二溪路一段88號'::text,'彰化縣'::text,23.9596157::float8,120.47741309999998::float8,'OPERATIONAL'::text),
 (361,'ChIJFbUn5gcWaTQRuSBCRSNUX4I'::text,'TEA TOP第一味 台中西屯總店'::text,'407臺中市西屯區福雅里西屯路三段155號'::text,'台中市'::text,24.1865979::float8,120.6211827::float8,'OPERATIONAL'::text),
 (361,'ChIJxZxOn9szaTQRlwGFhQzVD8M'::text,'TEA TOP第一味 名間松柏嶺店'::text,'55143南投縣名間鄉松山村名松路二段177號1樓'::text,'南投縣'::text,23.833541099999998::float8,120.636361::float8,'OPERATIONAL'::text),
@@ -14,7 +27,6 @@ from (values
 (361,'ChIJ7xhvwHk9aTQRyquCL9KFCHs'::text,'TEA-TOP 第一味 台中民權店'::text,'404臺中市北區淡溝里民權路347號'::text,'台中市'::text,24.1561257::float8,120.6704677::float8,'OPERATIONAL'::text),
 (361,'ChIJG2Bgt7YbaTQRfKM9rIj7ygU'::text,'TEATOP台灣第一味 台中后綜店'::text,'421臺中市后里區墩東里三豐路三段883號'::text,'台中市'::text,24.3060734::float8,120.72166::float8,'OPERATIONAL'::text),
 (361,'ChIJ590wnmoVaTQR8kX9kL63kbE'::text,'Tea Top第一味(龍井沙田店)'::text,'434臺中市龍井區山腳里沙田路六段319號'::text,'台中市'::text,24.212674::float8,120.5512612::float8,'OPERATIONAL'::text),
-(361,'ChIJQ2W39GDLbjQRD7M32F5pbkE'::text,'TeaTop台灣第一味 彰化二水店'::text,'530彰化縣二水鄉光化村光文路68號'::text,'彰化縣'::text,23.812147000000003::float8,120.61684220000001::float8,'OPERATIONAL'::text),
 (361,'ChIJ57F_q-WpQjQR9ua_18-F7o8'::text,'TEA TOP 第一味(永和永元店）'::text,'234新北市永和區秀和里永元路95巷1號'::text,'新北市'::text,25.001841199999998::float8,121.52242609999999::float8,'OPERATIONAL'::text),
 (361,'ChIJi5YRTzg3aTQRESZUJQ3HVIY'::text,'TEA TOP台灣第一味 員林員水店'::text,'510彰化縣員林市萬年里員水路二段294號'::text,'彰化縣'::text,23.955423::float8,120.5822048::float8,'OPERATIONAL'::text),
 (361,'ChIJ2dzdYl89aTQRZe2k7optN-g'::text,'TEA-TOP 台灣第一味 台中興大店'::text,'402臺中市南區南門里南門路158號'::text,'台中市'::text,24.122507::float8,120.68031200000001::float8,'OPERATIONAL'::text),
@@ -186,12 +198,12 @@ on conflict (offer_id, place_id) do update set
 -- 自動隱藏（不刪除）。少貼一個檔的話這裡會報錯停下來，不會誤把一大堆分店藏掉。
 do $$
 begin
-  if (select count(*) from public.offer_stores where fetched_at = timestamptz '2026-09-14T10:02:54Z') < 9767 then
-    raise exception '前面的 stores_import 檔案還沒全部貼完（這一輪應該有 9767 家），先把缺的貼完再貼一次最後這個檔。';
+  if (select count(*) from public.offer_stores where fetched_at = timestamptz '2026-09-16T04:18:43Z') < 9779 then
+    raise exception '前面的 stores_import 檔案還沒全部貼完（這一輪應該有 9779 家），先把缺的貼完再貼一次最後這個檔。';
   end if;
 end $$;
 update public.offer_stores set hidden = true, hidden_by = 'import'
 where source = 'google_places' and not hidden
-  and offer_id in (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,115,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,197,198,199,200,201,202,203,204,205,214,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,252,277,290,293,296,298,299,300,301,302,303,304,305,306,307,308,309,310,311,312,313,314,315,316,317,318,319,320,321,322,323,324,326,327,328,329,330,331,332,333,334,335,336,337,340,341,342,343,344,345,346,347,348,352,353,354,355,356,357,358,359,360,361,362,363,364,365,366,367,368,369,370,372,373,374,375,376,377,378,379)
-  and fetched_at < timestamptz '2026-09-14T10:02:54Z';
+  and offer_id in (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,115,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,197,198,199,200,201,202,203,204,205,214,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,252,277,290,293,296,298,299,300,301,302,303,304,305,306,307,308,309,310,311,312,313,314,315,316,317,318,319,320,321,322,323,324,326,327,328,329,330,331,332,333,334,335,336,337,340,341,342,343,344,345,346,347,348,352,353,354,355,356,357,358,359,360,361,362,363,364,365,366,367,368,369,370,372,373,374,375,376,377,378,379,380,381,382,383,384,385,386,387,388,389,390)
+  and fetched_at < timestamptz '2026-09-16T04:18:43Z';
 commit;

@@ -1,11 +1,24 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 41/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 41/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(317,'ChIJYcy7n6I1aDQRkYA6bnZba6w'::text,'JerryBrunch & Night｜Fine Brunch 奢華早午餐'::text,'300新竹市東區中央路261號'::text,'新竹市'::text,24.81017::float8,120.97761019999999::float8,'OPERATIONAL'::text),
+(318,'ChIJ_-dqe3U9aTQR4Jy50r8M5cs'::text,'模範貝果MOFAN BAGELS'::text,'403臺中市西區雙龍里模範街1巷1號'::text,'台中市'::text,24.147082599999997::float8,120.66645810000001::float8,'OPERATIONAL'::text),
+(319,'ChIJi616FWGrQjQRBw77GqcgEzI'::text,'御私藏X Bye bye blues生乳捲南港環球百貨'::text,'115臺北市南港區新光里忠孝東路七段371號B1'::text,'台北市'::text,25.052895499999998::float8,121.6072597::float8,'OPERATIONAL'::text),
+(320,'ChIJFZifB7QXaTQRLwa4qvW8wBI'::text,'MAGEASY SwitchEasy 魚骨牌 台中漢神洲際店'::text,'406臺中市北屯區崇德路三段865號B1F'::text,'台中市'::text,24.1980078::float8,120.68523180000001::float8,'OPERATIONAL'::text),
+(320,'ChIJxUHG_EypQjQRy4taT_MSJEw'::text,'MAGEASY | SwitchEasy 魚骨牌 台北京站店 (B2F)'::text,'103臺北市大同區建明里承德路一段1號B2F'::text,'台北市'::text,25.049257599999997::float8,121.51719589999998::float8,'OPERATIONAL'::text),
+(320,'ChIJE6nTpWCpQjQRhZBXUltLpck'::text,'MAGEASY | SwitchEasy 魚骨牌 板橋大遠百店 (8F)'::text,'8F, No. 28號新站路福丘里板橋區新北市220'::text,'新北市'::text,25.0140651::float8,121.46733320000001::float8,'OPERATIONAL'::text),
+(320,'ChIJYTWnrIQ3aDQRVGDNwdn3MCA'::text,'MAGEASY | SwitchEasy 魚骨牌 遠東百貨竹北店 (4F)'::text,'302新竹縣竹北市十興里莊敬北路18號'::text,'新竹縣'::text,24.822509::float8,121.0237405::float8,'OPERATIONAL'::text),
+(320,'ChIJaSFmi2oFbjQRZ37kc0HFx_4'::text,'MAGEASY | SwitchEasy 魚骨牌 高雄漢神巨蛋店(B1F)'::text,'813高雄市左營區新下里博愛二路777號B1F'::text,'高雄市'::text,22.669592599999998::float8,120.30228600000001::float8,'OPERATIONAL'::text),
+(320,'ChIJ41ZeWBA9aTQRwtf-Vo4GcXo'::text,'MAGEASY | SwitchEasy 魚骨牌 新光三越 台中中港店 (B1F)'::text,'407台中市西屯区惠来里臺灣大道三段301號B1F'::text,'台中市'::text,24.164767299999998::float8,120.6434748::float8,'OPERATIONAL'::text),
+(320,'ChIJqZbDY7KrQjQRCxdkWZf7SYI'::text,'MAGEASY | SwitchEasy 魚骨牌 新光三越信義 A11 店 (3F)'::text,'110臺北市信義區西村里松壽路11號3樓'::text,'台北市'::text,25.036127999999998::float8,121.56739359999997::float8,'OPERATIONAL'::text),
+(320,'ChIJv-L8hHOVbjQRrMZWnO7gtBo'::text,'嘉義 SNOW精品手機配件店（imos經銷店/hoda經銷店/MAGEASY經銷店/iPhone/Samsung/三星/手機維修/UAG/軍規防摔殼/玻璃貼/藍寶石鏡頭環/犀牛盾/Navjack/換電池/空機買賣/二手機買賣/資料轉移）'::text,'600嘉義市西區獅子里南京路9號'::text,'嘉義市'::text,23.455928999999998::float8,120.44311270000001::float8,'OPERATIONAL'::text),
+(321,'ChIJS-hvGQAXaTQR7dqnSZj6pIE'::text,'DONQ東客麵包 漢神洲際店'::text,'406臺中市北屯區仁美里崇德路三段865號B1'::text,'台中市'::text,24.2006224::float8,120.6862964::float8,'OPERATIONAL'::text),
+(321,'ChIJq6qqqvd2bjQRjWohwj4fwcY'::text,'DONQ東客麵包 新光三越中山店'::text,'B2, No. 162號中山路城隍里中西區臺南市700'::text,'台南市'::text,22.995528999999998::float8,120.20984220000001::float8,'OPERATIONAL'::text),
 (321,'ChIJ0S5_sIw9aTQRBu5poVtGb_8'::text,'DONQ東客麵包 新光三越中港店'::text,'407臺中市西屯區惠來里臺灣大道三段301號'::text,'台中市'::text,24.1652572::float8,120.6437083::float8,'OPERATIONAL'::text),
 (321,'ChIJg4AOtW6pQjQRuP864XZ1nVA'::text,'DONQ東客麵包 新光三越南西店'::text,'10491臺北市中山區民安里南京西路12號B2'::text,'台北市'::text,25.052303799999997::float8,121.52110479999999::float8,'OPERATIONAL'::text),
 (321,'ChIJZdnth4OuQjQRfMfqI3gbAlw'::text,'DONQ東客麵包 新光三越天母店'::text,'111臺北市士林區天福里天母東路68號'::text,'台北市'::text,25.1179204::float8,121.5339295::float8,'OPERATIONAL'::text),
@@ -192,20 +205,7 @@ from (values
 (333,'ChIJJ7c_NwCdbjQRIuf-ebQSQxE'::text,'麥味登朴子南通店'::text,'613嘉義縣朴子市文化里南通路三段716號'::text,'嘉義縣'::text,23.4624605::float8,120.24285259999999::float8,'OPERATIONAL'::text),
 (333,'ChIJ89t3r1UlaDQRpRVTGkwzl1w'::text,'麥味登楊梅金山店'::text,'326桃園市楊梅區楊明里新農街497號1樓'::text,'桃園市'::text,24.912805199999998::float8,121.1604519::float8,'OPERATIONAL'::text),
 (333,'ChIJp8bATfsPbjQRHYRY0fVoOg8'::text,'麥味登楠梓清豐店'::text,'811高雄市楠梓區清豐里清豐三路153號'::text,'高雄市'::text,22.7395314::float8,120.33046209999999::float8,'OPERATIONAL'::text),
-(333,'ChIJW_J-RaAPbjQR0YE_ja6gPno'::text,'麥味登楠梓翠屏店'::text,'811高雄市楠梓區翠屏里翠屏路36號'::text,'高雄市'::text,22.725579::float8,120.29969629999998::float8,'OPERATIONAL'::text),
-(333,'ChIJybpfAwCRbjQRC1NOHXaV42c'::text,'麥味登水上市政店'::text,'608嘉義縣水上鄉水上村市政街83號'::text,'嘉義縣'::text,23.4299042::float8,120.39757399999999::float8,'OPERATIONAL'::text),
-(333,'ChIJf_QNWoJ3bjQR7ZAdSXLJBWA'::text,'麥味登永康鹽忠店'::text,'710臺南市永康區塩洲里鹽忠街116號'::text,'台南市'::text,23.0415298::float8,120.23318800000001::float8,'OPERATIONAL'::text),
-(333,'ChIJa1d9wMJTXTQRQOC68X15Yk4'::text,'麥味登汐止福德店'::text,'221新北市汐止區康福里福德一路20號'::text,'新北市'::text,25.0693531::float8,121.63862649999999::float8,'OPERATIONAL'::text),
-(333,'ChIJ70nYaiOvQjQRarUlZpVN6qw'::text,'麥味登淡水淡江店'::text,'25148新北市淡水區北新里北新路182巷37號'::text,'新北市'::text,25.1773836::float8,121.44849549999999::float8,'OPERATIONAL'::text),
-(333,'ChIJSZpx43wxaDQR3N_WPHV7KwA'::text,'麥味登湖口中山店'::text,'303新竹縣湖口鄉信義村中山二街67號'::text,'新竹縣'::text,24.895604199999998::float8,121.04057960000002::float8,'OPERATIONAL'::text),
-(333,'ChIJQV00uXYxaDQRozIY5nb_IWo'::text,'麥味登湖口晨安店'::text,'303新竹縣湖口鄉中正村中正路二段273號'::text,'新竹縣'::text,24.8904417::float8,121.05146900000001::float8,'OPERATIONAL'::text),
-(333,'ChIJuRV5hMhPXTQRzwR3y-LZVjY'::text,'麥味登瑞芳明燈店'::text,'224新北市瑞芳區龍興里明燈路三段81號'::text,'新北市'::text,25.108283099999998::float8,121.8052678::float8,'OPERATIONAL'::text),
-(333,'ChIJJ6wLGAD7ZzQRMK_Z6c3B0fo'::text,'麥味登礁溪大忠店'::text,'262宜蘭縣礁溪鄉大忠村大忠路147號'::text,'宜蘭縣'::text,24.821845999999997::float8,121.76579::float8,'OPERATIONAL'::text),
-(333,'ChIJkXo6uq2faDQRTBzPx1Z0jyk'::text,'麥味登花蓮吉安店'::text,'973花蓮縣吉安鄉南昌村中山路二段89號'::text,'花蓮縣'::text,23.9709178::float8,121.58300009999999::float8,'OPERATIONAL'::text),
-(333,'ChIJ1TkVHbwFbjQRyK_odeuH8DM'::text,'麥味登高雄建元店'::text,'807057高雄市三民區正興里建元路7號'::text,'高雄市'::text,22.647644::float8,120.31779600000002::float8,'OPERATIONAL'::text),
-(333,'ChIJ-9moc7kbbjQRQmOd0iFSJSQ'::text,'麥味登鳳山大東店'::text,'830高雄市鳳山區和德里大東二路29號'::text,'高雄市'::text,22.620354499999998::float8,120.3601263::float8,'OPERATIONAL'::text),
-(333,'ChIJNyNj4YE9aDQReylGRbEMtbA'::text,'麥味登龍潭中豐店'::text,'325桃園市龍潭區中豐路531號'::text,'桃園市'::text,24.883993999999998::float8,121.21186390000001::float8,'OPERATIONAL'::text),
-(333,'ChIJOZFzX-kbaDQRz7i2SDOR9ZE'::text,'麥味登 三峽大同店'::text,'237新北市三峽區安溪里大同路196-2號'::text,'新北市'::text,24.927137::float8,121.3710409::float8,'OPERATIONAL'::text)
+(333,'ChIJW_J-RaAPbjQR0YE_ja6gPno'::text,'麥味登楠梓翠屏店'::text,'811高雄市楠梓區翠屏里翠屏路36號'::text,'高雄市'::text,22.725579::float8,120.29969629999998::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

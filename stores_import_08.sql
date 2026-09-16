@@ -1,10 +1,10 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 8/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 8/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
 (5,'ChIJP1RRQZipQjQRQ_o_5lircOM'::text,'Dicos德克士脆皮炸雞-台北重慶南店'::text,'100臺北市中正區光復里重慶南路一段100號'::text,'台北市'::text,25.042622::float8,121.51307200000001::float8,'OPERATIONAL'::text),
 (5,'ChIJ5_OcQImvQjQRcvC4JPCzYwA'::text,'Dicos德克士脆皮炸雞-天母棒球場店(依球賽時間營業)'::text,'111臺北市士林區三玉里忠誠路二段77號'::text,'台北市'::text,25.1132352::float8,121.532986::float8,'OPERATIONAL'::text),

@@ -79,7 +79,7 @@ python fetch_stores.py
 - [ ] 手機實測：把距離從 1 公里調到 30 公里，列表筆數跟著變
 - [ ] 桌機實測：地圖可以拖曳、縮放，放大後會出現分店點，點「看優惠」會開詳情
 - [ ] `cd jstest && node run_all.js` 全綠
-- [ ] 地圖圖磚：目前用 OpenStreetMap 官方圖磚，它的[使用政策](https://operations.osmfoundation.org/policies/tiles/)不適合大流量。流量變大前，要換成 MapTiler、Stadia 之類的圖磚服務（改 `openNearMap()` 裡的 `tileLayer` 網址即可）
+- [x] 地圖圖磚：已經從 OpenStreetMap 官方圖磚（[使用政策](https://operations.osmfoundation.org/policies/tiles/)不適合大流量）換成 **CARTO Voyager**——一樣是 OSM 的資料、不用金鑰、專門給網站/App 用，有標示出處。之後想換成有 SLA 的服務（MapTiler、Stadia…），在 `config.js` 設 `window.MAPTILER_KEY` 或 `window.MAP_TILES`，不用改程式
 - [ ] 定期更新：分店會開關店，建議每季用 `python fetch_stores.py --refresh` 重抓一次
 
 合併：

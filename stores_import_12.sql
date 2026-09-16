@@ -1,11 +1,19 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 12/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 12/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(33,'ChIJXT9XBwG5bzQRdVaUYgVZpTw'::text,'鮮茶道（台東漢陽店）'::text,'950臺東縣臺東市豐榮里漢陽北路165號'::text,'台東縣'::text,22.7470255::float8,121.1345215::float8,'OPERATIONAL'::text),
+(33,'ChIJuWN7XBvJbzQRgk7IO2r4TaU'::text,'鮮茶道（台東知本店）'::text,'950臺東縣臺東市台東市富裕路105號'::text,'台東縣'::text,22.710851299999998::float8,121.0587012::float8,'OPERATIONAL'::text),
+(33,'ChIJM1dXq1K5bzQROyqnwgvHY9A'::text,'鮮茶道（台東秀泰店）'::text,'950臺東縣臺東市中山里新生路110號之1號'::text,'台東縣'::text,22.752387::float8,121.1485804::float8,'OPERATIONAL'::text),
+(33,'ChIJ42TNzl2lbzQRhph0l1RVPhg'::text,'鮮茶道（台東鹿野店）'::text,'955臺東縣鹿野鄉鹿野村中華路二段50號'::text,'台東縣'::text,22.9119492::float8,121.13614059999999::float8,'OPERATIONAL'::text),
+(33,'ChIJN7p_kiqUbjQRzfMMb3VA6_E'::text,'鮮茶道（嘉義北興店）'::text,'600嘉義市西區重興里北興街318號'::text,'嘉義市'::text,23.4857577::float8,120.4383266::float8,'OPERATIONAL'::text),
+(33,'ChIJhWHuujXoZzQR9V4hFmokfJ4'::text,'鮮茶道（宜蘭蘇澳店）'::text,'270宜蘭縣蘇澳鎮蘇南里中山路一段20號'::text,'宜蘭縣'::text,24.5961818::float8,121.85257569999999::float8,'OPERATIONAL'::text),
+(33,'ChIJs4FmMTIibjQRwKDyEY-FdTo'::text,'鮮茶道（屏東萬巒店）'::text,'923屏東縣萬巒鄉萬和村褒忠路157號'::text,'屏東縣'::text,22.573175::float8,120.56917000000001::float8,'OPERATIONAL'::text),
+(33,'ChIJ26BjCuRTaTQRKomVVA2ap5E'::text,'鮮茶道（彰化王功店）'::text,'528彰化縣芳苑鄉博愛村芳漢路王功段615號'::text,'彰化縣'::text,23.9658239::float8,120.3409397::float8,'OPERATIONAL'::text),
 (33,'ChIJ61Vzfd65bzQR6vYjhTk2OEc'::text,'鮮茶道（新生國中店）'::text,'950臺東縣臺東市馬蘭里新生路701號'::text,'台東縣'::text,22.763712299999998::float8,121.13566250000001::float8,'OPERATIONAL'::text),
 (33,'ChIJ4xYiZTWvaDQR9mUp1v2B3jw'::text,'鮮茶道（花蓮鳳林店）'::text,'3號, 中山路鳳智里鳳林鎮花蓮縣975'::text,'花蓮縣'::text,23.7457651::float8,121.448261::float8,'OPERATIONAL'::text),
 (33,'ChIJAeX8bwBBbjQR0rfZMQrmrnw'::text,'鮮茶道（高雄美濃店）'::text,'843高雄市美濃區泰安里中正路一段41號'::text,'高雄市'::text,22.900541500000003::float8,120.54186699999998::float8,'OPERATIONAL'::text),
@@ -197,15 +205,7 @@ from (values
 (36,'ChIJ_7vyhEPnZzQRIC1sGfQcehU'::text,'茶聚CHAGE冬山南興店'::text,'269宜蘭縣冬山鄉冬山路一段986巷12號喜互惠對面'::text,'宜蘭縣'::text,24.633747699999997::float8,121.7917231::float8,'OPERATIONAL'::text),
 (36,'ChIJq4L_9WqvQjQRxc1WeN45mYI'::text,'茶聚CHAGE北投尊賢店'::text,'112臺北市北投區立賢里尊賢街209號'::text,'台北市'::text,25.115373599999998::float8,121.50785619999999::float8,'OPERATIONAL'::text),
 (36,'ChIJ4yZpgpw9aTQR7Ap0KbhO2gQ'::text,'茶聚CHAGE南屯大墩店'::text,'408臺中市南屯區大興里南屯路二段202號'::text,'台中市'::text,24.1367732::float8,120.65041400000001::float8,'OPERATIONAL'::text),
-(36,'ChIJZfVSvaChQjQRp1K0_bmKXpQ'::text,'茶聚CHAGE南崁南上店'::text,'333桃園市龜山區南美里南上路66號'::text,'桃園市'::text,25.0479167::float8,121.2966501::float8,'OPERATIONAL'::text),
-(36,'ChIJi-lT5_urQjQRpEAEHMMfryA'::text,'茶聚CHAGE南港玉成店'::text,'115004臺北市南港區西新里南港路三段25號'::text,'台北市'::text,25.0537524::float8,121.5914183::float8,'OPERATIONAL'::text),
-(36,'ChIJwfHoMhypQjQRDjUK-WIHYow'::text,'茶聚CHAGE台北長安店'::text,'103臺北市大同區建功里長安西路129號'::text,'台北市'::text,25.051396::float8,121.51529069999998::float8,'OPERATIONAL'::text),
-(36,'ChIJWaUcfBMRaTQRbKjpTLru4TU'::text,'茶聚CHAGE大甲鎮瀾店'::text,'437臺中市大甲區鎮瀾街163號1樓'::text,'台中市'::text,24.3456947::float8,120.6239183::float8,'OPERATIONAL'::text),
-(36,'ChIJxRGYrooBaDQRgaew5qhIhpY'::text,'茶聚CHAGE文山木新店'::text,'116臺北市文山區順興里木新路二段262號'::text,'台北市'::text,24.983169399999998::float8,121.5660206::float8,'OPERATIONAL'::text),
-(36,'ChIJs_DMO16pQjQRB84p5v-2tGw'::text,'茶聚CHAGE板橋大仁店'::text,'220新北市板橋區社後里大仁街25號'::text,'新北市'::text,25.0167449::float8,121.455547::float8,'OPERATIONAL'::text),
-(36,'ChIJ_6fuqOupQjQRo001GERBZZg'::text,'茶聚CHAGE板橋莒光店'::text,'22042新北市板橋區埤墘里莒光路196巷1號'::text,'新北市'::text,25.0222816::float8,121.47411160000001::float8,'OPERATIONAL'::text),
-(36,'ChIJuUAieREfaDQRRJpL55qUfSE'::text,'茶聚CHAGE桃園中正店'::text,'330桃園市桃園區東埔里中正路534號'::text,'桃園市'::text,25.003069::float8,121.30581219999999::float8,'OPERATIONAL'::text),
-(36,'ChIJWQRwTZKpQjQR4ENL40d6Qjs'::text,'茶聚CHAGE永和竹林店'::text,'234新北市永和區竹林路41號'::text,'新北市'::text,25.014124::float8,121.51798900000001::float8,'OPERATIONAL'::text)
+(36,'ChIJZfVSvaChQjQRp1K0_bmKXpQ'::text,'茶聚CHAGE南崁南上店'::text,'333桃園市龜山區南美里南上路66號'::text,'桃園市'::text,25.0479167::float8,121.2966501::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

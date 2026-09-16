@@ -1,11 +1,24 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 37/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 37/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(247,'ChIJJaH-FmQXaTQR49hbk1zSoWs'::text,'POYA寶雅 台中潭子店'::text,'427臺中市潭子區甘蔗里雅潭路一段99巷2號'::text,'台中市'::text,24.215671999999998::float8,120.70243010000002::float8,'OPERATIONAL'::text),
+(247,'ChIJJ90nMripQjQRqIVcuBTcs9c'::text,'POYA寶雅 台北公館店'::text,'100臺北市中正區水源里汀州路三段184-4號'::text,'台北市'::text,25.012843699999998::float8,121.5349729::float8,'OPERATIONAL'::text),
+(247,'ChIJxxUb51uvQjQRWOPFfWPk9zs'::text,'POYA寶雅 台北北投店'::text,'112臺北市北投區大同里北投路二段9號B1'::text,'台北市'::text,25.130497::float8,121.498815::float8,'OPERATIONAL'::text),
+(247,'ChIJb_xsJzWpQjQRfMEOsXHrHoY'::text,'POYA寶雅 台北南西店'::text,'10491臺北市中山區民安里南京西路1號'::text,'台北市'::text,25.0525836::float8,121.52206419999999::float8,'OPERATIONAL'::text),
+(247,'ChIJfROGo7arQjQRPiUwGUJAbxQ'::text,'POYA寶雅 台北景美店'::text,'116臺北市文山區景行里景後街130號'::text,'台北市'::text,24.991448199999997::float8,121.54246529999999::float8,'OPERATIONAL'::text),
+(247,'ChIJa6bCs65PXTQRlWJOwvpygV4'::text,'POYA寶雅 台北瑞芳店'::text,'224新北市瑞芳區龍興里民生街5號'::text,'新北市'::text,25.10842::float8,121.80633619999999::float8,'OPERATIONAL'::text),
+(247,'ChIJqc0Ji_OrQjQRdKIkiSlabls'::text,'POYA寶雅 台北臨江店'::text,'106臺北市大安區通化里臨江街87號B1'::text,'台北市'::text,25.030218599999998::float8,121.55500550000001::float8,'OPERATIONAL'::text),
+(247,'ChIJIWO35ppzbjQR4UNLKw3CZsk'::text,'POYA寶雅 台南三井店'::text,'711013臺南市歸仁區武東里歸仁大道101號2樓'::text,'台南市'::text,22.9237309::float8,120.28786699999999::float8,'OPERATIONAL'::text),
+(247,'ChIJ87tOHQB3bjQR1QdtYj_BYDU'::text,'POYA寶雅 台南中山店'::text,'700臺南市中西區城隍里中山路166號9樓'::text,'台南市'::text,22.9955969::float8,120.21006360000001::float8,'OPERATIONAL'::text),
+(247,'ChIJ9QgLbN91bjQRe81ieLkHXYw'::text,'POYA寶雅 台南健康店'::text,'702臺南市南區文南里中華西路一段175號'::text,'台南市'::text,22.9823839::float8,120.18591989999999::float8,'OPERATIONAL'::text),
+(247,'ChIJJ6-k0Y52bjQRA8swM5nJzYA'::text,'POYA寶雅 台南北門店'::text,'700臺南市中西區城隍里北門路一段101號'::text,'台南市'::text,22.992191899999998::float8,120.211512::float8,'OPERATIONAL'::text),
+(247,'ChIJuw7fgb13bjQRsd7MLSgDzYQ'::text,'POYA寶雅 台南大學店'::text,'701006臺南市東區大學里大學路8號'::text,'台南市'::text,22.9960359::float8,120.2201829::float8,'OPERATIONAL'::text),
+(247,'ChIJiYornvd2bjQR4tRiSDtDtwg'::text,'POYA寶雅 台南小北店'::text,'704臺南市北區成德里西門路四段169號'::text,'台南市'::text,23.010055599999998::float8,120.2079485::float8,'OPERATIONAL'::text),
 (247,'ChIJ7Qe6cZZ2bjQROkVq5end7hQ'::text,'POYA寶雅 台南東寧店'::text,'701臺南市東區東明里東寧路229號'::text,'台南市'::text,22.9907664::float8,120.22633139999999::float8,'OPERATIONAL'::text),
 (247,'ChIJocSjXGNxbjQRxogJA-nwvyM'::text,'POYA寶雅 台南歸仁店'::text,'71152臺南市歸仁區南保里中山路三段133號'::text,'台南市'::text,22.9677686::float8,120.28443909999999::float8,'OPERATIONAL'::text),
 (247,'ChIJZysBAVR3bjQRd-68iPx4ESA'::text,'POYA寶雅 台南永華店'::text,'708臺南市安平區怡平里永華路二段466號'::text,'台南市'::text,22.990617::float8,120.1764576::float8,'OPERATIONAL'::text),
@@ -192,20 +205,7 @@ from (values
 (247,'ChIJawgxjCsXaTQRw1MvjVlHO1A'::text,'POYA寶雅 台中崇德二店'::text,'406臺中市北屯區平和里崇德路二段219號'::text,'台中市'::text,24.1744119::float8,120.68538389999999::float8,'OPERATIONAL'::text),
 (247,'ChIJ1af4FAA9aTQRH3D-ZKSirUA'::text,'POYA寶雅 台中文心南店'::text,'408臺中市南屯區豐樂里文心南路488號'::text,'台中市'::text,24.1244124::float8,120.6476204::float8,'OPERATIONAL'::text),
 (247,'ChIJHT-cZIY9aTQRSwQuBvHBnPY'::text,'POYA寶雅 台中河南二店'::text,'407臺中市西屯區上德里河南路二段451、453號'::text,'台中市'::text,24.169673::float8,120.64290539999998::float8,'OPERATIONAL'::text),
-(247,'ChIJ37LlEK49aTQRXThXaLwxeSk'::text,'POYA寶雅 台中漢口三店'::text,'407臺中市西屯區何福里漢口路二段182號'::text,'台中市'::text,24.166108::float8,120.663867::float8,'OPERATIONAL'::text),
-(247,'ChIJ05asbdkXaTQRVUgD9MDKd0k'::text,'POYA寶雅 台中漢口二店'::text,'404臺中市北區梅川里漢口路四段389號'::text,'台中市'::text,24.1671254::float8,120.6844306::float8,'OPERATIONAL'::text),
-(247,'ChIJva3IiPg8aTQREFOfLXAoyKE'::text,'POYA寶雅 台中美村南店'::text,'40253臺中市南區和平里美村南路70號'::text,'台中市'::text,24.1165457::float8,120.66696369999998::float8,'OPERATIONAL'::text),
-(247,'ChIJw2JybwCpQjQR422gTHBSDxw'::text,'POYA寶雅 台北中山北店'::text,'10491臺北市中山區晴光里中山北路三段47號1樓'::text,'台北市'::text,25.0666831::float8,121.52265140000002::float8,'OPERATIONAL'::text),
-(247,'ChIJhZ0uOACrQjQRJLaxNhA57CM'::text,'POYA寶雅 台北復興北店'::text,'105臺北市松山區民有里復興北路331號'::text,'台北市'::text,25.059675799999997::float8,121.54442750000001::float8,'OPERATIONAL'::text),
-(247,'ChIJC5ppS7upQjQRJmsX45AN5Ao'::text,'POYA寶雅 台北民生西店'::text,'10345臺北市大同區朝陽里民生西路300之3號1樓'::text,'台北市'::text,25.056849999999997::float8,121.512328::float8,'OPERATIONAL'::text),
-(247,'ChIJadfzZUypQjQRkdd6gr3N2P0'::text,'POYA寶雅 台北重慶北店'::text,'103臺北市大同區重慶北路一段67號1、2樓'::text,'台北市'::text,25.0518038::float8,121.51413379999998::float8,'OPERATIONAL'::text),
-(247,'ChIJr67YHAB3bjQR5xmRFGhz_ac'::text,'POYA寶雅 台南健康二店'::text,'700臺南市中西區法華里健康路一段182號'::text,'台南市'::text,22.981468::float8,120.206626::float8,'OPERATIONAL'::text),
-(247,'ChIJC72GfOl3bjQR4FKp5oPRbpg'::text,'POYA寶雅 台南海佃二店'::text,'709030臺南市安南區海佃里海佃路一段371號'::text,'台南市'::text,23.027652999999997::float8,120.19059299999998::float8,'OPERATIONAL'::text),
-(247,'ChIJO_usYQA9aTQRqkV0xHhNZGg'::text,'POYA寶雅 大里中興二店'::text,'412臺中市大里區東湖里中興路一段155-5號'::text,'台中市'::text,24.0852538::float8,120.6963842::float8,'OPERATIONAL'::text),
-(247,'ChIJF5StWwAjaTQRIroxz2gmeRY'::text,'POYA寶雅 太平中興東店'::text,'411臺中市太平區永平里中興東路17號'::text,'台中市'::text,24.1297312::float8,120.71919520000002::float8,'OPERATIONAL'::text),
-(247,'ChIJt4hILIUXbjQRzsZOc5ZXI_w'::text,'POYA寶雅 屏東自由二店'::text,'900屏東縣屏東市北勢里自由路482號'::text,'屏東縣'::text,22.683704000000002::float8,120.49022040000001::float8,'OPERATIONAL'::text),
-(247,'ChIJs3G5PNMNbjQRs77EihmiwsU'::text,'POYA寶雅 岡山中山北店'::text,'820高雄市岡山區碧紅里中山北路79號'::text,'高雄市'::text,22.795314899999997::float8,120.29842380000001::float8,'OPERATIONAL'::text),
-(247,'ChIJ93BwANEfaDQRLir1NjkmK4c'::text,'POYA寶雅 桃園中山東店'::text,'330桃園市桃園區中山東路32-10號'::text,'桃園市'::text,24.9959134::float8,121.31507359999998::float8,'OPERATIONAL'::text)
+(247,'ChIJ37LlEK49aTQRXThXaLwxeSk'::text,'POYA寶雅 台中漢口三店'::text,'407臺中市西屯區何福里漢口路二段182號'::text,'台中市'::text,24.166108::float8,120.663867::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

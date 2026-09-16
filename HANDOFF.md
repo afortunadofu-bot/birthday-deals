@@ -196,12 +196,14 @@ celine 會轉述朋友「嵐」的回饋（口語、有時間戳、繁中）。�
 2. 地圖功能：附近店家優惠——**已經合併回 `main` 上線**（2026-09-16）。程式、SQL（v58）、
    分店資料（`stores_import_*.sql`，9767 家）、測試（`jstest/t06_near_me.js`）都在 main 上。
    還沒收尾的兩件事：
-   - `store_search_aliases.json` 最下面 `_待celine確認` 那 10 個品牌還是 0 家分店
-     （薄多義、忠泰樂、波記、喜多酸菜魚、Mr. May、喬義思、烤狀猿、丹蕾，以及天成／米塔／
-     瓦城泰統／京星集團優惠涵蓋哪些品牌）。celine 確認後改別名、`python fetch_stores.py
-     --cache-only` 重新產生匯入檔再貼一次即可
-   - 地圖圖磚目前用 OpenStreetMap 官方圖磚，流量變大前要換成 MapTiler／Stadia
-     （改 `openNearMap()` 裡的 `tileLayer` 網址），見 `GEO-SETUP.md`
+   - 原本待確認的 10 個品牌已經逐筆判斷完（理由在 `store_search_aliases.json` 的 `_判斷紀錄`）。
+     還沒補完的只剩兩類，兩個都要帶 `GOOGLE_MAPS_API_KEY` 在自己電腦上跑：
+     (a) 集團優惠（天成／米塔／瓦城泰統／京星）已列出旗下品牌當查詢字，但那是新的查詢字，
+         `--cache-only` 抓不到，要正常跑一次；
+     (b) 喬義思、烤狀猿的適用地區要先跑 `schema_v66_fix_offer_regions.sql` 改對，
+         再 `python fetch_stores.py --only 喬義思` / `--only 烤狀猿`
+   - 地圖圖磚已經換成 CARTO Voyager（不用金鑰）。要換成有 SLA 的服務時在 `config.js` 設
+     `window.MAPTILER_KEY` 或 `window.MAP_TILES`，不用改程式，見 `GEO-SETUP.md`
 3. 洞察分析加品牌／使用趨勢走勢圖
 4. i18n 多語系
 

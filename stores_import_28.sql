@@ -1,11 +1,24 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 28/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 28/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(111,'ChIJezNjQEG3bjQRPfnE3xj6Akk'::text,'遠傳雲林虎尾直營門市'::text,'632雲林縣虎尾鎮新興里中正路37號'::text,'雲林縣'::text,23.709450699999998::float8,120.4365871::float8,'OPERATIONAL'::text),
+(111,'ChIJ-TxsIEuvbjQR-Pmg-CaHcqw'::text,'遠傳雲林麥寮加盟門市'::text,'638雲林縣麥寮鄉麥豐村光復南路348號'::text,'雲林縣'::text,23.746568::float8,120.2560115::float8,'OPERATIONAL'::text),
+(111,'ChIJ357A29IYaDQR0KCOTpPNYjg'::text,'遠傳電信八德直營門市'::text,'334桃園市八德區大忠里介壽路一段933號'::text,'桃園市'::text,24.959669899999998::float8,121.29986400000001::float8,'OPERATIONAL'::text),
+(111,'ChIJZUn21Z87aTQRRn755UQZfNI'::text,'遠傳霧峰中正加盟門市'::text,'413臺中市霧峰區中正里中正路966號'::text,'台中市'::text,24.065898400000002::float8,120.6989616::float8,'OPERATIONAL'::text),
+(111,'ChIJL3C8wwc7aTQRArSilIb7RDA'::text,'遠傳霧峰樹仁直營門市'::text,'413臺中市霧峰區本堂里樹仁路41號'::text,'台中市'::text,24.063795499999998::float8,120.6970688::float8,'OPERATIONAL'::text),
+(111,'ChIJ9xRUTLsEbjQRGSMktlVeRs4'::text,'遠傳高雄三信直營門市'::text,'802高雄市苓雅區林靖里三多二路78號'::text,'高雄市'::text,22.621509099999997::float8,120.32717199999999::float8,'OPERATIONAL'::text),
+(111,'ChIJwe3TnwUFbjQRfPBEnSqKiWg'::text,'遠傳高雄三多直營門市'::text,'806高雄市前鎮區盛興里三多三路171號'::text,'高雄市'::text,22.6151905::float8,120.30870589999999::float8,'OPERATIONAL'::text),
+(111,'ChIJp4mcwZkEbjQRVVfRnsm740k'::text,'遠傳高雄光華直營門市'::text,'802高雄市苓雅區中正里光華一路148之76號'::text,'高雄市'::text,22.624755399999998::float8,120.31547450000001::float8,'OPERATIONAL'::text),
+(111,'ChIJbyr_JAwFbjQRUW6FuGYWlx0'::text,'遠傳高雄博愛直營門市'::text,'813高雄市左營區菜公里博愛三路257號'::text,'高雄市'::text,22.674709999999997::float8,120.3051479::float8,'OPERATIONAL'::text),
+(111,'ChIJU8KbCIIPbjQRmGTEGjqXcSU'::text,'遠傳高雄右昌加盟門市'::text,'811高雄市楠梓區和昌里後昌路755號'::text,'高雄市'::text,22.709950499999998::float8,120.296292::float8,'OPERATIONAL'::text),
+(111,'ChIJ68c3sAocbjQRYg6GMY3C1t8'::text,'遠傳高雄大寮直營門市'::text,'831高雄市大寮區大寮里大寮路612號'::text,'高雄市'::text,22.591877099999998::float8,120.41286629999999::float8,'OPERATIONAL'::text),
+(111,'ChIJy401b9gEbjQRRjmj6Uhq_Bg'::text,'遠傳高雄大昌直營門市'::text,'807高雄市三民區本武里大昌二路552號'::text,'高雄市'::text,22.652046799999997::float8,120.32988549999999::float8,'OPERATIONAL'::text),
+(111,'ChIJQSmMjJ0bbjQRzcv-kKAw5L8'::text,'遠傳高雄大樹加盟門市'::text,'840高雄市大樹區久堂里久堂路143號'::text,'高雄市'::text,22.6579408::float8,120.41641589999999::float8,'OPERATIONAL'::text),
 (111,'ChIJ8_1me2ERbjQRKHYe5EJoyrY'::text,'遠傳高雄大社加盟門市'::text,'815高雄市大社區大社里中山路247號'::text,'高雄市'::text,22.7319841::float8,120.34844329999999::float8,'OPERATIONAL'::text),
 (111,'ChIJyX2nPIcFbjQRmhLLLnK0Elk'::text,'遠傳高雄天祥直營門市'::text,'807高雄市三民區鼎力里天祥一路170號'::text,'高雄市'::text,22.6679659::float8,120.318483::float8,'OPERATIONAL'::text),
 (111,'ChIJExIfDdMdbjQRulTDVI05TFM'::text,'遠傳高雄小港加盟門市'::text,'812高雄市小港區順苓里漢民路361號'::text,'高雄市'::text,22.567::float8,120.35622500000001::float8,'OPERATIONAL'::text),
@@ -192,20 +205,7 @@ from (values
 (111,'ChIJi7V40QSoQjQR8DMfDbCUQ9U'::text,'遠傳電信 板橋中正直營門市'::text,'220新北市板橋區建國里中正路156號'::text,'新北市'::text,25.0167377::float8,121.4566941::float8,'OPERATIONAL'::text),
 (111,'ChIJP1ZpqxSoQjQRDzDOM_RbZK0'::text,'遠傳電信 板橋四維直營門市'::text,'220新北市板橋區明翠里四維路185號'::text,'新北市'::text,25.0267257::float8,121.46413729999999::float8,'OPERATIONAL'::text),
 (111,'ChIJoyAhFbsCaDQRYptnIYItWxQ'::text,'遠傳電信 板橋國慶直營門市'::text,'220新北市板橋區重慶里國慶路145號'::text,'新北市'::text,24.9961181::float8,121.46128650000001::float8,'OPERATIONAL'::text),
-(111,'ChIJsdPPQRGoQjQR3-rMf0jF-Jo'::text,'遠傳電信 板橋新海加盟門市'::text,'220新北市板橋區文德里新海路132號1樓'::text,'新北市'::text,25.0231519::float8,121.4611382::float8,'OPERATIONAL'::text),
-(111,'ChIJr8Ij2EWoQjQRD1fcRxoPggk'::text,'遠傳電信 板橋民治直營門市'::text,'220新北市板橋區嵐翠里民治街132號'::text,'新北市'::text,25.0309417::float8,121.4777646::float8,'OPERATIONAL'::text),
-(111,'ChIJgbiITT6oQjQRQBL1FCnJb3w'::text,'遠傳電信 板橋莒光直營門市'::text,'220新北市板橋區莒光里莒光路46號'::text,'新北市'::text,25.024291299999998::float8,121.47063179999999::float8,'OPERATIONAL'::text),
-(111,'ChIJQbg3XXupQjQRIi1pmT6ZiDk'::text,'遠傳電信 板橋雙十直營門市'::text,'220新北市板橋區忠翠里雙十路二段71號1樓'::text,'新北市'::text,25.026753799999998::float8,121.47615839999999::float8,'OPERATIONAL'::text),
-(111,'ChIJuV_lauWmQjQReFn4k7vym64'::text,'遠傳電信 林口竹林直營門市'::text,'244新北市林口區西林里竹林路33號'::text,'新北市'::text,25.077531::float8,121.38673759999999::float8,'OPERATIONAL'::text),
-(111,'ChIJqdXt3vseaDQRXmwrDQs8nBA'::text,'遠傳電信 桃園成功直營門市'::text,'330桃園市桃園區東門里成功路二段55號'::text,'桃園市'::text,24.9939774::float8,121.3159197::float8,'OPERATIONAL'::text),
-(111,'ChIJYwPzRG1TXTQRN0Ma6LxzY2M'::text,'遠傳電信 汐止忠孝加盟門市'::text,'221新北市汐止區新昌里忠孝東路202號'::text,'新北市'::text,25.066074::float8,121.6617947::float8,'OPERATIONAL'::text),
-(111,'ChIJlSxj7lWlQjQR3c_yERP0lZA'::text,'遠傳電信 淡水北新加盟門市'::text,'251新北市淡水區水碓里北新路14號'::text,'新北市'::text,25.1775909::float8,121.4446675::float8,'OPERATIONAL'::text),
-(111,'ChIJHadcnfk2aDQRnSITWC1e2no'::text,'遠傳電信 竹北自強直營門市'::text,'302新竹縣竹北市鹿場里自強南路160號'::text,'新竹縣'::text,24.8161341::float8,121.0248476::float8,'OPERATIONAL'::text),
-(111,'ChIJf4GkVZizaTQRZzprnjcf5BI'::text,'遠傳電信 竹南博愛加盟門市'::text,'350苗栗縣竹南鎮竹南里博愛街137號'::text,'苗栗縣'::text,24.686663::float8,120.875191::float8,'OPERATIONAL'::text),
-(111,'ChIJ_9Hi3bmfaDQRpX8l_Wv6KF8'::text,'遠傳電信 花蓮中山加盟門市'::text,'970花蓮縣花蓮市國聯里中山路599號'::text,'花蓮縣'::text,23.988536::float8,121.6002261::float8,'OPERATIONAL'::text),
-(111,'ChIJoXy9ZsyoQjQRNG1qQqUN4Rk'::text,'遠傳電信 蘆洲復興直營門市'::text,'247新北市蘆洲區鷺江里復興路84號'::text,'新北市'::text,25.0866714::float8,121.47530499999999::float8,'OPERATIONAL'::text),
-(111,'ChIJP4RTfmI9aTQRyqDdLTz2_NA'::text,'遠傳電信 進化學士直營門市'::text,'404臺中市北區賴村里進化北路345號'::text,'台中市'::text,24.1629796::float8,120.680674::float8,'OPERATIONAL'::text),
-(111,'ChIJz2D0YtaoQjQRKMG5HpJoRp0'::text,'遠傳電信-三重溪尾加盟門市'::text,'241新北市三重區慈福里溪尾街172號1樓'::text,'新北市'::text,25.080503699999998::float8,121.488534::float8,'OPERATIONAL'::text)
+(111,'ChIJsdPPQRGoQjQR3-rMf0jF-Jo'::text,'遠傳電信 板橋新海加盟門市'::text,'220新北市板橋區文德里新海路132號1樓'::text,'新北市'::text,25.0231519::float8,121.4611382::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

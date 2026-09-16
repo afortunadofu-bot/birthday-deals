@@ -1,11 +1,19 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 22/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 22/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
+(51,'ChIJ-SJN1WsfaDQRJgKjM74jCfM'::text,'屈臣氏Watsons 新龍安門市'::text,'330桃園市桃園區龍鳳里龍安街140號'::text,'桃園市'::text,24.9907799::float8,121.2798085::float8,'OPERATIONAL'::text),
+(51,'ChIJsUjQ6QaqQjQRPskOllglsbE'::text,'屈臣氏Watsons 景美二門市'::text,'116臺北市文山區景東里景興路195號'::text,'台北市'::text,24.9921796::float8,121.54418079999999::float8,'OPERATIONAL'::text),
+(51,'ChIJkb8sAZanQjQRp0kIRtqIBj8'::text,'屈臣氏Watsons 林口三門市'::text,'244新北市林口區仁愛里仁愛路二段247號'::text,'新北市'::text,25.0768408::float8,121.37418129999999::float8,'OPERATIONAL'::text),
+(51,'ChIJcVp0bvqnQjQRnXSRhpxhFxo'::text,'屈臣氏Watsons 林口二門市'::text,'244新北市林口區南勢里文化二路一段152號'::text,'新北市'::text,25.0712266::float8,121.36832799999999::float8,'OPERATIONAL'::text),
+(51,'ChIJ4dh8dACpQjQR2hC7Rft3DS8'::text,'屈臣氏Watsons 校園二門市'::text,'106臺北市大安區大學里羅斯福路三段327號'::text,'台北市'::text,25.01707::float8,121.53230699999999::float8,'OPERATIONAL'::text),
+(51,'ChIJqfpxdUKpQjQRcKZFa3M58xo'::text,'屈臣氏Watsons 民生西門市'::text,'103臺北市大同區雙連里民生西路231號'::text,'台北市'::text,25.057214::float8,121.5158016::float8,'OPERATIONAL'::text),
+(51,'ChIJtxWzBZg9aTQRm6AnQrXgfrU'::text,'屈臣氏Watsons 精誠二門市'::text,'407臺中市西屯區何南里精誠路18號'::text,'台中市'::text,24.157108599999997::float8,120.6569207::float8,'OPERATIONAL'::text),
+(51,'ChIJuY7p8pw9aTQRb7HDjUQJZ6A'::text,'屈臣氏Watsons 美村二門市'::text,'403臺中市西區忠明里美村路一段22號'::text,'台中市'::text,24.1546304::float8,120.66175779999999::float8,'OPERATIONAL'::text),
 (51,'ChIJGb3j-5-WbjQRKU-i0S_aZXo'::text,'屈臣氏Watsons 興業西門市'::text,'600嘉義市西區興業西路328號'::text,'嘉義市'::text,23.468004699999998::float8,120.43824099999998::float8,'OPERATIONAL'::text),
 (51,'ChIJybZaWwADbjQRKcxoH9OYKAE'::text,'屈臣氏Watsons 鄭和南門市'::text,'806高雄市前鎮區竹南里鄭和南路420-2號'::text,'高雄市'::text,22.6064788::float8,120.31493090000001::float8,'OPERATIONAL'::text),
 (51,'ChIJ8wBIMmKpQjQRolyqQVkZQbE'::text,'屈臣氏Watsons 長安東門市'::text,'104臺北市中山區朱園里長安東路二段77號'::text,'台北市'::text,25.048609499999998::float8,121.53443370000001::float8,'OPERATIONAL'::text),
@@ -48,7 +56,9 @@ from (values
 (57,'ChIJ7UMCPQA3aTQR_eGup24qIGo'::text,'久違石頭火鍋-彰化員林店（收客至20:30）'::text,'510彰化縣員林市忠孝里大同路一段85號'::text,'彰化縣'::text,23.957437::float8,120.58177740000001::float8,'OPERATIONAL'::text),
 (57,'ChIJIW7XyRcjaDQR9lkyp29fLGY'::text,'久違石頭火鍋中山東路店（提供免費停車場、收客至08:30）'::text,'320桃園市中壢區仁美里中山東路三段115巷12號'::text,'桃園市'::text,24.9444296::float8,121.24923520000002::float8,'OPERATIONAL'::text),
 (57,'ChIJqeT_TwAjaDQRFIn18grvJzU'::text,'久違石頭火鍋-專用停車場'::text,'320桃園市中壢區仁美里中山東路三段115巷63號'::text,'桃園市'::text,24.9455478::float8,121.2496716::float8,'OPERATIONAL'::text),
-(58,'ChIJYwytno-pQjQRKSSTLHtRuhY'::text,'Vino Vino Caf''e'::text,'106臺北市大安區古莊里師大路80巷2號'::text,'台北市'::text,25.0232492::float8,121.52809629999999::float8,'OPERATIONAL'::text),
+(58,'ChIJ2_TufYWpQjQR7ceufMkp3-I'::text,'petit doux 微兜 京站店'::text,'103臺北市大同區承德路一段1號Qsquare京站時尚廣場1樓承德路出口側'::text,'台北市'::text,25.049308::float8,121.51719349999998::float8,'OPERATIONAL'::text),
+(58,'ChIJ9Y1eI4KpQjQRO9xqg1e_1oA'::text,'petit doux 微兜 永康店'::text,'106臺北市大安區福住里信義路二段198巷7之3號'::text,'台北市'::text,25.0326374::float8,121.5306298::float8,'OPERATIONAL'::text),
+(58,'ChIJ8S5JfRarQjQRaozhjBf86Ps'::text,'petit doux 微兜 PD SOGO 忠孝店'::text,'106臺北市大安區忠孝東路四段45號遠東SOGO百貨忠孝館11F11樓'::text,'台北市'::text,25.0421272::float8,121.54493930000001::float8,'OPERATIONAL'::text),
 (59,'ChIJf7GXDoKsQjQR4nMbSjRnH0U'::text,'gonnaEAT 內湖店'::text,'114臺北市內湖區石潭里石潭路145號1樓'::text,'台北市'::text,25.063993099999998::float8,121.58911850000001::float8,'OPERATIONAL'::text),
 (59,'ChIJxd2CXIypQjQRDilKuXoB97Q'::text,'gonnaEAT 京站店 | 地中海概念 | 原型食物 | 健康餐廳'::text,'103台北市大同区承德路一段1號1F經典大道'::text,'台北市'::text,25.049308::float8,121.51719349999998::float8,'OPERATIONAL'::text),
 (59,'ChIJZxHWZiCrQjQRAdt0K4KjLmw'::text,'gonnaEAT 仁愛店 | 地中海概念 | 原型食物 | 健康餐廳'::text,'106臺北市大安區仁愛路四段109號'::text,'台北市'::text,25.0382251::float8,121.54983939999998::float8,'OPERATIONAL'::text),
@@ -195,17 +205,7 @@ from (values
 (72,'ChIJfQoRIvMRaTQRQUBVvZbgKtQ'::text,'Mövenpick Café- 莫凡彼台中麗寶店'::text,'42145臺中市后里區福容路201號期C區2樓 (二2樓'::text,'台中市'::text,24.326965299999998::float8,120.70278890000002::float8,'OPERATIONAL'::text),
 (72,'ChIJi3LTUBKsQjQRCg_6hLsYtJQ'::text,'Mövenpick Café-莫凡彼台北美麗華店'::text,'10491臺北市中山區金泰里敬業三路20號三樓'::text,'台北市'::text,25.0835013::float8,121.5575157::float8,'OPERATIONAL'::text),
 (72,'ChIJR7FeUHgDbjQR1AuU2icPudE'::text,'Mövenpick Café-莫凡彼高雄展覽館店'::text,'806高雄市前鎮區鎮北里成功二路39號'::text,'高雄市'::text,22.607666::float8,120.29805599999999::float8,'OPERATIONAL'::text),
-(72,'ChIJtczSR--rQjQRHLBL3YF8mJU'::text,'Mövenpick Café-莫凡彼台北微風松高店'::text,'3樓, No. 16號松高路西村里信義區臺北市110'::text,'台北市'::text,25.038155399999997::float8,121.56731389999999::float8,'OPERATIONAL'::text),
-(72,'ChIJhbIFE3Z1bjQRwAJq8Taw9S0'::text,'Mövenpick Café-莫凡彼台南誠品生活店'::text,'702臺南市南區彰南里中華西路一段76號誠品生活台南3F3樓'::text,'台南市'::text,22.9723468::float8,120.184198::float8,'OPERATIONAL'::text),
-(72,'ChIJMx0l0Cg9aTQRN3M0cAFPFNw'::text,'Mövenpick Café -莫凡彼台中文心秀泰店'::text,'2f, No. 289號文心南路豐樂里南屯區臺中市408'::text,'台中市'::text,24.1297616::float8,120.64576549999998::float8,'OPERATIONAL'::text),
-(72,'ChIJ59nGlBU9aTQR87e0vTl_u0M'::text,'Mövenpick Café-莫凡彼台中iFG遠雄店'::text,'401台中市东区新庄里复兴路四段186號7F'::text,'台中市'::text,24.1357726::float8,120.68774769999997::float8,'OPERATIONAL'::text),
-(72,'ChIJ08kNuJw9aTQRRCaFRijbUmE'::text,'Mövenpick Café-莫凡彼台中廣三SOGO店'::text,'403臺中市西區忠明里臺灣大道二段459號4 樓'::text,'台中市'::text,24.15531::float8,120.6617994::float8,'OPERATIONAL'::text),
-(73,'ChIJJ8gtSLqrQjQRXrSvKqkMReE'::text,'gelato pique cafe Creperie 台北A8店'::text,'110臺北市信義區信義連通空橋'::text,'台北市'::text,25.0384896::float8,121.56700509999999::float8,'OPERATIONAL'::text),
-(73,'ChIJL9TNdgCrQjQRI4naWGEzwjc'::text,'Gelato Pique cafe 遠東Garden City大巨蛋店'::text,'110臺北市信義區忠孝東路四段515號3樓'::text,'台北市'::text,25.043364999999998::float8,121.557936::float8,'OPERATIONAL'::text),
-(74,'ChIJVVVVVe4OaTQREULxZVW2_9U'::text,'裕珍馨 外埔店'::text,'438臺中市外埔區大東里甲后路四段527號'::text,'台中市'::text,24.3398859::float8,120.6418209::float8,'OPERATIONAL'::text),
-(74,'ChIJr0Jb-f4RaTQR-ho4EOtfdMs'::text,'裕珍馨 蔣公店'::text,'43745臺中市大甲區順天里蔣公路131號'::text,'台中市'::text,24.3458815::float8,120.62260209999998::float8,'OPERATIONAL'::text),
-(74,'ChIJr0Jb-f4RaTQR68QBgv6qsFM'::text,'裕珍馨 光明旗艦店'::text,'43746臺中市大甲區薰風里光明路67號2樓'::text,'台中市'::text,24.3439907::float8,120.6233885::float8,'OPERATIONAL'::text),
-(74,'ChIJ73Tw9-qrQjQR0XFjD8ysAHk'::text,'裕珍馨 台北旗艦店'::text,'10553臺北市松山區復勢里南京東路四段180號'::text,'台北市'::text,25.051261999999998::float8,121.557026::float8,'OPERATIONAL'::text)
+(72,'ChIJtczSR--rQjQRHLBL3YF8mJU'::text,'Mövenpick Café-莫凡彼台北微風松高店'::text,'3樓, No. 16號松高路西村里信義區臺北市110'::text,'台北市'::text,25.038155399999997::float8,121.56731389999999::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

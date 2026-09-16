@@ -1,10 +1,10 @@
--- 由 fetch_stores.py 產生（2026-09-14T10:02:54Z），第 10/49 個檔，請依序全部貼完。
+-- 由 fetch_stores.py 產生（2026-09-16T04:18:43Z），第 10/49 個檔，請依序全部貼完。
 -- 要先跑過 schema_v58_offer_stores.sql。可重複執行。
 begin;
 insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,
   business_status, source, fetched_at)
 select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,
-  'google_places', timestamptz '2026-09-14T10:02:54Z'
+  'google_places', timestamptz '2026-09-16T04:18:43Z'
 from (values
 (13,'ChIJNQEbOQgdaDQRtrFPdeyqW3I'::text,'肉多多火鍋-樹林中山店'::text,'238新北市樹林區樹西里中山路一段146號'::text,'新北市'::text,24.990132600000003::float8,121.42245650000001::float8,'OPERATIONAL'::text),
 (13,'ChIJZfF4c_ipQjQRS5cbtOz9Ojc'::text,'肉多多火鍋-永和民權店'::text,'234新北市永和區民族里民權路108號'::text,'新北市'::text,24.996585::float8,121.5196543::float8,'OPERATIONAL'::text),
@@ -21,6 +21,14 @@ from (values
 (13,'ChIJ-yMFrlqlQjQR4uvsBYoUtKc'::text,'肉多多火鍋-淡水中正店-淡水 景觀餐廳'::text,'2樓, No. 55號中正路草東里淡水區新北市251'::text,'新北市'::text,25.16932::float8,121.44182359999999::float8,'OPERATIONAL'::text),
 (14,'ChIJ1zStZJQXaTQRZndbICMN0gw'::text,'泰滾 泰式火鍋(崇德店）'::text,'406041臺中市北屯區仁和里崇德路三段75號'::text,'台中市'::text,24.1836946::float8,120.6859923::float8,'OPERATIONAL'::text),
 (14,'ChIJjav5Hi2pQjQRiFVpwOl7kps'::text,'泰滾 Rolling Thai 泰式火鍋(南京店）'::text,'10491臺北市中山區朱園里南京東路二段178號B1, No'::text,'台北市'::text,25.051805400000003::float8,121.53507929999999::float8,'OPERATIONAL'::text),
+(15,'ChIJA7wegIAEbjQRnlXRXTUuSW8'::text,'薄多義Bite2Eat 高雄文橫店'::text,'80241高雄市苓雅區仁政里文橫二路105號'::text,'高雄市'::text,22.619513899999998::float8,120.30490850000001::float8,'OPERATIONAL'::text),
+(15,'ChIJWZdc4JBzbjQR9pF_cLwGEas'::text,'薄多義 Bite2Eat 台南三井店'::text,'711臺南市歸仁區武東里歸仁大道101號2樓'::text,'台南市'::text,22.925163899999998::float8,120.28749429999998::float8,'OPERATIONAL'::text),
+(15,'ChIJE4qFuZ52bjQR_JyrAKxuLzg'::text,'薄多義 Bite2Eat 台南崇學店'::text,'701臺南市東區德光里崇學路171號'::text,'台南市'::text,22.980315899999997::float8,120.2234596::float8,'OPERATIONAL'::text),
+(15,'ChIJA2G0TYvlZzQRB_cJo9slm6A'::text,'薄多義 Bite2Eat 宜蘭新月店'::text,'260宜蘭縣宜蘭市民權路二段38巷6號1樓'::text,'宜蘭縣'::text,24.754043::float8,121.75082900000001::float8,'OPERATIONAL'::text),
+(15,'ChIJweTZLl2rQjQRcPtOFR7TP4Q'::text,'薄多義 Bite2Eat 微風南山店'::text,'110臺北市信義區西村里松智路17號5 樓'::text,'台北市'::text,25.0343166::float8,121.56620199999999::float8,'OPERATIONAL'::text),
+(15,'ChIJp4Bvjx2oQjQRhIhKsYqWLqA'::text,'薄多義 Bite2Eat 新北板橋店'::text,'220新北市板橋區景星里中山路一段46號5樓'::text,'新北市'::text,25.0089188::float8,121.46084150000002::float8,'OPERATIONAL'::text),
+(15,'ChIJPVMug-s2aDQRJ7xkkPrJds8'::text,'薄多義 Bite2Eat 新竹竹北店'::text,'302新竹縣竹北市文化里光明一路127號'::text,'新竹縣'::text,24.830238299999998::float8,121.0158283::float8,'OPERATIONAL'::text),
+(15,'ChIJp0crIf0eaDQR9VpUg8YKakg'::text,'薄多義 Bite2Eat 桃園站前店'::text,'330桃園市桃園區文化里中華路26號'::text,'桃園市'::text,24.991131799999998::float8,121.31113889999999::float8,'OPERATIONAL'::text),
 (16,'ChIJbavd6fg3aTQR5hMU5gekxyo'::text,'鍋泰暖 員林創始店'::text,'510彰化縣員林市三和里大同路一段431號'::text,'彰化縣'::text,23.9649797::float8,120.5791496::float8,'OPERATIONAL'::text),
 (16,'ChIJKxQ-X2wXaTQRsX6ns-3k13s'::text,'鍋泰暖-台中崇德店'::text,'404臺中市北區崇德路一段514號'::text,'台中市'::text,24.1657938::float8,120.685397::float8,'OPERATIONAL'::text),
 (16,'ChIJmVN4OwARaTQR0O5BZTtIWhU'::text,'鍋泰暖泰式南洋火鍋-台中豐原店'::text,'420臺中市豐原區豐圳里成功路500號1樓'::text,'台中市'::text,24.2522311::float8,120.70643319999999::float8,'OPERATIONAL'::text),
@@ -197,15 +205,7 @@ from (values
 (28,'ChIJxT08C02faDQRLY6__ZhD314'::text,'養鍋 Yang Guo 石頭涮涮鍋 (花蓮中山店)'::text,'97053花蓮縣花蓮市國魂里中山路549-1號'::text,'花蓮縣'::text,23.9868824::float8,121.6010326::float8,'OPERATIONAL'::text),
 (28,'ChIJtVlF5s9LaTQRSIsWG5Z9CBc'::text,'養鍋 Yang Guo 石頭涮涮鍋 彰化北斗旗艦店'::text,'521彰化縣北斗鎮西安里中山路一段397號'::text,'彰化縣'::text,23.8733754::float8,120.516836::float8,'OPERATIONAL'::text),
 (28,'ChIJF8iZnGnJbjQRH8nSVD_cywA'::text,'養鍋 Yang Guo 石頭涮涮鍋 (斗六民生南店)'::text,'64050雲林縣斗六市鎮南里民生南路276號'::text,'雲林縣'::text,23.6991943::float8,120.5368485::float8,'OPERATIONAL'::text),
-(28,'ChIJWdQ7H549aTQRC_-i3cGSKEw'::text,'養鍋 Yang Guo 石頭涮涮鍋 (台中忠孝夜市店)'::text,'402臺中市南區忠孝路208號'::text,'台中市'::text,24.1303044::float8,120.6839625::float8,'OPERATIONAL'::text),
-(29,'ChIJIdkxPgAXaTQR-cYLNrU4JAc'::text,'TGI FRIDAYS 崇德餐廳'::text,'406臺中市北屯區平德里崇德路二段63號'::text,'台中市'::text,24.170571499999998::float8,120.6851516::float8,'OPERATIONAL'::text),
-(29,'ChIJUQ5gApGhQjQR05hxp3KkuYM'::text,'TGI FRIDAYS星期五美式餐廳 台茂餐廳'::text,'338桃園市蘆竹區錦中里南崁路一段112號1樓'::text,'桃園市'::text,25.0532205::float8,121.28804059999999::float8,'OPERATIONAL'::text),
-(29,'ChIJG5r8JL0haDQRwLo4arM5WuA'::text,'TGI FRIDAYS 星期五美式餐廳 中壢餐廳'::text,'320桃園市中壢區內定里中園路二段501號4樓'::text,'桃園市'::text,25.0016279::float8,121.22855669999998::float8,'OPERATIONAL'::text),
-(29,'ChIJ_bpJRJqpQjQRXz73PDJ74XA'::text,'TGI FRIDAYS 星期五美式餐廳 古亭餐廳'::text,'100臺北市中正區南福里羅斯福路二段60號'::text,'台北市'::text,25.027577899999997::float8,121.52175299999999::float8,'OPERATIONAL'::text),
-(29,'ChIJhR-n2uIDaDQRlOsacXE-eW0'::text,'TGI FRIDAYS 星期五美式餐廳 松高餐廳'::text,'3樓, 微風松高3FNo. 16號松高路西村里信義區臺北市110'::text,'台北市'::text,25.038155399999997::float8,121.56731389999999::float8,'OPERATIONAL'::text),
-(29,'ChIJ0UB-1WepQjQRhSdjEUnly7A'::text,'TGI FRIDAYS 星期五美式餐廳 林森餐廳'::text,'10491台北市中山区康乐里林森北路247號1樓'::text,'台北市'::text,25.053975899999998::float8,121.5257614::float8,'OPERATIONAL'::text),
-(29,'ChIJo9S363IDbjQRMD82sbo2f30'::text,'TGI FRIDAYS 星期五美式餐廳 夢時代餐廳'::text,'806高雄市前鎮區興邦里中華五路789號藍鯨館三樓'::text,'高雄市'::text,22.595625700000003::float8,120.3073439::float8,'OPERATIONAL'::text),
-(29,'ChIJQypzveUBaDQRR9Tkk_lM70k'::text,'TGI FRIDAYS 星期五美式餐廳 裕隆城餐廳'::text,'23144新北市新店區寶福里中興路三段70號4樓'::text,'新北市'::text,24.978061::float8,121.546478::float8,'OPERATIONAL'::text)
+(28,'ChIJWdQ7H549aTQRC_-i3cGSKEw'::text,'養鍋 Yang Guo 石頭涮涮鍋 (台中忠孝夜市店)'::text,'402臺中市南區忠孝路208號'::text,'台中市'::text,24.1303044::float8,120.6839625::float8,'OPERATIONAL'::text)
 ) as v(offer_id, place_id, name, address, county, lat, lng, business_status)
 join public.offers o on o.id = v.offer_id
 on conflict (offer_id, place_id) do update set

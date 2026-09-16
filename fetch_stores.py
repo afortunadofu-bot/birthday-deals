@@ -44,6 +44,14 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+# Windows 的主控台預設是 cp950，印到「亀」這種罕見字會整個腳本炸掉（跑了半天的進度就沒了）。
+# 先把輸出改成 UTF-8，印不出來的字用替代字元，不要因為印訊息而中斷。
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 HERE = Path(__file__).parent
 CACHE = HERE / ".places_cache"
 ALIASES = HERE / "store_search_aliases.json"
