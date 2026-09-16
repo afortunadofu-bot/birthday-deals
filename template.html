@@ -553,6 +553,10 @@
     bottom:calc(72px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom));
     background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
     box-shadow:0 8px 24px rgba(0,0,0,.14);padding:12px 14px;font-size:.86rem}
+  /* 待辦清單標籤（嵐：想把清單分組，上面用標籤篩選） */
+  .wl-tag{font-size:.72rem;padding:4px 8px;border-radius:999px;border:1px solid var(--line);
+    background:var(--bg);color:var(--ink-2);max-width:104px;min-height:28px}
+  .wl-tag[data-has="1"]{border-color:var(--accent);color:var(--accent-dark);font-weight:600}
   /* 「我的」分頁：更新紀錄＋新更新小紅點 */
   .upd-entry{padding:10px 0;border-top:1px solid var(--line-soft)}
   .upd-entry:first-child{border-top:0;padding-top:2px}
@@ -1134,6 +1138,22 @@
       <h2>提醒</h2>
       <div id="remindersBody"></div>
     </div>
+    <!-- 第二組生日（嵐許願）：幫家人／另一半也記一個生日。預設收著，不想用的人不會被打擾。 -->
+    <div class="panel" id="altBdayPanel">
+      <h2>🎁 幫家人／另一半也記一個生日</h2>
+      <p class="sub">記一組就好。生日快到時會提醒你，待辦清單裡貼上他的標籤，入會死線也會照他的生日算。只有你自己看得到。</p>
+      <label class="lbl">稱呼<input id="altLabel" maxlength="10" placeholder="例如：媽媽、老公、女兒"></label>
+      <label class="lbl birthday-row">生日
+        <select id="altMonth"><option value="">月</option></select>
+        <select id="altDay"><option value="">日</option></select>
+      </label>
+      <div class="row" style="gap:8px;margin-top:8px">
+        <button type="button" class="btn sm primary" id="btnAltSave">儲存</button>
+        <button type="button" class="btn sm" id="btnAltClear">清除</button>
+      </div>
+      <div id="altBdayMsg"></div>
+      <p class="hint" id="altBdayHint" style="margin-top:6px"></p>
+    </div>
     <div class="panel" id="wishlistPanel"><h2>待辦清單</h2>
       <p class="sub">點卡片上的星號收藏，勾起來代表用過了。</p>
       <div class="row" style="margin:0 0 10px;flex-wrap:wrap;gap:8px 14px">
@@ -1144,6 +1164,7 @@
           <option value="manual">自訂順序（可上下移動）</option>
         </select></label>
         <label class="lbl">年度<select id="wlYear"></select></label>
+        <label class="lbl">標籤<select id="wlTagFilter"></select></label>
         <label class="toggle"><input type="checkbox" id="wlSinkDone" checked> 已使用的排到最下面</label>
         <label class="toggle"><input type="checkbox" id="wlCompact"> 簡易版</label>
       </div>
@@ -2046,6 +2067,15 @@ function paintAuth(){
       renderPlanner();
       renderReminders();
     }
+    // 第二組生日（家人／另一半）
+    ALT_B={label:myProfile.alt_label||'', month:myProfile.alt_birth_month||0, day:myProfile.alt_birth_day||0};
+    if($('#altLabel')){
+      $('#altLabel').value=ALT_B.label;
+      $('#altMonth').value=ALT_B.month?String(ALT_B.month):'';
+      $('#altDay').value=ALT_B.day?String(ALT_B.day):'';
+    }
+    renderAltBdayHint();
+    renderReminders();
   }
   paintSubmitGate();
   // 登入後名字／管理員徽章／頭像都可能讓 header 那一列變高或變成兩行，
@@ -2278,6 +2308,65 @@ async function toggleWish(id, btn){
   if(!$('#tab-mine').classList.contains('hidden')) renderMyWishlist();
   renderReminders();
 }
+/* ---- 第二組生日（嵐許願、celine 拍板）----
+   幫家人／另一半記一組生日：生日快到會在「提醒」區多一條，待辦清單那一筆貼上他的
+   稱呼當標籤，入會死線就照他的生日算。只記一組，不做多筆管理——越麻瓜越好。
+   資料存在 profiles.alt_label / alt_birth_month / alt_birth_day（schema_v65）。 ---- */
+let ALT_B={label:'',month:0,day:0};
+function altBdayDate(){
+  if(!ALT_B.month) return null;
+  const t=new Date(TODAY.getFullYear(),ALT_B.month-1,ALT_B.day||1);
+  if(t<TODAY) t.setFullYear(TODAY.getFullYear()+1);
+  return t;
+}
+function altTagName(){ return ALT_B.month ? (ALT_B.label||'家人') : ''; }
+function renderAltBdayHint(){
+  const el=$('#altBdayHint'); if(!el) return;
+  const t=altBdayDate();
+  if(!t){ el.textContent=''; return; }
+  const left=Math.round((t-TODAY)/864e5);
+  el.textContent=`${altTagName()}的生日 ${t.getMonth()+1}/${t.getDate()}，還有 ${left} 天。`
+    +`待辦清單裡把那幾筆貼上「${altTagName()}」標籤，入會死線就會照這個生日算。`;
+}
+function altSchemaHint(error){
+  return /alt_label|alt_birth|column|schema cache/i.test(error?.message||'')
+    ? '這個功能還沒開通（管理員需要先在 Supabase 執行 schema_v65_alt_birthday_wishlist_tags.sql）。'
+    : '儲存失敗：'+esc(error?.message||'');
+}
+async function saveAltBday(clear){
+  const label=clear?'':$('#altLabel').value.trim().slice(0,10);
+  const m=clear?null:($('#altMonth').value?Number($('#altMonth').value):null);
+  const d=clear?null:($('#altDay').value?Number($('#altDay').value):null);
+  if(!clear && !m){ note($('#altBdayMsg'),'alert','請先選生日的月份。'); return; }
+  if(!clear && !label){ note($('#altBdayMsg'),'alert','請填一個稱呼（例如：媽媽、老公），待辦清單的標籤才知道是誰的。'); return; }
+  if(!LIVE || !me){ note($('#altBdayMsg'),'alert','要登入才能存起來，下次打開也看得到。'); return; }
+  const {error}=await sb.from('profiles')
+    .update({alt_label:label||null, alt_birth_month:m, alt_birth_day:d}).eq('id',me.id);
+  if(error){ note($('#altBdayMsg'),'alert',altSchemaHint(error)); return; }
+  ALT_B={label:label||'', month:m||0, day:d||0};
+  myProfile = myProfile ? {...myProfile, alt_label:label||null, alt_birth_month:m, alt_birth_day:d} : myProfile;
+  if(clear){ $('#altLabel').value=''; $('#altMonth').value=''; $('#altDay').value=''; }
+  note($('#altBdayMsg'),'good', clear?'✓ 已清除。':`✓ 已記下 ${esc(label)} 的生日。`);
+  renderAltBdayHint(); renderReminders(); renderWishlistBody();
+}
+$('#btnAltSave').onclick=()=>saveAltBday(false);
+$('#btnAltClear').onclick=()=>saveAltBday(true);
+
+/* ---- 待辦清單標籤（嵐：想把「比較遠但考慮使用」的分開放）----
+   一筆一個標籤就夠（不做多標籤）。預設幾個常用的，加上第二組生日的稱呼，
+   也可以自訂。上面的下拉選單負責篩選。資料存在 wishlist.tag（schema_v65）。 ---- */
+const WL_TAG_PRESETS=['這次生日','明年再說','離家遠','跟朋友一起'];
+function wlTagList(){
+  const tags=new Set(WL_TAG_PRESETS);
+  if(altTagName()) tags.add(altTagName());
+  WL_ROWS.forEach(w=>{ if(w.tag) tags.add(w.tag); });
+  return [...tags];
+}
+function wlTagOptions(cur){
+  return `<option value="">＋標籤</option>`
+    +wlTagList().map(t=>`<option value="${esc(t)}"${t===cur?' selected':''}>${esc(t)}</option>`).join('')
+    +`<option value="__new__">自訂…</option>`;
+}
 let WL_ROWS=[];
 async function renderMyWishlist(){
   const box=$('#myWishlist');
@@ -2285,9 +2374,11 @@ async function renderMyWishlist(){
     box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">登入後可以把想去用的優惠加進待辦清單，跨裝置都看得到。</div>';
     return;
   }
-  const {data}=await sb.from('wishlist')
-    .select('offer_id,done,note,sort_order,created_at,year,offers(brand,offer,conditions,membership,timing,advance_days,value_twd,valid_until,regions,region_note)')
-    .eq('user_id',me.id).order('created_at',{ascending:false});
+  const COLS='offer_id,done,note,sort_order,created_at,year,offers(brand,offer,conditions,membership,timing,advance_days,value_twd,valid_until,regions,region_note)';
+  const wlQuery=cols=>sb.from('wishlist').select(cols).eq('user_id',me.id).order('created_at',{ascending:false});
+  let {data,error}=await wlQuery(COLS+',tag');
+  // v65 還沒跑（wishlist 沒有 tag 欄位）：改成不帶標籤查一次，清單照樣看得到
+  if(error) ({data}=await wlQuery(COLS));
   WL_ROWS=data||[];
   renderWishlistBody();
 }
@@ -2295,8 +2386,9 @@ async function renderMyWishlist(){
 // 邏輯（生日月/日 + advance_days 往前推），只是這裡不畫圖表，只算一個日期字串。
 // #bmonth/#bday 是「我的」分頁本身的生日欄位，只要有登入、個人資料讀回來就會
 // 填好，待辦清單面板跟這兩個欄位在同一個分頁，可以直接共用。
-function bdayDeadlineText(advanceDays){
-  const m=+($('#bmonth')?.value||0), d=+($('#bday')?.value||0);
+function bdayDeadlineText(advanceDays, useAlt){
+  const m=useAlt?ALT_B.month:+($('#bmonth')?.value||0);
+  const d=useAlt?ALT_B.day:+($('#bday')?.value||0);
   if(!m || advanceDays==null) return null;
   const t=new Date(TODAY.getFullYear(),m-1,d||1);
   if(t<TODAY) t.setFullYear(TODAY.getFullYear()+1);
@@ -2329,8 +2421,21 @@ function renderWishlistBody(){
     wlYearSel.value=(prevVal && (prevVal==='all'||sortedYears.includes(Number(prevVal)))) ? prevVal : String(CURRENT_YEAR);
   }
   const yearFilter=wlYearSel?.value||'all';
+  // 標籤篩選（嵐）：選項是「全部」＋目前真的有用到的標籤＋「沒有標籤」
+  const tagSel=$('#wlTagFilter');
+  if(tagSel){
+    const prevTag=tagSel.value;
+    const used=[...new Set(WL_ROWS.map(w=>w.tag).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'zh-Hant'));
+    tagSel.innerHTML=`<option value="all">全部</option>`
+      +used.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')
+      +(WL_ROWS.some(w=>!w.tag)?`<option value="__none__">沒有標籤</option>`:'');
+    tagSel.value=[...tagSel.options].some(o=>o.value===prevTag)?prevTag:'all';
+  }
+  const tagFilter=tagSel?.value||'all';
   let list=[...WL_ROWS];
   if(yearFilter!=='all') list=list.filter(w=>(w.year||CURRENT_YEAR)===Number(yearFilter));
+  if(tagFilter==='__none__') list=list.filter(w=>!w.tag);
+  else if(tagFilter!=='all') list=list.filter(w=>w.tag===tagFilter);
   if(sortBy==='added_asc') list.reverse();
   else if(sortBy==='brand') list.sort((a,b)=>String(a.offers?.brand||'').localeCompare(String(b.offers?.brand||''),'zh-Hant'));
   else if(manual) list.sort((a,b)=>(a.sort_order??999999)-(b.sort_order??999999)
@@ -2369,7 +2474,11 @@ function renderWishlistBody(){
     const wYear = w.year || CURRENT_YEAR;
     const yearBadge = wYear!==CURRENT_YEAR ? `<span class="wl-year-badge" style="font-size:.72rem;color:var(--accent-dark);font-weight:700;white-space:nowrap">📅${wYear}</span>` : '';
     const yearBtn = !done ? `<button class="btn sm wl-year-toggle" data-id="${w.offer_id}" data-year="${wYear}" type="button">${wYear>CURRENT_YEAR?'移回今年':'移到明年'}</button>` : '';
-    const dlText = o.brand ? bdayDeadlineText(o.advance_days) : null;
+    // 這一筆貼的是「家人的稱呼」標籤 → 入會死線照他的生日算
+    const forAlt = !!(altTagName() && w.tag===altTagName());
+    const dlText = o.brand ? bdayDeadlineText(o.advance_days, forAlt) : null;
+    const tagSelectHtml = `<select class="wl-tag" data-id="${w.offer_id}" data-has="${w.tag?'1':''}"
+      title="標籤：把待辦清單分組">${wlTagOptions(w.tag||'')}</select>`;
     // 打勾＝已經用過了，之前只有刪除線＋灰階，看起來像「停用」而不是「達成」，
     // 加個綠色背景跟打勾字樣，一眼就能分出「還沒用」跟「已經用過」。
     if(compact){
@@ -2381,6 +2490,7 @@ function renderWishlistBody(){
         ${yearBadge}
         ${moveBtns}
         ${yearBtn}
+        ${tagSelectHtml}
         ${o.brand?`<a class="btn sm wl-map" href="${esc(mapsSearchUrl(mo))}" target="_blank" rel="noopener"
           title="用 Google 地圖找附近的分店">📍</a>`:''}
         <button class="btn sm wl-remove" data-id="${w.offer_id}">移除</button>
@@ -2396,6 +2506,7 @@ function renderWishlistBody(){
       ${yearBadge}
       ${moveBtns}
       ${yearBtn}
+      ${tagSelectHtml}
       ${o.brand?`<button class="btn sm wl-toggle" data-id="${w.offer_id}" type="button">詳情</button>
         <a class="btn sm wl-map" href="${esc(mapsSearchUrl(mo))}" target="_blank" rel="noopener"
           title="用 Google 地圖找附近的分店">📍 地圖</a>`:''}
@@ -2408,7 +2519,8 @@ function renderWishlistBody(){
         placeholder="加個備註，只有你自己看得到"
         style="width:100%;font-size:.78rem;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);resize:none;overflow:hidden;line-height:1.5;font-family:inherit;display:block;field-sizing:content">${esc(w.note||'')}</textarea>
     </div>
-    ${dlText&&!done?`<div style="font-size:.76rem;color:var(--accent-dark);margin:-4px 0 8px">⏰ ${esc(dlText)}</div>`:''}`;
+    ${dlText&&!done?`<div style="font-size:.76rem;color:var(--accent-dark);margin:-4px 0 8px">⏰ ${
+      forAlt?esc(altTagName())+'的生日：':''}${esc(dlText)}</div>`:''}`;
   }).join('') : '<div style="color:var(--ink-3);font-size:.86rem">還沒有收藏，去「優惠」分頁點卡片上的書籤圖示加入。</div>';
   // 把剛剛發現「有回報但 wishlist.done 還沒同步」的幾筆補寫回資料庫，純粹是
   // 讓資料庫本身也保持一致（目前前端只有這裡讀 wishlist.done），不影響畫面
@@ -2429,6 +2541,24 @@ function renderWishlistBody(){
     if(justDone && confirm('這筆標記成用過了！要不要順便回報一下成功了嗎、大約省下多少？')){
       openReport(cb.dataset.id);
     }
+  });
+  $$('.wl-tag').forEach(sel=>sel.onchange=async()=>{
+    let v=sel.value;
+    if(v==='__new__'){
+      v=(prompt('自訂標籤（最多 12 個字）：')||'').trim().slice(0,12);
+      if(!v){ renderWishlistBody(); return; }
+    }
+    const {error}=await sb.from('wishlist').update({tag:v||null})
+      .eq('user_id',me.id).eq('offer_id',sel.dataset.id);
+    if(error){
+      alert(/tag|column|schema cache/i.test(error.message||'')
+        ? '標籤功能還沒開通（管理員需要先在 Supabase 執行 schema_v65_alt_birthday_wishlist_tags.sql）。'
+        : '標籤存檔失敗：'+error.message);
+      renderWishlistBody(); return;
+    }
+    const row=WL_ROWS.find(w=>String(w.offer_id)===String(sel.dataset.id));
+    if(row) row.tag=v||null;
+    renderWishlistBody();
   });
   let wlNoteTimer=null;
   $$('.wl-note').forEach(inp=>{
@@ -2507,6 +2637,7 @@ async function moveWishlistItem(offerId, dir){
 }
 $('#wlSort').onchange=renderWishlistBody;
 $('#wlYear').onchange=renderWishlistBody;
+$('#wlTagFilter').onchange=renderWishlistBody;
 $('#wlSinkDone').onchange=renderWishlistBody;
 $('#wlCompact').onchange=renderWishlistBody;
 
@@ -2695,7 +2826,9 @@ $('#btnMineA2hsClose').onclick=()=>{
    的東西；還在 feature/geo 分支、沒上線的功能（附近分店、地圖模式）不列。
    新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
 const SITE_UPDATES=[
-  {date:'2026-09-16', title:'待辦清單也能開地圖', items:[
+  {date:'2026-09-16', title:'家人的生日、待辦清單標籤、地圖', items:[
+    '「我的」可以幫家人／另一半也記一個生日（預設收著）：他的生日快到會提醒你，清單貼上他的標籤，入會死線就照他的生日算',
+    '待辦清單可以貼標籤分組（這次生日／明年再說／離家遠…也可以自訂），上面用標籤篩選',
     '待辦清單每一筆也有「📍 地圖」，直接用 Google 地圖找附近分店（之前只有優惠卡片跟詳情有）',
     '回饋問卷的題目分得更細：「多久來一次」分得出生日月跟平常，「用過幾個」分得出 3 個以上',
     '排行榜上的「上榜人數」「平均每人省下」改成完整數字，之前只算到前 50 名']},
@@ -2889,6 +3022,12 @@ function buildControls(){
     for(let m=1;m<=12;m++) bm.add(new Option(m+' 月',m));
     for(let d=1;d<=31;d++) bd.add(new Option(d+' 日',d));
     bm.dataset.done=1;
+  }
+  const am=$('#altMonth'), ad=$('#altDay');
+  if(am && !am.dataset.done){
+    for(let m=1;m<=12;m++) am.add(new Option(m+' 月',m));
+    for(let d=1;d<=31;d++) ad.add(new Option(d+' 日',d));
+    am.dataset.done=1;
   }
   // 多選 chip 群組：點個別選項可複選（例如同時選「當月」+「當週」），
   // 點「全部」清空選取；一個都沒選時視同「全部」，chip 上會顯示「全部」被按下。
@@ -3428,6 +3567,19 @@ function renderReminders(){
       }
     }
   }
+  // 第二組生日（家人／另一半）快到了也提醒一次
+  const at=altBdayDate();
+  if(at){
+    const aleft=Math.round((at-TODAY)/864e5);
+    const akey=`sxr_alt_bday_dismissed_${at.getFullYear()}-${ALT_B.month}-${ALT_B.day||1}`;
+    if(aleft<=14 && !localStorage.getItem(akey)){
+      html+=`<div class="new-banner" id="altBdaySoonBanner" style="margin-bottom:10px">
+        <span class="nb-icon" aria-hidden="true">🎁</span>
+        <div style="flex:1">${esc(altTagName())}的生日還有 <b>${aleft}</b> 天，要幫他找優惠嗎？</div>
+        <button type="button" class="btn plain" id="btnDismissAltBday">知道了</button>
+      </div>`;
+    }
+  }
   const expiring = OFFERS.filter(o=>WISH.has(String(o.id)) && o.validUntil)
     .map(o=>({...o, daysLeft: Math.round((new Date(o.validUntil+'T00:00:00')-TODAY)/864e5)}))
     .filter(o=>o.daysLeft>=0 && o.daysLeft<=14)
@@ -3448,6 +3600,12 @@ function renderReminders(){
     const t2=new Date(TODAY.getFullYear(),m2-1,d2||1);
     if(t2<TODAY) t2.setFullYear(TODAY.getFullYear()+1);
     localStorage.setItem(`sxr_bday_soon_dismissed_${t2.getFullYear()}-${m2}-${d2||1}`,'1');
+    renderReminders();
+  };
+  const da=$('#btnDismissAltBday');
+  if(da) da.onclick=()=>{
+    const t3=altBdayDate(); if(!t3) return;
+    localStorage.setItem(`sxr_alt_bday_dismissed_${t3.getFullYear()}-${ALT_B.month}-${ALT_B.day||1}`,'1');
     renderReminders();
   };
   $$('#remindersPanel .dl-click').forEach(row=>row.onclick=()=>{
@@ -7306,6 +7464,8 @@ function makeCollapsiblePanel(id, defaultOpen){
 // 我省下多少這幾個常用的預設展開，成就徽章／使用回報／投稿紀錄這幾個
 // 比較像歷史紀錄、不用每次進來都看到的預設收合。
 [['profilePanel',true],['remindersPanel',true],['wishlistPanel',true],['mySavingsPanel',true],
+ // 第二組生日：celine 說預設收著，不用的人不會被打擾
+ ['altBdayPanel',false],
  ['badgesPanel',false],['myReportsPanel',false],['myOffersPanel',false],
  // 更新紀錄（celine：可以摺疊、預設展開）；收合時有新更新標題旁會標 NEW
  ['siteUpdatesPanel',true]]
