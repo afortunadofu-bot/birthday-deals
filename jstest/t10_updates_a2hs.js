@@ -46,10 +46,8 @@ const { boot, tick, makeAsserts } = require('./harness');
   const allText = updates.map((u) => u.title + u.items.join('')).join('');
   t.ok('內容是給一般使用者看的（沒有技術／後台用語）',
     !/schema|RLS|jsdom|SQL|Supabase|trigger|RPC|管理員|後台|待審佇列|feature\/geo|v\d{2}/i.test(allText), allText.match(/schema|RLS|jsdom|SQL|Supabase|trigger|RPC|管理員|後台|待審佇列|feature\/geo|v\d{2}/i));
-  // 「用 Google 地圖找附近分店」是 main 上已上線的地圖按鈕，可以寫；
-  // 還在 feature/geo 分支的是「📍 附近」按鈕、離我最近排序、距離範圍這些
-  t.ok('沒上線的附近模式功能沒有列進去', !/離我最近|附近模式|📍 附近|距離範圍/.test(allText),
-    allText.match(/離我最近|附近模式|📍 附近|距離範圍/));
+  // 附近模式（原本的 feature/geo）已經合併上線，更新紀錄要寫得到它
+  t.ok('附近模式上線了，更新紀錄有寫', /附近/.test(allText));
 
   // 第一次來的人：不顯示紅點
   ls.removeItem('sxr_updates_seen');

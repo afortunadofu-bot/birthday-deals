@@ -9,6 +9,25 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## 大版本　「附近有優惠的店」上線（feature/geo 合併回 main）
+
+celine 拍板：先上線，`_待celine確認` 的 10 個品牌之後再補。原本在 `feature/geo` 開發的東西整包進 main：
+
+- `schema_v58_offer_stores.sql`：`offer_stores` 分店表、`nearest_offer_stores()`、
+  `offer_stores_in_bounds()`、`offer_store_coverage`
+- `stores_import_01..49.sql`：Google Places 抓到的 9,767 家分店，依序貼進 Supabase
+- `fetch_stores.py` / `store_search_aliases.json`：抓分店的腳本跟品牌別名
+- 前端：「📍 附近」按鈕、距離範圍（1–30 公里）、離我最近排序、卡片上的最近分店＋導航、
+  Leaflet 地圖（拒絕定位時可以點地圖換位置）
+- 測試：`jstest/t06_near_me.js`（12 支全綠）
+
+`SITE_UPDATES` 補上附近模式（`t10` 原本斷言「沒上線的附近功能不能寫進更新紀錄」，跟著改成要寫）。
+`GEO-SETUP.md`、`HANDOFF.md` 標記成已上線，並記下還沒收尾的兩件事（10 個品牌的別名、地圖圖磚要換服務）。
+
+**上線步驟**：Supabase 依序跑 `schema_v58` → `stores_import_01..49`，然後重新上傳 `index.html`。
+
+---
+
 ## 大版本　優惠列表上方的地圖功能介紹小卡
 
 celine：地圖按鈕加了之後很多人沒發現（嵐就以為功能不見了），在「優惠」分頁列表最上面加一張小卡片，

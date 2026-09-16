@@ -193,10 +193,15 @@ celine 會轉述朋友「嵐」的回饋（口語、有時間戳、繁中）。�
    - 前端沿用這輪新加的 `.dash-chart` / `.hbar-row` 樣式；交叉分析建議用
      簡單熱力表（類別為列、月份為欄，格子深淺代表次數）
 
-2. 地圖功能：附近店家優惠——**開發中，在 `feature/geo` 分支**（celine：要整個做完才能上線）。
-   程式、SQL（v58）、測試都在分支上；還差 celine 申請 Google API 金鑰、跑
-   `fetch_stores.py` 抓分店、匯入 Supabase、照 `GEO-SETUP.md` 清單實測，全部打勾
-   才合併回 `main`。**不要在 main 上直接開發這個功能**
+2. 地圖功能：附近店家優惠——**已經合併回 `main` 上線**（2026-09-16）。程式、SQL（v58）、
+   分店資料（`stores_import_*.sql`，9767 家）、測試（`jstest/t06_near_me.js`）都在 main 上。
+   還沒收尾的兩件事：
+   - `store_search_aliases.json` 最下面 `_待celine確認` 那 10 個品牌還是 0 家分店
+     （薄多義、忠泰樂、波記、喜多酸菜魚、Mr. May、喬義思、烤狀猿、丹蕾，以及天成／米塔／
+     瓦城泰統／京星集團優惠涵蓋哪些品牌）。celine 確認後改別名、`python fetch_stores.py
+     --cache-only` 重新產生匯入檔再貼一次即可
+   - 地圖圖磚目前用 OpenStreetMap 官方圖磚，流量變大前要換成 MapTiler／Stadia
+     （改 `openNearMap()` 裡的 `tileLayer` 網址），見 `GEO-SETUP.md`
 3. 洞察分析加品牌／使用趨勢走勢圖
 4. i18n 多語系
 
