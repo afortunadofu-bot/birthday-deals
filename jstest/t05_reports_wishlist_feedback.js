@@ -115,6 +115,11 @@ const offer = (id, brand, extra = {}) => ({
   win.openDetail = realOpenDetail;
   t.eq('點詳情呼叫 openDetail 開同一個視窗', calls.length && calls[0].id, '7');
   t.eq('有帶備援資料（已下架時也看得到內容）', calls.length && calls[0].fallback && calls[0].fallback.brand, '環球購物中心');
+  // 嵐：地圖找附近店家「不見了」——待辦清單本來沒有這顆，只有優惠卡片跟詳情視窗有
+  const wlMap = doc.querySelector('#myWishlist .wl-map');
+  t.ok('待辦清單每一列也有地圖按鈕', !!wlMap && /google\.com\/maps/.test(wlMap.href), wlMap && wlMap.href);
+  t.ok('地圖按鈕用品牌＋縣市去搜', decodeURIComponent(wlMap.href).includes('環球購物中心'), decodeURIComponent(wlMap.href));
+  t.eq('地圖按鈕開新分頁', wlMap.target, '_blank');
 
   /* ================= E. 第一次收藏提示收到哪裡 ================= */
   win.localStorage.removeItem('sxr_wish_where_hinted');

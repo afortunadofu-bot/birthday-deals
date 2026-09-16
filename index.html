@@ -2352,6 +2352,8 @@ function renderWishlistBody(){
   const undoneOrder=list.filter(w=>!isDone(w)).map(w=>String(w.offer_id));
   box.innerHTML = list.length ? list.map(w=>{
     const o=w.offers||{};
+    // 地圖按鈕要用完整的優惠資料（要帶適用地區），w.offers 只有存幾個欄位
+    const mo=OFFERS.find(x=>String(x.id)===String(w.offer_id))||o;
     const usedByReport = MY_USED_OFFER_IDS.has(String(w.offer_id));
     const done = usedByReport || w.done;
     if(usedByReport && !w.done) needsSync.push(w.offer_id);
@@ -2379,6 +2381,8 @@ function renderWishlistBody(){
         ${yearBadge}
         ${moveBtns}
         ${yearBtn}
+        ${o.brand?`<a class="btn sm wl-map" href="${esc(mapsSearchUrl(mo))}" target="_blank" rel="noopener"
+          title="用 Google 地圖找附近的分店">📍</a>`:''}
         <button class="btn sm wl-remove" data-id="${w.offer_id}">移除</button>
       </div>`;
     }
@@ -2392,7 +2396,9 @@ function renderWishlistBody(){
       ${yearBadge}
       ${moveBtns}
       ${yearBtn}
-      ${o.brand?`<button class="btn sm wl-toggle" data-id="${w.offer_id}" type="button">詳情</button>`:''}
+      ${o.brand?`<button class="btn sm wl-toggle" data-id="${w.offer_id}" type="button">詳情</button>
+        <a class="btn sm wl-map" href="${esc(mapsSearchUrl(mo))}" target="_blank" rel="noopener"
+          title="用 Google 地圖找附近的分店">📍 地圖</a>`:''}
       <button class="btn sm wl-remove" data-id="${w.offer_id}">移除</button>
     </div>
     ${o.offer?`<div style="font-size:.78rem;color:var(--ink-2);margin:-4px 0 8px;overflow:hidden;
@@ -2689,6 +2695,10 @@ $('#btnMineA2hsClose').onclick=()=>{
    的東西；還在 feature/geo 分支、沒上線的功能（附近分店、地圖模式）不列。
    新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
 const SITE_UPDATES=[
+  {date:'2026-09-16', title:'待辦清單也能開地圖', items:[
+    '待辦清單每一筆也有「📍 地圖」，直接用 Google 地圖找附近分店（之前只有優惠卡片跟詳情有）',
+    '回饋問卷的題目分得更細：「多久來一次」分得出生日月跟平常，「用過幾個」分得出 3 個以上',
+    '排行榜上的「上榜人數」「平均每人省下」改成完整數字，之前只算到前 50 名']},
   {date:'2026-09-15', title:'回饋問卷、按讚、Google 地圖', items:[
     '新增回饋問卷：在「我的」分頁「推薦給朋友」下面，全部用點的，大約 2 分鐘，歡迎隨時來填',
     '使用回報、留言可以按讚 👍，覺得有幫助就按一下',
@@ -5055,7 +5065,10 @@ async function loadBoard(){
     // 「本月／全部」切換一起變動——不然選「本月」時這個數字會突然縮水，
     // 看起來又像另一個對不起來的 bug。!monthly 時 lbQuery 本來就是抓
     // 這張 view，不用再多打一次一樣的查詢。
-    monthly ? sb.from('leaderboard').select('saved_total') : Promise.resolve({data:null}),
+    // 本來只有「本月」分頁才查這張全站 view。但「上榜人數」「平均每人省下」原本是拿畫面上的
+    // 排行榜列表（只抓前 50 名）算的，人一多就永遠卡在 50——嵐：上限就是那個數字的話，
+    // 寫成站台數據會誤導。改成兩種分頁都查完整的 leaderboard view 來算。
+    sb.from('leaderboard').select('saved_total').limit(5000),
     // 「被使用過的店家數」之前是拿 popular_offers（熱門前 50 家）反查，優惠一多
     // 家數超過 50 就會被低估、看起來卡在某個數字不動。這裡直接查 usage_reports
     // 本身（對所有人開放讀取，不受 50 家上限），近一年、成功回報過的，才是真數字。
@@ -5483,8 +5496,10 @@ function renderBoardStats(lb, pop, allTimeSavedRows, usedRows, siteStatsRow, onl
   // 至少不會直接壞掉。
   const saved   = allTimeSavedRows ? allTimeSavedRows.reduce((a,r)=>a+(r.saved_total||0),0)
     : pop.reduce((a,r)=>a+(r.saved_total||0),0);
-  const people  = lb.length;
-  const avg     = people?Math.round(lb.reduce((a,r)=>a+(r.saved_total||0),0)/people):0;
+  // 用完整的 leaderboard view 算，不要用畫面上那份前 50 名（拿不到時才退回舊算法）
+  const peopleRows = allTimeSavedRows || lb;
+  const people  = peopleRows.length;
+  const avg     = people?Math.round(peopleRows.reduce((a,r)=>a+(r.saved_total||0),0)/people):0;
   const rate    = reports?Math.round(100*success/reports):null;
   const top     = pop.slice().sort((a,b)=>(b.report_count||0)-(a.report_count||0))[0];
   // 除了金額，也算「被用過的店家數」——跟金額比起來，這個數字比較能看出
@@ -6528,7 +6543,7 @@ $('#fbTypeFilter').onchange=renderFbList;
    - 引導小卡片：第 2 次來、第一次收藏／回報成功、這次停留滿 5 分鐘，任一個條件就出現，
      每次打開網站最多一次；「之後再說」7 天內不再出現；填完 30 天內不主動跳
    題目改版時把 SURVEY_VERSION 往上加，後台統計跟 CSV 就分得出新舊版本的答案。 ---- */
-const SURVEY_VERSION='v2';
+const SURVEY_VERSION='v3';
 const SURVEY_FACES=[['1','😣','很差'],['2','🙁','不太好'],['3','😐','普通'],['4','🙂','不錯'],['5','😍','超喜歡']];
 const SURVEY_ASPECTS=[['score_find','找優惠方便'],['score_accuracy','資訊正確'],['score_mobile','手機好用'],['score_look','畫面好看']];
 const SURVEY_FEATURES=[['browse','瀏覽／篩選優惠'],['wishlist','待辦清單'],['report','回報使用狀況'],
@@ -6540,10 +6555,13 @@ const SURVEY_SOURCES=[['threads','Threads'],['instagram','Instagram'],['facebook
 // 單選存字串、複選存陣列；以後加題目只要改這裡，不用再跑 SQL。
 // exclusive：像「都沒有」這種選項，點了會清掉同一題其他選項（反過來也是）。
 const SURVEY_EXTRA=[
-  {key:'visit_freq', title:'你多久會來一次壽星日？', opts:[['first','第一次來'],['birthday_month','生日月才來'],
-    ['monthly','每個月'],['weekly','每週'],['daily','幾乎每天']]},
-  {key:'used_offer', title:'你有真的去用過在這裡找到的優惠嗎？', opts:[['many','用過好幾個'],['one','用過 1 個'],
-    ['planning','還沒，但打算去'],['not_yet','還沒有']]},
+  // 嵐：「多久來一次」大家都會是生日月才來，要分成生日月／非生日月才看得出差別；
+  // 「用過好幾個」也要分出 3 個以上
+  {key:'visit_freq', title:'你多久會來一次壽星日？', opts:[['first','第一次來'],
+    ['bday_daily','生日月幾乎每天'],['bday_weekly','生日月每週幾次'],['bday_once','生日月來個一兩次'],
+    ['off_often','不是生日月也常來'],['off_sometimes','不是生日月偶爾來']]},
+  {key:'used_offer', title:'你有真的去用過在這裡找到的優惠嗎？', opts:[['many','用過 3 個以上'],
+    ['few','用過 1–2 個'],['planning','還沒，但打算去'],['not_yet','還沒有']]},
   {key:'vs_self', title:'跟自己上網查比起來，找優惠有變快嗎？', opts:[['much','快很多'],['bit','快一點'],
     ['same','差不多'],['slower','比較慢']]},
   {key:'want_types', title:'你最想看到哪類優惠？（可複選）', multi:true, opts:[['food','餐廳／吃到飽'],['drink','飲料甜點'],
@@ -6800,7 +6818,7 @@ function renderSurveySummary(d, label){
     ${SURVEY_EXTRA.map(x=>countBars(x.title.replace(/（可複選）$/,''), d.extra?.[x.key], x.opts)).join('')}
     ${(d.recent_comments||[]).length?`<div class="dash-chart" style="margin-top:12px"><b>還想說的話（最新 50 則）</b>
       <div class="sub-list" style="margin-top:8px">${d.recent_comments.map(c=>`<div class="sub-item">
-        <b>${esc(fmtDT(c.created_at))}・${c.is_member?'會員':'訪客'}・滿意度 ${esc(String(c.overall))}・推薦 ${esc(String(c.nps))}</b>
+        <b>${esc(fmtDT(c.created_at))}・${c.is_member?esc(c.display_name||'會員（沒設暱稱）'):'訪客'}・滿意度 ${esc(String(c.overall))}・推薦 ${esc(String(c.nps))}</b>
         <span style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(c.comment)}</span></div>`).join('')}</div></div>`:''}`;
 }
 $('#svRange').onchange=loadSurveyAdmin;
