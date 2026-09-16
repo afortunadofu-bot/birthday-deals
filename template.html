@@ -854,6 +854,14 @@
     </div>
     <p class="count" id="count"></p>
 
+    <!-- 功能介紹小卡（celine）：地圖按鈕加了之後很多人沒發現，在列表最上面講一句，
+         箭頭指向下面第一張卡片的按鈕列。看過、按過地圖、或按 ✕ 就不再出現。 -->
+    <div class="new-banner hidden" id="mapTipBanner">
+      <span class="nb-icon" aria-hidden="true">📍</span>
+      <span>每張優惠卡片下面都有一顆 <b>📍 地圖</b>，一鍵用 Google 地圖找離你最近的分店 👇</span>
+      <button class="btn sm plain" id="btnDismissMapTip" type="button" aria-label="知道了">✕</button>
+    </div>
+
     <div class="grid" id="grid"></div>
     <div class="empty hidden" id="empty">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
@@ -2804,6 +2812,7 @@ const SITE_UPDATES=[
     '「我的」可以幫家人／另一半也記一個生日（預設收著）：他的生日快到會提醒你，清單貼上他的標籤，入會死線就照他的生日算',
     '待辦清單可以貼標籤分組（這次生日／明年再說／離家遠…也可以自訂），上面用標籤篩選',
     '待辦清單每一筆也有「📍 地圖」，直接用 Google 地圖找附近分店（之前只有優惠卡片跟詳情有）',
+    '優惠列表最上面多一句話介紹地圖按鈕，看過或按過就不再出現',
     '回饋問卷的題目分得更細：「多久來一次」分得出生日月跟平常，「用過幾個」分得出 3 個以上',
     '排行榜上的「上榜人數」「平均每人省下」改成完整數字，之前只算到前 50 名']},
   {date:'2026-09-15', title:'回饋問卷、按讚、Google 地圖', items:[
@@ -3243,7 +3252,8 @@ function render(){
   $$('.act-report').forEach(b=>b.onclick=e=>{e.stopPropagation();openReport(b.dataset.id);});
   $$('.act-thread').forEach(b=>b.onclick=e=>{e.stopPropagation();openDetail(b.dataset.id);});
   // 地圖連結直接開新分頁，不要順便觸發整張卡片「點了開詳情」
-  $$('.act-map').forEach(a=>a.onclick=e=>e.stopPropagation());
+  $$('.act-map').forEach(a=>a.onclick=e=>{ e.stopPropagation(); markMapTipDone(); });
+  renderMapTip();
   $$('.act-adminedit').forEach(b=>b.onclick=e=>{e.stopPropagation();startEditOffer(b.dataset.id,true);});
   $$('.act-suggest').forEach(b=>b.onclick=e=>{e.stopPropagation();startEditOffer(b.dataset.id,false,true);});
   $$('.act-verify').forEach(b=>b.onclick=e=>{e.stopPropagation();setVerified(b.dataset.id,b.dataset.v==='1');});
@@ -3597,6 +3607,24 @@ function pendingOfferEditsHtml(rows){
    品牌會跳出一堆不適用的分店；「屋莎洋食鬆餅屋（Woosa）」這種括號裡的英文名去掉，免得
    搜尋字太長反而找不到。只適用一個縣市的優惠順便帶縣市（避免跳到外縣市的同名店）；
    全台或多個縣市就不帶，交給 Google 用使用者位置判斷。 ---- */
+/* ---- 「📍 地圖」的功能介紹小卡 ----
+   celine：地圖按鈕要有個地方介紹一下，不然沒人知道有這顆。做成列表最上面一句話＋
+   箭頭指向卡片上的按鈕，看過就不用再看：按 ✕、或真的按過地圖按鈕，就永久收起來。 ---- */
+function mapTipDone(){
+  try{ return !!localStorage.getItem('sxr_map_tip_done'); }catch{ return true; }
+}
+function markMapTipDone(){
+  try{ localStorage.setItem('sxr_map_tip_done','1'); }catch{}
+  $('#mapTipBanner')?.classList.add('hidden');
+}
+function renderMapTip(){
+  const el=$('#mapTipBanner'); if(!el) return;
+  // 列表是空的（搜尋沒結果／還沒載入）時不用講，旁邊根本沒有卡片可以指
+  const hasCards=!!$('#grid')?.querySelector('.card');
+  el.classList.toggle('hidden', mapTipDone() || !hasCards);
+}
+$('#btnDismissMapTip').onclick=markMapTipDone;
+
 function mapsSearchQuery(o){
   let brand=String(o?.brand||'');
   const only=brand.match(/[（(]\s*限\s*([^）)]*)[）)]/);
@@ -3646,7 +3674,7 @@ function offerFactsHtml(o){
     </div>
     ${adminEditDiffHtml(o)}
     ${o.brand?`<div class="row" style="margin-top:10px">
-      <a class="btn sm dtl-map" href="${esc(mapsSearchUrl(o))}" target="_blank" rel="noopener"
+      <a class="btn sm dtl-map" onclick="markMapTipDone()" href="${esc(mapsSearchUrl(o))}" target="_blank" rel="noopener"
         title="用 Google 地圖找附近的分店">📍 在 Google 地圖找附近分店</a></div>`:''}
     ${(o.sources&&o.sources.length)?`<div class="meta" style="margin-top:8px">
       ${o.sources.map(s=>`<span>${esc(s.tierLabel||TIER_LABEL[s.tier]||'來源')}

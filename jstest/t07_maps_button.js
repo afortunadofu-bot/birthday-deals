@@ -56,5 +56,34 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.ok('詳情按鈕網址跟卡片用同一套規則', dtl && dtl.href === win.eval('mapsSearchUrl(OFFERS[0])'));
   t.eq('沒有品牌的空資料不畫按鈕', win.eval("offerFactsHtml({timing:'當月',regions:[],sources:[]})").includes('dtl-map'), false);
 
+  /* ================= 功能介紹小卡（celine）================= */
+  const tip = doc.querySelector('#mapTipBanner');
+  t.ok('介紹卡在優惠列表裡、在卡片上面', !!tip && !!tip.closest('#tab-browse')
+    && (tip.compareDocumentPosition(doc.querySelector('#grid')) & 4) === 4);
+  win.localStorage.removeItem('sxr_map_tip_done');
+  win.renderMapTip();
+  t.ok('還沒看過時會顯示', !tip.classList.contains('hidden'));
+  t.ok('介紹卡講的是地圖按鈕', /地圖/.test(tip.textContent) && /分店/.test(tip.textContent), tip.textContent);
+  doc.querySelector('#btnDismissMapTip').click();
+  t.ok('按 ✕ 收起來', tip.classList.contains('hidden'));
+  win.renderMapTip();
+  t.ok('看過之後不再出現', tip.classList.contains('hidden'));
+
+  // 按過地圖按鈕也當作知道了
+  win.localStorage.removeItem('sxr_map_tip_done');
+  win.renderMapTip();
+  doc.querySelector('#grid .act-map').click();
+  t.ok('按過地圖按鈕就不用再提醒', tip.classList.contains('hidden')
+    && !!win.localStorage.getItem('sxr_map_tip_done'));
+
+  // 列表空的時候不講（沒有卡片可以指）
+  win.localStorage.removeItem('sxr_map_tip_done');
+  const grid = doc.querySelector('#grid');
+  const keep = grid.innerHTML;
+  grid.innerHTML = '';
+  win.renderMapTip();
+  t.ok('列表沒有卡片時不顯示', tip.classList.contains('hidden'));
+  grid.innerHTML = keep;
+
   process.exit(t.done() ? 0 : 1);
 })().catch((e) => { console.error(e); process.exit(1); });
