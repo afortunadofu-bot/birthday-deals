@@ -537,11 +537,13 @@
   #myWishlist .rep>.wl-name>span{overflow-wrap:anywhere}
   #myWishlist .rep .btn,#myWishlist .rep .wl-tag,#myWishlist .rep .wl-year-badge{flex:none;white-space:nowrap}
   @media(max-width:600px){
-    #myWishlist .rep{column-gap:6px}
+    #myWishlist .rep{column-gap:5px}
     #myWishlist .rep>.wl-name{flex-basis:100%}
     /* 手機上按鈕縮小一點，一列按鈕多半一行放得下 */
-    #myWishlist .rep .btn{min-height:32px;padding:4px 10px;font-size:.76rem}
-    #myWishlist .rep .wl-tag{min-height:32px;max-width:92px}
+    #myWishlist .rep .btn{min-height:32px;padding:4px 7px;font-size:.76rem}
+    #myWishlist .rep .wl-tag{min-height:32px;max-width:84px}
+    /* 「📍 地圖」在手機上只留 📍（celine），一列按鈕才放得下 */
+    #myWishlist .wl-map-txt{display:none}
   }
   /* 回報／留言的「有幫助」讚 */
   .like-btn{padding:2px 8px;font-size:.72rem;white-space:nowrap}
@@ -2533,7 +2535,7 @@ function renderWishlistBody(){
       ${tagSelectHtml}
       ${o.brand?`<button class="btn sm wl-toggle" data-id="${w.offer_id}" type="button">詳情</button>
         <a class="btn sm wl-map" href="${esc(mapsSearchUrl(mo))}" target="_blank" rel="noopener"
-          title="用 Google 地圖找附近的分店">📍 地圖</a>`:''}
+          title="用 Google 地圖找附近的分店" aria-label="地圖">📍<span class="wl-map-txt"> 地圖</span></a>`:''}
       <button class="btn sm wl-remove" data-id="${w.offer_id}">移除</button>
     </div>
     ${o.offer?`<div style="font-size:.78rem;color:var(--ink-2);margin:-4px 0 8px;overflow:hidden;

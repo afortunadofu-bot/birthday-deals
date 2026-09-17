@@ -114,6 +114,11 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   t.ok('待辦清單的一列可以換行', /#myWishlist \.rep\{[^}]*flex-wrap:wrap/.test(css));
   t.ok('按鈕文字不折行', /#myWishlist \.rep \.btn[^{]*\{[^}]*white-space:nowrap/.test(css));
   t.ok('手機上品牌名獨佔一行', /@media\(max-width:600px\)\{[^@]*#myWishlist \.rep>\.wl-name\{flex-basis:100%\}/.test(css));
+  // celine：「📍 地圖」在手機上縮成只有 📍（文字包在 .wl-map-txt，手機版藏起來）
+  const mapBtn = doc.querySelector('#myWishlist .wl-map');
+  t.ok('地圖按鈕的「地圖」兩個字可以單獨藏起來', !!mapBtn.querySelector('.wl-map-txt') && mapBtn.textContent.includes('📍'));
+  t.eq('只剩 📍 時螢幕報讀器還是念得出「地圖」', mapBtn.getAttribute('aria-label'), '地圖');
+  t.ok('手機上藏起「地圖」兩個字', /@media\(max-width:600px\)\{[^@]*#myWishlist \.wl-map-txt\{display:none\}/.test(css));
   const tagSelects = () => [...doc.querySelectorAll('#myWishlist .wl-tag')];
   t.eq('每一列都有標籤選單', tagSelects().length, 2);
   const opts = [...tagSelects()[0].options].map((o) => o.textContent);
