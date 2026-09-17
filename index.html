@@ -2913,7 +2913,7 @@ const SITE_UPDATES=[
     '待辦清單每一筆也有「📍 地圖」，直接用 Google 地圖找附近分店（之前只有優惠卡片跟詳情有）',
     '優惠列表最上面多一句話介紹地圖按鈕，看過或按過就不再出現',
     '回饋問卷的題目分得更細：「多久來一次」分得出生日月跟平常，「用過幾個」分得出 3 個以上',
-    '排行榜上的「上榜人數」「平均每人省下」改成完整數字，之前只算到前 50 名']},
+    '排行榜的站台數據：「上榜人數」換成「已上架店家」，「平均每人省下」改成完整數字（之前只算到前 50 名）']},
   {date:'2026-09-15', title:'回饋問卷、按讚、Google 地圖', items:[
     '新增回饋問卷：在「我的」分頁「推薦給朋友」下面，全部用點的，大約 2 分鐘，歡迎隨時來填',
     '使用回報、留言可以按讚 👍，覺得有幫助就按一下',
@@ -5785,6 +5785,8 @@ function renderBoardStats(lb, pop, allTimeSavedRows, usedRows, siteStatsRow, onl
   // 用完整的 leaderboard view 算，不要用畫面上那份前 50 名（拿不到時才退回舊算法）
   const peopleRows = allTimeSavedRows || lb;
   const people  = peopleRows.length;
+  // celine：站台數據的「上榜人數」改成「已上架店家」——網站上目前有幾個不同品牌的優惠
+  const shopCount = new Set(OFFERS.map(o=>o.brand).filter(Boolean)).size;
   const avg     = people?Math.round(peopleRows.reduce((a,r)=>a+(r.saved_total||0),0)/people):0;
   const rate    = reports?Math.round(100*success/reports):null;
   const top     = pop.slice().sort((a,b)=>(b.report_count||0)-(a.report_count||0))[0];
@@ -5815,7 +5817,7 @@ function renderBoardStats(lb, pop, allTimeSavedRows, usedRows, siteStatsRow, onl
     <div><div class="v">${nt(saved)}</div><div class="k">大家累積省下（近一年）</div></div>
     <div><div class="v">${reports}</div><div class="k">總回報次數</div></div>
     <div><div class="v ${rate>=70?'free':''}">${rate==null?'—':rate+'%'}</div><div class="k">整體成功率</div></div>
-    <div><div class="v">${people}</div><div class="k">上榜人數</div></div>
+    <div><div class="v">${shopCount}</div><div class="k">已上架店家</div></div>
     <div><div class="v">${brandSet.size}</div><div class="k">被使用過的店家數</div></div>
     <div><div class="v">${nt(avg)}</div><div class="k">平均每人省下</div></div>
     <div><div class="v" style="font-size:1.05rem">${esc(top?.brand||'—')}</div>
