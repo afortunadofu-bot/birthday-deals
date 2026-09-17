@@ -90,7 +90,7 @@ const { boot, tick, makeAsserts } = require('./harness');
   const stats = doc.querySelector('#boardStats').textContent;
   const brands = win.eval('new Set(OFFERS.map(o=>o.brand).filter(Boolean)).size');
   t.ok('站台數據不再顯示「上榜人數」', !/上榜人數/.test(stats), stats);
-  t.ok('改成顯示「已上架店家」', new RegExp(brands + '\s*已上架店家').test(stats), { brands, stats });
+  t.ok('改成顯示「已上架店家」', new RegExp(brands + '\\s*已上架店家').test(stats), { brands, stats });
 
   process.exit(t.done() ? 0 : 1);
 })().catch((e) => { console.error(e); process.exit(1); });
