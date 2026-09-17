@@ -527,23 +527,64 @@
   .rep.rep-full{flex-wrap:wrap;row-gap:3px}
   .rep-full .rep-note{flex-basis:100%;white-space:pre-wrap;overflow-wrap:anywhere;
     color:var(--ink-2);line-height:1.55}
-  /* 待辦清單的一列（celine：手機跑版）：加了標籤選單、地圖按鈕之後一列放不下，品牌名被擠成
-     一個字一行、「移到明年」「詳情」這些按鈕文字也被折成直的。改成可以換行：品牌名至少留
-     180px，放不下時按鈕整排換到下一行；手機上品牌名直接獨佔一行、按鈕排在下面。
-     按鈕跟標籤選單的文字一律不折行。 */
-  #myWishlist .rep{flex-wrap:wrap;align-items:center;row-gap:6px}
-  /* 品牌名原本是 inline style="flex:1"，會蓋掉這裡的設定，所以改成 .wl-name */
-  #myWishlist .rep>.wl-name{flex:1 1 180px;min-width:0}
-  #myWishlist .rep>.wl-name>span{overflow-wrap:anywhere}
-  #myWishlist .rep .btn,#myWishlist .rep .wl-tag,#myWishlist .rep .wl-year-badge{flex:none;white-space:nowrap}
+  /* 待辦清單（celine：「還不夠簡潔直觀好看」）：原本一列塞了 5 顆一樣大的外框按鈕、
+     每一筆的備註框都攤開，看起來很雜。改成一筆一張小卡：
+       第一行：勾選、品牌名（點名字開詳情）、右邊只留 📍 跟「⋯」
+       第二行：優惠內容＋入會期限（淡色小字）
+       第三行：標籤膠囊、備註（有寫才攤開輸入框）
+     不常用的「移到明年／移回今年」「移除」收進「⋯」選單。 */
+  #myWishlist .wl-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:12px 14px;margin:0 0 10px;transition:border-color .15s var(--ease)}
+  #myWishlist .wl-item:hover{border-color:var(--accent-line)}
+  #myWishlist .wl-item.compact{padding:8px 12px;margin-bottom:6px}
+  #myWishlist .wl-item.done{background:var(--free-bg);border-color:var(--free-line)}
+  .wl-top{display:flex;align-items:center;gap:10px;min-width:0}
+  .wl-top .wl-done{flex:none;width:18px;height:18px;margin:0;accent-color:var(--free);cursor:pointer}
+  .wl-name{flex:0 1 auto;min-width:0;background:none;border:0;padding:0;font:inherit;font-size:.92rem;
+    font-weight:700;color:var(--ink);text-align:left;cursor:pointer;overflow-wrap:anywhere;line-height:1.4}
+  button.wl-name::after{content:"\203A";margin-left:6px;color:var(--ink-3);font-weight:400}
+  button.wl-name:hover{color:var(--accent-dark)}
+  .wl-item.done .wl-name{color:var(--ink-2)}
+  .wl-pill{flex:none;font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap;line-height:1.5}
+  .wl-pill-ok{background:var(--surface);color:var(--free);border:1px solid var(--free-line)}
+  .wl-year-badge{background:var(--accent-soft);color:var(--accent-dark)}
+  .wl-actions{margin-left:auto;display:flex;align-items:center;gap:6px;flex:none}
+  .icon-btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:34px;height:34px;
+    padding:0 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink-2);
+    font:inherit;font-size:.8rem;line-height:1;cursor:pointer;text-decoration:none;white-space:nowrap}
+  .icon-btn:hover{border-color:var(--accent-line);color:var(--accent-dark)}
+  .icon-btn:disabled{opacity:.35;cursor:default}
+  .wl-map-txt{font-size:.78rem}
+  .wl-more{position:relative}
+  .wl-more>summary{list-style:none}
+  .wl-more>summary::-webkit-details-marker{display:none}
+  .wl-more[open]>summary{border-color:var(--accent-line);color:var(--accent-dark)}
+  .wl-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:150px;padding:6px;
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:var(--shadow-md);
+    display:flex;flex-direction:column;gap:2px}
+  .wl-menu button{background:none;border:0;border-radius:var(--r-xs);padding:9px 10px;text-align:left;
+    font:inherit;font-size:.84rem;color:var(--ink);cursor:pointer;white-space:nowrap}
+  .wl-menu button:hover{background:var(--line-soft)}
+  .wl-menu .wl-danger{color:var(--accent-dark)}
+  .wl-meta{margin:6px 0 0 28px;font-size:.8rem;color:var(--ink-2);line-height:1.55;overflow-wrap:anywhere}
+  .wl-sep{margin:0 6px;color:var(--ink-3)}
+  .wl-pills{display:inline-flex;gap:4px;margin-right:6px;vertical-align:1px}
+  .wl-dl{color:var(--accent-dark);font-weight:600}
+  .wl-chips{margin:10px 0 0 28px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .wl-tag-wrap{display:inline-flex;align-items:center;gap:2px;height:28px;padding:0 4px 0 10px;border-radius:999px;
+    background:var(--bg);color:var(--ink-3);font-size:.72rem}
+  .wl-tag-wrap.on{background:var(--accent-soft);color:var(--accent-dark)}
+  .wl-tag-wrap .wl-tag{border:0;background:transparent;color:inherit;font:inherit;font-size:.74rem;font-weight:600;
+    padding:0 2px;height:26px;max-width:128px;cursor:pointer}
+  .wl-note-add{height:28px;padding:0 10px;border:1px dashed var(--line);border-radius:999px;background:none;
+    color:var(--ink-3);font:inherit;font-size:.72rem;cursor:pointer}
+  .wl-note-add:hover{color:var(--ink-2);border-color:var(--ink-3)}
+  #myWishlist .wl-note{display:block;width:calc(100% - 28px);margin:8px 0 0 28px;font:inherit;font-size:.8rem;
+    line-height:1.5;padding:7px 10px;border-radius:var(--r-xs);border:1px solid var(--line);background:var(--bg);
+    resize:none;overflow:hidden;field-sizing:content}
   @media(max-width:600px){
-    #myWishlist .rep{column-gap:5px}
-    #myWishlist .rep>.wl-name{flex-basis:100%}
-    /* 手機上按鈕縮小一點，一列按鈕多半一行放得下 */
-    #myWishlist .rep .btn{min-height:32px;padding:4px 7px;font-size:.76rem}
-    #myWishlist .rep .wl-tag{min-height:32px;max-width:84px}
-    /* 「📍 地圖」在手機上只留 📍（celine），一列按鈕才放得下 */
-    #myWishlist .wl-map-txt{display:none}
+    #myWishlist .wl-item{padding:11px 12px}
+    .wl-map-txt{display:none}
   }
   /* 回報／留言的「有幫助」讚 */
   .like-btn{padding:2px 8px;font-size:.72rem;white-space:nowrap}
@@ -571,10 +612,6 @@
     bottom:calc(72px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom));
     background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
     box-shadow:0 8px 24px rgba(0,0,0,.14);padding:12px 14px;font-size:.86rem}
-  /* 待辦清單標籤（嵐：想把清單分組，上面用標籤篩選） */
-  .wl-tag{font-size:.72rem;padding:4px 8px;border-radius:999px;border:1px solid var(--line);
-    background:var(--bg);color:var(--ink-2);max-width:104px;min-height:28px}
-  .wl-tag[data-has="1"]{border-color:var(--accent);color:var(--accent-dark);font-weight:600}
   /* 「我的」分頁：更新紀錄＋新更新小紅點 */
   .upd-entry{padding:10px 0;border-top:1px solid var(--line-soft)}
   .upd-entry:first-child{border-top:0;padding-top:2px}
@@ -2389,7 +2426,7 @@ function wlTagList(){
   return [...tags];
 }
 function wlTagOptions(cur){
-  return `<option value="">＋標籤</option>`
+  return `<option value="">加標籤</option>`
     +wlTagList().map(t=>`<option value="${esc(t)}"${t===cur?' selected':''}>${esc(t)}</option>`).join('')
     +`<option value="__new__">自訂…</option>`;
 }
@@ -2489,64 +2526,67 @@ function renderWishlistBody(){
     const done = usedByReport || w.done;
     if(usedByReport && !w.done) needsSync.push(w.offer_id);
     const upos=undoneOrder.indexOf(String(w.offer_id));
+    // celine：「還不夠簡潔直觀好看」→ 每一筆改成一張小卡（樣式說明見 CSS 的 .wl-item）。
+    // 不常用的動作收進「⋯」選單；class 名稱（wl-toggle／wl-map／wl-remove／wl-year-toggle／
+    // wl-move／wl-tag／wl-note）都沿用原本的，下面綁事件的程式不用改。
     const moveBtns = (manual && !done) ? `
-      <button class="btn sm wl-move" data-id="${w.offer_id}" data-dir="-1" type="button"
+      <button class="icon-btn wl-move" data-id="${w.offer_id}" data-dir="-1" type="button"
         ${upos<=0?'disabled':''} aria-label="往上移">▲</button>
-      <button class="btn sm wl-move" data-id="${w.offer_id}" data-dir="1" type="button"
+      <button class="icon-btn wl-move" data-id="${w.offer_id}" data-dir="1" type="button"
         ${upos<0||upos>=undoneOrder.length-1?'disabled':''} aria-label="往下移">▼</button>` : '';
-    // 年度標籤：星號收藏預設存「當下這一年」，這顆按鈕讓已經加進待辦的項目
-    // 可以「移到明年」（提早存明年的代辦）或「移回今年」，不用整個重新收藏一次。
-    // 已經用過的項目不需要再切換年度，跟 moveBtns 一樣只在未完成時顯示。
+    // 年度：星號收藏預設存「當下這一年」，「⋯」選單裡可以移到明年（提早存明年的代辦）或移回今年。
     const wYear = w.year || CURRENT_YEAR;
-    const yearBadge = wYear!==CURRENT_YEAR ? `<span class="wl-year-badge" style="font-size:.72rem;color:var(--accent-dark);font-weight:700;white-space:nowrap">📅${wYear}</span>` : '';
-    const yearBtn = !done ? `<button class="btn sm wl-year-toggle" data-id="${w.offer_id}" data-year="${wYear}" type="button">${wYear>CURRENT_YEAR?'移回今年':'移到明年'}</button>` : '';
+    const yearBadge = wYear!==CURRENT_YEAR ? `<span class="wl-pill wl-year-badge">📅 ${wYear}</span>` : '';
+    const yearBtn = !done ? `<button class="wl-year-toggle" data-id="${w.offer_id}" data-year="${wYear}" type="button">${
+      wYear>CURRENT_YEAR?'↩ 移回今年':'📅 移到明年'}</button>` : '';
     // 這一筆貼的是「家人的稱呼」標籤 → 入會死線照他的生日算
     const forAlt = !!(altTagName() && w.tag===altTagName());
     const dlText = o.brand ? bdayDeadlineText(o.advance_days, forAlt) : null;
     const tagSelectHtml = `<select class="wl-tag" data-id="${w.offer_id}" data-has="${w.tag?'1':''}"
-      title="標籤：把待辦清單分組">${wlTagOptions(w.tag||'')}</select>`;
-    // 打勾＝已經用過了，之前只有刪除線＋灰階，看起來像「停用」而不是「達成」，
-    // 加個綠色背景跟打勾字樣，一眼就能分出「還沒用」跟「已經用過」。
-    if(compact){
-      return `<div class="rep${done?' wl-row-done':''}" data-wl-row="${w.offer_id}">
-        <label class="toggle wl-name">
-          <input type="checkbox" class="wl-done" data-id="${w.offer_id}" ${done?'checked':''} ${usedByReport?'disabled title="已經有使用回報紀錄，狀態自動同步"':''}>
-          <span style="${done?'text-decoration:line-through;color:var(--free);font-weight:700':''}">${esc(o.brand||'（已下架）')}</span>
-        </label>
-        ${yearBadge}
-        ${moveBtns}
-        ${yearBtn}
-        ${tagSelectHtml}
-        ${o.brand?`<a class="btn sm wl-map" href="${esc(mapsSearchUrl(mo))}" target="_blank" rel="noopener"
-          title="用 Google 地圖找附近的分店">📍</a>`:''}
-        <button class="btn sm wl-remove" data-id="${w.offer_id}">移除</button>
+      title="標籤：把待辦清單分組" aria-label="標籤">${wlTagOptions(w.tag||'')}</select>`;
+    // 狀態小膠囊（用過了／明年）放在第二行，品牌名很長時才不會被擠成好幾行；簡易版沒有第二行，放第一行
+    const pills = (done?`<span class="wl-pill wl-pill-ok">✓ ${usedByReport?'已回報':'用過了'}</span>`:'') + yearBadge;
+    const name = o.brand
+      ? `<button type="button" class="wl-name wl-toggle" data-id="${w.offer_id}" title="看詳情">${esc(o.brand)}</button>`
+      : `<span class="wl-name">（已下架）</span>`;
+    const top = `<div class="wl-top">
+        <input type="checkbox" class="wl-done" data-id="${w.offer_id}" ${done?'checked':''} ${usedByReport?'disabled':''}
+          title="${usedByReport?'已經有使用回報紀錄，狀態自動同步':'勾起來代表用過了'}" aria-label="${esc(o.brand||'')} 用過了">
+        ${name}
+        ${compact?pills:''}
+        <span class="wl-actions">
+          ${moveBtns}
+          ${o.brand?`<a class="icon-btn wl-map" href="${esc(mapsSearchUrl(mo))}" target="_blank" rel="noopener"
+            title="用 Google 地圖找附近的分店" aria-label="地圖">📍<span class="wl-map-txt">地圖</span></a>`:''}
+          <details class="wl-more">
+            <summary class="icon-btn" aria-label="更多動作" title="更多">⋯</summary>
+            <div class="wl-menu">
+              ${yearBtn}
+              <button class="wl-remove wl-danger" data-id="${w.offer_id}" type="button">🗑 從清單移除</button>
+            </div>
+          </details>
+        </span>
       </div>`;
-    }
-    return `<div class="rep${done?' wl-row-done':''}" data-wl-row="${w.offer_id}">
-      <label class="toggle wl-name">
-        <input type="checkbox" class="wl-done" data-id="${w.offer_id}" ${done?'checked':''} ${usedByReport?'disabled title="已經有使用回報紀錄，狀態自動同步"':''}>
-        <span style="${done?'text-decoration:line-through;color:var(--free);font-weight:700':''}">${esc(o.brand||'（已下架）')}${
-          usedByReport?' <span style="font-weight:400;font-size:.78rem">✓ 已回報使用過</span>'
-          :(w.done?' <span style="font-weight:400;font-size:.78rem">✓ 今年已用過</span>':'')}</span>
-      </label>
-      ${yearBadge}
-      ${moveBtns}
-      ${yearBtn}
-      ${tagSelectHtml}
-      ${o.brand?`<button class="btn sm wl-toggle" data-id="${w.offer_id}" type="button">詳情</button>
-        <a class="btn sm wl-map" href="${esc(mapsSearchUrl(mo))}" target="_blank" rel="noopener"
-          title="用 Google 地圖找附近的分店" aria-label="地圖">📍<span class="wl-map-txt"> 地圖</span></a>`:''}
-      <button class="btn sm wl-remove" data-id="${w.offer_id}">移除</button>
-    </div>
-    ${o.offer?`<div style="font-size:.78rem;color:var(--ink-2);margin:-4px 0 8px;overflow:hidden;
-      text-overflow:ellipsis;white-space:nowrap" title="${esc(o.offer)}">${esc(o.offer)}</div>`:''}
-    <div style="padding:0 0 8px">
-      <textarea class="wl-note" data-id="${w.offer_id}" maxlength="200" rows="1"
-        placeholder="加個備註，只有你自己看得到"
-        style="width:100%;font-size:.78rem;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);resize:none;overflow:hidden;line-height:1.5;font-family:inherit;display:block;field-sizing:content">${esc(w.note||'')}</textarea>
-    </div>
-    ${dlText&&!done?`<div style="font-size:.76rem;color:var(--accent-dark);margin:-4px 0 8px">⏰ ${
-      forAlt?esc(altTagName())+'的生日：':''}${esc(dlText)}</div>`:''}`;
+    if(compact) return `<div class="wl-item compact${done?' done':''}" data-wl-row="${w.offer_id}">${top}</div>`;
+    const dlHtml = dlText && !done
+      ? `<span class="wl-dl">⏰ ${forAlt?esc(altTagName())+'的生日・':''}入會期限 ${esc(dlText)}</span>` : '';
+    const meta = [o.offer?`<span class="wl-offer">${esc(o.offer)}</span>`:'', dlHtml]
+      .filter(Boolean).join('<span class="wl-sep">·</span>');
+    const metaHtml = (pills||meta) ? `<div class="wl-meta">${pills?`<span class="wl-pills">${pills}</span>`:''}${meta}</div>` : '';
+    // 用過的項目：沒貼標籤就不用再顯示「加標籤／備註」，卡片更乾淨
+    const chips = done
+      ? (w.tag ? `<div class="wl-chips"><span class="wl-tag-wrap on">🏷${tagSelectHtml}</span></div>` : '')
+      : `<div class="wl-chips">
+        <span class="wl-tag-wrap${w.tag?' on':''}">🏷${tagSelectHtml}</span>
+        ${w.note?'':`<button type="button" class="wl-note-add" data-id="${w.offer_id}">📝 備註</button>`}
+      </div>`;
+    return `<div class="wl-item${done?' done':''}" data-wl-row="${w.offer_id}">
+      ${top}
+      ${metaHtml}
+      ${chips}
+      <textarea class="wl-note${w.note?'':' hidden'}" data-id="${w.offer_id}" maxlength="200" rows="1"
+        placeholder="加個備註，只有你自己看得到">${esc(w.note||'')}</textarea>
+    </div>`;
   }).join('') : '<div style="color:var(--ink-3);font-size:.86rem">還沒有收藏，去「優惠」分頁點卡片上的書籤圖示加入。</div>';
   // 把剛剛發現「有回報但 wishlist.done 還沒同步」的幾筆補寫回資料庫，純粹是
   // 讓資料庫本身也保持一致（目前前端只有這裡讀 wishlist.done），不影響畫面
@@ -2586,6 +2626,14 @@ function renderWishlistBody(){
     if(row) row.tag=v||null;
     renderWishlistBody();
   });
+  // 還沒寫備註的，先只放一顆「📝 備註」，按了才攤開輸入框
+  $$('.wl-note-add').forEach(b=>b.onclick=()=>{
+    const ta=b.closest('.wl-item')?.querySelector('.wl-note');
+    if(!ta) return;
+    ta.classList.remove('hidden'); b.remove(); ta.focus();
+  });
+  // 「⋯」選單裡的動作按下去就把選單收起來
+  $$('#myWishlist .wl-menu button').forEach(b=>b.addEventListener('click',()=>b.closest('details')?.removeAttribute('open')));
   let wlNoteTimer=null;
   $$('.wl-note').forEach(inp=>{
     // celine 回饋：手機版收藏備註字數多就顯示不完整。原本是單行 input，超過寬度的字只能
@@ -2664,6 +2712,10 @@ async function moveWishlistItem(offerId, dir){
 $('#wlSort').onchange=renderWishlistBody;
 $('#wlYear').onchange=renderWishlistBody;
 $('#wlTagFilter').onchange=renderWishlistBody;
+// 點選單以外的地方就收起待辦清單的「⋯」選單（一次只開一個）
+document.addEventListener('click', e=>{
+  $$('#myWishlist details.wl-more[open]').forEach(d=>{ if(!d.contains(e.target)) d.removeAttribute('open'); });
+});
 $('#wlSinkDone').onchange=renderWishlistBody;
 $('#wlCompact').onchange=renderWishlistBody;
 

@@ -105,20 +105,32 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   win.renderWishlistBody();
   await tick(win, 1);
 
-  // celine：手機上待辦清單跑版（品牌名被擠成一個字一行、按鈕文字折成直的）。
-  // 原因是品牌名有 inline style="flex:1" 蓋掉 CSS；改成 .wl-name，並讓整列可以換行。
-  const names = [...doc.querySelectorAll('#myWishlist .rep > .wl-name')];
-  t.eq('每一列的品牌名都有 .wl-name', names.length, 2);
-  t.ok('品牌名沒有 inline 的 flex 設定（會蓋掉手機版排版）', names.every((n) => !/flex/.test(n.getAttribute('style') || '')));
+  // celine：「還不夠簡潔直觀好看」→ 每一筆改成一張小卡
+  const cards = [...doc.querySelectorAll('#myWishlist .wl-item')];
+  t.eq('每一筆是一張小卡', cards.length, 2);
+  t.ok('點品牌名就是開詳情', cards.every((c) => c.querySelector('.wl-top .wl-name.wl-toggle')));
+  t.ok('第一行右邊只留地圖跟「⋯」', cards.every((c) => c.querySelectorAll('.wl-actions > .wl-map, .wl-actions > .wl-more').length === 2
+    && !c.querySelector('.wl-actions > .wl-remove')));
+  t.ok('移除、移到明年收進「⋯」選單', cards.every((c) => c.querySelector('.wl-more .wl-remove') && c.querySelector('.wl-more .wl-year-toggle')));
+  t.ok('優惠內容跟入會期限在第二行', cards.every((c) => /生日禮/.test(c.querySelector('.wl-meta').textContent)
+    && /入會期限/.test(c.querySelector('.wl-meta').textContent)));
+  // 沒寫備註：只有一顆「📝 備註」，按了才攤開
+  const noteTa = cards[0].querySelector('.wl-note');
+  t.ok('沒寫備註時輸入框先收起來', noteTa.classList.contains('hidden'));
+  cards[0].querySelector('.wl-note-add').click();
+  t.ok('按「📝 備註」才攤開輸入框', !noteTa.classList.contains('hidden') && !cards[0].querySelector('.wl-note-add'));
+  // 「⋯」選單：按了動作就收起來、點別的地方也收起來
+  const more = cards[0].querySelector('.wl-more');
+  more.setAttribute('open', '');
+  doc.body.click();
+  t.ok('點選單以外的地方就收起「⋯」選單', !more.hasAttribute('open'));
   const css = [...doc.querySelectorAll('style')].map((x) => x.textContent).join(' ');
-  t.ok('待辦清單的一列可以換行', /#myWishlist \.rep\{[^}]*flex-wrap:wrap/.test(css));
-  t.ok('按鈕文字不折行', /#myWishlist \.rep \.btn[^{]*\{[^}]*white-space:nowrap/.test(css));
-  t.ok('手機上品牌名獨佔一行', /@media\(max-width:600px\)\{[^@]*#myWishlist \.rep>\.wl-name\{flex-basis:100%\}/.test(css));
   // celine：「📍 地圖」在手機上縮成只有 📍（文字包在 .wl-map-txt，手機版藏起來）
   const mapBtn = doc.querySelector('#myWishlist .wl-map');
   t.ok('地圖按鈕的「地圖」兩個字可以單獨藏起來', !!mapBtn.querySelector('.wl-map-txt') && mapBtn.textContent.includes('📍'));
   t.eq('只剩 📍 時螢幕報讀器還是念得出「地圖」', mapBtn.getAttribute('aria-label'), '地圖');
-  t.ok('手機上藏起「地圖」兩個字', /@media\(max-width:600px\)\{[^@]*#myWishlist \.wl-map-txt\{display:none\}/.test(css));
+  t.ok('手機上藏起「地圖」兩個字', /@media\(max-width:600px\)\{[^@]*\.wl-map-txt\{display:none\}/.test(css));
+  t.ok('品牌名沒有 inline 樣式（手機版排版靠 CSS）', cards.every((c) => !c.querySelector('.wl-name').getAttribute('style')));
   const tagSelects = () => [...doc.querySelectorAll('#myWishlist .wl-tag')];
   t.eq('每一列都有標籤選單', tagSelects().length, 2);
   const opts = [...tagSelects()[0].options].map((o) => o.textContent);
