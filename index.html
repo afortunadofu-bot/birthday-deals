@@ -527,6 +527,22 @@
   .rep.rep-full{flex-wrap:wrap;row-gap:3px}
   .rep-full .rep-note{flex-basis:100%;white-space:pre-wrap;overflow-wrap:anywhere;
     color:var(--ink-2);line-height:1.55}
+  /* 待辦清單的一列（celine：手機跑版）：加了標籤選單、地圖按鈕之後一列放不下，品牌名被擠成
+     一個字一行、「移到明年」「詳情」這些按鈕文字也被折成直的。改成可以換行：品牌名至少留
+     180px，放不下時按鈕整排換到下一行；手機上品牌名直接獨佔一行、按鈕排在下面。
+     按鈕跟標籤選單的文字一律不折行。 */
+  #myWishlist .rep{flex-wrap:wrap;align-items:center;row-gap:6px}
+  /* 品牌名原本是 inline style="flex:1"，會蓋掉這裡的設定，所以改成 .wl-name */
+  #myWishlist .rep>.wl-name{flex:1 1 180px;min-width:0}
+  #myWishlist .rep>.wl-name>span{overflow-wrap:anywhere}
+  #myWishlist .rep .btn,#myWishlist .rep .wl-tag,#myWishlist .rep .wl-year-badge{flex:none;white-space:nowrap}
+  @media(max-width:600px){
+    #myWishlist .rep{column-gap:6px}
+    #myWishlist .rep>.wl-name{flex-basis:100%}
+    /* 手機上按鈕縮小一點，一列按鈕多半一行放得下 */
+    #myWishlist .rep .btn{min-height:32px;padding:4px 10px;font-size:.76rem}
+    #myWishlist .rep .wl-tag{min-height:32px;max-width:92px}
+  }
   /* 回報／留言的「有幫助」讚 */
   .like-btn{padding:2px 8px;font-size:.72rem;white-space:nowrap}
   .like-btn.on{background:var(--free-bg);border-color:var(--free-line);color:var(--free)}
@@ -2491,7 +2507,7 @@ function renderWishlistBody(){
     // 加個綠色背景跟打勾字樣，一眼就能分出「還沒用」跟「已經用過」。
     if(compact){
       return `<div class="rep${done?' wl-row-done':''}" data-wl-row="${w.offer_id}">
-        <label class="toggle" style="flex:1;min-width:0">
+        <label class="toggle wl-name">
           <input type="checkbox" class="wl-done" data-id="${w.offer_id}" ${done?'checked':''} ${usedByReport?'disabled title="已經有使用回報紀錄，狀態自動同步"':''}>
           <span style="${done?'text-decoration:line-through;color:var(--free);font-weight:700':''}">${esc(o.brand||'（已下架）')}</span>
         </label>
@@ -2505,7 +2521,7 @@ function renderWishlistBody(){
       </div>`;
     }
     return `<div class="rep${done?' wl-row-done':''}" data-wl-row="${w.offer_id}">
-      <label class="toggle" style="flex:1;min-width:0">
+      <label class="toggle wl-name">
         <input type="checkbox" class="wl-done" data-id="${w.offer_id}" ${done?'checked':''} ${usedByReport?'disabled title="已經有使用回報紀錄，狀態自動同步"':''}>
         <span style="${done?'text-decoration:line-through;color:var(--free);font-weight:700':''}">${esc(o.brand||'（已下架）')}${
           usedByReport?' <span style="font-weight:400;font-size:.78rem">✓ 已回報使用過</span>'

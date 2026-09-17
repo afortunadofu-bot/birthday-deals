@@ -105,6 +105,15 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   win.renderWishlistBody();
   await tick(win, 1);
 
+  // celine：手機上待辦清單跑版（品牌名被擠成一個字一行、按鈕文字折成直的）。
+  // 原因是品牌名有 inline style="flex:1" 蓋掉 CSS；改成 .wl-name，並讓整列可以換行。
+  const names = [...doc.querySelectorAll('#myWishlist .rep > .wl-name')];
+  t.eq('每一列的品牌名都有 .wl-name', names.length, 2);
+  t.ok('品牌名沒有 inline 的 flex 設定（會蓋掉手機版排版）', names.every((n) => !/flex/.test(n.getAttribute('style') || '')));
+  const css = [...doc.querySelectorAll('style')].map((x) => x.textContent).join(' ');
+  t.ok('待辦清單的一列可以換行', /#myWishlist \.rep\{[^}]*flex-wrap:wrap/.test(css));
+  t.ok('按鈕文字不折行', /#myWishlist \.rep \.btn[^{]*\{[^}]*white-space:nowrap/.test(css));
+  t.ok('手機上品牌名獨佔一行', /@media\(max-width:600px\)\{[^@]*#myWishlist \.rep>\.wl-name\{flex-basis:100%\}/.test(css));
   const tagSelects = () => [...doc.querySelectorAll('#myWishlist .wl-tag')];
   t.eq('每一列都有標籤選單', tagSelects().length, 2);
   const opts = [...tagSelects()[0].options].map((o) => o.textContent);
