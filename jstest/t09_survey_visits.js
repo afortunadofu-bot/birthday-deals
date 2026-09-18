@@ -179,6 +179,9 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   doc.querySelector('#btnSvNudgeGo').click();
   await tick(win, 1);
   t.ok('按「好啊」打開問卷、收起卡片', doc.querySelector('#dlgSurvey').open && nudge.classList.contains('hidden'));
+  // 前面送出問卷留下的「1.2 秒後自動關視窗」不能把這份新打開的問卷關掉
+  await new Promise((r) => win.setTimeout(r, 1400));
+  t.ok('送出後的自動關閉不會關到新打開的問卷', doc.querySelector('#dlgSurvey').open);
   doc.querySelector('#dlgSurvey').close();
 
   // 造訪次數：間隔 30 分鐘才算新的一次

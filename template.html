@@ -7150,7 +7150,11 @@ function surveyExtraAnswers(){
   });
   return o;
 }
+// 每打開一次問卷就換一個編號：送出後「1.2 秒自動關視窗」只關當次那一份，
+// 不會把 1.2 秒內重新打開的新問卷也一起關掉
+let SV_OPEN_SEQ=0;
 function openSurvey(from){
+  SV_OPEN_SEQ++;
   hideSurveyNudge();
   renderSurveyForm();
   $('#dlgSurvey').showModal(); pushDlgHistory();
@@ -7207,7 +7211,8 @@ $('#btnSvSubmit').onclick=async()=>{
   logEvent('survey_submit', {overall:row.overall, nps:row.nps});
   renderSurveyLastHint();
   note($('#svMsg'),'good','✓ 收到了，謝謝你的回饋！');
-  setTimeout(()=>{ if($('#dlgSurvey').open) $('#dlgSurvey').close(); }, 1200);
+  const seq=SV_OPEN_SEQ;
+  setTimeout(()=>{ if(seq===SV_OPEN_SEQ && $('#dlgSurvey').open) $('#dlgSurvey').close(); }, 1200);
 };
 $('#btnOpenSurvey').onclick=()=>openSurvey('mine');
 
