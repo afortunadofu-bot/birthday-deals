@@ -1482,8 +1482,13 @@
   <div class="panel" id="pnlFeedback">
     <h2>問題回報／建議<span class="n hidden" id="fbCount"></span></h2>
     <p class="sub">大家送出的問題回報與功能建議，訪客不用登入也能送。標記已處理時可以順手留一句回覆，登入的送出者會在通知裡看到；訪客沒有帳號，只會更新狀態。</p>
-    <div class="row" style="margin:0 0 10px"><label class="lbl">類型<select id="fbTypeFilter">
+    <div class="row" style="margin:0 0 10px;gap:8px 14px;flex-wrap:wrap"><label class="lbl">類型<select id="fbTypeFilter">
       <option value="all">全部</option><option value="bug">問題回報</option><option value="suggestion">建議</option>
+    </select></label>
+    <!-- 嵐：可以篩選已完成、未完成跟修改中 -->
+    <label class="lbl">狀態<select id="fbStatusFilter">
+      <option value="all">全部</option><option value="open">未完成</option>
+      <option value="in_progress">修改中</option><option value="resolved">已完成</option>
     </select></label></div>
     <div id="fbMsg2"></div>
     <div id="fbList"></div>
@@ -7168,8 +7173,11 @@ async function loadFeedbackList(){
 }
 function renderFbList(){
   const filter=$('#fbTypeFilter').value;
-  const data=filter==='all'?FB_ROWS:FB_ROWS.filter(f=>(f.type||'bug')===filter);
-  const open=data.filter(f=>f.status==='open');
+  const sf=$('#fbStatusFilter')?.value||'all';
+  let data=filter==='all'?FB_ROWS:FB_ROWS.filter(f=>(f.type||'bug')===filter);
+  // 狀態：未完成＝待處理（open），修改中＝in_progress（schema_v68），已完成＝resolved
+  if(sf!=='all') data=data.filter(f=>f.status===sf);
+  const open=FB_ROWS.filter(f=>f.status!=='resolved' && (filter==='all'||(f.type||'bug')===filter));
   $('#fbCount').textContent=open.length; $('#fbCount').classList.toggle('hidden',!open.length);
   $('#fbList').innerHTML=data.length?data.map(f=>{
     const acct=f.account_email||f.email||'';
@@ -7178,7 +7186,8 @@ function renderFbList(){
       <div style="flex:1;min-width:0">
         <div>
           <span class="flag${f.type==='suggestion'?' ok-flag':' alert'}" style="margin-right:4px">${esc(FB_TYPE_LABEL[f.type||'bug'])}</span>
-          <span class="flag${f.status==='resolved'?' ok-flag':''}">${f.status==='resolved'?'✓ 已處理':'⏳ 待處理'}</span>
+          <span class="flag${f.status==='resolved'?' ok-flag':''}"${f.status==='in_progress'?' style="background:var(--alert-bg);color:var(--alert);border-color:var(--alert-line)"':''}>${
+            f.status==='resolved'?'✓ 已完成':f.status==='in_progress'?'🔧 修改中':'⏳ 未完成'}</span>
         </div>
         <div style="margin-top:4px;${f.status==='resolved'?'color:var(--ink-3);text-decoration:line-through':''}">${esc(f.message)}</div>
         ${f.status==='resolved'&&f.admin_reply?`<div style="margin-top:4px;font-size:.8rem;color:var(--ink-2)">回覆：${esc(f.admin_reply)}</div>`:''}
@@ -7189,8 +7198,11 @@ function renderFbList(){
           ${f.page?`<span style="color:var(--ink-3)">${esc(f.page)}</span>`:''}
         </div>
       </div>
-      <button class="btn sm fb-toggle" data-id="${f.id}" data-status="${f.status==='open'?'resolved':'open'}" data-hasuser="${f.account_email?'1':'0'}">
-        ${f.status==='open'?'標記已處理':'改回未處理'}</button>
+      <div style="display:flex;flex-direction:column;gap:6px;flex:none">
+        ${f.status==='open'?`<button class="btn sm fb-toggle" data-id="${f.id}" data-status="in_progress">🔧 修改中</button>`:''}
+        ${f.status!=='resolved'?`<button class="btn sm fb-toggle" data-id="${f.id}" data-status="resolved" data-hasuser="${f.account_email?'1':'0'}">標記已完成</button>`:''}
+        ${f.status!=='open'?`<button class="btn sm fb-toggle" data-id="${f.id}" data-status="open">改回未完成</button>`:''}
+      </div>
     </div>`;}).join('') : '<div style="color:var(--ink-3);font-size:.86rem">目前沒有符合的內容。</div>';
   $$('.fb-toggle').forEach(b=>b.onclick=async()=>{
     if(b.dataset.status==='resolved'){
@@ -7205,13 +7217,20 @@ function renderFbList(){
       if(error){ b.disabled=false; alert('更新失敗：'+error.message); return; }
     }else{
       b.disabled=true;
-      const {error}=await sb.from('site_feedback').update({status:'open'}).eq('id',b.dataset.id);
-      if(error){ b.disabled=false; alert('更新失敗：'+error.message); return; }
+      const {error}=await sb.from('site_feedback').update({status:b.dataset.status}).eq('id',b.dataset.id);
+      if(error){
+        b.disabled=false;
+        alert(b.dataset.status==='in_progress' && /check|constraint|violates/i.test(error.message)
+          ? '「修改中」要先在 Supabase 執行 schema_v68_feedback_in_progress.sql。'
+          : '更新失敗：'+error.message);
+        return;
+      }
     }
     loadFeedbackList();
   });
 }
 $('#fbTypeFilter').onchange=renderFbList;
+$('#fbStatusFilter').onchange=renderFbList;
 
 /* ---- 站台儀表板 ---- */
 /* ===================================================================== */
