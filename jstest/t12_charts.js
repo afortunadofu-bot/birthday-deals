@@ -31,6 +31,20 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   win.renderBoardStats([{ saved_total: 100 }], pop, [{ saved_total: 100 }, { saved_total: 300 }], pop, { pageview_count: 9 }, 1);
   t.ok('累積省下放大成主角', /累積省下/.test($('#boardStats .hero').textContent));
   t.ok('成功率有量表', !!$('#boardStats .vm-track .vm-fill'));
+  // 嵐：優惠頁跟站台數據的「大家累積省下」要一樣——兩邊都用 site_stats
+  win.renderBoardStats([{ saved_total: 100 }], pop, [{ saved_total: 100 }], pop,
+    { pageview_count: 9, saved_total: 123456, report_count: 789 }, 1);
+  t.ok('站台數據的累積省下用 site_stats', /123,456/.test($('#boardStats .hero').textContent), $('#boardStats .hero').textContent);
+  t.ok('總回報次數也用 site_stats', /789\s*總回報次數/.test($('#boardStats').textContent));
+  // 成功率不能只拿「成功的回報」來除（會永遠接近 100%）
+  win.renderBoardStats([], pop, [], pop, { saved_total: 1, report_count: 4 }, 1,
+    [{ result: 'success' }, { result: 'success' }, { result: 'success' }, { result: 'failed' }]);
+  t.ok('成功率用所有回報算（3 成功／4 筆＝75%）', /75%\s*成功率（近半年）/.test($('#boardStats').textContent), $('#boardStats').textContent);
+  win.__sbS = makeSb({ tables: { site_stats: [{ offer_count: 5, saved_total: 123456, report_count: 789 }] } });
+  win.eval('sb = window.__sbS; LIVE = true;');
+  await win.loadSiteStats();
+  t.ok('優惠頁顯示同一個數字、同一個說法', /大家累積省下\s*\$?123,456/.test($('#siteStats').textContent), $('#siteStats').textContent);
+  win.eval('LIVE = false;');
 
   /* ---- 使用時段：24 根直條，只有尖峰用主色 ---- */
   win.renderBoardHoursChart([{ hour: 9, count: 3 }, { hour: 21, count: 12 }, { hour: 22, count: 5 }]);
@@ -155,6 +169,17 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   const bm = [...dash.querySelectorAll('.viz')].find((x) => /生日月份/.test(x.textContent));
   t.eq('生日月份是 12 根直條', bm.querySelectorAll('.vcol').length, 12);
   t.ok('回訪率是量表', [...doc.querySelectorAll('#dashVisits .vmeter')].some((m) => /回訪率/.test(m.textContent)));
+
+  /* ---- 嵐：站台數據、洞察分析分成小分頁，一次只看一塊 ---- */
+  const bar = $('.subtabs[data-group="boardInsights"]');
+  const panes = () => [...doc.querySelectorAll('#biMonth, #biTrend, #biType, #biWeek')].filter((p) => !p.classList.contains('hidden')).map((p) => p.id);
+  t.eq('洞察分析一次只顯示一塊', panes().length, 1);
+  bar.querySelector('[data-pane="biWeek"]').click();
+  t.eq('點「星期」就只顯示星期那塊', panes(), ['biWeek']);
+  t.eq('分頁按鈕標出目前選的', bar.querySelector('[aria-selected="true"]').dataset.pane, 'biWeek');
+  t.eq('記住上次看的分頁', win.localStorage.getItem('sxr_subtab_boardInsights'), 'biWeek');
+  t.ok('站台數據也分成小分頁', doc.querySelectorAll('.subtabs[data-group="boardStats"] .subtab').length === 3
+    && [...doc.querySelectorAll('#bsOverview, #bsHours, #bsCat')].filter((p) => !p.classList.contains('hidden')).length === 1);
 
   /* ---- 滑過看數字 ---- */
   const tip = doc.querySelector('.viz-tip');
