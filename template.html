@@ -837,6 +837,18 @@
   /* 使用者回饋：內文可以換行（條列式 1. 2. 3. 比較好讀）。輸入框本來就能換行、資料也存得進去，
      只是顯示時被併成一行——優惠內容、條件、期限改成保留換行 */
   .card p.offer, .card dl.kv dd, .sub-item>span.fact-v, .wl-offer{white-space:pre-line}
+  /* 大頭貼上傳 */
+  .avatar-edit{display:flex;align-items:center;gap:14px;margin:4px 0 14px}
+  .avatar-lg{width:64px;height:64px;border-radius:50%;object-fit:cover;flex:none;font-size:1.5rem;
+    display:inline-flex;align-items:center;justify-content:center}
+  /* 管理員：合併重複優惠 */
+  .merge-pick{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:600px){ .merge-pick{grid-template-columns:1fr} }
+  .merge-card{border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;font-size:.8rem;min-height:64px}
+  .merge-card b{display:block;font-size:.88rem}
+  .merge-card .offer{white-space:pre-line;color:var(--ink-2);margin-top:4px}
+  .merge-sugg{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+  .merge-sugg button{text-align:left}
   /* ---------- 表單 / 對話框 ---------- */
   dialog{border:none;border-radius:var(--r);padding:0;max-width:520px;
     width:calc(100% - 32px);box-shadow:var(--shadow-lg)}
@@ -1323,6 +1335,20 @@
     </div>
     <div class="panel" id="profilePanel">
       <h2>個人資料</h2>
+      <!-- 使用者回饋：大頭貼可以自己換，不要只能用 Google 帳號的照片（schema_v70 開了 avatars 儲存空間） -->
+      <div class="avatar-edit">
+        <img class="avatar avatar-lg hidden" id="avatarPreview" alt="我的大頭貼">
+        <span class="initial avatar-lg" id="avatarInitial">壽</span>
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+          <div class="row" style="gap:8px;flex-wrap:wrap">
+            <label class="btn sm" for="avatarFile" style="cursor:pointer">📷 上傳照片</label>
+            <input type="file" id="avatarFile" accept="image/jpeg,image/png,image/webp" class="hidden">
+            <button type="button" class="btn sm hidden" id="btnAvatarGoogle">用回 Google 頭像</button>
+          </div>
+          <span class="hint" style="margin:0">會自動裁成正方形、縮小到 256×256，排行榜上大家看得到。</span>
+        </div>
+      </div>
+      <div id="avatarMsg"></div>
       <div class="two">
         <div class="field"><label>暱稱</label><input id="fNickname" maxlength="30" placeholder="顯示給其他人看的名字"></div>
         <div class="field" style="align-self:flex-end"><button class="btn primary" id="btnSaveNickname" type="button">儲存暱稱</button></div>
@@ -1569,6 +1595,27 @@
     <button class="btn primary sm" id="btnSendAnnounce" type="button">發送公告</button>
     <button type="button" class="sub-toggle" id="btnAnnHistoryToggle" aria-expanded="false" style="margin-top:14px">歷史公告</button>
     <div class="hidden" id="annHistoryWrap"><div id="annHistory" style="margin-top:8px"></div></div>
+  </div>
+  <!-- 使用者回饋：重複的店家（例如「硬咖啡」vs「CAFE!N 硬咖啡」）回報時不知道要回報哪張 -->
+  <div class="panel" id="pnlMerge">
+    <h2>合併重複優惠</h2>
+    <p class="sub">選「要保留的」跟「要併掉的」：併掉那張的回報、留言、評分、收藏、修改建議都會搬到保留的那張，
+      然後把併掉那張下架（不會刪除）。同一個人兩張都評過分／收藏過時，保留「保留那張」上的。</p>
+    <div class="merge-pick">
+      <div class="field"><label>要保留的優惠</label><input id="mergeKeep" list="mergeOfferList" placeholder="輸入品牌或 #編號">
+        <div class="merge-card" id="mergeKeepCard"><span class="hint">還沒選</span></div></div>
+      <div class="field"><label>要併掉的優惠</label><input id="mergeDrop" list="mergeOfferList" placeholder="輸入品牌或 #編號">
+        <div class="merge-card" id="mergeDropCard"><span class="hint">還沒選</span></div></div>
+    </div>
+    <datalist id="mergeOfferList"></datalist>
+    <div class="row" style="gap:8px;margin-top:4px">
+      <button type="button" class="btn primary" id="btnMerge" disabled>合併</button>
+      <button type="button" class="btn sm" id="btnMergeSwap">⇄ 對調</button>
+    </div>
+    <div id="mergeMsg"></div>
+    <div style="margin-top:14px"><b style="font-size:.85rem">可能重複的優惠</b>
+      <div class="hint" style="margin-top:2px">品牌名稱去掉空白、英文大小寫後一樣，或其中一個包含另一個。點一下帶進上面，再自己確認要不要合併。</div>
+      <div class="merge-sugg" id="mergeSugg"></div></div>
   </div>
   <div class="panel" id="pnlAdminSettings">
     <h2>管理員設定</h2>
@@ -2228,7 +2275,7 @@ async function onSession(s){
   if(me){ loadMyStuff(); loadWishlist(); loadMyUsedOffers(); flushPendingReport(); loadPendingPreview(); loadPendingEditsPreview(); loadNotifCount(); }
   else { $('#pendPreviewPanel').classList.add('hidden'); $('#pendEditsPreviewPanel').classList.add('hidden'); $('#btnNotif').classList.add('hidden'); }
   if(myProfile?.is_admin){ loadPending(); loadPendingEdits(); loadRejected(); loadApproved();
-    loadAdminSettings(); loadAdminDashboard(); loadFeedbackList(); loadUsageReportsAdmin(); loadSurveyAdmin();
+    loadAdminSettings(); loadAdminDashboard(); loadFeedbackList(); loadUsageReportsAdmin(); loadSurveyAdmin(); renderMergePanel();
     loadAdminCommentList(); loadReviewInsights(); }
 }
 
@@ -2284,6 +2331,7 @@ function paintAuth(){
   $('#uName').textContent = on ? (myProfile?.display_name||'壽星') : '';
   $('#uAdminBadge').classList.toggle('hidden', !(on&&myProfile?.is_admin));
   if(on&&myProfile?.avatar_url) $('#uAvatar').src=myProfile.avatar_url;
+  renderAvatarEditor();
   $$('.tab[data-tab="admin"]').forEach(t=>t.classList.toggle('hidden',!myProfile?.is_admin));
   if(myProfile){
     $('#optLeaderboard').checked = !!myProfile.show_on_leaderboard;
@@ -3075,7 +3123,9 @@ const SITE_UPDATES=[
     '排行榜會直接告訴你自己排第幾名；每個排行榜都可以切「進步最多」，看最近衝最快的店家跟人',
     '修正手機上排行榜最右邊那欄被切掉，還有優惠頁跟排行榜的「大家累積省下」數字不一樣',
     '優惠內容、條件可以換行了，條列式 1. 2. 3. 比較好讀',
-    '「買一送一」跟「折扣」分成兩類，篩選更好找；優惠會直接寫清楚要不要本人出示證件']},
+    '「買一送一」跟「折扣」分成兩類，篩選更好找；優惠會直接寫清楚要不要本人出示證件',
+    '大頭貼可以自己上傳照片了（在「我的」→ 個人資料）',
+    'PK雙饗卡、多那之集團、瓦城泰統集團的優惠拆成一個品牌一張，回報時找得到自己去的那家']},
   {date:'2026-09-16', title:'附近有優惠的店、家人的生日、清單標籤', items:[
     '新增「📍 附近」：允許定位之後可以只看你附近有優惠的店，列表由近到遠排序，卡片上直接顯示最近的一家分店跟導航連結',
     '不想給定位也可以：打開地圖點一下任何地方，就會找那附近的優惠',
@@ -6510,6 +6560,77 @@ function renderWeekdayBreakdown(rows){
      table:{head:['星期','成功使用次數','佔比'], rows:items.map(it=>[it.label,it.value,vizPct(it.value,total)+'%'])}});
 }
 
+/* ---- 大頭貼：自己上傳照片（schema_v70）----
+   選照片 → 在瀏覽器裁成正方形、縮成 256×256 JPEG（手機拍的照片動輒好幾 MB，縮完通常幾十 KB）→
+   上傳到 avatars/<自己的 id>/ → 更新 profiles.avatar_url。檔名每次都不一樣，瀏覽器快取不會卡住舊照片；
+   換新照片後把自己資料夾裡的舊檔刪掉。也可以用回 Google 帳號的頭像。 ---- */
+function googleAvatarUrl(){ return me?.user_metadata?.avatar_url || me?.user_metadata?.picture || null; }
+function renderAvatarEditor(){
+  const img=$('#avatarPreview'), ini=$('#avatarInitial');
+  if(!img) return;
+  const url=myProfile?.avatar_url||'';
+  img.classList.toggle('hidden', !url);
+  ini.classList.toggle('hidden', !!url);
+  if(url) img.src=url;
+  ini.textContent=(myProfile?.display_name||'壽')[0];
+  const g=googleAvatarUrl();
+  $('#btnAvatarGoogle').classList.toggle('hidden', !(me && g && g!==url));
+}
+function squareJpeg(file, size=256){
+  return new Promise((resolve,reject)=>{
+    const url=URL.createObjectURL(file);
+    const im=new Image();
+    im.onload=()=>{
+      const s=Math.min(im.naturalWidth, im.naturalHeight);
+      const c=document.createElement('canvas'); c.width=size; c.height=size;
+      c.getContext('2d').drawImage(im, (im.naturalWidth-s)/2, (im.naturalHeight-s)/2, s, s, 0, 0, size, size);
+      URL.revokeObjectURL(url);
+      c.toBlob(b=>b?resolve(b):reject(new Error('轉檔失敗')), 'image/jpeg', 0.86);
+    };
+    im.onerror=()=>{ URL.revokeObjectURL(url); reject(new Error('讀不到這張圖片')); };
+    im.src=url;
+  });
+}
+async function setAvatarUrl(url){
+  const {error}=await sb.from('profiles').update({avatar_url:url}).eq('id',me.id);
+  if(error) throw error;
+  myProfile={...(myProfile||{}), avatar_url:url};
+  paintAuth();
+}
+async function uploadAvatar(file){
+  const msg=$('#avatarMsg');
+  if(!LIVE||!me){ note(msg,'alert','要登入才能換大頭貼。'); return; }
+  if(!file) return;
+  if(!/^image\/(jpeg|png|webp)$/.test(file.type)){ note(msg,'alert','只能用 JPG、PNG 或 WebP 圖片。'); return; }
+  if(file.size>15*1024*1024){ note(msg,'alert','照片太大了（超過 15MB），換一張試試。'); return; }
+  note(msg,'','上傳中…');
+  try{
+    const blob=await squareJpeg(file);
+    const path=`${me.id}/avatar-${Date.now()}.jpg`;
+    const bucket=sb.storage.from('avatars');
+    const {error:upErr}=await bucket.upload(path, blob, {contentType:'image/jpeg', upsert:false});
+    if(upErr) throw upErr;
+    const url=bucket.getPublicUrl(path).data.publicUrl;
+    const old=myProfile?.avatar_url||'';
+    await setAvatarUrl(url);
+    // 刪掉自己資料夾裡的舊照片（刪不掉也不影響）
+    const m=old.match(/\/avatars\/(.+)$/);
+    if(m && m[1].startsWith(me.id+'/')) bucket.remove([decodeURIComponent(m[1])]).catch(()=>{});
+    note(msg,'good','✓ 大頭貼換好了。');
+  }catch(e){
+    const t=String(e?.message||e);
+    note(msg,'alert', /bucket|not found|policy|row-level|avatar/i.test(t)
+      ? '大頭貼上傳還沒開通（管理員需要先在 Supabase 執行 schema_v70_split_groups_merge_avatars.sql）。'
+      : '上傳失敗：'+esc(t));
+  }
+}
+$('#avatarFile').onchange=e=>{ uploadAvatar(e.target.files?.[0]); e.target.value=''; };
+$('#btnAvatarGoogle').onclick=async()=>{
+  const g=googleAvatarUrl(); if(!g) return;
+  try{ await setAvatarUrl(g); note($('#avatarMsg'),'good','✓ 已經用回 Google 頭像。'); }
+  catch(e){ note($('#avatarMsg'),'alert','更新失敗：'+esc(e.message||e)); }
+};
+
 /* ---- 批次核可待審投稿：嵐回饋「待審核清單也要一鍵審核全選」。跟
    bulkApproveEdits 同一套精神，但這裡會把每一列自己的「已查證」勾選狀態
    跟「審核備註」一起帶進 review_offer，不是一律送未查證／空備註——管理員
@@ -8036,6 +8157,79 @@ function wireChartTooltips(root, registry=DASH_CHARTS){
 }
 
 /* ---- 管理員設定：用 email 直接在網站上新增／移除管理員，不用回去跑 SQL ---- */
+/* ---- 管理員：合併重複優惠（schema_v70 的 admin_merge_offers）---- */
+function mergeOfferLabel(o){ return `#${o.id} ${o.brand}`; }
+function mergeFind(v){
+  const m=String(v||'').match(/#?(\d+)/);
+  return m ? OFFERS.find(o=>String(o.id)===m[1]) : null;
+}
+function mergeNorm(b){ return String(b||'').toLowerCase().replace(/[\s\-_.·・!！'’]/g,''); }
+// 可能重複：品牌名稱正規化後一樣，或其中一個包含另一個（至少 2 個字）
+function mergeSuggestions(){
+  const list=OFFERS.map(o=>({o, n:mergeNorm(o.brand)}));
+  const pairs=[];
+  for(let i=0;i<list.length;i++) for(let j=i+1;j<list.length;j++){
+    const a=list[i], b=list[j];
+    if(!a.n || !b.n) continue;
+    const same = a.n===b.n;
+    // 「包含」要夠長才算：有中文的至少 2 個字；純英文至少 3 個字母（不然「GU」會比到「Guiji」「Yang Guo」）
+    const longEnough=x=>/[一-鿿]/.test(x) ? x.length>=2 : x.length>=3;
+    const contain = (longEnough(a.n) && b.n.includes(a.n)) || (longEnough(b.n) && a.n.includes(b.n));
+    if(same || contain){
+      // 同一個集團拆出來的（group_name 一樣）不算重複
+      if(a.o.groupName && a.o.groupName===b.o.groupName) continue;
+      const [keep, drop] = (b.o.reportCount||0)>(a.o.reportCount||0) ? [b.o,a.o] : [a.o,b.o];
+      pairs.push({keep, drop, same});
+    }
+  }
+  return pairs.sort((x,y)=>(y.same-x.same)||String(x.keep.brand).localeCompare(String(y.keep.brand),'zh-Hant'));
+}
+function mergeCardHtml(o){
+  if(!o) return '<span class="hint">找不到這張優惠，輸入品牌或 #編號</span>';
+  return `<b>${esc(mergeOfferLabel(o))}</b>
+    <div class="offer">${esc(o.offer||'')}</div>
+    <div class="hint" style="margin-top:4px">回報 ${o.reportCount||0} 次・留言 ${o.commentCount||0}・收藏 ${o.wishCount||0}・${esc((o.regions||[]).join('、')||'地區未確認')}</div>`;
+}
+function renderMergePanel(){
+  const dl=$('#mergeOfferList'); if(!dl) return;
+  if(!dl.options.length) OFFERS.forEach(o=>dl.appendChild(new Option(mergeOfferLabel(o))));
+  const keep=mergeFind($('#mergeKeep').value), drop=mergeFind($('#mergeDrop').value);
+  $('#mergeKeepCard').innerHTML=$('#mergeKeep').value?mergeCardHtml(keep):'<span class="hint">還沒選</span>';
+  $('#mergeDropCard').innerHTML=$('#mergeDrop').value?mergeCardHtml(drop):'<span class="hint">還沒選</span>';
+  $('#btnMerge').disabled=!(keep&&drop&&keep.id!==drop.id);
+  const sug=mergeSuggestions();
+  $('#mergeSugg').innerHTML=sug.length?sug.slice(0,30).map((p,i)=>`<button type="button" class="btn sm merge-sugg-btn" data-i="${i}">
+      ${esc(mergeOfferLabel(p.keep))}（${p.keep.reportCount||0} 次回報）　⇄　${esc(mergeOfferLabel(p.drop))}（${p.drop.reportCount||0} 次）</button>`).join('')
+    :'<span class="hint">目前沒有看起來重複的優惠。</span>';
+  $$('#mergeSugg .merge-sugg-btn').forEach(b=>b.onclick=()=>{
+    const p=sug[Number(b.dataset.i)];
+    $('#mergeKeep').value=mergeOfferLabel(p.keep); $('#mergeDrop').value=mergeOfferLabel(p.drop);
+    renderMergePanel();
+    $('#pnlMerge').scrollIntoView({behavior:'smooth',block:'start'});
+  });
+}
+$('#mergeKeep').oninput=renderMergePanel;
+$('#mergeDrop').oninput=renderMergePanel;
+$('#btnMergeSwap').onclick=()=>{ const a=$('#mergeKeep').value; $('#mergeKeep').value=$('#mergeDrop').value; $('#mergeDrop').value=a; renderMergePanel(); };
+$('#btnMerge').onclick=async()=>{
+  const keep=mergeFind($('#mergeKeep').value), drop=mergeFind($('#mergeDrop').value);
+  if(!keep||!drop||keep.id===drop.id) return;
+  if(!confirm(`確定把「${mergeOfferLabel(drop)}」併進「${mergeOfferLabel(keep)}」？\n\n併掉那張的回報、留言、評分、收藏會搬過去，然後下架。`)) return;
+  const btn=$('#btnMerge'); btn.disabled=true;
+  const {data,error}=await sb.rpc('admin_merge_offers',{p_keep:Number(keep.id), p_drop:Number(drop.id)});
+  if(error){
+    btn.disabled=false;
+    note($('#mergeMsg'),'alert', /function|does not exist/i.test(error.message)
+      ? '合併功能要先在 Supabase 執行 schema_v70_split_groups_merge_avatars.sql。'
+      : '合併失敗：'+esc(error.message));
+    return;
+  }
+  const d=data||{};
+  note($('#mergeMsg'),'good',`✓ 已合併：搬了 ${d.reports||0} 筆回報、${d.comments||0} 則留言、${d.ratings||0} 個評分、${d.wishlist||0} 個收藏，「${esc(drop.brand)}」已下架。`);
+  $('#mergeKeep').value=''; $('#mergeDrop').value='';
+  await loadOffers(); render(); renderMergePanel();
+};
+
 async function loadAdminSettings(){
   if(!LIVE||!myProfile?.is_admin) return;
   const {data,error}=await sb.from('profiles').select('id,display_name,is_admin')
@@ -8204,7 +8398,7 @@ function makeCollapsiblePanel(id, defaultOpen){
 }
 [['pnlDash',true],['pnlComments',true],['pnlSurvey',true],['pnlFeedback',true],['pnlPending',true],['pnlEdits',true],
  ['pnlRejected',false],['pnlApproved',false],['pnlUsageReports',false],
- ['pnlAnnounce',false],['pnlAdminSettings',false]]
+ ['pnlAnnounce',false],['pnlMerge',false],['pnlAdminSettings',false]]
   .forEach(([id,open])=>makeCollapsiblePanel(id,open));
 // 「我的」分頁也套用同一套可摺疊 panel——個人資料／待辦清單／提醒／
 // 我省下多少這幾個常用的預設展開，成就徽章／使用回報／投稿紀錄這幾個

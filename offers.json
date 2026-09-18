@@ -126,9 +126,9 @@
     },
     {
       "id": "pk-card",
-      "brand": "PK雙饗卡（肯德基 × 必勝客）",
+      "brand": "肯德基",
       "category": "速食",
-      "offer": "肯德基 $50 折價券 + 必勝客 $50 折價券",
+      "offer": "PK雙饗卡會員生日禮：肯德基 $50 折價券",
       "membership": "雙饗卡 APP 會員",
       "advanceDays": 30,
       "advanceNote": "建議提前一個月加入，部分用戶回報券面額有分眾差異（$40/$50）",
@@ -167,7 +167,52 @@
       "freeTier": "discount",
       "freeTierLabel": "折扣／買一送一",
       "timing": "當月",
-      "valueTwd": 100
+      "valueTwd": 50
+    },
+    {
+      "id": "pk-card-pizzahut",
+      "brand": "必勝客",
+      "category": "速食",
+      "offer": "PK雙饗卡會員生日禮：必勝客 $50 折價券",
+      "membership": "雙饗卡 APP 會員",
+      "advanceDays": 30,
+      "advanceNote": "建議提前一個月加入，部分用戶回報券面額有分眾差異（$40/$50）",
+      "window": "當月",
+      "conditions": "低消 $79；部分門市不適用（必勝客南港/信陽、肯德基桃園台茂/新竹湖口/內湖金龍/屏東潮州）",
+      "validity": "生日當日起 60 天內",
+      "verified": true,
+      "source": "https://info.talk.tw/2026birthday/",
+      "lastChecked": "2026-08-04",
+      "regions": [
+        "全台"
+      ],
+      "regionNote": "",
+      "validityType": "rolling",
+      "validFrom": null,
+      "validUntil": null,
+      "sources": [
+        {
+          "url": "https://info.talk.tw/2026birthday/",
+          "title": "info.talk.tw",
+          "tier": 3,
+          "tierLabel": "部落格懶人包",
+          "checked": "2026-08-04"
+        }
+      ],
+      "bestSource": {
+        "url": "https://info.talk.tw/2026birthday/",
+        "title": "info.talk.tw",
+        "tier": 3,
+        "tierLabel": "部落格懶人包",
+        "checked": "2026-08-04"
+      },
+      "membershipType": "app",
+      "membershipTypeLabel": "品牌 APP",
+      "membershipCost": "free",
+      "freeTier": "discount",
+      "freeTierLabel": "折扣／買一送一",
+      "timing": "當月",
+      "valueTwd": 50
     },
     {
       "id": "sanshang-1",
