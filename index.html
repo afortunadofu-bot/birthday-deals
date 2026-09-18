@@ -829,6 +829,11 @@
     color:var(--ink-2);cursor:pointer;white-space:nowrap;min-height:34px}
   .subtab:hover{color:var(--ink)}
   .subtab[aria-selected="true"]{background:var(--surface);color:var(--ink);font-weight:700;box-shadow:var(--shadow-sm)}
+  /* 問卷逐筆回覆 */
+  .sv-item .sv-email{font-weight:400;color:var(--accent-dark);font-size:.76rem;word-break:break-all}
+  .sv-ans-list{display:flex;flex-wrap:wrap;gap:4px 12px;margin:4px 0 2px;font-size:.76rem;color:var(--ink-2)}
+  .sv-ans i{font-style:normal;color:var(--ink-3);margin-right:4px}
+  .sv-ans i::after{content:"："}
   /* ---------- 表單 / 對話框 ---------- */
   dialog{border:none;border-radius:var(--r);padding:0;max-width:520px;
     width:calc(100% - 32px);box-shadow:var(--shadow-lg)}
@@ -1465,8 +1470,14 @@
       </select></label>
       <button class="btn sm" type="button" id="btnSvExport">匯出 CSV</button>
     </div>
+    <!-- 嵐：可以篩選問題看結果——選一題、選一個答案，下面的圖表跟逐筆回覆都只算答這個答案的人 -->
+    <div class="row" style="margin:0 0 10px;gap:8px;align-items:center;flex-wrap:wrap">
+      <label class="lbl">篩選<select id="svFilterQ"><option value="">全部回覆</option></select></label>
+      <label class="lbl hidden" id="svFilterAWrap">答案<select id="svFilterA"></select></label>
+    </div>
     <div id="svAdminMsg"></div>
     <div id="svBody"></div>
+    <div id="svResponses" style="margin-top:12px"></div>
   </div>
   <div class="panel" id="pnlFeedback">
     <h2>問題回報／建議<span class="n hidden" id="fbCount"></span></h2>
@@ -7447,12 +7458,78 @@ function startSurveyNudges(){
 
 /* ---- 管理員：問卷統計 ---- */
 let SV_ADMIN_SEQ=0;
+/* ---- 管理員：問卷篩選＋逐筆回覆（嵐：要看得到填表人的名字跟信箱、可以篩選問題看結果）----
+   逐筆資料直接讀 survey_responses（只有管理員讀得到），順便帶會員暱稱；信箱用 admin_user_emails()
+   一次查一批。選了篩選條件時，圖表改成用篩選後的逐筆資料在前端重算（跟 admin_survey_summary 同一套算法），
+   沒篩選時照舊用 RPC。 */
+let SV_RAW=[], SV_LABEL='', SV_SHOW=30;
+function surveyFilterQuestions(){
+  return [
+    {key:'who', label:'會員／訪客', opts:[['member','會員'],['guest','訪客']], get:r=>r.user_id?'member':'guest'},
+    {key:'overall', label:'整體滿意度', opts:SURVEY_FACES.map(([v,e,l])=>[v,`${v} 分・${l}`]), get:r=>String(r.overall)},
+    {key:'nps', label:'會不會推薦', opts:[['pro','推薦者（9–10 分）'],['pas','中立（7–8 分）'],['det','批評者（0–6 分）']],
+      get:r=>r.nps>=9?'pro':r.nps>=7?'pas':'det'},
+    {key:'liked', label:'喜歡的功能', opts:SURVEY_FEATURES, multi:true, get:r=>r.liked_features||[]},
+    {key:'used', label:'最常用的功能', opts:SURVEY_FEATURES, multi:true, get:r=>r.used_features||[]},
+    {key:'source', label:'怎麼知道壽星日', opts:SURVEY_SOURCES, get:r=>r.source},
+    ...SURVEY_EXTRA.map(x=>({key:'x_'+x.key, label:x.title.replace(/（可複選）$/,''), opts:x.opts, multi:!!x.multi,
+      get:r=>r.extra?.[x.key]}))
+  ];
+}
+function surveyRowMatches(r, q, a){
+  const v=q.get(r);
+  if(v==null) return false;
+  return Array.isArray(v) ? v.includes(a) : String(v)===a;
+}
+function surveyFiltered(){
+  const qk=$('#svFilterQ')?.value, a=$('#svFilterA')?.value;
+  if(!qk || !a) return null;
+  const q=surveyFilterQuestions().find(x=>x.key===qk);
+  if(!q) return null;
+  return {q, a, label:`${q.label}：${(q.opts.find(o=>o[0]===a)||[a,a])[1]}`, rows:SV_RAW.filter(r=>surveyRowMatches(r,q,a))};
+}
+// 逐筆資料 → 跟 admin_survey_summary() 一樣的彙總格式
+function surveyAggregate(rows){
+  const avg=k=>{ const v=rows.map(r=>r[k]).filter(x=>x!=null); return v.length?Math.round(v.reduce((a,b)=>a+Number(b),0)/v.length*100)/100:null; };
+  const count=(get)=>{ const o={}; rows.forEach(r=>{ const v=get(r); (Array.isArray(v)?v:[v]).forEach(x=>{ const k=x==null?'unknown':x; o[k]=(o[k]||0)+1; }); }); return o; };
+  const extra={};
+  rows.forEach(r=>Object.entries(r.extra||{}).forEach(([k,v])=>{
+    extra[k]=extra[k]||{};
+    (Array.isArray(v)?v:[v]).forEach(x=>{ extra[k][x]=(extra[k][x]||0)+1; });
+  }));
+  return {
+    total:rows.length, members:rows.filter(r=>r.user_id).length, guests:rows.filter(r=>!r.user_id).length,
+    overall_avg:avg('overall'), promoters:rows.filter(r=>r.nps>=9).length,
+    passives:rows.filter(r=>r.nps>=7&&r.nps<=8).length, detractors:rows.filter(r=>r.nps<=6).length,
+    find_avg:avg('score_find'), accuracy_avg:avg('score_accuracy'), mobile_avg:avg('score_mobile'), look_avg:avg('score_look'),
+    liked:count(r=>r.liked_features||[]), used:count(r=>r.used_features||[]),
+    source:count(r=>r.source??null), extra,
+    recent_comments:rows.filter(r=>r.comment).slice(0,50).map(r=>({created_at:r.created_at, overall:r.overall, nps:r.nps,
+      comment:r.comment, is_member:!!r.user_id, device:r.device, display_name:r.profiles?.display_name||null}))
+  };
+}
+function fillSurveyFilter(){
+  const qs=$('#svFilterQ'); if(!qs || qs.options.length>1) return;
+  surveyFilterQuestions().forEach(q=>qs.add(new Option(q.label,q.key)));
+}
+function renderSurveyFilterAnswers(){
+  const qk=$('#svFilterQ').value, as=$('#svFilterA');
+  $('#svFilterAWrap').classList.toggle('hidden', !qk);
+  as.innerHTML='';
+  const q=surveyFilterQuestions().find(x=>x.key===qk);
+  if(!q) return;
+  const count=a=>SV_RAW.filter(r=>surveyRowMatches(r,q,a)).length;
+  q.opts.forEach(([k,l])=>as.add(new Option(`${l}（${count(k)}）`, k)));
+}
 async function loadSurveyAdmin(){
   if(!LIVE||!myProfile?.is_admin) return;
   const seq=++SV_ADMIN_SEQ;
   const days=Number($('#svRange').value);
   const label=days ? `近 ${days} 天` : '全部時間';
-  const {data:d,error}=await sb.rpc('admin_survey_summary',{p_days: days||null});
+  fillSurveyFilter();
+  let rawQ=sb.from('survey_responses').select('*, profiles(display_name)').order('created_at',{ascending:false}).limit(2000);
+  if(days) rawQ=rawQ.gte('created_at', new Date(Date.now()-days*864e5).toISOString());
+  const [{data:d,error},{data:raw}]=await Promise.all([sb.rpc('admin_survey_summary',{p_days: days||null}), rawQ]);
   if(seq!==SV_ADMIN_SEQ) return;
   if(error){
     $('#svBody').innerHTML = /function|does not exist/i.test(error.message)
@@ -7460,7 +7537,57 @@ async function loadSurveyAdmin(){
       : `<div class="note alert">讀取失敗：${esc(error.message)}</div>`;
     return;
   }
-  renderSurveySummary(d||{}, label);
+  SV_RAW=raw||[]; SV_LABEL=label; SV_SHOW=30;
+  if($('#svFilterQ').value) renderSurveyFilterAnswers();
+  const f=surveyFiltered();
+  if(f) renderSurveySummary(surveyAggregate(f.rows), `${label}・${f.label}・`);
+  else renderSurveySummary(d||{}, label);
+  await renderSurveyResponses();
+}
+// 逐筆回覆：時間、名字（訪客標訪客）、信箱、分數、每一題的答案、還想說的話
+async function renderSurveyResponses(){
+  const el=$('#svResponses'); if(!el) return;
+  const f=surveyFiltered();
+  const rows=f?f.rows:SV_RAW;
+  if(!SV_RAW.length){ el.innerHTML=''; return; }
+  const shown=rows.slice(0,SV_SHOW);
+  // 會員的信箱一次查一批（只有管理員能查）
+  const ids=[...new Set(shown.map(r=>r.user_id).filter(uid=>uid && !ADMIN_EMAIL_CACHE.has(uid)))];
+  if(ids.length){
+    try{
+      const {data}=await sb.rpc('admin_user_emails',{p_ids:ids});
+      (data||[]).forEach(x=>ADMIN_EMAIL_CACHE.set(x.id||x.user_id, x.email||null));
+    }catch{}
+  }
+  const qs=surveyFilterQuestions().filter(q=>!['who','overall','nps'].includes(q.key));
+  const ans=r=>qs.map(q=>{
+    const v=q.get(r); if(v==null || (Array.isArray(v)&&!v.length)) return '';
+    const name=k=>(q.opts.find(o=>o[0]===k)||[k, SURVEY_LEGACY_LABELS[k]?SURVEY_LEGACY_LABELS[k]+'（舊版）':k])[1];
+    return `<span class="sv-ans"><i>${esc(q.label)}</i>${esc((Array.isArray(v)?v:[v]).map(name).join('、'))}</span>`;
+  }).join('');
+  el.innerHTML=`<div class="dash-chart">
+    <b>逐筆回覆（${rows.length} 份${f?`，${esc(f.label)}`:''}）</b>
+    <div class="sub-list" style="margin-top:8px">${shown.map(r=>{
+      const email=r.user_id?ADMIN_EMAIL_CACHE.get(r.user_id):null;
+      return `<div class="sub-item sv-item">
+        <b>${esc(fmtDT(r.created_at))}・${r.user_id?esc(r.profiles?.display_name||'會員（沒設暱稱）'):'訪客'}${
+          email?`　<span class="sv-email">${esc(email)}</span>`:''}・滿意度 ${esc(String(r.overall))}・推薦 ${esc(String(r.nps))}</b>
+        <div class="sv-ans-list">${ans(r)}</div>
+        ${r.comment?`<span style="white-space:pre-wrap;overflow-wrap:anywhere">💬 ${esc(r.comment)}</span>`:''}
+      </div>`;}).join('')||'<div class="hint">沒有符合的回覆。</div>'}</div>
+    ${rows.length>SV_SHOW?`<button type="button" class="btn sm" id="btnSvMore" style="margin-top:10px">再看 30 份（還有 ${rows.length-SV_SHOW} 份）</button>`:''}
+  </div>`;
+  const more=$('#btnSvMore');
+  if(more) more.onclick=()=>{ SV_SHOW+=30; renderSurveyResponses(); };
+}
+$('#svFilterQ').onchange=()=>{ renderSurveyFilterAnswers(); applySurveyFilter(); };
+$('#svFilterA').onchange=()=>applySurveyFilter();
+function applySurveyFilter(){
+  SV_SHOW=30;
+  const f=surveyFiltered();
+  if(f) renderSurveySummary(surveyAggregate(f.rows), `${SV_LABEL}・${f.label}・`);
+  else loadSurveyAdmin();
+  renderSurveyResponses();
 }
 function renderSurveySummary(d, label){
   const total=Number(d.total||0);
