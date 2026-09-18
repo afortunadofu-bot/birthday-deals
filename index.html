@@ -1115,11 +1115,23 @@
     <div class="panel" id="pnlPopular">
       <h2>大家都在用什麼</h2>
       <p class="sub">被回報最多次的優惠。</p>
+      <div class="row" style="margin-bottom:10px">
+        <label class="lbl">顯示<select id="popSortBy">
+          <option value="rank">名次</option>
+          <option value="climb">進步最多（跟 7 天前比）</option>
+        </select></label>
+      </div>
       <div id="popBody"></div>
     </div>
     <div class="panel" id="pnlWished">
       <h2>最多人收藏</h2>
       <p class="sub">被加進待辦清單最多次的優惠——大家想用但還沒用的。</p>
+      <div class="row" style="margin-bottom:10px">
+        <label class="lbl">顯示<select id="wishSortBy">
+          <option value="rank">名次</option>
+          <option value="climb">進步最多（跟 7 天前比）</option>
+        </select></label>
+      </div>
       <div id="wishBody"></div>
     </div>
     <div class="panel" id="pnlLb">
@@ -1139,6 +1151,7 @@
         <label class="lbl">排序依<select id="lbSortBy">
           <option value="amount">累積金額</option>
           <option value="count">成功次數</option>
+          <option value="climb">進步最多</option>
         </select></label>
         <label class="toggle"><input type="checkbox" id="lbHideAnon"> 隱藏匿名使用者</label>
       </div>
@@ -1158,7 +1171,12 @@
           <option value="week">本週</option>
         </select></label>
         <label class="lbl hidden" id="contribMonthWrap">月份<input type="month" id="contribMonth"></label>
+        <label class="lbl">顯示<select id="contribSortBy">
+          <option value="rank">名次</option>
+          <option value="climb">進步最多</option>
+        </select></label>
       </div>
+      <div class="note hidden" id="contribMyRank" style="margin-bottom:10px"></div>
       <div id="contribBody"></div>
     </div>
   </main>
@@ -3030,7 +3048,10 @@ $('#btnMineA2hsClose').onclick=()=>{
 const SITE_UPDATES=[
   {date:'2026-09-18', title:'圖表全面改版', items:[
     '排行榜的站台數據、洞察分析，每一份數據都換成最適合的圖表：時間用直條、佔比用一條色塊、尖峰會特別標出來',
-    '每張圖手指按住（或滑鼠滑過）就看得到數字，也可以展開「看數字」看完整表格']},
+    '每張圖手指按住（或滑鼠滑過）就看得到數字，也可以展開「看數字」看完整表格',
+    '站台數據、洞察分析分成幾個小分頁，不用一直往下滑',
+    '排行榜會直接告訴你自己排第幾名；每個排行榜都可以切「進步最多」，看最近衝最快的店家跟人',
+    '修正手機上排行榜最右邊那欄被切掉，還有優惠頁跟排行榜的「大家累積省下」數字不一樣']},
   {date:'2026-09-16', title:'附近有優惠的店、家人的生日、清單標籤', items:[
     '新增「📍 附近」：允許定位之後可以只看你附近有優惠的店，列表由近到遠排序，卡片上直接顯示最近的一家分店跟導航連結',
     '不想給定位也可以：打開地圖點一下任何地方，就會找那附近的優惠',
@@ -5561,19 +5582,10 @@ async function loadBoard(){
   const popHasPrev = Array.isArray(popPrev);
   const popPrevRankMap = new Map();
   (popPrev||[]).forEach((r,i)=>{ if(!popPrevRankMap.has(r.offer_id)) popPrevRankMap.set(r.offer_id,i+1); });
-  const popEntries=(pop||[]).map((r,i)=>{
-    const rank=i+1;
-    const prevRank=popPrevRankMap.has(r.offer_id)?popPrevRankMap.get(r.offer_id):null;
-    return `<tr class="lb-click" data-oid="${r.offer_id}"><td class="rk ${i<3?'top':''}">${rank}${popHasPrev?`<br>${rankDeltaHtml(true,prevRank,rank)}`:''}</td>
-      <td>${esc(r.brand)}<span style="color:var(--ink-3);font-size:.78rem">　${esc(r.timing)}</span></td>
-      <td>${r.success_count}／${r.report_count}</td>
-      <td class="amt">${nt(r.saved_total)}</td></tr>`;
-  });
-  renderCollapsibleTable($('#popBody'), '<th class="rk">#</th><th>品牌</th><th>成功／回報</th><th class="amt">已省下</th>',
-    popEntries, 5, 'pop-more-rows',
-    '<div style="color:var(--ink-3);font-size:.86rem">還沒有回報資料。</div>');
-  wireShowMore($('#popBody'));
-  $$('#popBody .lb-click').forEach(row=>row.onclick=()=>openDetail(row.dataset.oid));
+  POP_ROWS=(pop||[]).map((r,i)=>({...r, rank:i+1,
+    prevRank:popPrevRankMap.has(r.offer_id)?popPrevRankMap.get(r.offer_id):null}));
+  POP_HAS_PREV=popHasPrev;
+  renderPopBody();
   loadRecentActivity();
   loadContribBoard();
 }
@@ -5593,9 +5605,43 @@ function rankDeltaHtml(hasPrev, prevRank, rank){
   return `<span class="rk-delta same" title="名次跟上一期一樣">－</span>`;
 }
 function rankChangeHtml(r){ return rankDeltaHtml(LB_HAS_PREV, r.prevRank, r.rank); }
+// 嵐：排行榜都多一個選項，可以只看「最近前進名次最多」的店家跟人。
+// 進步幾名＝上一期名次 − 這一期名次；上一期沒上榜的（NEW）當作從榜外（最後一名再後面）衝上來。
+// 只留真的有往前進的，照進步幅度排；名次數字維持原本的名次，不重編。
+function rankClimbRows(rows){
+  const outside=Math.max(rows.length, ...rows.map(r=>r.prevRank||0))+1;
+  return rows.map(r=>({...r, climb:(r.prevRank==null?outside:r.prevRank)-r.rank}))
+    .filter(r=>r.climb>0)
+    .sort((a,b)=>(b.climb-a.climb)||(a.rank-b.rank));
+}
+function climbEmptyMsg(hasPrev){
+  return `<div style="color:var(--ink-3);font-size:.86rem">${hasPrev
+    ?'這段期間沒有人（店家）的名次往前進。':'這一期還沒有可以比較的上一期名次。'}</div>`;
+}
+// 嵐：所有排行榜都要讓使用者知道自己是第幾名。用 my_board_rank()（schema_v67）直接在資料庫算，
+// 名次在 50 名以後、或自己沒公開暱稱也找得到。v67 還沒跑時退回「在抓回來的名單裡找自己」。
+async function showMyBoardRank(el, board, period, key, fallback, unit){
+  if(!el) return;
+  if(!LIVE || !me || !sb){ el.classList.add('hidden'); return; }
+  const seq=(el._seq=(el._seq||0)+1);
+  let data=null, error=null;
+  try{ ({data,error}=await sb.rpc('my_board_rank',{p_board:board, p_period:period, p_key:key||null})); }
+  catch(e){ error=e; }
+  if(seq!==el._seq) return;
+  let d = (!error && data) ? data : (fallback ? {rank:fallback.rank, total:null, value:fallback.value} : null);
+  if(error && !fallback){ el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  const val = d ? unit(Number(d.value)||0) : '';
+  el.innerHTML = d && d.rank
+    ? `🎯 你目前排第 <b>${d.rank}</b> 名${d.total?`（共 ${d.total} 人）`:''}　${val}`
+    : (board==='savings'
+      ? '🎯 你這一期還沒上榜——回報一次成功使用就會出現在排行榜上。'
+      : '🎯 你這一期還沒上榜——投稿新優惠或修改建議被核可，就會出現在排行榜上。');
+}
 function renderLbBody(){
   const hideAnon=$('#lbHideAnon').checked;
-  const sortByCount=$('#lbSortBy').value==='count';
+  const sortMode=$('#lbSortBy').value;
+  const sortByCount=sortMode==='count';
   let rows=hideAnon ? LB_ROWS.filter(r=>!String(r.display_name||'').startsWith('匿名使用者')) : LB_ROWS;
   // 預設名次是視圖依金額排好的；改成「依成功次數」時前端重新排序＋重編名次，
   // 這樣省最多錢的人跟用最勤的人可以是不同排名，不會誰都只看得到金額那一套。
@@ -5603,6 +5649,8 @@ function renderLbBody(){
     rows=[...rows].sort((a,b)=>(b.success_count-a.success_count)||(b.saved_total-a.saved_total));
     rows=rows.map((r,i)=>({...r, rank:i+1}));
   }
+  const allRows=rows;
+  if(sortMode==='climb') rows=rankClimbRows(rows);
   const lbEntries=rows.map((r,i)=>`<tr class="lb-row" data-lb="${i}"><td class="rk ${r.rank<=3?'top':''}">${r.rank}${LB_HAS_PREV?`<br>${rankChangeHtml(r)}`:''}</td>
       <td><div class="who"><div class="who-main">${r.avatar_url?`<img class="avatar who-avatar" ${r.email?'data-email="1"':''} src="${esc(r.avatar_url)}" alt="">`
         :`<span class="initial who-avatar" ${r.email?'data-email="1"':''}>${esc((r.display_name||'壽')[0])}</span>`}
@@ -5615,6 +5663,7 @@ function renderLbBody(){
       </td></tr>`);
   renderCollapsibleTable($('#lbBody'), '<th class="rk">#</th><th>使用者</th><th>成功</th><th>品牌</th><th class="amt">累積省下</th>',
     lbEntries, 5, 'lb-more-rows',
+    sortMode==='climb' ? climbEmptyMsg(LB_HAS_PREV) :
     `<div style="color:var(--ink-3);font-size:.86rem">${hideAnon&&LB_ROWS.length?'隱藏匿名使用者後這裡暫時空的，取消勾選可以看全部。':
       LB_MONTHLY?`${esc(LB_YM)} 這個月還沒有人上榜。`:LB_WEEKLY?'這一週還沒有人上榜。':'還沒有人上榜。回報「我用過了」並填成功，就會出現在這裡。'}</div>`);
   wireShowMore($('#lbBody'));
@@ -5635,9 +5684,9 @@ function renderLbBody(){
   let myRow=null;
   if(LIVE && me){
     if(LB_MONTHLY||LB_WEEKLY){
-      myRow=rows.find(r=>r.user_id===me.id)||null;
+      myRow=allRows.find(r=>r.user_id===me.id)||null;
     } else if(myName && myProfile?.show_on_leaderboard){
-      const nameMatches=rows.filter(r=>r.display_name===myName);
+      const nameMatches=allRows.filter(r=>r.display_name===myName);
       if(nameMatches.length===1) myRow=nameMatches[0];
     }
   }
@@ -5645,11 +5694,16 @@ function renderLbBody(){
   // 很差——不管名次在不在目前展開顯示的範圍內，都直接告訴他排第幾名。
   const rankBanner=$('#myRankBanner');
   if(rankBanner){
-    if(myRow){
-      rankBanner.classList.remove('hidden');
-      rankBanner.innerHTML=`🎯 你目前排第 <b>${myRow.rank}</b> 名　累積省下 ${nt(myRow.saved_total)}　成功 ${myRow.success_count} 次`;
+    if(sortByCount){
+      // 依成功次數排的名次是前端重排的，資料庫那支是照金額算，這時候維持在名單裡找自己
+      if(myRow){
+        rankBanner.classList.remove('hidden');
+        rankBanner.innerHTML=`🎯 你目前排第 <b>${myRow.rank}</b> 名　累積省下 ${nt(myRow.saved_total)}　成功 ${myRow.success_count} 次`;
+      } else rankBanner.classList.add('hidden');
     } else {
-      rankBanner.classList.add('hidden');
+      showMyBoardRank(rankBanner, 'savings', LB_MONTHLY?'month':LB_WEEKLY?'week':'all',
+        LB_MONTHLY?LB_YM:LB_WEEKLY?isoWeekStr(new Date()):null,
+        myRow?{rank:myRow.rank, value:myRow.saved_total}:null, v=>`累積省下 ${nt(v)}`);
     }
   }
   const shareWrap=$('#myRankShareWrap'), shareBtn=$('#btnShareRank');
@@ -5728,7 +5782,8 @@ async function loadContribBoard(){
   renderContribBody();
 }
 function renderContribBody(){
-  const rows=CONTRIB_ROWS;
+  const climb=$('#contribSortBy')?.value==='climb';
+  const rows=climb ? rankClimbRows(CONTRIB_ROWS) : CONTRIB_ROWS;
   const entries=rows.map(r=>`<tr><td class="rk ${r.rank<=3?'top':''}">${r.rank}${CONTRIB_HAS_PREV?`<br>${rankDeltaHtml(CONTRIB_HAS_PREV,r.prevRank,r.rank)}`:''}</td>
       <td><div class="who"><div class="who-main">${r.avatar_url?`<img class="avatar who-avatar" ${r.email?'data-email="1"':''} src="${esc(r.avatar_url)}" alt="">`
         :`<span class="initial who-avatar" ${r.email?'data-email="1"':''}>${esc((r.display_name||'壽')[0])}</span>`}
@@ -5738,10 +5793,16 @@ function renderContribBody(){
       <td class="amt lb-primary">${r.total_count}</td></tr>`);
   renderCollapsibleTable($('#contribBody'), '<th class="rk">#</th><th>使用者</th><th>投稿</th><th>建議</th><th class="amt">總貢獻</th>',
     entries, 5, 'contrib-more-rows',
+    climb ? climbEmptyMsg(CONTRIB_HAS_PREV) :
     `<div style="color:var(--ink-3);font-size:.86rem">${CONTRIB_MONTHLY?esc(CONTRIB_YM)+' 這個月':CONTRIB_WEEKLY?'這一週':''}還沒有人上榜。投稿新優惠或提出修改建議，被核可後就會出現在這裡。</div>`);
   wireShowMore($('#contribBody'));
   wireEmailPeek($('#contribBody'));
+  const mine = me ? CONTRIB_ROWS.find(r=>r.user_id===me.id) : null;
+  showMyBoardRank($('#contribMyRank'), 'contrib', CONTRIB_MONTHLY?'month':CONTRIB_WEEKLY?'week':'all',
+    CONTRIB_MONTHLY?CONTRIB_YM:CONTRIB_WEEKLY?isoWeekStr(new Date()):null,
+    mine?{rank:mine.rank, value:mine.total_count}:null, v=>`貢獻 ${v} 次`);
 }
+$('#contribSortBy').onchange=renderContribBody;
 // 貢獻度排行榜的月份選擇器，跟省錢排行榜的 #lbPeriod/#lbMonth 是同一套
 // 寫法——選「本月」時才顯示月份輸入框，預設帶入當月，之後就可以自己
 // 切換成任何一個月份，不會鎖死在系統當下的這個月。
@@ -5884,20 +5945,44 @@ async function loadPendingEditsPreview(){
   }).join('') : '<div style="color:var(--ink-3);font-size:.86rem">目前沒有待審的修改建議。</div>';
 }
 
+/* ---- 大家都在用什麼 ---- */
+let POP_ROWS=[], POP_HAS_PREV=false;
+function renderPopBody(){
+  const climb=$('#popSortBy')?.value==='climb';
+  const rows=climb ? rankClimbRows(POP_ROWS) : POP_ROWS;
+  const entries=rows.map(r=>`<tr class="lb-click" data-oid="${r.offer_id}"><td class="rk ${r.rank<=3?'top':''}">${r.rank}${POP_HAS_PREV?`<br>${rankDeltaHtml(true,r.prevRank,r.rank)}`:''}</td>
+      <td>${esc(r.brand)}<span style="color:var(--ink-3);font-size:.78rem">　${esc(r.timing||'')}</span></td>
+      <td>${r.success_count}／${r.report_count}</td>
+      <td class="amt">${nt(r.saved_total)}</td></tr>`);
+  renderCollapsibleTable($('#popBody'), '<th class="rk">#</th><th>品牌</th><th>成功／回報</th><th class="amt">已省下</th>',
+    entries, 5, 'pop-more-rows',
+    climb ? climbEmptyMsg(POP_HAS_PREV) : '<div style="color:var(--ink-3);font-size:.86rem">還沒有回報資料。</div>');
+  wireShowMore($('#popBody'));
+  $$('#popBody .lb-click').forEach(row=>row.onclick=()=>openDetail(row.dataset.oid));
+}
+$('#popSortBy').onchange=renderPopBody;
+
 /* ---- 最多人收藏 ---- */
+let WISH_ROWS=[], WISH_HAS_PREV=false;
 function renderMostWished(rows, hasPrev){
-  const entries=rows.map((r,i)=>{
-    const rank=i+1;
+  if(rows){ WISH_ROWS=rows.map((r,i)=>({...r, rank:i+1})); WISH_HAS_PREV=!!hasPrev; }
+  hasPrev=WISH_HAS_PREV;
+  const climb=$('#wishSortBy')?.value==='climb';
+  const list=climb ? rankClimbRows(WISH_ROWS) : WISH_ROWS;
+  const entries=list.map(r=>{
+    const rank=r.rank, i=rank-1;
     return `<tr class="lb-click" data-oid="${r.offer_id}"><td class="rk ${i<3?'top':''}">${rank}${hasPrev?`<br>${rankDeltaHtml(true,r.prevRank,rank)}`:''}</td>
       <td>${esc(r.brand)}<span style="color:var(--ink-3);font-size:.78rem">　${esc(r.timing||'')}</span></td>
       <td>${r.wish_count}</td><td class="amt">${nt(r.value_twd)}</td></tr>`;
   });
   renderCollapsibleTable($('#wishBody'), '<th class="rk">#</th><th>品牌</th><th>收藏</th><th class="amt">可省</th>',
     entries, 5, 'wish-more-rows',
+    climb ? climbEmptyMsg(hasPrev) :
     '<div style="color:var(--ink-3);font-size:.86rem">還沒有人收藏，去「優惠」分頁點卡片右上角的書籤圖示。</div>');
   wireShowMore($('#wishBody'));
   $$('#wishBody .lb-click').forEach(row=>row.onclick=()=>openDetail(row.dataset.oid));
 }
+$('#wishSortBy').onchange=()=>renderMostWished();
 
 /* ---- 排行榜上方的整站數據：全部從已載入的兩張表算，不用再多打 API ---- */
 function renderBoardStats(lb, pop, allTimeSavedRows, usedRows, siteStatsRow, onlineNow, resultRows){
