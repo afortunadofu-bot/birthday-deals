@@ -686,7 +686,7 @@
   .bigstat>div{background:var(--line-soft);border-radius:var(--r-sm);
     padding:13px 18px;flex:1 1 128px;min-width:112px}
   .bigstat .v{font-size:1.6rem;font-weight:800;letter-spacing:-.02em;
-    line-height:1.15;font-variant-numeric:tabular-nums;color:var(--ink)}
+    line-height:1.15;color:var(--ink)}
   .bigstat .v.free{color:var(--free)}
   .bigstat .k{font-size:.74rem;color:var(--ink-3);margin-top:4px;font-weight:600}
   @media(max-width:600px){ .bigstat>div{padding:11px 14px} }
@@ -721,6 +721,100 @@
   .hbar-val{flex-shrink:0;color:var(--ink-3);font-variant-numeric:tabular-nums}
   .hbar-row:hover .hbar-track{background:var(--accent-soft)}
 
+  /* ---------- 圖表元件（celine：「統計圖表形式都過於單一，每一份數據找最適合的方式呈現」）----------
+     依 dataviz 方法：先看資料要回答什麼，再選形式；顏色最後才決定、而且要驗證過。
+     - 類別色 --viz-1..6：以站上的珊瑚紅開頭，跑過色盲驗證（相鄰色 CVD ΔE ≥ 9）。
+       其中 3 個淺色對白底不到 3:1，所以每張圖都一定有看得到的文字標示＋「看數字」表格。
+     - 大小比較用單一主色；要突顯某一個（尖峰、最多）用主色＋其餘灰色；
+       有正負（批評↔推薦、慢↔快）用珊瑚紅↔灰↔藍，不用紅綠（紅綠色盲分不出來）。
+     - 細長條、圓角只在資料那一端、相鄰色塊用 2px 白縫分開、格線是實線髮絲。 */
+  :root{
+    --viz-1:#e8483c; --viz-2:#2a78d6; --viz-3:#1baf7a; --viz-4:#eda100; --viz-5:#4a3aa7; --viz-6:#e87ba4;
+    --viz-muted:#dadae1; --viz-neg:#e8483c; --viz-mid:#c9c9d1; --viz-pos:#2a78d6;
+  }
+  .viz .viz-sub{font-size:.74rem;color:var(--ink-3);margin-top:1px}
+  .viz .viz-body{margin-top:12px}
+  .viz-tip{position:fixed;z-index:300;pointer-events:none;background:var(--ink);color:#fff;font-size:.74rem;
+    line-height:1.45;padding:5px 9px;border-radius:6px;box-shadow:var(--shadow-md);max-width:240px}
+  /* 橫條：大小比較 */
+  .vbars{display:flex;flex-direction:column;gap:8px}
+  .vbar{display:grid;grid-template-columns:var(--lw,96px) minmax(40px,1fr) auto;align-items:center;gap:10px;font-size:.78rem}
+  .vbar-label{color:var(--ink-2);display:flex;align-items:center;gap:5px;min-width:0;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .vbar-track{display:flex;flex-direction:column;gap:2px;justify-content:center;min-height:10px}
+  .vbar-fill{display:block;height:10px;border-radius:0 4px 4px 0;background:var(--accent)}
+  .vbar-val{color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right;
+    display:flex;flex-direction:column;line-height:1.3}
+  .vbar:hover .vbar-fill{filter:brightness(.9)}
+  .vbar.grp .vbar-fill{height:8px}
+  .vbar.grp .vbar-val{font-size:.72rem}
+  /* 直條：時間順序／週期（時段、星期、月份） */
+  .vcols-plot{height:var(--h,100px);display:flex;align-items:stretch;gap:3px;padding-top:18px;
+    border-bottom:1px solid var(--line);background:linear-gradient(var(--line-soft),var(--line-soft)) 0 calc(18px + (100% - 18px)/2)/100% 1px no-repeat}
+  .vcol{flex:1;position:relative;display:flex;align-items:flex-end;justify-content:center;min-width:0;cursor:default}
+  .vcol-fill{display:block;width:100%;max-width:24px;border-radius:4px 4px 0 0;background:var(--accent)}
+  .vcol-fill.mute{background:var(--viz-muted)}
+  .vcol-fill.soft{background:var(--accent-line)}
+  .vcol-val{position:absolute;left:50%;transform:translateX(-50%);margin-bottom:3px;font-size:.7rem;font-weight:700;
+    color:var(--ink);white-space:nowrap}
+  .vcol:hover .vcol-fill{filter:brightness(.9)}
+  .vcols-x{display:flex;gap:3px;margin-top:4px}
+  .vcols-x span{flex:1;text-align:center;font-size:.66rem;color:var(--ink-3);white-space:nowrap;min-width:0}
+  /* 100% 堆疊條：佔比 */
+  .vstack{display:flex;gap:2px;height:16px}
+  .vstack-seg{display:block;height:100%;min-width:3px}
+  .vstack-seg:first-child{border-radius:4px 0 0 4px}
+  .vstack-seg:last-child{border-radius:0 4px 4px 0}
+  .vstack-seg:only-child{border-radius:4px}
+  .vstack-seg:hover{filter:brightness(.9)}
+  .vleg{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:.76rem;color:var(--ink-2)}
+  .vleg>span{display:inline-flex;align-items:center;gap:5px}
+  .vleg i{width:9px;height:9px;border-radius:2px;display:inline-block;flex:none}
+  .vleg b{color:var(--ink)}
+  .vleg small{color:var(--ink-3);font-size:.7rem}
+  /* 分歧條：有正負的（批評↔推薦、慢↔快） */
+  .vdiv{position:relative;height:16px}
+  .vdiv-seg{position:absolute;top:0;height:100%}
+  .vdiv-seg:hover{filter:brightness(.9)}
+  .vdiv-axis{position:absolute;left:50%;top:-4px;bottom:-4px;width:1px;background:var(--ink-3)}
+  .vdiv-ends{display:flex;justify-content:space-between;font-size:.68rem;color:var(--ink-3);margin-top:5px}
+  /* 量表：單一比例（轉化率、回訪率、核可率、成功率） */
+  .vmeters{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px 22px}
+  .vm-v{font-size:1.4rem;font-weight:800;color:var(--ink);letter-spacing:-.01em;line-height:1.15}
+  .vm-k{font-size:.74rem;color:var(--ink-3);font-weight:600;margin-top:2px}
+  .vm-track{height:8px;border-radius:99px;background:var(--accent-soft);margin-top:7px;overflow:hidden}
+  .vm-fill{display:block;height:100%;border-radius:99px;background:var(--accent)}
+  .bigstat .vm-track{height:6px;margin-top:8px}
+  /* 刻度上的點：1–5 分的平均（長條從 0 開始會誇大差距） */
+  .vdots{display:flex;flex-direction:column;gap:12px}
+  .vdot,.vdot-scale{display:grid;grid-template-columns:var(--lw,84px) 1fr 52px;align-items:center;gap:10px;font-size:.78rem}
+  .vdot-label{color:var(--ink-2)}
+  .vdot-track{position:relative;height:18px;margin:0 7px}
+  .vdot-track::before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:var(--line)}
+  .vdot-tick{position:absolute;top:5px;width:1px;height:8px;background:var(--line)}
+  .vdot-mark{position:absolute;top:50%;width:13px;height:13px;border-radius:50%;background:var(--accent);
+    box-shadow:0 0 0 2px var(--surface);transform:translate(-50%,-50%)}
+  .vdot-val{text-align:right;font-weight:700;color:var(--ink)}
+  .vdot-scale{font-size:.66rem;color:var(--ink-3);margin-top:-4px}
+  .vdot-scale .vdot-track{height:auto}
+  .vdot-scale .vdot-track::before{display:none}
+  .vdot-scale span.n{position:absolute;transform:translateX(-50%)}
+  /* 大數字 */
+  .bigstat>div.hero{flex-basis:100%;background:var(--accent-soft)}
+  .bigstat>div.hero .v{font-size:clamp(2.1rem,6.5vw,3rem);letter-spacing:-.03em;line-height:1.05}
+  .bigstat>div.hero .k{font-size:.8rem;color:var(--accent-dark)}
+  /* 「看數字」表格：每張圖都有，色盲、列印、讀螢幕都讀得到 */
+  .viz-data{margin-top:10px;font-size:.74rem}
+  .viz-data summary{cursor:pointer;color:var(--ink-3);display:inline-block;list-style:none}
+  .viz-data summary::-webkit-details-marker{display:none}
+  .viz-data summary::before{content:"\25B8  ";}
+  .viz-data[open] summary::before{content:"\25BE  ";}
+  .viz-data summary:hover{color:var(--ink-2)}
+  .viz-table-wrap{overflow-x:auto;margin-top:6px;max-height:260px;overflow-y:auto}
+  .viz-data table{border-collapse:collapse;width:100%}
+  .viz-data th,.viz-data td{padding:4px 8px;border-bottom:1px solid var(--line-soft);text-align:left;white-space:nowrap}
+  .viz-data td.num,.viz-data th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .viz-data th{color:var(--ink-3);font-weight:600;position:sticky;top:0;background:var(--surface)}
   /* ---------- 表單 / 對話框 ---------- */
   dialog{border:none;border-radius:var(--r);padding:0;max-width:520px;
     width:calc(100% - 32px);box-shadow:var(--shadow-lg)}
@@ -2904,6 +2998,9 @@ $('#btnMineA2hsClose').onclick=()=>{
    的東西；還在 feature/geo 分支、沒上線的功能（附近分店、地圖模式）不列。
    新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
 const SITE_UPDATES=[
+  {date:'2026-09-18', title:'圖表全面改版', items:[
+    '排行榜的站台數據、洞察分析，每一份數據都換成最適合的圖表：時間用直條、佔比用一條色塊、尖峰會特別標出來',
+    '每張圖手指按住（或滑鼠滑過）就看得到數字，也可以展開「看數字」看完整表格']},
   {date:'2026-09-16', title:'附近有優惠的店、家人的生日、清單標籤', items:[
     '新增「📍 附近」：允許定位之後可以只看你附近有優惠的店，列表由近到遠排序，卡片上直接顯示最近的一家分店跟導航連結',
     '不想給定位也可以：打開地圖點一下任何地方，就會找那附近的優惠',
@@ -4988,7 +5085,7 @@ async function loadMyStuff(){
   if($('#fNickname')&&document.activeElement!==$('#fNickname')) $('#fNickname').value=myProfile?.display_name||'';
   const {data:sv}=await sb.from('my_savings').select('*').eq('user_id',me.id).maybeSingle();
   $('#mySavings').innerHTML = sv ? `
-    <div><div class="v">${nt(sv.saved_total)}</div><div class="k">累積省下</div></div>
+    <div class="hero"><div class="v">${nt(sv.saved_total)}</div><div class="k">累積省下</div></div>
     <div><div class="v">${nt(sv.saved_this_year)}</div><div class="k">今年省下</div></div>
     <div><div class="v">${sv.success_count}</div><div class="k">成功次數</div></div>
     <div><div class="v">${sv.brands_used}</div><div class="k">用過品牌</div></div>`
@@ -5813,10 +5910,12 @@ function renderBoardStats(lb, pop, allTimeSavedRows, usedRows, siteStatsRow, onl
       +'<div style="color:var(--ink-3);font-size:.86rem;flex-basis:100%">還沒有任何回報資料，去「優惠」分頁按「我用過了」就會開始累積。</div>';
     return;
   }
-  $('#boardStats').innerHTML=liveStatsHtml+`
-    <div><div class="v">${nt(saved)}</div><div class="k">大家累積省下（近一年）</div></div>
+  // 形式：一個最重要的數字（大家累積省下）放大當主角；成功率是比例 → 加一條量表；其他是數字卡
+  $('#boardStats').innerHTML=`
+    <div class="hero"><div class="v">${nt(saved)}</div><div class="k">大家累積省下（近一年）</div></div>`+liveStatsHtml+`
     <div><div class="v">${reports}</div><div class="k">總回報次數</div></div>
-    <div><div class="v ${rate>=70?'free':''}">${rate==null?'—':rate+'%'}</div><div class="k">整體成功率</div></div>
+    <div><div class="v ${rate>=70?'free':''}">${rate==null?'—':rate+'%'}</div><div class="k">整體成功率</div>
+      ${rate==null?'':`<div class="vm-track"><span class="vm-fill" style="width:${rate}%"></span></div>`}</div>
     <div><div class="v">${shopCount}</div><div class="k">已上架店家</div></div>
     <div><div class="v">${brandSet.size}</div><div class="k">被使用過的店家數</div></div>
     <div><div class="v">${nt(avg)}</div><div class="k">平均每人省下</div></div>
@@ -5837,6 +5936,174 @@ function startBoardOnlineRefresh(){
     if(!error && el) el.textContent=data??0;
   }, 20000);
 }
+/* ===================== 圖表元件 =====================
+   celine：「統計圖表形式都過於單一，希望每一份數據找到最適合的方式呈現」。
+   原本幾乎每張圖都是同一種橫條。改成依資料要回答的問題選形式：
+     大小比較 → vizBars（橫條）        時間／週期 → vizColumns（直條，照時間順序）
+     佔比     → vizStack（100% 堆疊條） 有正負     → vizDiverging（分歧條）
+     單一比例 → vizMeters（量表）      1–5 分平均 → vizDots（刻度上的點）
+     同一批項目的兩個數字 → vizBars 的分組模式（喜歡 vs 常用）
+   每張圖都有滑過看數字（data-tip），也都有「看數字」表格（vizCard 的 table）。
+   類別色照固定順序給「那個項目」，不是照名次給——資料變動、排序改變時顏色不會跳。 */
+const VIZ_CAT=['var(--viz-1)','var(--viz-2)','var(--viz-3)','var(--viz-4)','var(--viz-5)','var(--viz-6)'];
+const VIZ_MUTED='var(--viz-muted)';
+function vizPct(n,t){ return t?Math.round(n/t*100):0; }
+function vizCard(title, body, opts={}){
+  return `<div class="dash-chart viz"${opts.style?` style="${opts.style}"`:''}>
+    ${title?`<b>${esc(title)}</b>`:''}
+    ${opts.sub?`<div class="viz-sub">${esc(opts.sub)}</div>`:''}
+    <div class="viz-body">${body}</div>
+    ${opts.table?vizTable(opts.table.head, opts.table.rows):''}
+  </div>`;
+}
+function vizTable(head, rows){
+  return `<details class="viz-data"><summary>看數字</summary>
+    <div class="viz-table-wrap"><table>
+      <thead><tr>${head.map((h,i)=>`<th${i?' class="num"':''}>${esc(h)}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td${i?' class="num"':''}>${esc(String(c??''))}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table></div></details>`;
+}
+// 橫條：items [{label, value, text, tip, dot, color}]；groups 模式：values/texts 是陣列，series 給顏色與名稱
+function vizBars(items, opts={}){
+  const series=opts.series;
+  const all=items.flatMap(it=>series?it.values:[it.value]);
+  const max=Math.max(1,...all);
+  const w=v=>v?Math.max(1.5,v/max*100):0;
+  const legend=series&&series.length>1?`<div class="vleg" style="margin:0 0 10px">${series.map(s=>
+    `<span><i style="background:${s.color}"></i>${esc(s.label)}</span>`).join('')}</div>`:'';
+  return legend+`<div class="vbars" style="--lw:${opts.labelWidth||96}px">${items.map(it=>{
+    const label=`<span class="vbar-label" title="${esc(it.label)}">${it.dot?`<i class="catdot" style="--c:${it.dot}"></i>`:''}${esc(it.label)}</span>`;
+    if(series){
+      return `<div class="vbar grp" data-tip="${esc(it.tip||`${it.label}｜`+series.map((s,k)=>`${s.label} ${it.texts[k]}`).join('｜'))}">
+        ${label}
+        <span class="vbar-track">${series.map((s,k)=>`<span class="vbar-fill" style="width:${w(it.values[k])}%;background:${s.color}"></span>`).join('')}</span>
+        <span class="vbar-val">${series.map((s,k)=>`<span>${esc(it.texts[k])}</span>`).join('')}</span>
+      </div>`;
+    }
+    return `<div class="vbar" data-tip="${esc(it.tip||`${it.label}：${it.text??it.value}`)}">
+      ${label}
+      <span class="vbar-track"><span class="vbar-fill" style="width:${w(it.value)}%${it.color?`;background:${it.color}`:''}"></span></span>
+      <span class="vbar-val">${esc(String(it.text??it.value))}</span>
+    </div>`;
+  }).join('')}</div>`;
+}
+// 直條：items [{label, short, value, text, tip, emph, soft, showValue}]
+function vizColumns(items, opts={}){
+  const max=Math.max(1,...items.map(i=>i.value));
+  const every=opts.labelEvery||1;
+  const anyEmph=items.some(i=>i.emph);
+  return `<div class="vcols" style="--h:${opts.height||100}px">
+    <div class="vcols-plot">${items.map(it=>{
+      const pct=it.value?Math.max(2,it.value/max*100):0;
+      const cls=it.mute?' mute':it.soft?' soft':(anyEmph&&!it.emph?' mute':'');
+      return `<div class="vcol" data-tip="${esc(it.tip||`${it.label}：${it.text??it.value}`)}">
+        ${it.showValue?`<span class="vcol-val" style="bottom:${pct}%">${esc(String(it.text??it.value))}</span>`:''}
+        <span class="vcol-fill${cls}" style="height:${pct}%"></span>
+      </div>`;}).join('')}</div>
+    <div class="vcols-x">${items.map((it,i)=>`<span>${(i%every===0||i===items.length-1)?esc(it.short??it.label):''}</span>`).join('')}</div>
+  </div>`;
+}
+// 100% 堆疊條：parts [{label, value, color}]；超過 6 塊時，小的合併成「其他」
+function vizStack(parts, opts={}){
+  let ps=parts.filter(p=>p.value>0);
+  if(!opts.keepOrder) ps=ps.slice().sort((a,b)=>b.value-a.value);
+  if(ps.length>6){
+    const keep=ps.slice(0,5), rest=ps.slice(5);
+    ps=[...keep,{label:'其他',value:rest.reduce((a,p)=>a+p.value,0),color:VIZ_MUTED,
+      tip:'其他：'+rest.map(p=>p.label).join('、')}];
+  }
+  const total=ps.reduce((a,p)=>a+p.value,0)||1;
+  const unit=opts.unit||'';
+  const txt=p=>`${vizPct(p.value,total)}%`;
+  return `<div class="vstack">${ps.map(p=>`<span class="vstack-seg" style="flex:${p.value} 1 0;background:${p.color||VIZ_MUTED}"
+      data-tip="${esc(p.tip||`${p.label}：${p.value}${unit}（${txt(p)}）`)}"></span>`).join('')}</div>
+    <div class="vleg">${ps.map(p=>`<span data-tip="${esc(`${p.label}：${p.value}${unit}（${txt(p)}）`)}"><i style="background:${p.color||VIZ_MUTED}"></i>${esc(p.label)}
+      <b>${txt(p)}</b>${unit?`<small>${p.value}${esc(unit)}</small>`:''}</span>`).join('')}</div>`;
+}
+// 分歧條：neg（左，負向）、mid（中立，跨在中線上）、pos（右，正向），都照「離中線由近到遠」的順序給
+function vizDiverging(neg, mid, pos, opts={}){
+  const sum=a=>a.reduce((x,p)=>x+p.value,0);
+  const total=sum(neg)+(mid?mid.value:0)+sum(pos)||1;
+  const half=(mid?mid.value:0)/2;
+  const left=sum(neg)+half, right=sum(pos)+half;
+  const span=Math.max(left,right)*2||1;
+  const pctOf=v=>v/span*100;
+  const unit=opts.unit||'';
+  const segs=[];
+  let x=50-pctOf(half);
+  if(mid) segs.push({...mid, from:x, w:pctOf(mid.value)});
+  let lx=50-pctOf(half);
+  neg.forEach(p=>{ lx-=pctOf(p.value); segs.push({...p, from:lx, w:pctOf(p.value)}); });
+  let rx=50+pctOf(half);
+  pos.forEach(p=>{ segs.push({...p, from:rx, w:pctOf(p.value)}); rx+=pctOf(p.value); });
+  const tip=p=>`${p.label}：${p.value}${unit}（${vizPct(p.value,total)}%）`;
+  const order=[...neg.slice().reverse(), ...(mid?[mid]:[]), ...pos];
+  return `<div class="vdiv">${segs.filter(p=>p.value>0).map(p=>`<span class="vdiv-seg" data-tip="${esc(tip(p))}"
+      style="left:calc(${p.from}% + 1px);width:calc(${p.w}% - 2px);background:${p.color}"></span>`).join('')}
+      <span class="vdiv-axis"></span></div>
+    <div class="vdiv-ends"><span>← ${esc(opts.leftLabel||'')}</span><span>${esc(opts.rightLabel||'')} →</span></div>
+    <div class="vleg">${order.map(p=>`<span data-tip="${esc(tip(p))}"><i style="background:${p.color}"></i>${esc(p.label)}
+      <b>${vizPct(p.value,total)}%</b>${unit?`<small>${p.value}${esc(unit)}</small>`:''}</span>`).join('')}</div>`;
+}
+// 量表：items [{label, ratio(0–1 或 null), text}]
+function vizMeters(items){
+  return `<div class="vmeters">${items.map(it=>`<div class="vmeter" data-tip="${esc(`${it.label}：${it.text}`)}">
+      <div class="vm-v">${esc(it.text)}</div><div class="vm-k">${esc(it.label)}</div>
+      ${it.ratio==null?'':`<div class="vm-track"><span class="vm-fill" style="width:${Math.max(0,Math.min(1,it.ratio))*100}%"></span></div>`}
+    </div>`).join('')}</div>`;
+}
+// 刻度上的點：items [{label, value}]，min–max 的平均分數
+function vizDots(items, opts={}){
+  const min=opts.min??1, max=opts.max??5;
+  const pos=v=>(v-min)/(max-min)*100;
+  const ticks=Array.from({length:max-min+1},(_,i)=>min+i);
+  return `<div class="vdots" style="--lw:${opts.labelWidth||84}px">${items.map(it=>`
+      <div class="vdot" data-tip="${esc(`${it.label}：平均 ${Number(it.value).toFixed(1)} / ${max}`)}">
+        <span class="vdot-label">${esc(it.label)}</span>
+        <span class="vdot-track">${ticks.map(t=>`<i class="vdot-tick" style="left:${pos(t)}%"></i>`).join('')}
+          <i class="vdot-mark" style="left:${pos(Number(it.value))}%"></i></span>
+        <span class="vdot-val">${Number(it.value).toFixed(1)} / ${max}</span>
+      </div>`).join('')}
+      <div class="vdot-scale"><span></span><span class="vdot-track">${ticks.map(t=>`<span class="n" style="left:${pos(t)}%">${t}</span>`).join('')}</span><span></span></div>
+    </div>`;
+}
+// 滑過（或手指按住）任何一個標了 data-tip 的圖表元素，就在旁邊顯示數字
+(()=>{
+  const tip=document.createElement('div');
+  tip.className='viz-tip hidden'; tip.setAttribute('role','tooltip');
+  document.body.appendChild(tip);
+  const hit=e=>e.target && e.target.closest ? e.target.closest('.viz [data-tip]') : null;
+  const place=(el,x,y)=>{
+    tip.textContent=el.dataset.tip; tip.classList.remove('hidden');
+    const r=tip.getBoundingClientRect();
+    let left=x+12, top=y-r.height-12;
+    if(left+r.width>window.innerWidth-8) left=Math.max(8,x-r.width-12);
+    if(top<8) top=y+16;
+    tip.style.left=left+'px'; tip.style.top=top+'px';
+  };
+  document.addEventListener('pointermove',e=>{ const el=hit(e); if(el) place(el,e.clientX,e.clientY); else tip.classList.add('hidden'); },{passive:true});
+  document.addEventListener('pointerdown',e=>{ const el=hit(e); if(el) place(el,e.clientX,e.clientY); else tip.classList.add('hidden'); },{passive:true});
+  document.addEventListener('pointerleave',()=>tip.classList.add('hidden'));
+  window.addEventListener('scroll',()=>tip.classList.add('hidden'),{passive:true});
+})();
+
+// 使用時段分布（公開版、管理員版共用同一個畫法）：24 根直條，尖峰用主色、其他灰色
+function vizHours(hourRows, title){
+  const byHour=new Map((hourRows||[]).map(r=>[Number(r.hour), Number(r.count)||0]));
+  const items=Array.from({length:24},(_,h)=>({label:`${h}:00`, short:`${h}時`, value:byHour.get(h)||0}));
+  const max=Math.max(0,...items.map(i=>i.value));
+  const peak=max?items.findIndex(i=>i.value===max):-1;
+  items.forEach((it,h)=>{
+    it.text=`${it.value} 次`;
+    it.tip=`${h}:00–${(h+1)%24}:00　${it.value} 次瀏覽`;
+    if(h===peak){ it.emph=true; it.showValue=true; }
+  });
+  return vizCard(title, vizColumns(items,{height:110, labelEvery:6}), {
+    sub: peak>=0?`尖峰時段：${peak}:00 前後，共 ${max} 次瀏覽`:'還沒有資料',
+    table:{head:['時段','瀏覽次數'], rows:items.map(i=>[i.label, i.value])}
+  });
+}
+
 // 使用時段分布（schema_v55 公開版），跟管理員儀表板那張圖是同一個畫法，
 // 獨立寫一份而不是共用函式——管理員那邊還有「近 N 天」篩選器等專屬邏輯，
 // 硬共用反而要多繞一層參數，不如照抄畫法但保持兩邊各自獨立比較不會互相
@@ -5845,23 +6112,7 @@ function renderBoardHoursChart(hourRows){
   const box=$('#boardHoursChart');
   if(!box) return;
   if(!hourRows){ box.innerHTML=''; return; }
-  const hrows=hourRows||[];
-  const hmax=Math.max(1,...hrows.map(r=>r.count));
-  const peak=hrows.length?hrows.slice().sort((a,b)=>b.count-a.count)[0]:null;
-  box.innerHTML=`<div class="dash-chart">
-    <b>近 30 天使用時段分布（台灣時間，依瀏覽次數）</b>
-    <div style="margin-top:10px;display:flex;align-items:flex-end;gap:2px;height:80px">
-      ${hrows.map(r=>`<div style="flex:1;height:100%;display:flex;align-items:flex-end" title="${r.hour}時：${r.count} 次">
-        <div style="width:100%;border-radius:3px 3px 0 0;transition:opacity .15s var(--ease);
-          background:${peak&&r.hour===peak.hour?'linear-gradient(180deg,var(--accent),var(--accent-dark))':'var(--line-soft)'};
-          height:${r.count?Math.max(3,r.count/hmax*100):2}%"></div>
-      </div>`).join('')}
-    </div>
-    <div style="display:flex;justify-content:space-between;font-size:.66rem;color:var(--ink-3);margin-top:3px">
-      <span>0時</span><span>6時</span><span>12時</span><span>18時</span><span>23時</span>
-    </div>
-    ${peak?`<div style="font-size:.76rem;color:var(--ink-3);margin-top:4px">尖峰時段：${peak.hour}:00 前後，共 ${peak.count} 次瀏覽</div>`:''}
-  </div>`;
+  box.innerHTML=vizHours(hourRows,'近 30 天使用時段分布（台灣時間，依瀏覽次數）');
 }
 
 // 各類別使用狀況：popular_offers 本身沒有 category 欄位，這裡拿已經
@@ -5886,16 +6137,12 @@ function renderCategoryBreakdown(pop){
   const rows=[...map.entries()].map(([cat,v])=>({cat,reports:v.reports,saved:v.saved,stores:v.brands.size}))
     .filter(r=>r.reports).sort((a,b)=>b.reports-a.reports);
   if(!rows.length){ box.innerHTML=''; return; }
-  const max=Math.max(1,...rows.map(r=>r.reports));
-  box.innerHTML=`<div class="dash-chart"><b>各類別使用狀況（依回報次數）</b>
-    <div style="margin-top:8px">
-      ${rows.map(r=>`<div class="hbar-row">
-        <span class="hbar-label" style="width:88px">
-          <i class="catdot" style="--c:${CAT_COLOR[r.cat]||'var(--ink-3)'}"></i>${esc(r.cat)}</span>
-        <div class="hbar-track"><div class="hbar-fill" style="width:${r.reports?Math.max(4,r.reports/max*100):0}%"></div></div>
-        <span class="hbar-val" style="width:128px;text-align:right">${r.reports} 次・${r.stores} 家店</span>
-      </div>`).join('')}
-    </div></div>`;
+  // 形式：各類別之間比大小 → 橫條（單一主色），類別顏色只留在前面的小圓點當識別
+  box.innerHTML=vizCard('各類別使用狀況（依回報次數）',
+    vizBars(rows.map(r=>({label:r.cat, dot:CAT_COLOR[r.cat]||'var(--ink-3)', value:r.reports,
+      text:`${r.reports} 次・${r.stores} 家店`, tip:`${r.cat}：${r.reports} 次回報，${r.stores} 家店，省下 ${nt(r.saved)}`})),
+      {labelWidth:92}),
+    {table:{head:['類別','回報次數','店家數','省下金額'], rows:rows.map(r=>[r.cat,r.reports,r.stores,nt(r.saved)])}});
 }
 
 // 近 30 天全站省錢走勢：usage_reports 的 select 政策本來就是 using(true)（誰都
@@ -5968,15 +6215,17 @@ function renderMonthlyBreakdown(rows){
   const label = metric==='count' ? '使用次數' : '省下金額';
   const vals = months.map(ym=>by.get(ym)||0);
   if(!vals.some(v=>v)){ box.innerHTML=''; return; }
-  const max=Math.max(1,...vals);
-  box.innerHTML=`<div class="dash-chart"><b>近 6 個月：每月${label}</b>
-    <div style="margin-top:8px">
-      ${months.map((ym,i)=>`<div class="hbar-row">
-        <span class="hbar-label" style="width:56px">${esc(ym.slice(5))} 月</span>
-        <div class="hbar-track"><div class="hbar-fill" style="width:${vals[i]?Math.max(4,vals[i]/max*100):0}%"></div></div>
-        <span class="hbar-val" style="width:96px;text-align:right">${metric==='count'?vals[i]+' 次':nt(vals[i])}</span>
-      </div>`).join('')}
-    </div></div>`;
+  const fmt=v=>metric==='count'?`${v} 次`:nt(v);
+  const max=Math.max(...vals);
+  // 形式：時間序列 → 直條照月份由左到右；這個月還沒結束，用淡色標「進行中」，避免看起來像「下滑」
+  const items=months.map((ym,i)=>{
+    const cur=i===months.length-1;
+    return {label:`${Number(ym.slice(5))} 月`, short:`${Number(ym.slice(5))}月${cur?'＊':''}`, value:vals[i], text:fmt(vals[i]),
+      tip:`${ym}${cur?'（進行中）':''}：${fmt(vals[i])}`, soft:cur, showValue:cur||vals[i]===max};
+  });
+  box.innerHTML=vizCard(`近 6 個月：每月${label}`, vizColumns(items,{height:120}),
+    {sub:'＊這個月還沒結束，數字會繼續增加',
+     table:{head:['月份',label], rows:months.map((ym,i)=>[ym, fmt(vals[i])])}});
 }
 $('#trendMetric').onchange=()=>{ renderTrendChart(); renderMonthlyBreakdown(TREND_ROWS); };
 
@@ -5990,24 +6239,31 @@ function renderMoMCompare(curRows, prevRows, curYm, prevYm){
   const curSaved=sumSaved(curRows), prevSaved=sumSaved(prevRows);
   const curUses=sumUses(curRows), prevUses=sumUses(prevRows);
   if(!curSaved && !prevSaved){ box.innerHTML=''; return; }
-  const pct = prevSaved>0 ? Math.round((curSaved-prevSaved)/prevSaved*100) : (curSaved>0?100:0);
-  const up = pct>=0;
-  box.innerHTML=`<div class="dash-chart">
-    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-      <div><div class="v" style="font-size:1.7rem;font-weight:800;letter-spacing:-.02em;
-          font-variant-numeric:tabular-nums">${nt(curSaved)}</div>
-        <div class="k" style="font-size:.78rem;color:var(--ink-3);margin-top:1px">${esc(curYm)} 累積省下</div></div>
-      <span style="font-size:.82rem;font-weight:700;padding:4px 10px;border-radius:99px;
-        background:${up?'var(--free-bg)':'var(--accent-soft)'};color:${up?'var(--free)':'var(--accent-dark)'}">
-        ${up?'▲':'▼'} ${Math.abs(pct)}%</span>
-      <span style="font-size:.78rem;color:var(--ink-3)">比上個月（${nt(prevSaved)}）</span>
+  // 形式：兩個數字＋變化 → 數字卡加漲跌標籤（不畫成兩根柱子）
+  const delta=(cur,prev)=>{
+    const pct = prev>0 ? Math.round((cur-prev)/prev*100) : (cur>0?100:0);
+    const up=pct>=0;
+    return `<span style="font-size:.78rem;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap;
+      background:${up?'var(--free-bg)':'var(--accent-soft)'};color:${up?'var(--free)':'var(--accent-dark)'}">${up?'▲':'▼'} ${Math.abs(pct)}%</span>`;
+  };
+  const tile=(v,k,d,prevTxt)=>`<div style="flex:1 1 180px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:1.8rem;font-weight:800;letter-spacing:-.02em;line-height:1.1">${v}</span>${d}</div>
+      <div style="font-size:.78rem;color:var(--ink-3);margin-top:3px">${esc(k)}　<span>上個月 ${prevTxt}</span></div>
+    </div>`;
+  box.innerHTML=`<div class="dash-chart viz">
+    <b>${esc(curYm)} 跟上個月比</b>
+    <div class="viz-body" style="display:flex;gap:18px 28px;flex-wrap:wrap">
+      ${tile(nt(curSaved), '累積省下', delta(curSaved,prevSaved), nt(prevSaved))}
+      ${tile(`${curUses} 次`, '成功使用', delta(curUses,prevUses), `${prevUses} 次`)}
     </div>
-    <div style="font-size:.78rem;color:var(--ink-3);margin-top:8px">${esc(curYm)} 成功使用 ${curUses} 次　·　上個月 ${prevUses} 次</div>
   </div>`;
 }
 
 // 大家用的優惠類型佔比（免費/需消費/折扣…），一樣拿 popular_offers 反查
 // OFFERS 的 freeTier，不用新開查詢。
+// 優惠類型的顏色跟著「類型」走，不跟著名次走——資料變動、順序改變時顏色不會跳
+const FREE_VIZ_COLOR={free_no_min:VIZ_CAT[0],free_min:VIZ_CAT[1],discount:VIZ_CAT[2],unknown:VIZ_MUTED};
 function renderTypeBreakdown(pop){
   const box=$('#boardTypeChart');
   if(!box) return;
@@ -6017,44 +6273,35 @@ function renderTypeBreakdown(pop){
     const key=o?.freeTier||'unknown';
     map.set(key, (map.get(key)||0) + (r.report_count||0));
   });
-  const rows=[...map.entries()].map(([k,v])=>({label:FREE_LABEL[k]||'其他／待確認',count:v}))
-    .filter(r=>r.count).sort((a,b)=>b.count-a.count);
-  const total=rows.reduce((a,r)=>a+r.count,0);
+  const parts=[...map.entries()].map(([k,v])=>({label:FREE_LABEL[k]||'其他／待確認', value:v, color:FREE_VIZ_COLOR[k]||VIZ_MUTED}))
+    .filter(p=>p.value);
+  const total=parts.reduce((a,p)=>a+p.value,0);
   if(!total){ box.innerHTML=''; return; }
-  box.innerHTML=`<div class="dash-chart"><b>大家用的優惠是什麼類型（依回報次數佔比）</b>
-    <div style="margin-top:8px">
-      ${rows.map(r=>`<div class="hbar-row">
-        <span class="hbar-label" style="width:104px">${esc(r.label)}</span>
-        <div class="hbar-track"><div class="hbar-fill free" style="width:${Math.max(4,r.count/total*100)}%"></div></div>
-        <span class="hbar-val" style="width:44px;text-align:right">${Math.round(r.count/total*100)}%</span>
-      </div>`).join('')}
-    </div></div>`;
+  // 形式：各類型加起來是 100% → 一條 100% 堆疊條
+  box.innerHTML=vizCard('大家用的優惠是什麼類型（依回報次數佔比）', vizStack(parts,{unit:' 次'}),
+    {table:{head:['類型','回報次數','佔比'], rows:parts.sort((a,b)=>b.value-a.value).map(p=>[p.label,p.value,vizPct(p.value,total)+'%'])}});
 }
 
 // 大家用的優惠是哪種會員取得方式（免會員/品牌APP/LINE/Ocard…），一樣拿
 // popular_offers 反查 OFFERS 的 membershipType，不用新開查詢——跟旁邊
 // 「優惠類型」那組圖表是同一批資料，只是換一個維度切。
+// 會員取得方式：前 6 種各有固定顏色，其餘（需達等級、其他、待確認）合併成灰色的「其他」
+const MEM_VIZ_COLOR={none:VIZ_CAT[0],app:VIZ_CAT[1],line:VIZ_CAT[2],ocard:VIZ_CAT[3],card:VIZ_CAT[4],brand:VIZ_CAT[5]};
 function renderMemberBreakdown(pop){
   const box=$('#boardMemberChart');
   if(!box) return;
   const map=new Map();
   pop.forEach(r=>{
     const o=OFFERS.find(x=>String(x.id)===String(r.offer_id));
-    const key=o?.membershipType||'unknown';
+    const key=MEM_VIZ_COLOR[o?.membershipType] ? o.membershipType : 'other';
     map.set(key, (map.get(key)||0) + (r.report_count||0));
   });
-  const rows=[...map.entries()].map(([k,v])=>({label:MEM_LABEL[k]||'其他／待確認',count:v}))
-    .filter(r=>r.count).sort((a,b)=>b.count-a.count);
-  const total=rows.reduce((a,r)=>a+r.count,0);
+  const parts=[...map.entries()].map(([k,v])=>({label:k==='other'?'其他／待確認':(MEM_LABEL[k]||k), value:v, color:MEM_VIZ_COLOR[k]||VIZ_MUTED}))
+    .filter(p=>p.value);
+  const total=parts.reduce((a,p)=>a+p.value,0);
   if(!total){ box.innerHTML=''; return; }
-  box.innerHTML=`<div class="dash-chart"><b>大家用的優惠是什麼會員取得方式（依回報次數佔比）</b>
-    <div style="margin-top:8px">
-      ${rows.map(r=>`<div class="hbar-row">
-        <span class="hbar-label" style="width:104px">${esc(r.label)}</span>
-        <div class="hbar-track"><div class="hbar-fill" style="width:${Math.max(4,r.count/total*100)}%"></div></div>
-        <span class="hbar-val" style="width:44px;text-align:right">${Math.round(r.count/total*100)}%</span>
-      </div>`).join('')}
-    </div></div>`;
+  box.innerHTML=vizCard('大家用的優惠是什麼會員取得方式（依回報次數佔比）', vizStack(parts,{unit:' 次'}),
+    {table:{head:['取得方式','回報次數','佔比'], rows:parts.sort((a,b)=>b.value-a.value).map(p=>[p.label,p.value,vizPct(p.value,total)+'%'])}});
 }
 
 // 星期幾最多人成功使用：拿近 30 天走勢圖同一批 usage_reports 資料
@@ -6076,16 +6323,17 @@ function renderWeekdayBreakdown(rows){
     counts[d.getDay()]++; total++;
   });
   if(!total){ box.innerHTML=''; return; }
-  const max=Math.max(1,...counts);
+  const max=Math.max(...counts);
   const order=[1,2,3,4,5,6,0]; // 一～日，週末排最後比較好讀
-  box.innerHTML=`<div class="dash-chart"><b>近 30 天：星期幾最多人成功使用</b>
-    <div style="margin-top:8px">
-      ${order.map(i=>`<div class="hbar-row">
-        <span class="hbar-label" style="width:40px">週${WEEKDAY_LABEL[i]}</span>
-        <div class="hbar-track"><div class="hbar-fill${(i===0||i===6)?' free':''}" style="width:${counts[i]?Math.max(4,counts[i]/max*100):0}%"></div></div>
-        <span class="hbar-val" style="width:44px;text-align:right">${counts[i]} 次</span>
-      </div>`).join('')}
-    </div></div>`;
+  // 形式：一週是有順序的 → 直條由週一到週日；要回答「哪天最多」→ 最多的那天用主色、其他灰色
+  const items=order.map(i=>({label:`週${WEEKDAY_LABEL[i]}`, short:WEEKDAY_LABEL[i], value:counts[i],
+    text:`${counts[i]} 次`, tip:`週${WEEKDAY_LABEL[i]}：${counts[i]} 次（${vizPct(counts[i],total)}%）`,
+    emph:counts[i]===max, showValue:counts[i]===max}));
+  const top=order.filter(i=>counts[i]===max).map(i=>'週'+WEEKDAY_LABEL[i]).join('、');
+  const weekend=counts[0]+counts[6];
+  box.innerHTML=vizCard('近 30 天：星期幾最多人成功使用', vizColumns(items,{height:110}),
+    {sub:`最多的是${top}；週末佔 ${vizPct(weekend,total)}%`,
+     table:{head:['星期','成功使用次數','佔比'], rows:items.map(it=>[it.label,it.value,vizPct(it.value,total)+'%'])}});
 }
 
 /* ---- 批次核可待審投稿：嵐回饋「待審核清單也要一鍵審核全選」。跟
@@ -6236,35 +6484,24 @@ async function loadReviewInsights(){
   const reviewed=approved+rejected;
   const rate=reviewed?Math.round(approved/reviewed*100):null;
   const catRows=d.pending_by_category||[];
-  const catMax=Math.max(1,...catRows.map(r=>r.count));
   const top=d.top_submitters||[];
-  box.innerHTML=`<div class="dash-chart">
+  // 形式：核可率是「比例」→ 量表；待審類別、投稿最多的人是「比大小」→ 橫條
+  box.innerHTML=`<div class="dash-chart viz">
     <div class="bigstat" style="margin-bottom:0">
       <div><div class="v ${rate!=null&&rate>=70?'free':''}" style="font-size:1.5rem">${rate==null?'—':rate+'%'}</div>
-        <div class="k">核可率（累積 ${approved} 通過／${rejected} 退回）</div></div>
+        <div class="k">核可率（累積 ${approved} 通過／${rejected} 退回）</div>
+        ${rate==null?'':`<div class="vm-track"><span class="vm-fill" style="width:${rate}%"></span></div>`}</div>
       <div><div class="v" style="font-size:1.5rem">${d.avg_review_hours==null?'—':d.avg_review_hours+' 小時'}</div>
         <div class="k">平均審核耗時（投稿到核可/退回）</div></div>
       <div><div class="v" style="font-size:1.5rem">${d.pending_count??0}</div>
         <div class="k">目前待審中</div></div>
     </div>
-    ${catRows.length?`<div style="margin-top:14px">
-      <b style="font-size:.85rem">待審類別分布</b>
-      <div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
-        ${catRows.map(r=>`<div style="display:flex;align-items:center;gap:8px;font-size:.78rem">
-          <span style="width:88px;flex-shrink:0;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.category)}</span>
-          <div style="flex:1;background:var(--line);border-radius:4px;height:14px;overflow:hidden">
-            <div style="width:${Math.max(4,r.count/catMax*100)}%;height:100%;background:var(--accent)"></div>
-          </div>
-          <span style="width:24px;text-align:right;flex-shrink:0">${r.count}</span>
-        </div>`).join('')}
-      </div>
-    </div>`:''}
-    ${top.length?`<div style="margin-top:14px">
-      <b style="font-size:.85rem">投稿最多的人（累積）</b>
-      <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px">
-        ${top.map((t,i)=>`<span class="flag${i===0?' ok-flag':''}">${esc(t.name)}　${t.count} 筆</span>`).join('')}
-      </div>
-    </div>`:''}
+    ${catRows.length?`<div style="margin-top:16px"><b style="font-size:.85rem">待審類別分布</b>
+      <div style="margin-top:10px">${vizBars(catRows.map(r=>({label:r.category, dot:CAT_COLOR[r.category], value:r.count, text:`${r.count} 筆`})))}</div>
+      ${vizTable(['類別','待審筆數'], catRows.map(r=>[r.category,r.count]))}</div>`:''}
+    ${top.length?`<div style="margin-top:16px"><b style="font-size:.85rem">投稿最多的人（累積）</b>
+      <div style="margin-top:10px">${vizBars(top.map((t,i)=>({label:t.name, value:t.count, text:`${t.count} 筆`,
+        color:i===0?'var(--accent)':'var(--accent-line)'})))}</div></div>`:''}
   </div>`;
 }
 
@@ -6847,11 +7084,12 @@ const SURVEY_EXTRA=[
   // 「用過好幾個」也要分出 3 個以上
   {key:'visit_freq', title:'你多久會來一次壽星日？', opts:[['first','第一次來'],
     ['bday_daily','生日月幾乎每天'],['bday_weekly','生日月每週幾次'],['bday_once','生日月來個一兩次'],
-    ['off_often','不是生日月也常來'],['off_sometimes','不是生日月偶爾來']]},
+    ['off_often','不是生日月也常來'],['off_sometimes','不是生日月偶爾來']], chart:'ordered'},
   {key:'used_offer', title:'你有真的去用過在這裡找到的優惠嗎？', opts:[['many','用過 3 個以上'],
-    ['few','用過 1–2 個'],['planning','還沒，但打算去'],['not_yet','還沒有']]},
+    ['few','用過 1–2 個'],['planning','還沒，但打算去'],['not_yet','還沒有']], chart:'ordered'},
   {key:'vs_self', title:'跟自己上網查比起來，找優惠有變快嗎？', opts:[['much','快很多'],['bit','快一點'],
-    ['same','差不多'],['slower','比較慢']]},
+    ['same','差不多'],['slower','比較慢']], chart:'diverging', neg:['slower'], mid:'same', pos:['bit','much'],
+    leftLabel:'比較慢', rightLabel:'變快'},
   {key:'want_types', title:'你最想看到哪類優惠？（可複選）', multi:true, opts:[['food','餐廳／吃到飽'],['drink','飲料甜點'],
     ['beauty','美妝保養'],['fun','娛樂休閒'],['stay','住宿旅遊'],['shopping','購物商場'],['free','免消費就能拿']]},
   {key:'decide', title:'決定要不要去用一個優惠，你最看重什麼？（可複選）', multi:true, opts:[['no_spend','不用消費'],
@@ -6863,8 +7101,11 @@ const SURVEY_EXTRA=[
     ['remind','生日前通知提醒'],['more_shops','更多店家'],['expire','優惠快到期提醒'],['plan','幫我排生日當天行程'],
     ['friends','跟朋友一起揪']]},
   {key:'age', title:'你的年紀？', opts:[['u18','18 歲以下'],['18_24','18–24'],['25_34','25–34'],['35_44','35–44'],
-    ['45p','45 歲以上'],['secret','不想說']]}
+    ['45p','45 歲以上'],['secret','不想說']], chart:'columns'}
 ];
+// 嵐：「多久來一次」表單跟結果顯示的選項不一樣——結果裡混著題目改版前的舊答案（英文代號）。
+// 舊答案沒辦法準確換算成新選項，所以照原本的意思翻成中文、標「舊版選項」另外列出來。
+const SURVEY_LEGACY_LABELS={birthday_month:'生日月才來', monthly:'每個月', weekly:'每週', daily:'幾乎每天', one:'用過 1 個'};
 const SURVEY_SNOOZE_DAYS=7, SURVEY_AFTER_SUBMIT_DAYS=30, SURVEY_STAY_MS=5*60*1000, SURVEY_VISIT_GAP_MS=30*60*1000;
 let SURVEY_NUDGE_SHOWN=false;
 
@@ -7073,23 +7314,76 @@ function renderSurveySummary(d, label){
   const total=Number(d.total||0);
   $('#svCount').textContent=total; $('#svCount').classList.toggle('hidden',!total);
   if(!total){ $('#svBody').innerHTML=`<div class="hint">${esc(label)}還沒有人填問卷。</div>`; return; }
-  const nps=Math.round((Number(d.promoters||0)-Number(d.detractors||0))/total*100);
+  const promoters=Number(d.promoters||0), passives=Number(d.passives||0), detractors=Number(d.detractors||0);
+  const nps=Math.round((promoters-detractors)/total*100);
   const avg=x=>x==null?'—':Number(x).toFixed(1);
   const cell=(v,k)=>`<div><div class="v">${esc(String(v))}</div><div class="k">${esc(k)}</div></div>`;
-  const bar=(label, n, max, val)=>`<div class="hbar-row">
-      <span class="hbar-label" style="width:128px">${esc(label)}</span>
-      <div class="hbar-track"><div class="hbar-fill" style="width:${n?Math.max(4,n/max*100):0}%"></div></div>
-      <span class="hbar-val" style="width:92px;text-align:right">${val}</span></div>`;
-  const countBars=(title, obj, list)=>{
-    const known=list.map(([k,l])=>[l, Number(obj?.[k]||0)]);
-    const extra=Object.entries(obj||{}).filter(([k])=>!list.some(([x])=>x===k)).map(([k,n])=>[k==='unknown'?'沒填':k, Number(n)]);
-    const rows=[...known,...extra].filter(r=>r[1]).sort((a,b)=>b[1]-a[1]);
-    if(!rows.length) return '';
-    const max=Math.max(1,...rows.map(r=>r[1]));
-    return `<div class="dash-chart" style="margin-top:12px"><b>${esc(title)}</b><div style="margin-top:8px">
-      ${rows.map(([l,n])=>bar(l,n,max,`${n} 人・${Math.round(n/total*100)}%`)).join('')}</div></div>`;
+  const pctTxt=n=>`${n} 人・${vizPct(n,total)}%`;
+  // 題目選項 → 每個選項的人數（沒在選項裡的，例如 unknown，照樣列出來）
+  const entries=(obj, list)=>{
+    const known=list.map(([k,l],i)=>({key:k, label:l, value:Number(obj?.[k]||0), idx:i}));
+    // 題目改版前的舊答案（例如「生日月才來」「每週」）：翻成中文、標「舊版」，畫成灰色
+    const extra=Object.entries(obj||{}).filter(([k])=>!list.some(([x])=>x===k))
+      .map(([k,n])=>({key:k, label:k==='unknown'?'沒填':(SURVEY_LEGACY_LABELS[k]?SURVEY_LEGACY_LABELS[k]+'（舊版選項）':k), value:Number(n), idx:-1}));
+    return [...known,...extra];
   };
-  const aspects=SURVEY_ASPECTS.map(([k,l])=>[l, d[k.replace('score_','')+'_avg']]).filter(r=>r[1]!=null);
+  const card=(title, body, table, sub)=>vizCard(title, body, {style:'margin-top:12px', sub, table});
+  // 橫條（複選題：每個選項各自有多少人勾）
+  const bars=(title, obj, list)=>{
+    const rows=entries(obj,list).filter(r=>r.value).sort((a,b)=>b.value-a.value);
+    if(!rows.length) return '';
+    // 「都沒有 👍」這種互斥選項不是一種問題／需求，用灰色跟其他選項分開
+    const excl=new Set(list.filter(o=>o[2]).map(o=>o[0]));
+    return card(title, vizBars(rows.map(r=>({label:r.label, value:r.value, text:pctTxt(r.value),
+        color:excl.has(r.key)?VIZ_MUTED:undefined})),{labelWidth:128}),
+      {head:['選項','人數','佔填答'], rows:rows.map(r=>[r.label,r.value,vizPct(r.value,total)+'%'])}, '複選題，百分比是「勾選人數 ÷ 填答人數」');
+  };
+  // 100% 堆疊條（單選題：加起來是全部）；ordered=有順序的選項維持原本順序
+  const stack=(title, obj, list, ordered)=>{
+    const rows=entries(obj,list).filter(r=>r.value);
+    if(!rows.length) return '';
+    const sum=rows.reduce((a,r)=>a+r.value,0);
+    return card(title, vizStack(rows.map(r=>({label:r.label, value:r.value,
+        color:r.idx<0?VIZ_MUTED:VIZ_CAT[r.idx%VIZ_CAT.length]})),{unit:' 人', keepOrder:!!ordered}),
+      {head:['選項','人數','佔比'], rows:rows.map(r=>[r.label,r.value,vizPct(r.value,sum)+'%'])});
+  };
+  // 直條（有順序的分組，例如年紀）
+  const cols=(title, obj, list)=>{
+    const rows=entries(obj,list).filter(r=>r.idx>=0);
+    if(!rows.some(r=>r.value)) return '';
+    const max=Math.max(...rows.map(r=>r.value));
+    // 「不想說」不在年紀的順序裡 → 灰色
+    return card(title, vizColumns(rows.map(r=>({label:r.label, value:r.value, text:`${r.value} 人`,
+        tip:`${r.label}：${pctTxt(r.value)}`, showValue:r.value===max, mute:r.key==='secret'})),{height:100}),
+      {head:['選項','人數'], rows:rows.map(r=>[r.label,r.value])});
+  };
+  // 分歧條（有正負的單選題）
+  const diverging=(title, obj, x)=>{
+    const rows=entries(obj,x.opts);
+    const get=k=>rows.find(r=>r.key===k)?.value||0;
+    if(!rows.some(r=>r.value)) return '';
+    const neg=x.neg.map((k,i)=>({label:x.opts.find(o=>o[0]===k)[1], value:get(k), color:i?'var(--accent-line)':'var(--viz-neg)'}));
+    const pos=x.pos.map((k,i)=>({label:x.opts.find(o=>o[0]===k)[1], value:get(k), color:i?'var(--viz-pos)':'#8fb6ea'}));
+    const mid=x.mid?{label:x.opts.find(o=>o[0]===x.mid)[1], value:get(x.mid), color:'var(--viz-mid)'}:null;
+    return card(title, vizDiverging(neg, mid, pos, {unit:' 人', leftLabel:x.leftLabel, rightLabel:x.rightLabel}),
+      {head:['選項','人數'], rows:rows.map(r=>[r.label,r.value])});
+  };
+  const aspects=SURVEY_ASPECTS.map(([k,l])=>({label:l, value:d[k.replace('score_','')+'_avg']})).filter(r=>r.value!=null);
+  // 喜歡 vs 最常用：同一批功能的兩個數字 → 放在同一張分組橫條圖裡比，一眼看出「喜歡但不常用」的功能
+  const likedRows=SURVEY_FEATURES.map(([k,l])=>({label:l, liked:Number(d.liked?.[k]||0), used:Number(d.used?.[k]||0)}))
+    .filter(r=>r.liked||r.used).sort((a,b)=>(b.liked+b.used)-(a.liked+a.used));
+  const featureChart = likedRows.length ? card('喜歡的功能 vs 最常用的功能',
+      vizBars(likedRows.map(r=>({label:r.label, values:[r.liked,r.used], texts:[pctTxt(r.liked),pctTxt(r.used)]})),
+        {labelWidth:128, series:[{label:'喜歡的功能',color:VIZ_CAT[0]},{label:'最常用的功能',color:VIZ_CAT[1]}]}),
+      {head:['功能','喜歡','最常用'], rows:likedRows.map(r=>[r.label,r.liked,r.used])}, '複選題，百分比是「勾選人數 ÷ 填答人數」') : '';
+  const extraCharts=SURVEY_EXTRA.map(x=>{
+    const t=x.title.replace(/（可複選）$/,'');
+    const obj=d.extra?.[x.key];
+    if(x.chart==='diverging') return diverging(t, obj, x);
+    if(x.chart==='columns') return cols(t, obj, x.opts);
+    if(x.multi) return bars(t, obj, x.opts);
+    return stack(t, obj, x.opts, x.chart==='ordered');
+  }).join('');
   $('#svBody').innerHTML=`
     <div class="bigstat">
       ${cell(total, label+'回覆數')}
@@ -7097,18 +7391,24 @@ function renderSurveySummary(d, label){
       ${cell(nps, 'NPS 分數')}
       ${cell(`${d.members||0} / ${d.guests||0}`, '會員 / 訪客')}
     </div>
-    <p class="statline" style="margin-top:8px">推薦者 ${d.promoters||0}　·　中立 ${d.passives||0}　·　批評者 ${d.detractors||0}</p>
-    ${aspects.length?`<div class="dash-chart" style="margin-top:12px"><b>各面向平均（滿分 5）</b><div style="margin-top:8px">
-      ${aspects.map(([l,v])=>bar(l,Number(v),5,`${avg(v)} / 5`)).join('')}</div></div>`:''}
-    ${countBars('喜歡的功能', d.liked, SURVEY_FEATURES)}
-    ${countBars('最常用的功能', d.used, SURVEY_FEATURES)}
-    ${countBars('怎麼知道壽星日', d.source, SURVEY_SOURCES)}
-    ${SURVEY_EXTRA.map(x=>countBars(x.title.replace(/（可複選）$/,''), d.extra?.[x.key], x.opts)).join('')}
+    ${card('會不會推薦給朋友（NPS）', vizDiverging(
+        [{label:'批評者（0–6 分）', value:detractors, color:'var(--viz-neg)'}],
+        {label:'中立（7–8 分）', value:passives, color:'var(--viz-mid)'},
+        [{label:'推薦者（9–10 分）', value:promoters, color:'var(--viz-pos)'}],
+        {unit:' 人', leftLabel:'不會推薦', rightLabel:'會推薦'}),
+      {head:['分組','人數'], rows:[['批評者（0–6 分）',detractors],['中立（7–8 分）',passives],['推薦者（9–10 分）',promoters]]},
+      `推薦者 ${promoters}　·　中立 ${passives}　·　批評者 ${detractors}；NPS = 推薦者% − 批評者% = ${nps}`)}
+    ${aspects.length?card('各面向平均（滿分 5）', vizDots(aspects),
+      {head:['面向','平均分數'], rows:aspects.map(r=>[r.label, avg(r.value)])}, '1 很差 → 5 很好；點越靠右越好'):''}
+    ${featureChart}
+    ${stack('怎麼知道壽星日', d.source, SURVEY_SOURCES)}
+    ${extraCharts}
     ${(d.recent_comments||[]).length?`<div class="dash-chart" style="margin-top:12px"><b>還想說的話（最新 50 則）</b>
       <div class="sub-list" style="margin-top:8px">${d.recent_comments.map(c=>`<div class="sub-item">
         <b>${esc(fmtDT(c.created_at))}・${c.is_member?esc(c.display_name||'會員（沒設暱稱）'):'訪客'}・滿意度 ${esc(String(c.overall))}・推薦 ${esc(String(c.nps))}</b>
         <span style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(c.comment)}</span></div>`).join('')}</div></div>`:''}`;
 }
+
 $('#svRange').onchange=loadSurveyAdmin;
 
 // CSV 給作品集整理用：不含 user_id／裝置代號這些可以追到個人的欄位；
@@ -7127,7 +7427,7 @@ function buildSurveyCsv(rows){
     if(k==='member') return q(r.user_id?'是':'否');
     if(k.startsWith('extra:')){
       const x=SURVEY_EXTRA.find(e=>'extra:'+e.key===k), v=r.extra?.[x.key];
-      return q(v==null?'':names(x.opts, Array.isArray(v)?v:[v]));
+      return q(v==null?'':names([...x.opts, ...Object.entries(SURVEY_LEGACY_LABELS).map(([k,l])=>[k,l+'（舊版選項）'])], Array.isArray(v)?v:[v]));
     }
     if(k==='liked_features'||k==='used_features') return q(names(SURVEY_FEATURES,r[k]));
     if(k==='source') return q(r.source?(SURVEY_SOURCES.find(([x])=>x===r.source)||[null,r.source])[1]:'');
@@ -7170,14 +7470,16 @@ async function loadVisitStats(statsDays, rangeLabel){
   const d=v||{};
   const one=x=>x==null?'—':String(Math.round(Number(x)*10)/10);
   const cell=(val,k)=>`<div><div class="v">${esc(val)}</div><div class="k">${esc(k)}</div></div>`;
-  el.innerHTML=`<div class="dash-chart"><b style="font-size:.85rem">${esc(rangeLabel)}會員造訪</b>
+  const rr=d.returning_rate==null?null:Number(d.returning_rate);
+  // 形式：平均次數是「數字」→ 數字卡；回訪率是「比例」→ 量表
+  el.innerHTML=`<div class="dash-chart viz"><b style="font-size:.85rem">${esc(rangeLabel)}會員造訪</b>
     <div class="bigstat" style="margin-top:8px">
       ${cell(one(d.avg_visits_per_member),'平均每位會員造訪次數')}
       ${cell(one(d.avg_pageviews_per_member),'平均每位會員瀏覽次數')}
-      ${cell(d.returning_rate==null?'—':(Math.round(Number(d.returning_rate)*1000)/10)+'%','回訪率（造訪 2 次以上）')}
       ${cell(one(d.avg_visits_per_guest_device),'訪客：平均每台裝置造訪次數')}
     </div>
-    <p class="sub" style="margin-top:6px">「造訪」＝同一個人兩次打開網站間隔超過 30 分鐘才算新的一次，連續重新整理
+    ${vizMeters([{label:'回訪率（造訪 2 次以上的會員）', ratio:rr, text:rr==null?'—':(Math.round(rr*1000)/10)+'%'}])}
+    <p class="sub" style="margin-top:10px">「造訪」＝同一個人兩次打開網站間隔超過 30 分鐘才算新的一次，連續重新整理
       不會重複算；「瀏覽」是每次打開／重新整理都算。分母是這段期間的活躍會員
       （${esc(String(d.active_members??0))} 人，跟上面「活躍會員」同一個數字）。</p></div>`;
 }
@@ -7215,15 +7517,15 @@ async function loadAdminDashboard(days){
   } else {
     const rows=series||[];
     chartsHtml=`<div class="dash-charts">`
-      + svgLineChart(rows,[{key:'pageviews',label:'瀏覽數',color:'var(--accent)'},
-                            {key:'visitors',label:'不重複訪客',color:'var(--free)'}],
+      + svgLineChart(rows,[{key:'pageviews',label:'瀏覽數',color:VIZ_CAT[0]},
+                            {key:'visitors',label:'不重複訪客',color:VIZ_CAT[1]}],
                      {title:`近 ${seriesDays} 天瀏覽數／訪客走勢`})
-      + svgLineChart(rows,[{key:'new_users',label:'新會員',color:'var(--accent)'}],
+      + svgLineChart(rows,[{key:'new_users',label:'新會員',color:VIZ_CAT[0]}],
                      {title:`近 ${seriesDays} 天每日新會員`})
-      + svgLineChart(rows,[{key:'use_reports',label:'使用回報',color:'var(--free)'}],
+      + svgLineChart(rows,[{key:'use_reports',label:'使用回報',color:VIZ_CAT[0]}],
                      {title:`近 ${seriesDays} 天每日使用回報數`})
-      + svgLineChart(rows,[{key:'submitted',label:'投稿',color:'var(--accent)'},
-                            {key:'reviewed',label:'審核（核可＋退回）',color:'var(--alert)'}],
+      + svgLineChart(rows,[{key:'submitted',label:'投稿',color:VIZ_CAT[0]},
+                            {key:'reviewed',label:'審核（核可＋退回）',color:VIZ_CAT[1]}],
                      {title:`近 ${seriesDays} 天投稿／審核量`})
       + `</div>`;
   }
@@ -7233,41 +7535,22 @@ async function loadAdminDashboard(days){
     bmonthHtml=`<div class="note alert" style="margin-top:10px">生日分布讀取失敗：${esc(e3.message)}${hint}</div>`;
   } else {
     const rows=bmonth||[];
-    const max=Math.max(1,...rows.map(r=>r.count));
-    bmonthHtml=`<div class="dash-chart" style="margin-top:16px">
-      <b style="font-size:.85rem">會員生日月份分布</b>
-      <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
-        ${rows.map(r=>`<div style="display:flex;align-items:center;gap:8px;font-size:.78rem">
-          <span style="width:34px;color:var(--ink-3)">${r.month} 月</span>
-          <div style="flex:1;background:var(--line);border-radius:4px;height:14px;overflow:hidden">
-            <div style="width:${r.count?Math.max(4,r.count/max*100):0}%;height:100%;background:var(--accent)"></div>
-          </div>
-          <span style="width:28px;text-align:right">${r.count}</span>
-        </div>`).join('')}
-      </div>
-    </div>`;
+    const byM=new Map(rows.map(r=>[Number(r.month), Number(r.count)||0]));
+    const cm=new Date().getMonth()+1;
+    const items=Array.from({length:12},(_,i)=>({label:`${i+1} 月`, short:`${i+1}`, value:byM.get(i+1)||0}));
+    const max=Math.max(0,...items.map(i=>i.value));
+    items.forEach((it,i)=>{ it.text=`${it.value} 人`; it.tip=`${i+1} 月生日：${it.value} 人${i+1===cm?'（這個月）':''}`;
+      it.showValue=(it.value===max&&max>0)||i+1===cm; it.soft=i+1!==cm; });
+    // 形式：一年 12 個月是週期 → 直條照月份排；這個月用主色（這個月的壽星最需要優惠）
+    bmonthHtml=`<div style="margin-top:16px">${vizCard('會員生日月份分布', vizColumns(items,{height:110}),
+      {sub:`深色是這個月（${cm} 月）的壽星`, table:{head:['月份','會員數'], rows:items.map(i=>[i.label,i.value])}})}</div>`;
   }
   let hoursHtml='';
   if(e4){
     const hint=/function|does not exist/i.test(e4.message)?'（Supabase 可能還沒跑 schema_v36_dashboard_online_hours.sql）':'';
     hoursHtml=`<div class="note alert" style="margin-top:10px">使用時段分布讀取失敗：${esc(e4.message)}${hint}</div>`;
   } else {
-    const hrows=hours||[];
-    const hmax=Math.max(1,...hrows.map(r=>r.count));
-    const peak=hrows.length?hrows.slice().sort((a,b)=>b.count-a.count)[0]:null;
-    hoursHtml=`<div class="dash-chart" style="margin-top:16px">
-      <b style="font-size:.85rem">${rangeLabel}使用時段分布（台灣時間，依瀏覽次數）</b>
-      <div style="margin-top:10px;display:flex;align-items:flex-end;gap:2px;height:80px">
-        ${hrows.map(r=>`<div style="flex:1;height:100%;display:flex;align-items:flex-end" title="${r.hour}時：${r.count} 次">
-          <div style="width:100%;background:${peak&&r.hour===peak.hour?'var(--accent)':'var(--line)'};
-            border-radius:2px 2px 0 0;height:${r.count?Math.max(3,r.count/hmax*100):2}%"></div>
-        </div>`).join('')}
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:.66rem;color:var(--ink-3);margin-top:3px">
-        <span>0時</span><span>6時</span><span>12時</span><span>18時</span><span>23時</span>
-      </div>
-      ${peak?`<div style="font-size:.76rem;color:var(--ink-3);margin-top:4px">尖峰時段：${peak.hour}:00 前後，共 ${peak.count} 次瀏覽</div>`:''}
-    </div>`;
+    hoursHtml=`<div style="margin-top:16px">${vizHours(hours, `${rangeLabel}使用時段分布（台灣時間，依瀏覽次數）`)}</div>`;
   }
   // 轉化率：用已經抓回來的 admin_dashboard_stats 這幾個原始數字互相除，
   // 不用另外多開 RPC。除以 0（例如這段期間剛好沒訪客）時顯示「—」，不要
@@ -7291,15 +7574,15 @@ async function loadAdminDashboard(days){
   </div>
   <p class="statline" style="margin-top:8px">累積瀏覽 ${nt2(d.pageviews_total)}　·　累積使用回報 ${nt2(d.total_use_reports)}
     　·　待處理問題回報 ${nt2(d.open_feedback)}</p>
-  <div class="dash-chart" style="margin-top:16px">
+  <div class="dash-chart viz" style="margin-top:16px">
     <b style="font-size:.85rem">${rangeLabel}轉化率</b>
-    <div class="bigstat" style="margin-top:8px">
-      ${cell(visitorToSignup,'訪客→新會員')}
-      ${cell(visitorToReport,'訪客→使用回報')}
-      ${cell(memberActiveRate,'會員活躍率（活躍／累積會員）')}
-      ${cell(pageviewsPerVisitor==null?'—':pageviewsPerVisitor,'平均每位訪客瀏覽頁數')}
-    </div>
-    <p class="sub" style="margin-top:6px">「訪客→新會員」「訪客→使用回報」是這段期間的不重複訪客中，
+    <div class="viz-body">${vizMeters([
+      {label:'訪客→新會員', ratio:pct(d.new_users_range, d.visitors_range)==null?null:pct(d.new_users_range, d.visitors_range)/100, text:visitorToSignup},
+      {label:'訪客→使用回報', ratio:pct(d.use_reports_range, d.visitors_range)==null?null:pct(d.use_reports_range, d.visitors_range)/100, text:visitorToReport},
+      {label:'會員活躍率（活躍／累積會員）', ratio:pct(d.active_users_range, d.total_users)==null?null:pct(d.active_users_range, d.total_users)/100, text:memberActiveRate},
+      {label:'平均每位訪客瀏覽頁數', ratio:null, text:pageviewsPerVisitor==null?'—':String(pageviewsPerVisitor)}
+    ])}</div>
+    <p class="sub" style="margin-top:10px">「訪客→新會員」「訪客→使用回報」是這段期間的不重複訪客中，
       有多少比例當場註冊／回報使用心得；「會員活躍率」是全部累積會員裡，
       這段期間還有回來的比例。</p>
   </div>
@@ -7337,47 +7620,71 @@ let DASH_CHARTS=[];
 // 用獨立的 registry 存排行榜自己的圖表，两邊互不影響。
 let BOARD_CHARTS=[];
 function svgLineChart(rows, series, opts={}, registry=DASH_CHARTS){
-  const w=560, h=140, padL=30, padR=8, padT=12, padB=20;
+  // 形式：隨時間變化 → 折線。只有一條線時底下加一層淡色面積，看得出總量感；
+  // 標出最高點；格線、座標軸都是實線髮絲；滑過看當天數字（wireChartTooltips）。
+  const w=560, h=150, padL=36, padR=10, padT=16, padB=22;
   const innerW=w-padL-padR, innerH=h-padT-padB;
   const n=rows.length||1;
   const allVals=series.flatMap(s=>rows.map(r=>Number(r[s.key])||0));
-  const max=Math.max(1, ...allVals, 0);
+  const rawMax=Math.max(1, ...allVals, 0);
+  // 刻度取整數好讀（例如 37 → 40、1,234 → 1,500）
+  const niceMax=(()=>{ const p=Math.pow(10,Math.floor(Math.log10(rawMax))); const f=rawMax/p;
+    return (f<=1?1:f<=1.5?1.5:f<=2?2:f<=3?3:f<=4?4:f<=5?5:f<=8?8:10)*p; })();
+  // 次數這種整數資料，中間刻度不要出現 7.5 這種小數
+  const max=(niceMax/2)%1 ? niceMax+1 : niceMax;
   const x=i=> padL + (n<=1?innerW/2:innerW*i/(n-1));
   const y=v=> padT + innerH - (v/max)*innerH;
   const step=Math.max(1,Math.ceil(n/6));
+  const tick=v=>Number(v).toLocaleString('zh-Hant');
+  const single=series.length===1;
   const paths=series.map(s=>{
-    const pts=rows.map((r,i)=>`${x(i)},${y(Number(r[s.key])||0)}`).join(' ');
-    const dots=rows.map((r,i)=>`<circle cx="${x(i)}" cy="${y(Number(r[s.key])||0)}" r="2.4" fill="${s.color}">`
-      +`<title>${esc(r.date)}　${esc(s.label)}：${esc(String(r[s.key]??0))}</title></circle>`).join('');
-    return `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2"
-      stroke-linejoin="round" stroke-linecap="round"/>${dots}`;
+    const pts=rows.map((r,i)=>`${x(i)},${y(Number(r[s.key])||0)}`);
+    const area=single&&rows.length>1
+      ? `<path d="M${x(0)},${padT+innerH} L${pts.join(' L')} L${x(n-1)},${padT+innerH} Z" style="fill:${s.color};fill-opacity:.1;stroke:none"/>` : '';
+    const last=rows.length?rows[rows.length-1]:null;
+    const endDot=last?`<circle cx="${x(n-1)}" cy="${y(Number(last[s.key])||0)}" r="4" style="fill:${s.color};stroke:var(--surface);stroke-width:2"/>`:'';
+    return `${area}<polyline points="${pts.join(' ')}" style="fill:none;stroke:${s.color}" stroke-width="2"
+      stroke-linejoin="round" stroke-linecap="round"/>${endDot}`;
   }).join('');
-  const xLabels=rows.map((r,i)=>(i%step===0||i===n-1)
-    ?`<text x="${x(i)}" y="${h-5}" font-size="9" fill="var(--ink-3)" text-anchor="middle">${esc(r.date)}</text>`:'').join('');
-  const legend=series.map(s=>`<span style="display:inline-flex;align-items:center;gap:4px;margin-right:12px">
-    <span style="width:8px;height:8px;border-radius:50%;background:${s.color};display:inline-block"></span>${esc(s.label)}</span>`).join('');
+  // 只有一條線時標出最高點（不要每個點都標數字）
+  let peakLabel='';
+  if(single && rows.length){
+    const k=series[0].key;
+    let pi=0; rows.forEach((r,i)=>{ if((Number(r[k])||0)>(Number(rows[pi][k])||0)) pi=i; });
+    const pv=Number(rows[pi][k])||0;
+    if(pv>0){
+      const px=x(pi), anchor=px>w-60?'end':px<padL+30?'start':'middle';
+      peakLabel=`<text x="${px}" y="${y(pv)-6}" font-size="10" font-weight="700" style="fill:var(--ink)" text-anchor="${anchor}">最高 ${tick(pv)}</text>`;
+    }
+  }
+  // 固定間隔標日期＋最後一天；跟最後一天太近的那個就不標，免得兩個日期疊在一起
+  const xLabels=rows.map((r,i)=>((i%step===0&&(n-1-i)>=step*0.6)||i===n-1)
+    ?`<text x="${x(i)}" y="${h-6}" font-size="9" style="fill:var(--ink-3)" text-anchor="${i===n-1&&n>1?'end':i===0?'start':'middle'}">${esc(r.date)}</text>`:'').join('');
+  const grid=[0,.5,1].map(f=>`<line x1="${padL}" y1="${y(max*f)}" x2="${w-padR}" y2="${y(max*f)}" style="stroke:${f?'var(--line-soft)':'var(--line)'}"/>
+    <text x="${padL-5}" y="${y(max*f)+3}" font-size="9" style="fill:var(--ink-3)" text-anchor="end">${tick(max*f)}</text>`).join('');
+  const legend=series.length>1?series.map(s=>`<span style="display:inline-flex;align-items:center;gap:5px;margin-right:14px">
+    <span style="width:14px;height:2px;border-radius:2px;background:${s.color};display:inline-block"></span>${esc(s.label)}</span>`).join(''):'';
   const chartIdx=registry.length;
   registry.push({rows,series,w,h,padL,padR,padT,padB,innerW,innerH,max});
+  const table=vizTable(['日期',...series.map(s=>s.label)], rows.map(r=>[r.date,...series.map(s=>Number(r[s.key])||0)]));
   return `<div class="dash-chart">
     ${opts.title?`<div style="font-size:.82rem;font-weight:700;margin-bottom:2px">${esc(opts.title)}</div>`:''}
+    ${legend?`<div style="font-size:.74rem;color:var(--ink-2);margin:4px 0 2px">${legend}</div>`:''}
     <div class="chart-wrap" style="position:relative">
       <svg data-chart-idx="${chartIdx}" viewBox="0 0 ${w} ${h}"
         style="width:100%;height:auto;display:block;touch-action:pan-y;cursor:crosshair">
-        <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+innerH}" stroke="var(--line)"/>
-        <line x1="${padL}" y1="${padT+innerH}" x2="${w-padR}" y2="${padT+innerH}" stroke="var(--line)"/>
-        <text x="2" y="${padT+4}" font-size="9" fill="var(--ink-3)">${max}</text>
-        <text x="2" y="${padT+innerH}" font-size="9" fill="var(--ink-3)">0</text>
-        ${paths}${xLabels}
+        ${grid}${paths}${peakLabel}${xLabels}
         <line class="tip-line" x1="0" y1="${padT}" x2="0" y2="${padT+innerH}"
-          stroke="var(--ink-3)" stroke-dasharray="3,3" style="display:none"/>
+          style="stroke:var(--ink-3);display:none"/>
       </svg>
-      <div class="chart-tip" style="display:none;position:absolute;top:4px;background:var(--card,#fff);
-        border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:.72rem;line-height:1.5;
-        pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.15);white-space:nowrap;z-index:5"></div>
+      <div class="chart-tip" style="display:none;position:absolute;top:4px;background:var(--ink);color:#fff;
+        border-radius:6px;padding:5px 9px;font-size:.72rem;line-height:1.5;
+        pointer-events:none;box-shadow:var(--shadow-md);white-space:nowrap;z-index:5"></div>
     </div>
-    <div style="font-size:.74rem;color:var(--ink-3);margin-top:2px">${legend}</div>
+    ${table}
   </div>`;
 }
+
 /* 長按／滑過走勢圖可以看到當天的實際數字（滑鼠 hover 或觸控按住拖曳都吃得到） */
 function wireChartTooltips(root, registry=DASH_CHARTS){
   root.querySelectorAll('svg[data-chart-idx]').forEach(svg=>{
