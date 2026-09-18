@@ -628,6 +628,12 @@
 
   /* ---------- 排行榜 ---------- */
   table.lb{width:100%;border-collapse:collapse;font-size:.86rem}
+  /* 嵐：手機上排行榜最右邊那欄被切掉、表頭「總貢獻」「收藏人數」擠成兩行。原因是名字那欄不能縮
+     （暱稱不換行），把整張表撐得比畫面寬。改成：名字／品牌那欄吃掉剩下的寬度、可以縮（太長就「…」），
+     數字欄一律不換行、表頭也不換行。 */
+  table.lb th{white-space:nowrap}
+  table.lb tr>td:nth-child(2), table.lb tr>th:nth-child(2){width:100%;max-width:0}
+  table.lb tr>td:nth-child(n+3), table.lb tr>th:nth-child(n+3){white-space:nowrap;padding-left:10px}
   table.lb th{text-align:left;font-weight:500;color:var(--ink-3);font-size:.78rem;
     padding:0 6px 9px 0;border-bottom:1px solid var(--line)}
   table.lb th:last-child,table.lb td:last-child{padding-right:0}
@@ -5583,7 +5589,7 @@ function renderLbBody(){
       <tr class="lb-detail hidden" data-lbd="${i}"><td colspan="5">
         ${(r.brands&&r.brands.length)?brandChipsHtml(r.brands,i):'<span style="color:var(--ink-3);font-size:.82rem">還沒有成功回報的店家</span>'}
       </td></tr>`);
-  renderCollapsibleTable($('#lbBody'), '<th class="rk">#</th><th>使用者</th><th>成功次數</th><th>品牌數</th><th class="amt">累積省下</th>',
+  renderCollapsibleTable($('#lbBody'), '<th class="rk">#</th><th>使用者</th><th>成功</th><th>品牌</th><th class="amt">累積省下</th>',
     lbEntries, 5, 'lb-more-rows',
     `<div style="color:var(--ink-3);font-size:.86rem">${hideAnon&&LB_ROWS.length?'隱藏匿名使用者後這裡暫時空的，取消勾選可以看全部。':
       LB_MONTHLY?`${esc(LB_YM)} 這個月還沒有人上榜。`:LB_WEEKLY?'這一週還沒有人上榜。':'還沒有人上榜。回報「我用過了」並填成功，就會出現在這裡。'}</div>`);
@@ -5706,7 +5712,7 @@ function renderContribBody(){
       <td class="amt">${r.submitted_count}</td>
       <td class="amt">${r.edit_count}</td>
       <td class="amt lb-primary">${r.total_count}</td></tr>`);
-  renderCollapsibleTable($('#contribBody'), '<th class="rk">#</th><th>使用者</th><th>投稿</th><th>修改建議</th><th class="amt">總貢獻</th>',
+  renderCollapsibleTable($('#contribBody'), '<th class="rk">#</th><th>使用者</th><th>投稿</th><th>建議</th><th class="amt">總貢獻</th>',
     entries, 5, 'contrib-more-rows',
     `<div style="color:var(--ink-3);font-size:.86rem">${CONTRIB_MONTHLY?esc(CONTRIB_YM)+' 這個月':CONTRIB_WEEKLY?'這一週':''}還沒有人上榜。投稿新優惠或提出修改建議，被核可後就會出現在這裡。</div>`);
   wireShowMore($('#contribBody'));
@@ -5862,7 +5868,7 @@ function renderMostWished(rows, hasPrev){
       <td>${esc(r.brand)}<span style="color:var(--ink-3);font-size:.78rem">　${esc(r.timing||'')}</span></td>
       <td>${r.wish_count}</td><td class="amt">${nt(r.value_twd)}</td></tr>`;
   });
-  renderCollapsibleTable($('#wishBody'), '<th class="rk">#</th><th>品牌</th><th>收藏人數</th><th class="amt">估計可省</th>',
+  renderCollapsibleTable($('#wishBody'), '<th class="rk">#</th><th>品牌</th><th>收藏</th><th class="amt">可省</th>',
     entries, 5, 'wish-more-rows',
     '<div style="color:var(--ink-3);font-size:.86rem">還沒有人收藏，去「優惠」分頁點卡片右上角的書籤圖示。</div>');
   wireShowMore($('#wishBody'));
