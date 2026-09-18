@@ -834,6 +834,9 @@
   .sv-ans-list{display:flex;flex-wrap:wrap;gap:4px 12px;margin:4px 0 2px;font-size:.76rem;color:var(--ink-2)}
   .sv-ans i{font-style:normal;color:var(--ink-3);margin-right:4px}
   .sv-ans i::after{content:"："}
+  /* 使用者回饋：內文可以換行（條列式 1. 2. 3. 比較好讀）。輸入框本來就能換行、資料也存得進去，
+     只是顯示時被併成一行——優惠內容、條件、期限改成保留換行 */
+  .card p.offer, .card dl.kv dd, .sub-item>span.fact-v, .wl-offer{white-space:pre-line}
   /* ---------- 表單 / 對話框 ---------- */
   dialog{border:none;border-radius:var(--r);padding:0;max-width:520px;
     width:calc(100% - 32px);box-shadow:var(--shadow-lg)}
@@ -965,7 +968,7 @@
         <label class="toggle"><input type="checkbox" id="fReported"> 近 90 天有人用</label>
         <label class="toggle"><input type="checkbox" id="fHasComments"> 有留言</label>
         <label class="toggle"><input type="checkbox" id="fNoCompanion"> 一人也能用（不含需同行）</label>
-        <label class="toggle"><input type="checkbox" id="fTransferable"> 可轉讓（免出示證件）</label>
+        <label class="toggle"><input type="checkbox" id="fTransferable"> 不用本人出示證件</label>
         <button class="btn sm hidden" id="btnClearFilters" type="button">清除篩選</button>
       </div>
     </div>
@@ -1200,14 +1203,15 @@
             <div class="dup-hint hidden" id="brandDupHint" style="margin-top:6px"></div></div>
           <div class="field"><label>類別 *</label><select name="category" id="fCategory" required></select></div>
         </div>
-        <div class="field"><label>優惠內容 *</label><textarea name="offer" required maxlength="1000"></textarea></div>
+        <div class="field"><label>優惠內容 *</label><textarea name="offer" required maxlength="1000"></textarea>
+          <div class="hint">可以換行；條件很多時寫成 1. 2. 3. 一行一條比較好讀</div></div>
         <div class="two">
           <div class="field"><label>適用期間 *</label><select name="timing" id="fTiming" required></select>
             <div class="hint">當日 = 只有生日當天能用，最容易錯過</div></div>
           <div class="field"><label>會員種類 *</label><select name="membership_type" id="fMemType" required></select></div>
         </div>
         <div class="field"><label>免費層級 *</label><select name="free_tier" id="fFreeTier" required></select>
-          <div class="hint">東西免費但要先點餐 → 選「免費・需消費」</div></div>
+          <div class="hint">東西免費但要先點餐 → 選「免費・需消費」；買一送一另外選「買一送一」</div></div>
         <div class="field hidden" id="fEditReasonField"><label>修改原因 *</label>
           <textarea name="edit_reason" id="fEditReason" maxlength="300"
             placeholder="例如：優惠已經改成 88 折、官網公告的期限不一樣了"></textarea>
@@ -1242,18 +1246,18 @@
           <div class="field"><label>適用縣市</label><div class="regchips" id="fRegions"></div>
             <div class="hint">全國連鎖只選「全台」；不確定就都不選</div></div>
           <div class="field"><label>使用條件</label>
-            <textarea name="conditions" maxlength="600" placeholder="低消、訂位人數、需出示證件等"></textarea></div>
+            <textarea name="conditions" maxlength="600" placeholder="低消、訂位人數、需出示證件等&#10;可以換行，例如：&#10;1. 需 4 人以上&#10;2. 每桌限用一次"></textarea></div>
           <div class="two">
             <div class="field"><label>檔期起日</label><input type="date" name="valid_from"></div>
             <div class="field"><label>檔期迄日</label><input type="date" name="valid_until"></div>
           </div>
           <label class="toggle"><input type="checkbox" name="requires_companion" id="fRequiresCompanion">
-            需要同行者才能用（例如買一送一，一個人用不了）</label>
-          <div class="field"><label>可轉讓</label>
+            需要同行者才能用（例如內用買一送一，一個人用不了）</label>
+          <div class="field"><label>需要本人出示證件嗎？</label>
             <select name="transferable" id="fSubmitTransferable">
               <option value="unknown">尚未確認</option>
-              <option value="yes">可轉讓・免出示證件（例如 App 序號/QR code，別人拿著也能兌換）</option>
-              <option value="no">需本人・要出示證件</option>
+              <option value="yes">不用（例如 App 序號／QR code，別人拿著也能兌換）</option>
+              <option value="no">要，需本人出示證件</option>
             </select></div>
         </div>
         <div class="foot">
@@ -1894,7 +1898,8 @@ function loadFilters(){
   if(s.sort) $('#sort').value=s.sort;
 }
 
-const FREE_LABEL={free_no_min:'免費・無低消',free_min:'免費・需消費',discount:'折扣／買一送一',unknown:'其他／待確認'};
+// 使用者回饋：「折扣」跟「買一送一」優惠程度差很多，拆成兩類（schema_v69 加了 bogo）
+const FREE_LABEL={free_no_min:'免費・無低消',free_min:'免費・需消費',bogo:'買一送一',discount:'折扣',unknown:'其他／待確認'};
 const MEM_LABEL={none:'免會員',app:'品牌 APP',line:'LINE',ocard:'Ocard',
                  card:'會員卡',tier:'需達等級',brand:'品牌會員',other:'其他'};
 const TIER_LABEL={1:'品牌官方',2:'新聞媒體',3:'部落格',4:'社群貼文',5:'其他'};
@@ -1902,7 +1907,8 @@ const TIER_LABEL={1:'品牌官方',2:'新聞媒體',3:'部落格',4:'社群貼�
 // 店員只掃碼、不會另外核對是不是本人——這種「不用出示證件」的券形同可轉讓。
 // 跟會員取得方式（membership_type）是兩件事：本人怎麼拿到券 vs 拿到券之後
 // 可不可以轉手給別人用，所以獨立成一個欄位，不是塞進既有欄位裡。
-const TRANSFER_LABEL={yes:'可轉讓・免出示證件',no:'需本人・要出示證件',unknown:'尚未確認'};
+// 使用者回饋：「可轉讓」不好懂，直接寫「要不要本人出示證件」
+const TRANSFER_LABEL={yes:'不用本人出示證件',no:'需本人出示證件',unknown:'尚未確認'};
 const TIMINGS=['當日','當月','當週','當月＋當日','前後3天','前後7天','其他'];
 // celine回饋：「19to1鮮選牛排專賣店」這種單店牛排館，不屬於速食／火鍋燒肉，
 // 卻也不太敢選「連鎖餐廳」（沒有很多分店，感覺不算「連鎖」），結果只能選
@@ -3067,7 +3073,9 @@ const SITE_UPDATES=[
     '每張圖手指按住（或滑鼠滑過）就看得到數字，也可以展開「看數字」看完整表格',
     '站台數據、洞察分析分成幾個小分頁，不用一直往下滑',
     '排行榜會直接告訴你自己排第幾名；每個排行榜都可以切「進步最多」，看最近衝最快的店家跟人',
-    '修正手機上排行榜最右邊那欄被切掉，還有優惠頁跟排行榜的「大家累積省下」數字不一樣']},
+    '修正手機上排行榜最右邊那欄被切掉，還有優惠頁跟排行榜的「大家累積省下」數字不一樣',
+    '優惠內容、條件可以換行了，條列式 1. 2. 3. 比較好讀',
+    '「買一送一」跟「折扣」分成兩類，篩選更好找；優惠會直接寫清楚要不要本人出示證件']},
   {date:'2026-09-16', title:'附近有優惠的店、家人的生日、清單標籤', items:[
     '新增「📍 附近」：允許定位之後可以只看你附近有優惠的店，列表由近到遠排序，卡片上直接顯示最近的一家分店跟導航連結',
     '不想給定位也可以：打開地圖點一下任何地方，就會找那附近的優惠',
@@ -3302,7 +3310,8 @@ function buildControls(){
   mkMulti($('#freeChips'),
     [['全部',''],[`免費・無低消（${cnt('freeTier','free_no_min')}）`,'free_no_min'],
      [`免費・需消費（${cnt('freeTier','free_min')}）`,'free_min'],
-     [`折扣類（${cnt('freeTier','discount')}）`,'discount']],
+     [`買一送一（${cnt('freeTier','bogo')}）`,'bogo'],
+     [`折扣（${cnt('freeTier','discount')}）`,'discount']],
     activeFree, 'g');
   mkMulti($('#cats'),
     [['全部類別','']].concat([...new Set(OFFERS.map(o=>o.category))].map(c=>[c,c])),
@@ -3684,7 +3693,8 @@ function render(){
         ${o.timing.includes('當日')?`<span class="flag today">${esc(o.timing)}</span>`
           :`<span class="flag">${esc(o.timing)}</span>`}
         ${o.freeTier==='free_no_min'?'<span class="flag free">免費・無低消</span>':
-          o.freeTier==='free_min'?'<span class="flag">免費・需消費</span>':''}
+          o.freeTier==='free_min'?'<span class="flag">免費・需消費</span>':
+          o.freeTier==='bogo'?'<span class="flag">買一送一</span>':''}
         <span class="flag">${esc(MEM_LABEL[o.membershipType]||'會員')}${cost}</span>
         ${o.verified?'<span class="flag ok-flag">已查證</span>':'<span class="flag alert">未查證</span>'}
         ${o.ratingCount?`<span class="flag star">★ ${o.ratingAvg}（${o.ratingCount}）</span>`:''}
@@ -4121,23 +4131,24 @@ function mapsSearchUrl(o){
 function offerFactsHtml(o){
   if(!o) return '';
   const ex=expText(o), pu=pulseText(o);
-  const kv=(k,v)=>`<div class="sub-item"><b>${esc(k)}</b><span>${esc(v??'—')}</span></div>`;
+  const kv=(k,v)=>`<div class="sub-item"><b>${esc(k)}</b><span class="fact-v">${esc(v??'—')}</span></div>`;
   return `<div class="dtl-facts">
     <div class="row" style="gap:5px;margin-bottom:8px">
       ${o.timing.includes('當日')?`<span class="flag today">${esc(o.timing)}</span>`
         :`<span class="flag">${esc(o.timing)}</span>`}
       ${o.freeTier==='free_no_min'?'<span class="flag free">免費・無低消</span>':
-        o.freeTier==='free_min'?'<span class="flag">免費・需消費</span>':''}
+        o.freeTier==='free_min'?'<span class="flag">免費・需消費</span>':
+          o.freeTier==='bogo'?'<span class="flag">買一送一</span>':''}
       <span class="flag">${esc(MEM_LABEL[o.membershipType]||'會員')}</span>
       ${o.verified?'<span class="flag ok-flag">已查證</span>':'<span class="flag alert">未查證</span>'}
       ${o.valueTwd?`<span class="flag">約 ${nt(o.valueTwd)}</span>`:''}
       ${o.requiresCompanion?'<span class="flag alert">需同行</span>':''}
-      ${o.transferable==='yes'?'<span class="flag free">可轉讓</span>':''}
+      ${o.transferable==='yes'?'<span class="flag free">免出示證件</span>':''}
     </div>
     <div class="sub-list">
       ${kv('優惠內容',o.offer)}
-      ${kv('同行需求',o.requiresCompanion?'需要同行者才能用（例如買一送一）':'一個人也能用')}
-      ${kv('可轉讓',TRANSFER_LABEL[o.transferable]||TRANSFER_LABEL.unknown)}
+      ${kv('同行需求',o.requiresCompanion?'需要同行者才能用（例如內用買一送一）':'一個人也能用')}
+      ${kv('本人出示證件',TRANSFER_LABEL[o.transferable]||TRANSFER_LABEL.unknown)}
       ${kv('使用條件',o.conditions||'—')}
       ${kv('期限',o.validity||'—')}
       ${kv('會員取得',o.membership||'—')}
@@ -5893,7 +5904,7 @@ async function loadPendingPreview(){
   const list=data||[];
   PENDING_PREVIEW=list;   // 給投稿表單的即時重複比對用
   cnt.textContent=list.length; cnt.classList.toggle('hidden',!list.length);
-  const kv=(k,v)=>`<div class="sub-item"><b>${esc(k)}</b><span>${esc(v??'—')}</span></div>`;
+  const kv=(k,v)=>`<div class="sub-item"><b>${esc(k)}</b><span class="fact-v">${esc(v??'—')}</span></div>`;
   box.innerHTML = list.length ? list.map(o=>`
     <div class="rej-row" style="border-top:1px solid var(--line);padding:10px 0">
       <div class="rep" style="padding:0;align-items:flex-start">
@@ -6426,7 +6437,7 @@ function renderMoMCompare(curRows, prevRows, curYm, prevYm){
 // 大家用的優惠類型佔比（免費/需消費/折扣…），一樣拿 popular_offers 反查
 // OFFERS 的 freeTier，不用新開查詢。
 // 優惠類型的顏色跟著「類型」走，不跟著名次走——資料變動、順序改變時顏色不會跳
-const FREE_VIZ_COLOR={free_no_min:VIZ_CAT[0],free_min:VIZ_CAT[1],discount:VIZ_CAT[2],unknown:VIZ_MUTED};
+const FREE_VIZ_COLOR={free_no_min:VIZ_CAT[0],free_min:VIZ_CAT[1],discount:VIZ_CAT[2],bogo:VIZ_CAT[3],unknown:VIZ_MUTED};
 function renderTypeBreakdown(pop){
   const box=$('#boardTypeChart');
   if(!box) return;
@@ -6676,7 +6687,7 @@ async function loadReviewInsights(){
    管理員是否調整過（見 schema_v42／schema_v40）。 ---- */
 const EDIT_FIELD_LABEL={brand:'品牌名稱',offer:'優惠內容',conditions:'使用條件',membership:'會員取得方式',
   timing:'適用期間',advance_days:'提前天數',value_twd:'優惠價值',valid_until:'檔期迄日',
-  category:'類別',requires_companion:'需同行',regions:'適用地區',transferable:'可轉讓',
+  category:'類別',requires_companion:'需同行',regions:'適用地區',transferable:'本人出示證件',
   membership_type:'會員種類',free_tier:'免費層級',valid_from:'檔期起日',sources:'資料來源'};
 // regions/sources 是陣列、requires_companion 是布林值——「新舊對照」畫面原本
 // 只处理過純文字/數字欄位，這幾種類型直接 String() 會印出 "true"/"false" 或
@@ -6896,7 +6907,7 @@ async function loadRejected(){
     $('#rejCount').classList.add('hidden'); $('#rejStats').textContent=''; return;
   }
   await Promise.all([mergeProfileNames(offs, 'submitted_by'), mergeProfileNames(edits, 'proposed_by')]);
-  const kv=(k,v)=>`<div class="sub-item"><b>${esc(k)}</b><span>${esc(v??'—')}</span></div>`;
+  const kv=(k,v)=>`<div class="sub-item"><b>${esc(k)}</b><span class="fact-v">${esc(v??'—')}</span></div>`;
   const items=[
     ...(offs||[]).map(o=>({kind:'offer',id:o.id,type:'投稿',brand:o.brand,by:o.profiles?.display_name,
       created:o.created_at,reviewed:o.reviewed_at,note:o.review_note,
