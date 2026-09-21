@@ -35,10 +35,13 @@ function setGeo(win, mode) {
   const { win } = await boot();
   const doc = win.document;
   const cards = () => [...doc.querySelectorAll('#grid .card')];
+  // 卡片是分批畫的（一次 30 張，滑到底再接著畫），所以「符合條件有幾筆」要看 GRID_LIST，
+  // 不是看目前畫出來幾張
+  const matched = () => win.eval('GRID_LIST.length');
 
   // 用開機時種子資料畫出來的前三張卡片當測試對象，不用自己捏一份完整的優惠物件
   const ids = cards().slice(0, 3).map((c) => c.dataset.id);
-  const totalCards = cards().length;
+  const totalCards = matched();
   t.ok('種子資料至少有 3 張卡片可以測', ids.length === 3 && totalCards > 3, { ids, totalCards });
 
   /* ================= 離線模式：直接講清楚，不假裝在找 ================= */
@@ -149,7 +152,7 @@ function setGeo(win, mode) {
   await tick(win, 4);
   t.ok('提示管理員執行 schema_v58', /schema_v58/.test(doc.querySelector('#nearStatus').textContent),
     doc.querySelector('#nearStatus').textContent);
-  t.eq('查詢失敗時列表不被篩掉', cards().length, totalCards);
+  t.eq('查詢失敗時列表不被篩掉', matched(), totalCards);
 
   /* ================= 關閉附近模式 ================= */
   doc.querySelector('#btnNearClose').click();
@@ -157,7 +160,7 @@ function setGeo(win, mode) {
   t.ok('狀態列收起來', doc.querySelector('#nearBar').classList.contains('hidden'));
   t.eq('按鈕顯示為關閉', doc.querySelector('#btnNear').getAttribute('aria-pressed'), 'false');
   t.eq('卡片不再有最近分店那一行', doc.querySelectorAll('#grid .near-line').length, 0);
-  t.eq('列表恢復全部', cards().length, totalCards);
+  t.eq('列表恢復全部', matched(), totalCards);
 
   /* ================= 重新整理還原出 distance 排序，但附近模式沒開 ================= */
   sort.value = 'distance';
@@ -176,7 +179,7 @@ function setGeo(win, mode) {
   t.ok('地圖載不到時講人話', /地圖載入失敗/.test(doc.querySelector('#nearMapHint').textContent),
     doc.querySelector('#nearMapHint').textContent);
   t.ok('地圖載不到時不會留一塊空白框', doc.querySelector('#nearMapWrap').classList.contains('hidden'));
-  t.ok('拒絕定位時列表維持原樣（沒有位置就不篩）', cards().length === totalCards, cards().length);
+  t.ok('拒絕定位時列表維持原樣（沒有位置就不篩）', matched() === totalCards, matched());
 
   /* ================= 隱私：座標沒有寫進瀏覽器儲存 ================= */
   const stored = Object.keys(win.localStorage).map((k) => `${k}=${win.localStorage.getItem(k)}`).join('|');

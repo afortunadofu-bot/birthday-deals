@@ -1072,6 +1072,11 @@
     </div>
 
     <div class="grid" id="grid"></div>
+    <!-- 分批畫卡片用的觸發點（滑到這裡就接著畫下一批）＋不靠捲動也能按的按鈕 -->
+    <div id="gridSentinel" aria-hidden="true"></div>
+    <div id="gridMore" class="hidden" style="text-align:center;margin-top:14px">
+      <button type="button" class="btn sm" id="btnGridMore"></button>
+    </div>
     <div class="empty hidden" id="empty">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
         stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/>
@@ -3116,6 +3121,10 @@ $('#btnMineA2hsClose').onclick=()=>{
    的東西；還在 feature/geo 分支、沒上線的功能（附近分店、地圖模式）不列。
    新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
 const SITE_UPDATES=[
+  {date:'2026-09-21', title:'列表更順、數字對齊', items:[
+    '修正往下滑優惠清單時網頁會出錯、整頁重載：改成先顯示 30 筆，滑到底自動接著顯示',
+    '用 iPad／手機點開一筆優惠再關掉，會停在原本的位置，不會跳回最上面',
+    '排行榜「本月」的省下金額改成跟「走勢」分頁同一份資料，兩邊數字一致']},
   {date:'2026-09-18', title:'圖表全面改版', items:[
     '排行榜的站台數據、洞察分析，每一份數據都換成最適合的圖表：時間用直條、佔比用一條色塊、尖峰會特別標出來',
     '每張圖手指按住（或滑鼠滑過）就看得到數字，也可以展開「看數字」看完整表格',
@@ -3731,10 +3740,24 @@ function render(){
     }
   }
 
-  const isAdmin=!!myProfile?.is_admin;
   $('#grid').classList.toggle('anim-in', !FIRST_PAINT_DONE);
   FIRST_PAINT_DONE=true;
-  $('#grid').innerHTML=list.map((o,idx)=>{
+  // 嵐：「往下滑一滑網頁都會出錯，無法顯示」。原本一次把符合條件的優惠全部畫出來
+  // （三百多張卡片、上萬個節點），iPad／手機記憶體吃緊時 Safari 會直接把整頁重載。
+  // 改成一次畫 30 張，滑到底再接著畫下一批（下面 paintGridChunk）。
+  GRID_LIST=list; GRID_SHOWN=0;
+  $('#grid').innerHTML='';
+  paintGridChunk();
+  renderPlanner();
+  renderReminders();
+  saveFilters();
+  updateSortTriggerLabel();
+}
+
+// 每一張優惠卡片的 HTML
+function offerCardHtml(o, idx){
+  const isAdmin=!!myProfile?.is_admin;
+  return ((o,idx)=>{
     const ex=expText(o), pu=pulseText(o);
     const cost=o.membershipCost==='spend'?'．需消費紀錄':o.membershipCost==='tier'?'．需達等級':'';
     const wished=WISH.has(String(o.id));
@@ -3791,8 +3814,53 @@ function render(){
           <a href="${esc(o.bestSource.url)}" target="_blank" rel="noopener nofollow">來源↗</a></span>`:''}
       </div>
       </article>`;
-  }).join('');
+  })(o, idx);
+}
 
+/* ---- 分批畫卡片 ----
+   一次 30 張；滑到列表底部附近就自動接著畫下一批（IntersectionObserver），
+   也留一顆「再看更多」按鈕給不支援或沒捲動的情況。 ---- */
+const GRID_PAGE=30;
+let GRID_LIST=[], GRID_SHOWN=0, gridMoreTimer=null, GRID_IO=null;
+function paintGridChunk(){
+  const grid=$('#grid'); if(!grid) return;
+  const next=GRID_LIST.slice(GRID_SHOWN, GRID_SHOWN+GRID_PAGE);
+  if(next.length){
+    grid.insertAdjacentHTML('beforeend', next.map((o,i)=>offerCardHtml(o, GRID_SHOWN+i)).join(''));
+    GRID_SHOWN+=next.length;
+  }
+  wireGridCards();
+  const rest=GRID_LIST.length-GRID_SHOWN;
+  const more=$('#gridMore'), btn=$('#btnGridMore');
+  if(more && btn){
+    more.classList.toggle('hidden', rest<=0);
+    btn.textContent=`再看 ${Math.min(GRID_PAGE, rest)} 筆（還有 ${rest} 筆）`;
+  }
+  // 畫完一批之後再看一次：螢幕很高（iPad 橫著看）時一批填不滿畫面，要再補一批
+  if(rest>0) requestAnimationFrame(maybePaintMore);
+  // 捲動事件之外再加一層 IntersectionObserver（兩個都有，哪個先到都行；瀏覽器不支援就只靠捲動）
+  if(GRID_IO) GRID_IO.disconnect();
+  const sentinel=$('#gridSentinel');
+  if(rest>0 && sentinel && typeof IntersectionObserver==='function'){
+    GRID_IO=new IntersectionObserver(es=>{ if(es.some(e=>e.isIntersecting)) paintGridChunk(); }, {rootMargin:'600px 0px'});
+    GRID_IO.observe(sentinel);
+  }
+}
+// 滑到離列表底部 600px 以內就接著畫下一批。用捲動事件而不是 IntersectionObserver——
+// 後者在某些環境不會觸發，一旦失效使用者就會卡在只看得到 30 筆。
+function maybePaintMore(){
+  if(GRID_SHOWN>=GRID_LIST.length) return;
+  const sentinel=$('#gridSentinel'); if(!sentinel) return;
+  if($('#tab-browse').classList.contains('hidden')) return;
+  if(sentinel.getBoundingClientRect().top <= window.innerHeight+600) paintGridChunk();
+}
+window.addEventListener('scroll', ()=>{
+  clearTimeout(gridMoreTimer);
+  gridMoreTimer=setTimeout(maybePaintMore, 80);
+}, {passive:true});
+window.addEventListener('resize', maybePaintMore, {passive:true});
+$('#btnGridMore').onclick=()=>paintGridChunk();
+function wireGridCards(){
   $$('.act-report').forEach(b=>b.onclick=e=>{e.stopPropagation();openReport(b.dataset.id);});
   $$('.act-thread').forEach(b=>b.onclick=e=>{e.stopPropagation();openDetail(b.dataset.id);});
   // 地圖連結直接開新分頁，不要順便觸發整張卡片「點了開詳情」
@@ -3806,10 +3874,6 @@ function render(){
   $$('.near-nav').forEach(a=>a.onclick=e=>e.stopPropagation());
   // 整張卡片都可以點開詳情——按鈕的 click 都有 stopPropagation，不會互相打架
   $$('#grid .card').forEach(c=>c.onclick=()=>openDetail(c.dataset.id));
-  renderPlanner();
-  renderReminders();
-  saveFilters();
-  updateSortTriggerLabel();
 }
 
 // 「註冊死線」現在移到「我的」分頁，用個人資料存的生日算，不再跟著瀏覽頁的
@@ -4551,6 +4615,42 @@ function pushDlgHistory(){
 function consumeDlgHistory(){
   if(DLG_HISTORY_PUSHED){ DLG_HISTORY_PUSHED=false; history.back(); }
 }
+/* ---- 彈出視窗打開時鎖住背景的捲動位置 ----
+   嵐：「用 iPad 瀏覽時，點開其中一筆關掉後又會跑到最上面」。iOS／iPadOS Safari 開 <dialog>
+   會把背後的頁面捲回頂端，關掉之後也回不來。做法是打開時把 body 固定住（position:fixed
+   配 top:-捲動位置），關掉時還原並捲回原來的位置——桌機瀏覽器本來就不會跳，這樣做也沒有副作用。
+   每個 <dialog> 的 showModal 都包一層，不用每個呼叫點各改一次。 ---- */
+let SCROLL_LOCK_Y=0, SCROLL_LOCKS=0;
+function lockBodyScroll(){
+  if(SCROLL_LOCKS++) return;
+  SCROLL_LOCK_Y=window.scrollY||document.documentElement.scrollTop||0;
+  const b=document.body;
+  b.dataset.scrollLocked='1';
+  b.style.position='fixed'; b.style.top=`-${SCROLL_LOCK_Y}px`;
+  b.style.left='0'; b.style.right='0'; b.style.width='100%';
+}
+function unlockBodyScroll(){
+  if(!SCROLL_LOCKS || --SCROLL_LOCKS) return;
+  const b=document.body;
+  delete b.dataset.scrollLocked;
+  b.style.position=''; b.style.top=''; b.style.left=''; b.style.right=''; b.style.width='';
+  window.scrollTo(0, SCROLL_LOCK_Y);
+}
+$$('dialog').forEach(d=>{
+  const open=d.showModal.bind(d), close=d.close.bind(d);
+  // 解鎖走兩條路：程式呼叫 close()、或使用者按 ESC（close 事件）。用一個旗標避免解兩次，
+  // 也避免某些瀏覽器不派送 close 事件時解不開。
+  const release=()=>{ if(d.dataset.scrollLocked){ delete d.dataset.scrollLocked; unlockBodyScroll(); } };
+  d.showModal=()=>{
+    if(d.open) return;   // 已經開著就不要再開一次（重複呼叫會丟例外，鎖會多加一層）
+    lockBodyScroll();
+    d.dataset.scrollLocked='1';
+    try{ open(); }catch(e){ release(); throw e; }
+  };
+  d.close=(...a)=>{ close(...a); release(); };
+  d.addEventListener('close', release);
+});
+
 /* ---- 沒有彈出視窗要關的時候，按返回鍵不要直接把整個 App／頁面關掉，
    要連續按兩次才真的離開——跟對話框那組歷史紀錄共用同一個 popstate
    事件，用 DLG_HISTORY_PUSHED 判斷這次返回是不是對話框的。 ---- */
@@ -5569,7 +5669,7 @@ async function loadBoard(){
   const trendSince = ISO(new Date(Date.now()-179*864e5));
   const yearSince = ISO(new Date(Date.now()-365*864e5));
   BOARD_CHARTS=[];
-  const [{data:lb,error:lbErr},{data:pop},{data:wish},{data:trendRows},{data:curMonthRows},{data:prevMonthRows},{data:allTimeLb},{data:usedRows},{data:prevPeriodRows},{data:popPrev},{data:wishPrev},{data:allTimeLbPrev},{data:boardSiteStats},{data:onlineNow,error:onlineErr},{data:hourRows,error:hourErr}]=await Promise.all([
+  const [{data:lb,error:lbErr},{data:pop},{data:wish},{data:trendRows},{data:allTimeLb},{data:usedRows},{data:prevPeriodRows},{data:popPrev},{data:wishPrev},{data:allTimeLbPrev},{data:boardSiteStats},{data:onlineNow,error:onlineErr},{data:hourRows,error:hourErr}]=await Promise.all([
     lbQuery,
     // 之前這裡砍到只留前 20 名，但 popular_offers 這張 view 本身就已經排好
     // 「熱門前 50 家」了——多這層 20 的限制沒有任何好處，只會讓「站台數據」
@@ -5578,8 +5678,6 @@ async function loadBoard(){
     sb.from('popular_offers').select('*').limit(50),
     sb.from('most_wished').select('*').limit(15),
     sb.from('usage_reports').select('used_on,saved_twd,result').gte('used_on',trendSince).limit(8000),
-    sb.from('leaderboard_monthly').select('saved_total,success_count').eq('ym',nowYm),
-    sb.from('leaderboard_monthly').select('saved_total,success_count').eq('ym',prevYm),
     // 「大家累積省下」要固定代表全部人、近一年的總量，不能跟著排行榜的
     // 「本月／全部」切換一起變動——不然選「本月」時這個數字會突然縮水，
     // 看起來又像另一個對不起來的 bug。!monthly 時 lbQuery 本來就是抓
@@ -5635,7 +5733,7 @@ async function loadBoard(){
   renderCategoryBreakdown(pop||[]);
   renderSavingsTrend(trendRows||[], trendSince);
   renderMonthlyBreakdown(trendRows||[]);
-  renderMoMCompare(curMonthRows||[], prevMonthRows||[], nowYm, prevYm);
+  renderMoMCompare(trendRows||[], nowYm, prevYm);
   renderTypeBreakdown(pop||[]);
   renderMemberBreakdown(pop||[]);
   renderWeekdayBreakdown(trendRows||[]);
@@ -6463,13 +6561,23 @@ $('#trendMetric').onchange=()=>{ renderTrendChart(); renderMonthlyBreakdown(TREN
 
 // 本月 vs 上月比較：兩次查 leaderboard_monthly（本來就對所有人開放），
 // 加總後算成長率，比單看「本月累積」多一層「跟上個月比是變好還變差」的脈絡。
-function renderMoMCompare(curRows, prevRows, curYm, prevYm){
+// 嵐：「本月」分頁寫的這個月省下金額，跟「走勢」分頁的近 6 個月對不起來。
+// 原因是兩邊資料來源不同：本月用 leaderboard_monthly（只算會員、只算還在架上的優惠、排除停權），
+// 近 6 個月直接用 usage_reports（全部）。改成兩邊都用同一份 usage_reports 算。
+function monthTotals(rows, ym){
+  let saved=0, uses=0;
+  (rows||[]).forEach(r=>{
+    if(r.result!=='success' || String(r.used_on||'').slice(0,7)!==ym) return;
+    saved += r.saved_twd||0; uses++;
+  });
+  return {saved, uses};
+}
+function renderMoMCompare(trendRows, curYm, prevYm){
   const box=$('#boardMoM');
   if(!box) return;
-  const sumSaved=rows=>rows.reduce((a,r)=>a+(r.saved_total||0),0);
-  const sumUses=rows=>rows.reduce((a,r)=>a+(r.success_count||0),0);
-  const curSaved=sumSaved(curRows), prevSaved=sumSaved(prevRows);
-  const curUses=sumUses(curRows), prevUses=sumUses(prevRows);
+  const cur=monthTotals(trendRows, curYm), prev=monthTotals(trendRows, prevYm);
+  const curSaved=cur.saved, prevSaved=prev.saved;
+  const curUses=cur.uses, prevUses=prev.uses;
   if(!curSaved && !prevSaved){ box.innerHTML=''; return; }
   // 形式：兩個數字＋變化 → 數字卡加漲跌標籤（不畫成兩根柱子）
   const delta=(cur,prev)=>{
@@ -6485,6 +6593,7 @@ function renderMoMCompare(curRows, prevRows, curYm, prevYm){
     </div>`;
   box.innerHTML=`<div class="dash-chart viz">
     <b>${esc(curYm)} 跟上個月比</b>
+    <div class="viz-sub">跟「走勢」分頁的每月金額是同一份資料</div>
     <div class="viz-body" style="display:flex;gap:18px 28px;flex-wrap:wrap">
       ${tile(nt(curSaved), '累積省下', delta(curSaved,prevSaved), nt(prevSaved))}
       ${tile(`${curUses} 次`, '成功使用', delta(curUses,prevUses), `${prevUses} 次`)}
