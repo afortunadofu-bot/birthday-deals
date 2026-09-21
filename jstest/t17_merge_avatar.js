@@ -28,7 +28,10 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
     {id:400, brand:'必勝客', offer:'$50', reportCount:0, groupName:'PK雙饗卡', regions:[]},
     {id:9, brand:'麥當勞', offer:'薯條', reportCount:5, groupName:'', regions:[]},
     {id:198, brand:'GU', offer:'折價券', reportCount:2, groupName:'', regions:[]},
-    {id:248, brand:'龜記茗品 Guiji', offer:'飲料', reportCount:6, groupName:'', regions:[]}];`);
+    {id:248, brand:'龜記茗品 Guiji', offer:'飲料', reportCount:6, groupName:'', regions:[]},
+    {id:5, brand:'德克士', offer:'炸雞桶 5 折優惠券 2 張', reportCount:0, groupName:'', regions:[]},
+    {id:320, brand:'再睡5分鐘', offer:'生日當天送蛋糕', reportCount:0, groupName:'', regions:[]},
+    {id:321, brand:'定食8', offer:'壽星招待甜點', reportCount:0, groupName:'', regions:[]}];`);
   win.renderMergePanel();
   const sugg = [...doc.querySelectorAll('#mergeSugg .merge-sugg-btn')].map((b) => b.textContent.replace(/\s+/g, ' ').trim());
   t.ok('列出「gonna EAT」跟「gonnaEAT」（去掉空白後一樣）', sugg.some((x) => /#59 gonna EAT/.test(x) && /#214 gonnaEAT/.test(x)), sugg);
@@ -38,6 +41,28 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   t.ok('不相干的不列', !sugg.some((x) => /麥當勞/.test(x)));
   t.ok('很短的英文不亂比（GU 不會比到 Guiji）', !sugg.some((x) => /#198 GU/.test(x)), sugg);
   t.ok('還沒選兩張時不能按合併', $('#btnMerge').disabled);
+
+  /* ---- 用店名搜尋（celine：「我查不到我很確定有的店家」）----
+     舊版在字串裡抓到第一串數字就當編號，打「再睡5」會跳出「#5 德克士」。 ---- */
+  const type = (sel, v) => { $(sel).value = v; $(sel).dispatchEvent(new win.Event('input')); };
+  const hits = (sel) => [...doc.querySelectorAll(sel + ' .merge-hit')].map((b) => b.textContent.replace(/\s+/g, ' ').trim());
+  type('#mergeKeep', '再睡5');
+  t.ok('名字裡有數字的店找得到，不會跳成 #5 德克士', /再睡5分鐘/.test($('#mergeKeepCard').textContent)
+    && !/德克士/.test($('#mergeKeepCard').textContent), $('#mergeKeepCard').textContent);
+  type('#mergeKeep', '定食8');
+  t.ok('「定食8」也找得到', /#321 定食8/.test($('#mergeKeepCard').textContent), $('#mergeKeepCard').textContent);
+  type('#mergeKeep', '咖啡');
+  t.ok('有好幾家符合時列出來讓人點', hits('#mergeKeepHits').length >= 2, hits('#mergeKeepHits'));
+  t.ok('每一筆都看得到編號跟內容', /^#\d+ .+/.test(hits('#mergeKeepHits')[0]), hits('#mergeKeepHits')[0]);
+  doc.querySelector('#mergeKeepHits .merge-hit').click();
+  t.ok('點一下就帶進輸入框', /^#\d+ /.test($('#mergeKeep').value), $('#mergeKeep').value);
+  t.eq('選好之後就不再列清單', hits('#mergeKeepHits').length, 0);
+  type('#mergeKeep', '這家店不存在');
+  t.ok('真的沒有的店講清楚找不到', /找不到符合的優惠/.test($('#mergeKeepHits').textContent), $('#mergeKeepHits').textContent);
+  type('#mergeKeep', '5');
+  t.ok('整串都是數字時才當編號', /德克士/.test($('#mergeKeepCard').textContent), $('#mergeKeepCard').textContent);
+  type('#mergeKeep', '#59 gonna EAT');
+  t.ok('「#編號 品牌」照樣認得', /咖啡一杯/.test($('#mergeKeepCard').textContent));
 
   // 點建議帶進上面
   const btn = [...doc.querySelectorAll('#mergeSugg .merge-sugg-btn')].find((b) => /gonnaEAT/.test(b.textContent));

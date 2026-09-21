@@ -121,6 +121,11 @@ const { boot, tick, makeSb, makeAsserts, stubHeavy } = require('./harness');
   await tick(win, 5);
   const delBtn = () => $('#approvedList .ap-delete');
   t.ok('已通過清單每一列都有「刪除」', !!delBtn());
+  // celine：「管理員頁面看不到店家編號」——要合併／刪除／互相講哪一筆時都得報編號
+  t.eq('已通過清單看得到優惠編號', $('#approvedList .oid')?.textContent, '#7');
+  await win.loadPending();
+  await tick(win, 5);
+  t.eq('待審佇列也看得到優惠編號', $('#pendingList .oid')?.textContent, '#7');
 
   // 第一次問：會一起刪掉什麼
   const asked = [];

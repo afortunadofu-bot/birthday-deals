@@ -873,6 +873,17 @@
   .merge-card{border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;font-size:.8rem;min-height:64px}
   .merge-card b{display:block;font-size:.88rem}
   .merge-card .offer{white-space:pre-line;color:var(--ink-2);margin-top:4px}
+  /* 管理員清單上的優惠編號：合併、刪除、互相回報問題都要講編號，
+     之前只有合併面板看得到，其他清單都只有店名（celine）。 */
+  .oid{flex:none;font-size:.72rem;color:var(--ink-3);font-weight:600;font-variant-numeric:tabular-nums;
+    background:var(--line-soft);border-radius:4px;padding:1px 5px;white-space:nowrap}
+  .merge-hits{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+  .merge-hits:empty{display:none}
+  .merge-hit{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xs);
+    padding:6px 9px;font:inherit;font-size:.82rem;color:var(--ink);cursor:pointer;min-height:36px}
+  .merge-hit small{display:block;color:var(--ink-3);font-size:.74rem;margin-top:1px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .merge-hit:hover{border-color:var(--accent)}
   .merge-sugg{display:flex;flex-direction:column;gap:6px;margin-top:8px}
   .merge-sugg button{text-align:left}
   /* ---------- 表單 / 對話框 ---------- */
@@ -1638,12 +1649,13 @@
     <p class="sub">選「要保留的」跟「要併掉的」：併掉那張的回報、留言、評分、收藏、修改建議都會搬到保留的那張，
       然後把併掉那張下架（不會刪除）。同一個人兩張都評過分／收藏過時，保留「保留那張」上的。</p>
     <div class="merge-pick">
-      <div class="field"><label>要保留的優惠</label><input id="mergeKeep" list="mergeOfferList" placeholder="輸入品牌或 #編號">
+      <div class="field"><label>要保留的優惠</label><input id="mergeKeep" placeholder="輸入品牌或 #編號" autocomplete="off">
+        <div class="merge-hits" id="mergeKeepHits"></div>
         <div class="merge-card" id="mergeKeepCard"><span class="hint">還沒選</span></div></div>
-      <div class="field"><label>要併掉的優惠</label><input id="mergeDrop" list="mergeOfferList" placeholder="輸入品牌或 #編號">
+      <div class="field"><label>要併掉的優惠</label><input id="mergeDrop" placeholder="輸入品牌或 #編號" autocomplete="off">
+        <div class="merge-hits" id="mergeDropHits"></div>
         <div class="merge-card" id="mergeDropCard"><span class="hint">還沒選</span></div></div>
     </div>
-    <datalist id="mergeOfferList"></datalist>
     <div class="row" style="gap:8px;margin-top:4px">
       <button type="button" class="btn primary" id="btnMerge" disabled>合併</button>
       <button type="button" class="btn sm" id="btnMergeSwap">⇄ 對調</button>
@@ -3223,7 +3235,8 @@ const SITE_UPDATES=[
     '排行榜「本月」的省下金額改成跟「走勢」分頁同一份資料，兩邊數字一致',
     '幫家人／另一半記生日的話，待辦清單會分成「我的」「○○的」兩份，可以切換；每一筆也能互相搬',
     '生日可以清除了（自己的旁邊多一顆「清除」）',
-    '重複、失效的優惠可以直接從站上清掉，不會再留在清單裡']},
+    '重複、失效的優惠可以直接從站上清掉，不會再留在清單裡',
+    '修正整併重複店家時會挑錯店：店名裡有數字的（再睡5分鐘、定食8、31冰淇淋…）會被當成編號']},
   {date:'2026-09-18', title:'圖表全面改版', items:[
     '排行榜的站台數據、洞察分析，每一份數據都換成最適合的圖表：時間用直條、佔比用一條色塊、尖峰會特別標出來',
     '每張圖手指按住（或滑鼠滑過）就看得到數字，也可以展開「看數字」看完整表格',
@@ -4460,7 +4473,9 @@ async function openDetail(id, fallback=null){
   // 這種管理／自助視角，項目可能還是待審或未上架，OFFERS 裡沒有，就用呼叫端
   // 已經拿到的原始資料（fromRow() 轉過的）當備援，內容照樣完整可看。
   const o=OFFERS.find(x=>String(x.id)===String(id)) || fallback;
-  $('#dtlBrand').textContent=o?.brand||'';
+  // 管理員在詳情頁也看得到編號（要合併／刪除／回報問題時用得上）
+  $('#dtlBrand').innerHTML=esc(o?.brand||'')
+    +(myProfile?.is_admin?` <span class="oid">#${esc(String(id))}</span>`:'');
   $('#dtlOffer').textContent=o?.offer||'';
   const dtlWishBtn=$('#btnDtlWish');
   dtlWishBtn.dataset.id=id;
@@ -6908,6 +6923,7 @@ async function loadPending(){
         <label class="toggle" style="flex:none" title="勾選後可用上方「核可已勾選」一次核可">
           <input type="checkbox" class="pend-check" data-id="${o.id}"></label>
         <h3 style="font-size:.95rem;flex:1;min-width:0">${esc(o.brand)}</h3>
+        <span class="oid">#${esc(String(o.id))}</span>
         ${o.valueTwd?`<span class="val">約 ${nt(o.valueTwd)}</span>`:''}</div>
       <div class="meta"><span>投稿者：${esc(o.submitterName||'匿名')}</span>
         <span>${esc(fmtD(o.createdAt))}</span></div>
@@ -7266,14 +7282,14 @@ async function loadRejected(){
   await Promise.all([mergeProfileNames(offs, 'submitted_by'), mergeProfileNames(edits, 'proposed_by')]);
   const kv=(k,v)=>`<div class="sub-item"><b>${esc(k)}</b><span class="fact-v">${esc(v??'—')}</span></div>`;
   const items=[
-    ...(offs||[]).map(o=>({kind:'offer',id:o.id,type:'投稿',brand:o.brand,by:o.profiles?.display_name,
+    ...(offs||[]).map(o=>({kind:'offer',id:o.id,oid:o.id,type:'投稿',brand:o.brand,by:o.profiles?.display_name,
       created:o.created_at,reviewed:o.reviewed_at,note:o.review_note,
       detail:kv('優惠內容',o.offer)+kv('使用條件',o.conditions)+kv('會員取得',o.membership)
         +kv('適用期間',o.timing||o.offer_window)+kv('提前天數',o.advance_days==null?'未明訂':o.advance_days+' 天')
         +kv('優惠價值',o.value_twd==null?'未填':nt(o.value_twd))+kv('類別',o.category)
         +kv('適用地區',(o.regions||[]).join('、')||'未確認')
         +kv('來源',((o.sources||[])[0]||{}).url||'未填')})),
-    ...(edits||[]).map(e=>({kind:'edit',id:e.id,type:'修改建議',brand:e.offers?.brand||'（優惠已刪除）',
+    ...(edits||[]).map(e=>({kind:'edit',id:e.id,oid:e.offer_id,type:'修改建議',brand:e.offers?.brand||'（優惠已刪除）',
       by:e.profiles?.display_name,created:e.created_at,reviewed:e.reviewed_at,note:e.review_note,
       detail:kv('修改原因',e.reason)+kv('來源',e.source_url||'未填')
         +Object.entries(e.patch||{}).map(([k,v])=>
@@ -7298,6 +7314,7 @@ async function loadRejected(){
     <div class="rej-row" data-rej="${x.kind}-${x.id}" style="border-top:1px solid var(--line);padding:12px 0">
       <div class="row" style="align-items:baseline">
         <span class="flag">${esc(x.type)}</span>
+        ${x.oid?`<span class="oid">#${esc(String(x.oid))}</span>`:''}
         <b style="flex:1;min-width:0">${esc(x.brand||'—')}</b>
         <button class="btn sm rej-detail" type="button" data-k="${x.kind}-${x.id}" aria-expanded="false">細節</button>
         <button class="btn sm rej-restore" type="button" data-kind="${x.kind}" data-id="${x.id}">救回重審</button>
@@ -7417,6 +7434,7 @@ async function loadApproved(){
   $('#approvedList').innerHTML=list.length?list.map(o=>`
     <div class="rep ap-click" data-id="${o.id}" style="cursor:pointer">
       <span>${esc(fmtD(o.reviewed_at||o.created_at))}</span>
+      <span class="oid">#${esc(String(o.id))}</span>
       <b style="flex:1;min-width:0">${esc(o.brand)}</b>
       <span style="color:var(--ink-3);font-size:.78rem">${o.submitted_by?esc(o.profiles?.display_name||'匿名'):'系統匯入'}</span>
       ${o.verified?'<span class="flag ok-flag">已查證</span>':''}
@@ -7477,7 +7495,7 @@ async function loadUsageReportsAdmin(){
     return `<div class="sub-item${clickable?' ur-row':''}" ${clickable?`data-oid="${esc(r.offer_id)}"`:''}
       style="${clickable?'cursor:pointer':''}">
       ${canSuggestVerify?`<input type="checkbox" class="ur-check" data-id="${esc(r.offer_id)}" style="margin-right:8px;vertical-align:middle" onclick="event.stopPropagation()">`:''}
-      <b>${esc(o?.brand||'（已刪除）')}</b>
+      <b>${esc(o?.brand||'（已刪除）')}</b><span class="oid">#${esc(String(r.offer_id))}</span>
       <span>
         <span class="${R[r.result][1]}">${R[r.result][0]}</span>
         ${r.saved_twd?`　省 ${nt(r.saved_twd)}`:''}
@@ -8504,11 +8522,39 @@ function wireChartTooltips(root, registry=DASH_CHARTS){
 /* ---- 管理員設定：用 email 直接在網站上新增／移除管理員，不用回去跑 SQL ---- */
 /* ---- 管理員：合併重複優惠（schema_v70 的 admin_merge_offers）---- */
 function mergeOfferLabel(o){ return `#${o.id} ${o.brand}`; }
-function mergeFind(v){
-  const m=String(v||'').match(/#?(\d+)/);
-  return m ? OFFERS.find(o=>String(o.id)===m[1]) : null;
-}
 function mergeNorm(b){ return String(b||'').toLowerCase().replace(/[\s\-_.·・!！'’]/g,''); }
+/* 找出輸入的是哪一張優惠。
+   celine：「我查不到我很確定有的店家」——舊版是 `/#?(\d+)/`，在字串裡抓到第一串數字就
+   當成編號，所以打「再睡5」會跳出「#5 德克士」，而且完全沒有用名字找的路。品牌名字裡
+   有數字的不少（再睡5分鐘、定食8、31冰淇淋、22:02、8% ice），只有「#數字」或整串都是
+   數字才當編號，其餘一律當名字搜尋。 */
+function mergeFind(v){
+  const s=String(v||'').trim();
+  if(!s) return null;
+  const m=s.match(/^#(\d+)\b/) || s.match(/^(\d+)$/);
+  if(m){ const hit=OFFERS.find(o=>String(o.id)===m[1]); if(hit) return hit; }
+  const exact=OFFERS.filter(o=>mergeNorm(o.brand)===mergeNorm(s));
+  if(exact.length===1) return exact[0];
+  const hits=mergeSearch(s, 2);
+  return hits.length===1 ? hits[0] : null;
+}
+// 搜尋：編號、品牌、優惠內容都比對得到；完全一樣 → 開頭一樣 → 包含 → 內容有提到
+function mergeSearch(v, limit=8){
+  const s=String(v||'').trim(); if(!s) return [];
+  const n=mergeNorm(s), byId=s.match(/^#?(\d+)$/);
+  const score=o=>{
+    const b=mergeNorm(o.brand);
+    if(byId && String(o.id)===byId[1]) return 0;
+    if(b===n) return 1;
+    if(b.startsWith(n)) return 2;
+    if(b.includes(n)) return 3;
+    if(mergeNorm(o.offer).includes(n)) return 4;
+    return 9;
+  };
+  return OFFERS.map(o=>({o, s:score(o)})).filter(x=>x.s<9)
+    .sort((a,b)=>a.s-b.s || String(a.o.brand).localeCompare(String(b.o.brand),'zh-Hant'))
+    .slice(0, limit).map(x=>x.o);
+}
 // 可能重複：品牌名稱正規化後一樣，或其中一個包含另一個（至少 2 個字）
 function mergeSuggestions(){
   const list=OFFERS.map(o=>({o, n:mergeNorm(o.brand)}));
@@ -8536,9 +8582,25 @@ function mergeCardHtml(o){
     <div class="hint" style="margin-top:4px">回報 ${o.reportCount||0} 次・留言 ${o.commentCount||0}・收藏 ${o.wishCount||0}・${esc((o.regions||[]).join('、')||'地區未確認')}</div>`;
 }
 function renderMergePanel(){
-  const dl=$('#mergeOfferList'); if(!dl) return;
-  if(!dl.options.length) OFFERS.forEach(o=>dl.appendChild(new Option(mergeOfferLabel(o))));
+  if(!$('#mergeKeep')) return;
   const keep=mergeFind($('#mergeKeep').value), drop=mergeFind($('#mergeDrop').value);
+  // 打字時列出符合的優惠讓人點（原本只靠 <input list=…> 的自動完成，手機上常常不跳出來）
+  [['#mergeKeep','#mergeKeepHits',keep],['#mergeDrop','#mergeDropHits',drop]].forEach(([inp,box,picked])=>{
+    const el=$(box), v=String($(inp).value||'').trim();
+    if(!el) return;
+    if(!v || picked){ el.innerHTML=''; return; }   // 已經指到某一張就不用再列
+    const hits=mergeSearch(v);
+    el.innerHTML=hits.length
+      ? hits.map(o=>`<button type="button" class="merge-hit" data-for="${esc(inp)}" data-id="${esc(String(o.id))}">
+          ${esc(mergeOfferLabel(o))}<small>${esc(o.offer||'')}</small></button>`).join('')
+      : '<span class="hint">找不到符合的優惠。試試店名的一部分，或直接輸入 #編號。</span>';
+  });
+  $$('.merge-hit').forEach(b=>b.onclick=()=>{
+    const o=OFFERS.find(x=>String(x.id)===b.dataset.id);
+    if(!o) return;
+    $(b.dataset.for).value=mergeOfferLabel(o);
+    renderMergePanel();
+  });
   $('#mergeKeepCard').innerHTML=$('#mergeKeep').value?mergeCardHtml(keep):'<span class="hint">還沒選</span>';
   $('#mergeDropCard').innerHTML=$('#mergeDrop').value?mergeCardHtml(drop):'<span class="hint">還沒選</span>';
   $('#btnMerge').disabled=!(keep&&drop&&keep.id!==drop.id);
