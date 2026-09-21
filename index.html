@@ -1365,7 +1365,10 @@
           <select id="bmonth"><option value="">月</option></select>
           <select id="bday"><option value="">日</option></select>
         </label>
-        <div class="field" style="align-self:flex-end"><button class="btn primary" id="btnSaveBirthday" type="button">儲存生日</button></div>
+        <div class="field" style="align-self:flex-end;display:flex;gap:8px">
+          <button class="btn primary" id="btnSaveBirthday" type="button">儲存生日</button>
+          <button class="btn" id="btnClearBirthday" type="button">清除</button>
+        </div>
       </div>
       <p class="sub">用來預設篩選你的生日月份，也會拿去算下面的註冊死線。</p>
       <div id="birthdayMsg"></div>
@@ -1401,6 +1404,8 @@
     </div>
     <div class="panel" id="wishlistPanel"><h2>待辦清單</h2>
       <p class="sub">點卡片上的星號收藏，勾起來代表用過了。</p>
+      <!-- 嵐：幫別人記生日的話，待辦清單要獨立出來、不同份清單（schema_v71 的 wishlist.person） -->
+      <div class="subtabs hidden" role="tablist" id="wlPersonTabs"></div>
       <div class="row" style="margin:0 0 10px;flex-wrap:wrap;gap:8px 14px">
         <label class="lbl">排序<select id="wlSort">
           <option value="added_desc">最近加入</option>
@@ -2554,6 +2559,8 @@ function hintWishlistLocation(){
     p?.scrollIntoView({behavior:'smooth',block:'start'});
   };
 }
+// 星號收藏時，放進「目前正在看的那份清單」——在媽媽的清單裡收藏就是收給媽媽的
+function wishPersonNow(){ return (WL_PERSON==='me'||WL_PERSON==='all') ? null : WL_PERSON; }
 async function toggleWish(id, btn){
   const has=WISH.has(String(id));
   has?WISH.delete(String(id)):WISH.add(String(id));
@@ -2561,13 +2568,25 @@ async function toggleWish(id, btn){
   if(LIVE&&me){
     const {error}= has
       ? await sb.from('wishlist').delete().eq('user_id',me.id).eq('offer_id',Number(id))
-      : await sb.from('wishlist').upsert({user_id:me.id, offer_id:Number(id)},{onConflict:'user_id,offer_id'});
+      : await (async()=>{
+          const person=wishPersonNow();
+          const row={user_id:me.id, offer_id:Number(id)};
+          let r=await sb.from('wishlist').upsert(person?{...row, person}:row,{onConflict:'user_id,offer_id'});
+          // v71 還沒跑（沒有 person 欄位）：退回不帶清單
+          if(r.error && person && /person|column|schema cache/i.test(r.error.message||''))
+            r=await sb.from('wishlist').upsert(row,{onConflict:'user_id,offer_id'});
+          return r;
+        })();
     if(error){ has?WISH.add(String(id)):WISH.delete(String(id));
       syncWishButtons(id, has);
       const hint=/relation|does not exist|wishlist/i.test(error.message)
         ? '\n（這通常是 Supabase 資料庫還沒建立「待辦清單」的資料表，請管理員到 SQL Editor 執行 schema_v8.sql。）' : '';
       alert('收藏失敗：'+error.message+hint); return; }
-    if(!has) hintWishlistLocation();
+    if(!has){
+      hintWishlistLocation();
+      const person=wishPersonNow();
+      if(person) showToast(`已加到 ${person} 的清單`);
+    }
   } else {
     localStorage.setItem('sxr_wishlist', JSON.stringify([...WISH]));
     // 只提醒一次就好，每按一次跳一次會很煩
@@ -2647,18 +2666,42 @@ function wlTagOptions(cur){
     +wlTagList().map(t=>`<option value="${esc(t)}"${t===cur?' selected':''}>${esc(t)}</option>`).join('')
     +`<option value="__new__">自訂…</option>`;
 }
-let WL_ROWS=[];
+let WL_ROWS=[], WL_PERSON='me';   // 'me'＝我的清單、'all'＝全部、其他＝那個人的稱呼
+// 目前有哪幾份清單：自己的＋（有設第二組生日的話）那個人的＋資料裡出現過的其他稱呼
+function wlPersonList(){
+  const names=new Set();
+  if(altTagName()) names.add(altTagName());
+  WL_ROWS.forEach(w=>{ if(w.person) names.add(w.person); });
+  return [...names];
+}
+function renderWlPersonTabs(){
+  const bar=$('#wlPersonTabs'); if(!bar) return;
+  const people=wlPersonList();
+  bar.classList.toggle('hidden', !people.length);   // 沒有幫別人記生日就不用出現這排
+  if(!people.length){ WL_PERSON='me'; return; }
+  if(WL_PERSON!=='me' && WL_PERSON!=='all' && !people.includes(WL_PERSON)) WL_PERSON='me';
+  const tabs=[['me','我的'], ...people.map(p=>[p,p+'的']), ['all','全部']];
+  bar.innerHTML=tabs.map(([v,l])=>`<button type="button" class="subtab" role="tab" data-person="${esc(v)}"
+    aria-selected="${v===WL_PERSON}">${esc(l)}（${WL_ROWS.filter(w=>v==='all'?true:v==='me'?!w.person:w.person===v).length}）</button>`).join('');
+  bar.querySelectorAll('.subtab').forEach(b=>b.onclick=()=>{
+    WL_PERSON=b.dataset.person;
+    try{ localStorage.setItem('sxr_wl_person', WL_PERSON); }catch{}
+    renderWishlistBody();
+  });
+}
+try{ const p=localStorage.getItem('sxr_wl_person'); if(p) WL_PERSON=p; }catch{}
 async function renderMyWishlist(){
   const box=$('#myWishlist');
   if(!LIVE||!me){
     box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">登入後可以把想去用的優惠加進待辦清單，跨裝置都看得到。</div>';
     return;
   }
-  const COLS='offer_id,done,note,sort_order,created_at,year,offers(brand,offer,conditions,membership,timing,advance_days,value_twd,valid_until,regions,region_note)';
+  const COLS='offer_id,done,note,sort_order,created_at,year,person,offers(brand,offer,conditions,membership,timing,advance_days,value_twd,valid_until,regions,region_note)';
   const wlQuery=cols=>sb.from('wishlist').select(cols).eq('user_id',me.id).order('created_at',{ascending:false});
   let {data,error}=await wlQuery(COLS+',tag');
-  // v65 還沒跑（wishlist 沒有 tag 欄位）：改成不帶標籤查一次，清單照樣看得到
-  if(error) ({data}=await wlQuery(COLS));
+  // v65／v71 還沒跑（wishlist 還沒有 tag／person 欄位）：拿掉那幾欄再查一次，清單照樣看得到
+  if(error) ({data,error}=await wlQuery(COLS));
+  if(error) ({data}=await wlQuery(COLS.replace(',person','')));
   WL_ROWS=data||[];
   renderWishlistBody();
 }
@@ -2700,6 +2743,7 @@ function renderWishlistBody(){
       `<option value="${y}">${y}年${y===CURRENT_YEAR?'（今年）':y===CURRENT_YEAR+1?'（明年）':''}</option>`).join('');
     wlYearSel.value=(prevVal && (prevVal==='all'||sortedYears.includes(Number(prevVal)))) ? prevVal : String(CURRENT_YEAR);
   }
+  renderWlPersonTabs();
   const yearFilter=wlYearSel?.value||'all';
   // 標籤篩選（嵐）：選項是「全部」＋目前真的有用到的標籤＋「沒有標籤」
   const tagSel=$('#wlTagFilter');
@@ -2713,6 +2757,9 @@ function renderWishlistBody(){
   }
   const tagFilter=tagSel?.value||'all';
   let list=[...WL_ROWS];
+  // 清單：我的（沒有 person）／某個人的／全部
+  if(WL_PERSON==='me') list=list.filter(w=>!w.person);
+  else if(WL_PERSON!=='all') list=list.filter(w=>w.person===WL_PERSON);
   if(yearFilter!=='all') list=list.filter(w=>(w.year||CURRENT_YEAR)===Number(yearFilter));
   if(tagFilter==='__none__') list=list.filter(w=>!w.tag);
   else if(tagFilter!=='all') list=list.filter(w=>w.tag===tagFilter);
@@ -2756,8 +2803,8 @@ function renderWishlistBody(){
     const yearBadge = wYear!==CURRENT_YEAR ? `<span class="wl-pill wl-year-badge">📅 ${wYear}</span>` : '';
     const yearBtn = !done ? `<button class="wl-year-toggle" data-id="${w.offer_id}" data-year="${wYear}" type="button">${
       wYear>CURRENT_YEAR?'↩ 移回今年':'📅 移到明年'}</button>` : '';
-    // 這一筆貼的是「家人的稱呼」標籤 → 入會死線照他的生日算
-    const forAlt = !!(altTagName() && w.tag===altTagName());
+    // 在家人的清單裡（或貼了家人的標籤）→ 入會死線照他的生日算
+    const forAlt = !!(altTagName() && (w.person===altTagName() || w.tag===altTagName()));
     const dlText = o.brand ? bdayDeadlineText(o.advance_days, forAlt) : null;
     const tagSelectHtml = `<select class="wl-tag" data-id="${w.offer_id}" data-has="${w.tag?'1':''}"
       title="標籤：把待辦清單分組" aria-label="標籤">${wlTagOptions(w.tag||'')}</select>`;
@@ -2778,6 +2825,9 @@ function renderWishlistBody(){
           <details class="wl-more">
             <summary class="icon-btn" aria-label="更多動作" title="更多">⋯</summary>
             <div class="wl-menu">
+              ${wlPersonList().filter(p=>p!==w.person).map(p=>`<button class="wl-move-person" data-id="${w.offer_id}"
+                data-person="${esc(p)}" type="button">👪 移到 ${esc(p)} 的清單</button>`).join('')}
+              ${w.person?`<button class="wl-move-person" data-id="${w.offer_id}" data-person="" type="button">🙋 移回我的清單</button>`:''}
               ${yearBtn}
               <button class="wl-remove wl-danger" data-id="${w.offer_id}" type="button">🗑 從清單移除</button>
             </div>
@@ -2824,6 +2874,24 @@ function renderWishlistBody(){
     if(justDone && confirm('這筆標記成用過了！要不要順便回報一下成功了嗎、大約省下多少？')){
       openReport(cb.dataset.id);
     }
+  });
+  // 把一筆搬到別人的清單（或搬回自己的）
+  $$('.wl-move-person').forEach(b=>b.onclick=async()=>{
+    const person=b.dataset.person||null;
+    b.disabled=true;
+    const {error}=await sb.from('wishlist').update({person})
+      .eq('user_id',me.id).eq('offer_id',b.dataset.id);
+    if(error){
+      b.disabled=false;
+      alert(/person|column|schema cache/i.test(error.message||'')
+        ? '分清單要先在 Supabase 執行 schema_v71_wishlist_person.sql。'
+        : '移動失敗：'+error.message);
+      return;
+    }
+    const row=WL_ROWS.find(w=>String(w.offer_id)===String(b.dataset.id));
+    if(row) row.person=person;
+    showToast(person?`已移到 ${person} 的清單`:'已移回我的清單');
+    renderWishlistBody();
   });
   $$('.wl-tag').forEach(sel=>sel.onchange=async()=>{
     let v=sel.value;
@@ -3124,7 +3192,9 @@ const SITE_UPDATES=[
   {date:'2026-09-21', title:'列表更順、數字對齊', items:[
     '修正往下滑優惠清單時網頁會出錯、整頁重載：改成先顯示 30 筆，滑到底自動接著顯示',
     '用 iPad／手機點開一筆優惠再關掉，會停在原本的位置，不會跳回最上面',
-    '排行榜「本月」的省下金額改成跟「走勢」分頁同一份資料，兩邊數字一致']},
+    '排行榜「本月」的省下金額改成跟「走勢」分頁同一份資料，兩邊數字一致',
+    '幫家人／另一半記生日的話，待辦清單會分成「我的」「○○的」兩份，可以切換；每一筆也能互相搬',
+    '生日可以清除了（自己的旁邊多一顆「清除」）']},
   {date:'2026-09-18', title:'圖表全面改版', items:[
     '排行榜的站台數據、洞察分析，每一份數據都換成最適合的圖表：時間用直條、佔比用一條色塊、尖峰會特別標出來',
     '每張圖手指按住（或滑鼠滑過）就看得到數字，也可以展開「看數字」看完整表格',
@@ -5136,6 +5206,11 @@ $('#btnSaveNickname').onclick=async()=>{
 };
 
 /* ---- 生日：存到 profiles，用來預設帶入「註冊死線」計算，不用每次都重選 ---- */
+// 生日也要刪得掉（嵐）：清空兩個下拉再存回去
+$('#btnClearBirthday').onclick=()=>{
+  $('#bmonth').value=''; $('#bday').value='';
+  $('#btnSaveBirthday').click();
+};
 $('#btnSaveBirthday').onclick=async()=>{
   if(!LIVE) return;
   if(!me){ note($('#birthdayMsg'),'alert','生日先幫你算好註冊死線了，但要登入才能存起來、下次不用重選。'); promptMineLogin(); return; }
@@ -6416,9 +6491,11 @@ function vizHours(hourRows, title){
 function wireSubtabs(root=document){
   root.querySelectorAll('.subtabs').forEach(bar=>{
     if(bar.dataset.wired) return;
+    const tabs=[...bar.querySelectorAll('.subtab')];
+    // 自己管自己的那種（待辦清單的「我的／媽媽／全部」，按鈕是動態產生的）跳過
+    if(!bar.dataset.group || !tabs.length) return;
     bar.dataset.wired='1';
     const key='sxr_subtab_'+bar.dataset.group;
-    const tabs=[...bar.querySelectorAll('.subtab')];
     const show=id=>{
       tabs.forEach(t=>{
         const on=t.dataset.pane===id;
