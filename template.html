@@ -737,6 +737,9 @@
   :root{
     --viz-1:#e8483c; --viz-2:#2a78d6; --viz-3:#1baf7a; --viz-4:#eda100; --viz-5:#4a3aa7; --viz-6:#e87ba4;
     --viz-muted:#dadae1; --viz-neg:#e8483c; --viz-mid:#c9c9d1; --viz-pos:#2a78d6;
+    /* 問卷題目改版前留下來的舊選項：不是一種「類別」，用一排灰階跟現行選項分開，
+       彼此的明度差夠大（每階約 12 L*），四個疊在一起還是分得出來。 */
+    --viz-old-1:#cfd1d7; --viz-old-2:#b0b3bb; --viz-old-3:#909499; --viz-old-4:#71747a;
   }
   .viz .viz-sub{font-size:.74rem;color:var(--ink-3);margin-top:1px}
   .viz .viz-body{margin-top:12px}
@@ -829,8 +832,31 @@
     color:var(--ink-2);cursor:pointer;white-space:nowrap;min-height:34px}
   .subtab:hover{color:var(--ink)}
   .subtab[aria-selected="true"]{background:var(--surface);color:var(--ink);font-weight:700;box-shadow:var(--shadow-sm)}
-  /* 問卷逐筆回覆 */
+  /* 問卷逐筆回覆：整列是一顆可以點開／收起的按鈕。
+     原本那一行（時間・名字・信箱・分數）是 .sub-item 的 <b>，被 width:76px + ellipsis
+     切成「2026-09-2…」，名字跟信箱根本看不到（嵐：「我都不知道什麼是誰填的」）——
+     這裡自己排版，不吃 .sub-item 的欄寬規則。 */
+  .sv-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0}
+  .sv-toolbar>b{flex:1 1 auto;white-space:nowrap}
+  .sv-toolbar-btns{display:flex;gap:8px;margin-left:auto}
+  .sv-item{display:block;padding:0}
+  .sv-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;width:100%;text-align:left;position:relative;
+    background:none;border:0;font:inherit;font-size:.8rem;color:var(--ink);padding:8px 26px 8px 10px;cursor:pointer}
+  .sv-head .sv-when{font-weight:700;white-space:nowrap}
+  .sv-head .sv-name{font-weight:700;min-width:0;overflow-wrap:anywhere}
+  .sv-head .sv-score{color:var(--ink-3);font-size:.74rem;white-space:nowrap}
+  /* 箭頭釘在右上角：手機上這一行會換行，跟著文字流走的話會自己落在最後一行的右邊，看起來像掉出去 */
+  .sv-head .sv-chev{position:absolute;right:9px;top:9px;color:var(--ink-3);font-size:.7rem;transition:transform .15s}
+  .sv-head[aria-expanded="true"] .sv-chev{transform:rotate(180deg)}
+  .sv-detail{padding:0 10px 10px}
+  .sv-detail.hidden{display:none}
+  .sv-comment{display:block;margin:6px 0 8px;white-space:pre-wrap;overflow-wrap:anywhere;
+    color:var(--ink-2);font-size:.8rem}
   .sv-item .sv-email{font-weight:400;color:var(--accent-dark);font-size:.76rem;word-break:break-all}
+  /* 「還想說的話」那一行也是同一個毛病（被 .sub-item b 的 76px 欄寬切成「2026-09-2…」） */
+  .sv-cmt{display:block;padding:8px 10px}
+  .sv-cmt .sv-cmt-who{display:block;width:auto;white-space:normal;overflow:visible;
+    overflow-wrap:anywhere;margin-bottom:3px}
   .sv-ans-list{display:flex;flex-wrap:wrap;gap:4px 12px;margin:4px 0 2px;font-size:.76rem;color:var(--ink-2)}
   .sv-ans i{font-style:normal;color:var(--ink-3);margin-right:4px}
   .sv-ans i::after{content:"："}
@@ -1791,6 +1817,8 @@
   <h2 id="dtlBrand"></h2>
   <p class="sub" id="dtlOffer"></p>
   <button type="button" class="btn sm hidden" id="dtlAdminEdit" style="margin:-6px 0 12px">編輯（管理員）</button>
+  <button type="button" class="btn sm hidden" id="dtlAdminDelete"
+    style="margin:-6px 0 12px;border-color:var(--alert-line);color:var(--alert)">刪除（管理員）</button>
   <div id="dtlBody"></div>
   <div class="foot"><button type="button" class="btn" id="btnDtlClose">關閉</button></div>
 </div></dialog>
@@ -3194,7 +3222,8 @@ const SITE_UPDATES=[
     '用 iPad／手機點開一筆優惠再關掉，會停在原本的位置，不會跳回最上面',
     '排行榜「本月」的省下金額改成跟「走勢」分頁同一份資料，兩邊數字一致',
     '幫家人／另一半記生日的話，待辦清單會分成「我的」「○○的」兩份，可以切換；每一筆也能互相搬',
-    '生日可以清除了（自己的旁邊多一顆「清除」）']},
+    '生日可以清除了（自己的旁邊多一顆「清除」）',
+    '重複、失效的優惠可以直接從站上清掉，不會再留在清單裡']},
   {date:'2026-09-18', title:'圖表全面改版', items:[
     '排行榜的站台數據、洞察分析，每一份數據都換成最適合的圖表：時間用直條、佔比用一條色塊、尖峰會特別標出來',
     '每張圖手指按住（或滑鼠滑過）就看得到數字，也可以展開「看數字」看完整表格',
@@ -4442,6 +4471,15 @@ async function openDetail(id, fallback=null){
   const dtlEditBtn=$('#dtlAdminEdit');
   dtlEditBtn.classList.toggle('hidden', !(myProfile?.is_admin && o?.status==='approved'));
   dtlEditBtn.onclick=()=>{ $('#dlgDetail').close(); startEditOffer(id, true, false); };
+  // 刪除：清單上找不到的舊優惠，從詳情頁也刪得掉（已通過清單只列最新 200 筆）
+  const dtlDelBtn=$('#dtlAdminDelete');
+  dtlDelBtn.classList.toggle('hidden', !myProfile?.is_admin);
+  dtlDelBtn.onclick=async()=>{
+    if(!await adminDeleteOffer(id)) return;
+    $('#dlgDetail').close();
+    loadOffers().then(render);
+    if(myProfile?.is_admin) loadApproved();
+  };
   const body=$('#dtlBody');
   // 先保留跟「留言＋評分區都載入完成」差不多的高度，
   // 免得留言／評分資料回來後視窗一次跳一大截（拖累 CLS）。
@@ -6330,6 +6368,8 @@ function startBoardOnlineRefresh(){
    類別色照固定順序給「那個項目」，不是照名次給——資料變動、排序改變時顏色不會跳。 */
 const VIZ_CAT=['var(--viz-1)','var(--viz-2)','var(--viz-3)','var(--viz-4)','var(--viz-5)','var(--viz-6)'];
 const VIZ_MUTED='var(--viz-muted)';
+// 舊版選項專用的灰階（問卷題目改版前的答案）
+const VIZ_OLD=['var(--viz-old-1)','var(--viz-old-2)','var(--viz-old-3)','var(--viz-old-4)'];
 function vizPct(n,t){ return t?Math.round(n/t*100):0; }
 function vizCard(title, body, opts={}){
   return `<div class="dash-chart viz"${opts.style?` style="${opts.style}"`:''}>
@@ -6387,10 +6427,12 @@ function vizColumns(items, opts={}){
   </div>`;
 }
 // 100% 堆疊條：parts [{label, value, color}]；超過 6 塊時，小的合併成「其他」
+// opts.noMerge：選項是固定清單的題目（問卷）不能併——嵐：「多久來一次的『其他』是什麼？
+// 問卷沒有其他的選項」。那個「其他」其實是題目改版前的舊選項被併在一起，看的人不可能猜到。
 function vizStack(parts, opts={}){
   let ps=parts.filter(p=>p.value>0);
   if(!opts.keepOrder) ps=ps.slice().sort((a,b)=>b.value-a.value);
-  if(ps.length>6){
+  if(ps.length>6 && !opts.noMerge){
     const keep=ps.slice(0,5), rest=ps.slice(5);
     ps=[...keep,{label:'其他',value:rest.reduce((a,p)=>a+p.value,0),color:VIZ_MUTED,
       tip:'其他：'+rest.map(p=>p.label).join('、')}];
@@ -7303,6 +7345,35 @@ async function loadRejected(){
   });
 }
 
+/* ---- 管理員刪除優惠（嵐：「管理員要可以刪除優惠」）----
+   後台本來只有「下架」（status=archived，資料都留著）。重複匯入、測試資料、
+   亂投稿這種東西下架之後還是佔著後台清單，所以另外給一顆「刪除」。
+   刪掉救不回來，所以先用 admin_delete_offer(p_confirm:false) 試算，把「會一起
+   刪掉幾筆回報／留言／評分／收藏」寫進確認視窗；上面有別人的使用回報時再確認
+   一次（那些人的累積省下跟排行榜名次會跟著變少，這種情況通常該用「下架」或「合併」）。 ---- */
+async function adminDeleteOffer(id){
+  if(!LIVE||!myProfile?.is_admin) return false;
+  const {data:prev,error:e1}=await sb.rpc('admin_delete_offer',{p_offer_id:Number(id),p_confirm:false});
+  if(e1){
+    alert(/function|does not exist/i.test(e1.message||'')
+      ? '刪除功能要先在 Supabase 執行 schema_v72_admin_delete_offer.sql。'
+      : '刪除失敗：'+e1.message);
+    return false;
+  }
+  const n=k=>Number(prev?.[k]||0);
+  const attached=[['筆使用回報','reports'],['則留言','comments'],['個評分','ratings'],
+                  ['個收藏','wishlist'],['筆修改建議','edits'],['家分店','stores']]
+    .filter(([,k])=>n(k)).map(([l,k])=>`${n(k)} ${l}`).join('、');
+  if(!confirm(`永久刪除「${prev?.brand||('#'+id)}」？\n\n會一起刪掉：${attached||'（沒有其他附帶資料）'}\n`
+    +'刪掉就救不回來了。只是不想讓它出現在「優惠」分頁的話，用「下架」就好。')) return false;
+  if(n('reports') && !confirm(`這筆上面有 ${n('reports')} 筆別人的使用回報。`
+    +'\n刪掉之後，那些人的「累積省下」跟排行榜名次都會跟著變少。\n\n確定還是要刪嗎？')) return false;
+  const {error}=await sb.rpc('admin_delete_offer',{p_offer_id:Number(id),p_confirm:true});
+  if(error){ alert('刪除失敗：'+error.message); return false; }
+  showToast(`已刪除「${prev?.brand||('#'+id)}」`);
+  return true;
+}
+
 /* ---- 已通過清單：核可上架的投稿，點列可看完整細節，也可以直接下架 ---- */
 let APPROVED_FALLBACK={};
 async function loadApproved(){
@@ -7350,6 +7421,8 @@ async function loadApproved(){
       <span style="color:var(--ink-3);font-size:.78rem">${o.submitted_by?esc(o.profiles?.display_name||'匿名'):'系統匯入'}</span>
       ${o.verified?'<span class="flag ok-flag">已查證</span>':''}
       <button class="btn sm ap-archive" data-id="${o.id}">下架</button>
+      <button class="btn sm ap-delete" data-id="${o.id}"
+        style="border-color:var(--alert-line);color:var(--alert)">刪除</button>
     </div>`).join('') : '<div style="color:var(--ink-3);font-size:.86rem">這個篩選條件下沒有已上架的投稿。</div>';
   $$('.ap-click').forEach(row=>row.onclick=()=>openDetail(row.dataset.id, APPROVED_FALLBACK[row.dataset.id]));
   $$('.ap-archive').forEach(b=>b.onclick=async(e)=>{
@@ -7359,6 +7432,13 @@ async function loadApproved(){
     const {error}=await sb.rpc('review_offer',{p_offer_id:Number(b.dataset.id),p_status:'archived'});
     if(error){ b.disabled=false; alert('下架失敗：'+error.message); return; }
     loadApproved(); loadOffers().then(render);
+  });
+  $$('.ap-delete').forEach(b=>b.onclick=async(e)=>{
+    e.stopPropagation();
+    b.disabled=true;
+    const ok=await adminDeleteOffer(b.dataset.id);
+    b.disabled=false;
+    if(ok){ loadApproved(); loadOffers().then(render); }
   });
 }
 $('#apSourceFilter').onchange=loadApproved;
@@ -7803,13 +7883,34 @@ function startSurveyNudges(){
 
 /* ---- 管理員：問卷統計 ---- */
 let SV_ADMIN_SEQ=0;
+// 哪幾份回覆被點開了（存 survey_responses.id）＋整塊逐筆回覆是不是展開的
+let SV_OPEN=new Set(), SV_LIST_OPEN=true;
+try{ SV_LIST_OPEN=localStorage.getItem('sxr_sv_list_open')!=='0'; }catch{}
 /* ---- 管理員：問卷篩選＋逐筆回覆（嵐：要看得到填表人的名字跟信箱、可以篩選問題看結果）----
    逐筆資料直接讀 survey_responses（只有管理員讀得到），順便帶會員暱稱；信箱用 admin_user_emails()
    一次查一批。選了篩選條件時，圖表改成用篩選後的逐筆資料在前端重算（跟 admin_survey_summary 同一套算法），
    沒篩選時照舊用 RPC。 */
 let SV_RAW=[], SV_LABEL='', SV_SHOW=30;
+// 每一份回覆是誰填的：會員看 user_id，訪客看 session_id（同一台裝置），
+// 兩個都沒有的（很舊的資料）歸成一組。
+function surveyPersonKey(r){ return r.user_id ? 'u:'+r.user_id : 's:'+(r.session_id||''); }
+// 「填表人」這一題的選項：會員排前面、填得多的排前面；訪客沒有名字，照順序編號。
+function surveyPersonOpts(){
+  const m=new Map();
+  SV_RAW.forEach(r=>{
+    const k=surveyPersonKey(r);
+    if(!m.has(k)) m.set(k,{key:k, member:!!r.user_id, name:r.profiles?.display_name||'', n:0});
+    m.get(k).n++;
+  });
+  let guestN=0;
+  return [...m.values()]
+    .sort((a,b)=>(Number(b.member)-Number(a.member))||(b.n-a.n))
+    .map(p=>[p.key, p.member?(p.name||'會員（沒設暱稱）'):`訪客 ${++guestN}`]);
+}
 function surveyFilterQuestions(){
   return [
+    // 嵐：「要有每一筆回饋分別篩選的結果，不然我都不知道什麼是誰填的、跟這個人分別填了什麼」
+    {key:'person', label:'填表人', opts:surveyPersonOpts(), get:r=>surveyPersonKey(r)},
     {key:'who', label:'會員／訪客', opts:[['member','會員'],['guest','訪客']], get:r=>r.user_id?'member':'guest'},
     {key:'overall', label:'整體滿意度', opts:SURVEY_FACES.map(([v,e,l])=>[v,`${v} 分・${l}`]), get:r=>String(r.overall)},
     {key:'nps', label:'會不會推薦', opts:[['pro','推薦者（9–10 分）'],['pas','中立（7–8 分）'],['det','批評者（0–6 分）']],
@@ -7904,26 +8005,71 @@ async function renderSurveyResponses(){
       (data||[]).forEach(x=>ADMIN_EMAIL_CACHE.set(x.id||x.user_id, x.email||null));
     }catch{}
   }
-  const qs=surveyFilterQuestions().filter(q=>!['who','overall','nps'].includes(q.key));
+  const qs=surveyFilterQuestions().filter(q=>!['person','who','overall','nps'].includes(q.key));
   const ans=r=>qs.map(q=>{
     const v=q.get(r); if(v==null || (Array.isArray(v)&&!v.length)) return '';
     const name=k=>(q.opts.find(o=>o[0]===k)||[k, SURVEY_LEGACY_LABELS[k]?SURVEY_LEGACY_LABELS[k]+'（舊版）':k])[1];
     return `<span class="sv-ans"><i>${esc(q.label)}</i>${esc((Array.isArray(v)?v:[v]).map(name).join('、'))}</span>`;
   }).join('');
+  // 33 份回覆一次全部攤開，滑到天荒地老（嵐：「回饋問卷也要可以收合」）：
+  // 整塊可以收起來，每一份預設也只顯示一行（時間・誰・信箱・分數），點開才看答案。
   el.innerHTML=`<div class="dash-chart">
-    <b>逐筆回覆（${rows.length} 份${f?`，${esc(f.label)}`:''}）</b>
-    <div class="sub-list" style="margin-top:8px">${shown.map(r=>{
-      const email=r.user_id?ADMIN_EMAIL_CACHE.get(r.user_id):null;
-      return `<div class="sub-item sv-item">
-        <b>${esc(fmtDT(r.created_at))}・${r.user_id?esc(r.profiles?.display_name||'會員（沒設暱稱）'):'訪客'}${
-          email?`　<span class="sv-email">${esc(email)}</span>`:''}・滿意度 ${esc(String(r.overall))}・推薦 ${esc(String(r.nps))}</b>
-        <div class="sv-ans-list">${ans(r)}</div>
-        ${r.comment?`<span style="white-space:pre-wrap;overflow-wrap:anywhere">💬 ${esc(r.comment)}</span>`:''}
-      </div>`;}).join('')||'<div class="hint">沒有符合的回覆。</div>'}</div>
-    ${rows.length>SV_SHOW?`<button type="button" class="btn sm" id="btnSvMore" style="margin-top:10px">再看 30 份（還有 ${rows.length-SV_SHOW} 份）</button>`:''}
+    <div class="sv-toolbar">
+      <b>逐筆回覆（${rows.length} 份${f?`，${esc(f.label)}`:''}）</b>
+      ${rows.length?`<span class="sv-toolbar-btns">
+        <button type="button" class="btn sm" id="btnSvExpandAll">${SV_OPEN.size?'全部收合':'全部展開'}</button>
+        <button type="button" class="btn sm" id="btnSvFold" aria-expanded="${SV_LIST_OPEN}">${SV_LIST_OPEN?'收合':'展開'}</button>
+      </span>`:''}
+    </div>
+    <div id="svRespWrap" class="${SV_LIST_OPEN?'':'hidden'}">
+      <div class="sub-list" style="margin-top:8px">${shown.map(r=>{
+        const email=r.user_id?ADMIN_EMAIL_CACHE.get(r.user_id):null;
+        const key=String(r.id ?? r.created_at);
+        const open=SV_OPEN.has(key);
+        return `<div class="sub-item sv-item">
+          <button type="button" class="sv-head" data-key="${esc(key)}" aria-expanded="${open}">
+            <span class="sv-when">${esc(fmtDT(r.created_at))}</span>
+            <span class="sv-name">${r.user_id?esc(r.profiles?.display_name||'會員（沒設暱稱）'):'訪客'}</span>
+            ${email?`<span class="sv-email">${esc(email)}</span>`:''}
+            <span class="sv-score">滿意度 ${esc(String(r.overall))}・推薦 ${esc(String(r.nps))}</span>
+            <span class="sv-chev" aria-hidden="true">▾</span>
+          </button>
+          <div class="sv-detail${open?'':' hidden'}">
+            <div class="sv-ans-list">${ans(r)}</div>
+            ${r.comment?`<span class="sv-comment">💬 ${esc(r.comment)}</span>`:''}
+            <button type="button" class="btn sm sv-only" data-person="${esc(surveyPersonKey(r))}">只看這個人的回覆</button>
+          </div>
+        </div>`;}).join('')||'<div class="hint">沒有符合的回覆。</div>'}</div>
+      ${rows.length>SV_SHOW?`<button type="button" class="btn sm" id="btnSvMore" style="margin-top:10px">再看 30 份（還有 ${rows.length-SV_SHOW} 份）</button>`:''}
+    </div>
   </div>`;
   const more=$('#btnSvMore');
   if(more) more.onclick=()=>{ SV_SHOW+=30; renderSurveyResponses(); };
+  $$('#svResponses .sv-head').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.key, open=b.getAttribute('aria-expanded')!=='true';
+    if(open) SV_OPEN.add(k); else SV_OPEN.delete(k);
+    b.setAttribute('aria-expanded', String(open));
+    b.parentElement.querySelector('.sv-detail').classList.toggle('hidden', !open);
+  });
+  const foldBtn=$('#btnSvFold');
+  if(foldBtn) foldBtn.onclick=()=>{
+    SV_LIST_OPEN=!SV_LIST_OPEN;
+    try{ localStorage.setItem('sxr_sv_list_open', SV_LIST_OPEN?'1':'0'); }catch{}
+    renderSurveyResponses();
+  };
+  const allBtn=$('#btnSvExpandAll');
+  if(allBtn) allBtn.onclick=()=>{
+    if(SV_OPEN.size) SV_OPEN.clear();
+    else shown.forEach(r=>SV_OPEN.add(String(r.id ?? r.created_at)));
+    renderSurveyResponses();
+  };
+  // 「只看這個人的回覆」＝把上面的篩選設成「填表人：這個人」，圖表也跟著只算他
+  $$('#svResponses .sv-only').forEach(b=>b.onclick=()=>{
+    $('#svFilterQ').value='person';
+    renderSurveyFilterAnswers();
+    $('#svFilterA').value=b.dataset.person;
+    applySurveyFilter();
+  });
 }
 $('#svFilterQ').onchange=()=>{ renderSurveyFilterAnswers(); applySurveyFilter(); };
 $('#svFilterA').onchange=()=>applySurveyFilter();
@@ -7967,8 +8113,13 @@ function renderSurveySummary(d, label){
     const rows=entries(obj,list).filter(r=>r.value);
     if(!rows.length) return '';
     const sum=rows.reduce((a,r)=>a+r.value,0);
+    // noMerge：問卷的選項是固定清單，選項多過 6 個也要一個一個列出來，
+    // 不能併成「其他」——問卷裡根本沒有「其他」這個選項（嵐）。
+    // 舊版選項各給一個不同深淺的灰，四個連在一起也分得出來。
+    let oldN=0;
     return card(title, vizStack(rows.map(r=>({label:r.label, value:r.value,
-        color:r.idx<0?VIZ_MUTED:VIZ_CAT[r.idx%VIZ_CAT.length]})),{unit:' 人', keepOrder:!!ordered}),
+        color:r.idx<0?VIZ_OLD[oldN++%VIZ_OLD.length]:VIZ_CAT[r.idx%VIZ_CAT.length]})),
+        {unit:' 人', keepOrder:!!ordered, noMerge:true}),
       {head:['選項','人數','佔比'], rows:rows.map(r=>[r.label,r.value,vizPct(r.value,sum)+'%'])});
   };
   // 直條（有順序的分組，例如年紀）
@@ -8028,8 +8179,8 @@ function renderSurveySummary(d, label){
     ${stack('怎麼知道壽星日', d.source, SURVEY_SOURCES)}
     ${extraCharts}
     ${(d.recent_comments||[]).length?`<div class="dash-chart" style="margin-top:12px"><b>還想說的話（最新 50 則）</b>
-      <div class="sub-list" style="margin-top:8px">${d.recent_comments.map(c=>`<div class="sub-item">
-        <b>${esc(fmtDT(c.created_at))}・${c.is_member?esc(c.display_name||'會員（沒設暱稱）'):'訪客'}・滿意度 ${esc(String(c.overall))}・推薦 ${esc(String(c.nps))}</b>
+      <div class="sub-list" style="margin-top:8px">${d.recent_comments.map(c=>`<div class="sub-item sv-cmt">
+        <b class="sv-cmt-who">${esc(fmtDT(c.created_at))}・${c.is_member?esc(c.display_name||'會員（沒設暱稱）'):'訪客'}・滿意度 ${esc(String(c.overall))}・推薦 ${esc(String(c.nps))}</b>
         <span style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(c.comment)}</span></div>`).join('')}</div></div>`:''}`;
 }
 
