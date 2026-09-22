@@ -6,6 +6,11 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://birthdaydeals.celine-fu-work.workers.dev/terms.html</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
     <loc>https://birthdaydeals.celine-fu-work.workers.dev/privacy.html</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
