@@ -9,6 +9,28 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## 新增隱私權政策頁（Google OAuth 驗證要求）
+
+Google 寄信來說 `birthdaydeals101` 這個 Cloud 專案的 OAuth 同意畫面缺品牌資訊、沒通過驗證，
+**期限 2026-12-20**；逾期而且專案還是 production 狀態的話，Console 上就不能再改任何設定
+（資料存取、用戶端…），使用者登入時也可能看到「未經 Google 驗證」。
+
+Google 要的四樣裡，只有「隱私權政策網址」是站上原本沒有的，所以補了一頁：
+
+- 新增 `privacy.html`（獨立一頁、不經過 build.py，沿用站上的配色與字體）
+- `template.html` 頁尾加「隱私權政策」連結——Google 審查會確認政策頁從首頁連得到
+- `sitemap.xml` 加這一頁
+
+內容是照實際實作寫的，不是罐頭範本：不登入會留下什麼、Google 登入拿到哪些資料（只有
+email／名字／頭像，不碰 Gmail 或雲端硬碟）、哪些欄位公開哪些不公開、位置資訊只在裝置上用、
+資料放在 Supabase／Cloudflare、怎麼來信刪帳號（30 天內）、Cookie 與本機儲存、兒童、聯絡方式。
+
+寫的時候順手核對過原始碼：`site_events` 沒有 IP 欄位、`session_id` 是存在 localStorage 的隨機字串
+（不只問卷會用到，造訪統計也用它）、avatars bucket 是公開讀取（政策裡有寫清楚上傳的照片是公開的）。
+Supabase 的機房區域沒有寫進去——這點要 celine 自己在 Supabase 後台確認。
+
+---
+
 ## 前端修正　合併面板：中文數字、有幾張符合、卡片上直接刪
 
 不用跑 SQL，只要重新上傳 `index.html` 跟 `sw.js`。
