@@ -31,7 +31,8 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
     {id:248, brand:'龜記茗品 Guiji', offer:'飲料', reportCount:6, groupName:'', regions:[]},
     {id:5, brand:'德克士', offer:'炸雞桶 5 折優惠券 2 張', reportCount:0, groupName:'', regions:[]},
     {id:320, brand:'再睡5分鐘', offer:'生日當天送蛋糕', reportCount:0, groupName:'', regions:[]},
-    {id:321, brand:'定食8', offer:'壽星招待甜點', reportCount:0, groupName:'', regions:[]}];`);
+    {id:321, brand:'定食8', offer:'壽星招待甜點', reportCount:0, groupName:'', regions:[]},
+    {id:391, brand:'再睡五分鐘', offer:'當月壽星飲品買一送一', reportCount:0, groupName:'', regions:[]}];`);
   win.renderMergePanel();
   const sugg = [...doc.querySelectorAll('#mergeSugg .merge-sugg-btn')].map((b) => b.textContent.replace(/\s+/g, ' ').trim());
   t.ok('列出「gonna EAT」跟「gonnaEAT」（去掉空白後一樣）', sugg.some((x) => /#59 gonna EAT/.test(x) && /#214 gonnaEAT/.test(x)), sugg);
@@ -47,8 +48,9 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   const type = (sel, v) => { $(sel).value = v; $(sel).dispatchEvent(new win.Event('input')); };
   const hits = (sel) => [...doc.querySelectorAll(sel + ' .merge-hit')].map((b) => b.textContent.replace(/\s+/g, ' ').trim());
   type('#mergeKeep', '再睡5');
-  t.ok('名字裡有數字的店找得到，不會跳成 #5 德克士', /再睡5分鐘/.test($('#mergeKeepCard').textContent)
-    && !/德克士/.test($('#mergeKeepCard').textContent), $('#mergeKeepCard').textContent);
+  t.ok('名字裡有數字的店找得到，不會跳成 #5 德克士',
+    hits('#mergeKeepHits').some((x) => /再睡5分鐘/.test(x)) && !/德克士/.test($('#mergeKeepHits').textContent),
+    hits('#mergeKeepHits'));
   type('#mergeKeep', '定食8');
   t.ok('「定食8」也找得到', /#321 定食8/.test($('#mergeKeepCard').textContent), $('#mergeKeepCard').textContent);
   type('#mergeKeep', '咖啡');
@@ -57,6 +59,19 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   doc.querySelector('#mergeKeepHits .merge-hit').click();
   t.ok('點一下就帶進輸入框', /^#\d+ /.test($('#mergeKeep').value), $('#mergeKeep').value);
   t.eq('選好之後就不再列清單', hits('#mergeKeepHits').length, 0);
+  // 「再睡5分鐘」跟「再睡五分鐘」：中文數字要認得是同一家
+  t.ok('中文數字寫法不同也算可能重複', win.mergeSearch('再睡').length === 2, win.mergeSearch('再睡').map((o) => o.brand));
+  t.eq('比對時把中文數字換成阿拉伯數字', win.mergeNorm('再睡五分鐘'), win.mergeNorm('再睡5分鐘'));
+  win.renderMergePanel();
+  const sugg2 = [...doc.querySelectorAll('#mergeSugg .merge-sugg-btn')].map((b) => b.textContent.replace(/\s+/g, ' ').trim());
+  t.ok('「可能重複」列出 再睡5分鐘 ⇄ 再睡五分鐘', sugg2.some((x) => /再睡5分鐘/.test(x) && /再睡五分鐘/.test(x)), sugg2);
+
+  // 有好幾張符合時不能寫「找不到」（celine 打「再睡」剛好命中兩張）
+  type('#mergeKeep', '再睡');
+  t.ok('有好幾張符合時叫人從上面挑，不是寫找不到', /有 2 張符合/.test($('#mergeKeepCard').textContent)
+    && !/找不到/.test($('#mergeKeepCard').textContent), $('#mergeKeepCard').textContent);
+  t.eq('兩張都列在上面讓人點', hits('#mergeKeepHits').length, 2);
+
   type('#mergeKeep', '這家店不存在');
   t.ok('真的沒有的店講清楚找不到', /找不到符合的優惠/.test($('#mergeKeepHits').textContent), $('#mergeKeepHits').textContent);
   type('#mergeKeep', '5');

@@ -3236,7 +3236,8 @@ const SITE_UPDATES=[
     '幫家人／另一半記生日的話，待辦清單會分成「我的」「○○的」兩份，可以切換；每一筆也能互相搬',
     '生日可以清除了（自己的旁邊多一顆「清除」）',
     '重複、失效的優惠可以直接從站上清掉，不會再留在清單裡',
-    '修正整併重複店家時會挑錯店：店名裡有數字的（再睡5分鐘、定食8、31冰淇淋…）會被當成編號']},
+    '修正整併重複店家時會挑錯店：店名裡有數字的（再睡5分鐘、定食8、31冰淇淋…）會被當成編號',
+    '整併重複店家時，「再睡5分鐘」跟「再睡五分鐘」這種中文數字寫法不同的，現在也認得出是同一家']},
   {date:'2026-09-18', title:'圖表全面改版', items:[
     '排行榜的站台數據、洞察分析，每一份數據都換成最適合的圖表：時間用直條、佔比用一條色塊、尖峰會特別標出來',
     '每張圖手指按住（或滑鼠滑過）就看得到數字，也可以展開「看數字」看完整表格',
@@ -8522,7 +8523,14 @@ function wireChartTooltips(root, registry=DASH_CHARTS){
 /* ---- 管理員設定：用 email 直接在網站上新增／移除管理員，不用回去跑 SQL ---- */
 /* ---- 管理員：合併重複優惠（schema_v70 的 admin_merge_offers）---- */
 function mergeOfferLabel(o){ return `#${o.id} ${o.brand}`; }
-function mergeNorm(b){ return String(b||'').toLowerCase().replace(/[\s\-_.·・!！'’]/g,''); }
+// 「再睡5分鐘」跟「再睡五分鐘」是同一家（真的兩張都在站上），中文數字換成阿拉伯數字
+// 才比得出來；只在比對時換，顯示出來的還是原本的店名。
+const CJK_NUM={'零':'0','一':'1','二':'2','三':'3','四':'4','五':'5','六':'6','七':'7','八':'8','九':'9','十':'10'};
+function mergeNorm(b){
+  return String(b||'').toLowerCase()
+    .replace(/[零一二三四五六七八九十]/g, c=>CJK_NUM[c])
+    .replace(/[\s\-_.·・!！'’]/g,'');
+}
 /* 找出輸入的是哪一張優惠。
    celine：「我查不到我很確定有的店家」——舊版是 `/#?(\d+)/`，在字串裡抓到第一串數字就
    當成編號，所以打「再睡5」會跳出「#5 德克士」，而且完全沒有用名字找的路。品牌名字裡
@@ -8575,11 +8583,19 @@ function mergeSuggestions(){
   }
   return pairs.sort((x,y)=>(y.same-x.same)||String(x.keep.brand).localeCompare(String(y.keep.brand),'zh-Hant'));
 }
-function mergeCardHtml(o){
-  if(!o) return '<span class="hint">找不到這張優惠，輸入品牌或 #編號</span>';
+function mergeCardHtml(o, v){
+  // 有好幾張符合時，上面的清單已經列出來了——這裡不能寫「找不到這張優惠」，
+  // celine 打「再睡」剛好命中兩張（#41 再睡5分鐘、#391 再睡五分鐘），就被這句話誤導成查不到。
+  if(!o){
+    const n=mergeSearch(v, 9).length;
+    return n>1 ? `<span class="hint">有 ${n} 張符合「${esc(String(v||'').trim())}」，從上面挑一張。</span>`
+               : '<span class="hint">找不到這張優惠，輸入品牌或 #編號</span>';
+  }
   return `<b>${esc(mergeOfferLabel(o))}</b>
     <div class="offer">${esc(o.offer||'')}</div>
-    <div class="hint" style="margin-top:4px">回報 ${o.reportCount||0} 次・留言 ${o.commentCount||0}・收藏 ${o.wishCount||0}・${esc((o.regions||[]).join('、')||'地區未確認')}</div>`;
+    <div class="hint" style="margin-top:4px">回報 ${o.reportCount||0} 次・留言 ${o.commentCount||0}・收藏 ${o.wishCount||0}・${esc((o.regions||[]).join('、')||'地區未確認')}</div>
+    ${myProfile?.is_admin?`<button type="button" class="btn sm merge-del" data-id="${esc(String(o.id))}"
+      style="margin-top:8px;border-color:var(--alert-line);color:var(--alert)">🗑 刪除這張</button>`:''}`;
 }
 function renderMergePanel(){
   if(!$('#mergeKeep')) return;
@@ -8601,8 +8617,24 @@ function renderMergePanel(){
     $(b.dataset.for).value=mergeOfferLabel(o);
     renderMergePanel();
   });
-  $('#mergeKeepCard').innerHTML=$('#mergeKeep').value?mergeCardHtml(keep):'<span class="hint">還沒選</span>';
-  $('#mergeDropCard').innerHTML=$('#mergeDrop').value?mergeCardHtml(drop):'<span class="hint">還沒選</span>';
+  $('#mergeKeepCard').innerHTML=$('#mergeKeep').value?mergeCardHtml(keep,$('#mergeKeep').value):'<span class="hint">還沒選</span>';
+  $('#mergeDropCard').innerHTML=$('#mergeDrop').value?mergeCardHtml(drop,$('#mergeDrop').value):'<span class="hint">還沒選</span>';
+  // 選到哪一張就能直接刪掉那一張——celine：「找不到直接刪除的按鈕」。
+  // 「已通過清單」裡本來就有一顆，但那個 panel 預設收合、又只列最新 200 筆，
+  // 用店名找特定一張優惠的人其實都是在這個面板上找。
+  $$('.merge-del').forEach(b=>b.onclick=async()=>{
+    b.disabled=true;
+    const ok=await adminDeleteOffer(b.dataset.id);
+    b.disabled=false;
+    if(!ok) return;
+    ['#mergeKeep','#mergeDrop'].forEach(sel=>{
+      const o=mergeFind($(sel).value);
+      if(!o || String(o.id)===String(b.dataset.id)) $(sel).value='';
+    });
+    await loadOffers();
+    render();
+    renderMergePanel();
+  });
   $('#btnMerge').disabled=!(keep&&drop&&keep.id!==drop.id);
   const sug=mergeSuggestions();
   $('#mergeSugg').innerHTML=sug.length?sug.slice(0,30).map((p,i)=>`<button type="button" class="btn sm merge-sugg-btn" data-i="${i}">
