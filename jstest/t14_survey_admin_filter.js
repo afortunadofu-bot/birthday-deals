@@ -56,7 +56,10 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   a.value = 'threads'; a.dispatchEvent(new win.Event('change'));
   await tick(win, 5);
   t.eq('逐筆回覆只剩答 Threads 的', items().length, 2);
-  t.ok('標題寫出篩選條件', /怎麼知道壽星日：Threads/.test($('#svResponses b').textContent));
+  t.ok('標題寫出幾份、篩選條件放在下面一行（放標題裡會把整頁撐寬）',
+    /逐筆回覆（2 份）/.test($('#svResponses b').textContent)
+    && /怎麼知道壽星日：Threads/.test($('#svResponses .sv-filter-note').textContent),
+    [$('#svResponses b').textContent, $('#svResponses .sv-filter-note')?.textContent]);
   t.eq('圖表也只算篩選後的人（回覆數 2）', $('#svCount').textContent, '2');
   t.ok('圖表標題寫出篩選條件', /怎麼知道壽星日：Threads/.test($('#svBody .bigstat').textContent), $('#svBody .bigstat').textContent);
 

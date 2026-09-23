@@ -98,7 +98,8 @@ const { boot, tick, makeSb, makeAsserts, stubHeavy } = require('./harness');
   await tick(win, 5);
   t.eq('「只看這個人的回覆」只留他填的', items().length, 2);
   t.eq('篩選條件也跟著設成這個人', [$('#svFilterQ').value, $('#svFilterA').value], ['person', 'u:u-1']);
-  t.ok('標題寫出是誰', /填表人：嵐/.test($('#svResponses b').textContent), $('#svResponses b').textContent);
+  t.ok('篩選條件寫在標題下面一行（不是塞進標題把整頁撐寬）',
+    /填表人：嵐/.test($('#svResponses .sv-filter-note').textContent), $('#svResponses .sv-filter-note')?.textContent);
   t.eq('圖表也只算這個人（2 份）', $('#svCount').textContent, '2');
 
   /* ============ 4. 管理員刪除優惠 ============ */

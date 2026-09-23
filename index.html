@@ -768,7 +768,10 @@
     color:var(--ink);white-space:nowrap}
   .vcol:hover .vcol-fill{filter:brightness(.9)}
   .vcols-x{display:flex;gap:3px;margin-top:4px}
-  .vcols-x span{flex:1;text-align:center;font-size:.66rem;color:var(--ink-3);white-space:nowrap;min-width:0}
+  /* nowrap 會讓長標籤（「18 歲以下」）溢出自己的格子、跟隔壁那格疊在一起。
+     讓它換行就好——直條本來就窄，兩行比疊字好讀。 */
+  .vcols-x span{flex:1;text-align:center;font-size:.66rem;color:var(--ink-3);min-width:0;
+    overflow-wrap:anywhere;line-height:1.25}
   /* 100% 堆疊條：佔比 */
   .vstack{display:flex;gap:2px;height:16px}
   .vstack-seg{display:block;height:100%;min-width:3px}
@@ -832,13 +835,47 @@
     color:var(--ink-2);cursor:pointer;white-space:nowrap;min-height:34px}
   .subtab:hover{color:var(--ink)}
   .subtab[aria-selected="true"]{background:var(--surface);color:var(--ink);font-weight:700;box-shadow:var(--shadow-sm)}
+  /* ---------- 生日當天／當週的祝賀（嵐：「有寫生日的人，生日當天或當週點進來
+     要有生日動畫跟小卡片，蠟燭之類的，祝她生日快樂玩得開心」）----------
+     用 CSS 做就好，不另外載動畫函式庫：紙花是一排絕對定位的小方塊各自掉下來，
+     蠟燭是一個會抖的火苗。整塊會蓋住畫面，但按任何地方或「知道了」就關掉。
+     會暈的人（prefers-reduced-motion）只看到靜止的卡片，不會有東西在動。 */
+  #bdayCheer{position:fixed;inset:0;z-index:400;display:flex;align-items:center;justify-content:center;
+    padding:20px;background:rgba(20,20,35,.42);backdrop-filter:blur(2px)}
+  #bdayCheer.hidden{display:none}
+  .bday-card{position:relative;z-index:2;background:var(--surface);border-radius:var(--r);
+    box-shadow:var(--shadow-lg);padding:26px 22px 20px;max-width:340px;width:100%;text-align:center;
+    animation:bdayPop .45s var(--ease) both}
+  .bday-cake{font-size:3rem;line-height:1;position:relative;display:inline-block;
+    animation:bdayBob 2.4s ease-in-out infinite}
+  .bday-flame{position:absolute;left:50%;top:-6px;width:8px;height:12px;margin-left:-4px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;
+    background:radial-gradient(circle at 50% 70%, #fff3b0 0%, #ffb320 55%, #f2711c 100%);
+    animation:bdayFlame 1.1s ease-in-out infinite}
+  .bday-card h2{font-size:1.25rem;margin:12px 0 4px}
+  .bday-card p{font-size:.9rem;color:var(--ink-2);margin:0 0 16px}
+  .bday-card .row{justify-content:center;gap:8px}
+  .bday-confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
+  .bday-confetti i{position:absolute;top:-16px;width:8px;height:12px;border-radius:2px;
+    animation:bdayFall linear infinite}
+  @keyframes bdayPop{from{opacity:0;transform:translateY(14px) scale(.94)}to{opacity:1;transform:none}}
+  @keyframes bdayBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+  @keyframes bdayFlame{0%,100%{transform:scaleY(1) rotate(-3deg);opacity:1}50%{transform:scaleY(1.25) rotate(4deg);opacity:.85}}
+  @keyframes bdayFall{to{transform:translateY(105vh) rotate(540deg)}}
+  @media (prefers-reduced-motion:reduce){
+    .bday-card,.bday-cake,.bday-flame,.bday-confetti i{animation:none}
+    .bday-confetti{display:none}
+  }
   /* 問卷逐筆回覆：整列是一顆可以點開／收起的按鈕。
      原本那一行（時間・名字・信箱・分數）是 .sub-item 的 <b>，被 width:76px + ellipsis
      切成「2026-09-2…」，名字跟信箱根本看不到（嵐：「我都不知道什麼是誰填的」）——
      這裡自己排版，不吃 .sub-item 的欄寬規則。 */
   .sv-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0}
-  .sv-toolbar>b{flex:1 1 auto;white-space:nowrap}
+  /* 標題不能 nowrap：篩選條件一長（「逐筆回覆（17 份，最希望壽星日接下來加什麼？：
+     找離我最近的分店）」）整個 panel 就被撐寬，整頁跟著可以左右捲，手機上看起來像
+     版面壞掉。篩選條件改成下面獨立一行的 .sv-filter-note，標題只留「逐筆回覆（N 份）」。 */
+  .sv-toolbar>b{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
   .sv-toolbar-btns{display:flex;gap:8px;margin-left:auto}
+  .sv-filter-note{font-size:.78rem;color:var(--ink-2);margin-top:4px;overflow-wrap:anywhere}
   .sv-item{display:block;padding:0}
   .sv-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;width:100%;text-align:left;position:relative;
     background:none;border:0;font:inherit;font-size:.8rem;color:var(--ink);padding:8px 26px 8px 10px;cursor:pointer}
@@ -1179,8 +1216,16 @@
       <p class="sub">被回報最多次的優惠。</p>
       <div class="row" style="margin-bottom:10px">
         <label class="lbl">顯示<select id="popSortBy">
-          <option value="rank">名次</option>
+          <option value="rank">名次（全部時間）</option>
+          <option value="recent">最近使用最多次</option>
           <option value="climb">進步最多（跟 7 天前比）</option>
+        </select></label>
+        <!-- 嵐：除了「最近前進名次最多」，也想看「最近使用最多次」，而且時間範圍可以自己選 -->
+        <label class="lbl hidden" id="popRangeWrap">期間<select id="popRange">
+          <option value="7">近 7 天</option>
+          <option value="30" selected>近 30 天</option>
+          <option value="90">近 90 天</option>
+          <option value="180">近 180 天</option>
         </select></label>
       </div>
       <div id="popBody"></div>
@@ -1784,6 +1829,20 @@
   </div>
 </form></dialog>
 
+<!-- 生日當天／當週打開網站時的祝賀（maybeShowBirthdayCheer） -->
+<div class="hidden" id="bdayCheer" role="dialog" aria-modal="true" aria-labelledby="bdayCheerTitle">
+  <div class="bday-confetti" id="bdayConfetti" aria-hidden="true"></div>
+  <div class="bday-card">
+    <span class="bday-cake" aria-hidden="true">🎂<span class="bday-flame"></span></span>
+    <h2 id="bdayCheerTitle">生日快樂！</h2>
+    <p id="bdayCheerSub"></p>
+    <div class="row">
+      <button type="button" class="btn sm" id="btnBdayCheerClose">知道了</button>
+      <button type="button" class="btn sm primary" id="btnBdayCheerGo">看我的待辦清單</button>
+    </div>
+  </div>
+</div>
+
 <!-- 有新更新時，打開網站跳出來引導去看更新紀錄（maybeShowUpdatesNudge） -->
 <div class="hidden" id="updatesNudge" role="dialog" aria-label="壽星日有新的更新">
   <div style="display:flex;gap:8px;align-items:flex-start">
@@ -2257,7 +2316,7 @@ async function connectLive(){
   loadSiteStats(); loadSiteAnnouncement(); registerSW();
   logEvent('pageview', {tab: location.hash||'offers'});
   startSurveyNudges();
-  setTimeout(maybeShowUpdatesNudge, 1200);
+  setTimeout(()=>{ maybeShowBirthdayCheer(); maybeShowUpdatesNudge(); }, 1200);
 }
 
 /* ---- 成效追蹤：極簡事件記錄，失敗就默默略過，不能影響網站正常使用 ---- */
@@ -2392,6 +2451,8 @@ function paintAuth(){
       $('#bday').value=myProfile.birth_day?String(myProfile.birth_day):'';
       renderPlanner();
       renderReminders();
+      // 開場跑 maybeShowBirthdayCheer() 時通常還沒登入完、生日還沒帶進來，這裡再試一次
+      maybeShowBirthdayCheer();
     }
     // 第二組生日（家人／另一半）
     ALT_B={label:myProfile.alt_label||'', month:myProfile.alt_birth_month||0, day:myProfile.alt_birth_day||0};
@@ -3230,6 +3291,12 @@ $('#btnMineA2hsClose').onclick=()=>{
    的東西；還在 feature/geo 分支、沒上線的功能（附近分店、地圖模式）不列。
    新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
 const SITE_UPDATES=[
+  {date:'2026-09-23', title:'生日祝賀、月底提醒、排行榜看最近', items:[
+    '有填生日的話，生日當天（跟前後幾天）打開壽星日會跳出生日祝賀小卡片，還有蠟燭跟紙花 🎂',
+    '月底前 7 天會提醒你：待辦清單裡有哪幾個優惠這個月底就結束了',
+    '「大家都在用什麼」多一個「最近使用最多次」，而且可以自己選近 7／30／90／180 天',
+    '修正問卷篩選條件太長時整個畫面會被撐寬、可以左右滑動',
+    '修正「你的年紀」長條圖下面的文字疊在一起']},
   {date:'2026-09-21', title:'列表更順、數字對齊', items:[
     '修正往下滑優惠清單時網頁會出錯、整頁重載：改成先顯示 30 筆，滑到底自動接著顯示',
     '用 iPad／手機點開一筆優惠再關掉，會停在原本的位置，不會跳回最上面',
@@ -3374,11 +3441,78 @@ $('#siteUpdatesPanel h2').addEventListener('click',()=>{
 function updatesNudgeDone(){
   try{ return localStorage.getItem('sxr_updates_nudge_done')||''; }catch{ return SITE_UPDATES[0].date; }
 }
+/* ---- 生日當天／當週的祝賀 ----
+   嵐：「如果使用者有寫自己的生日日期，在生日當天或當週點進來的話，會得到生日動畫跟
+   小卡片、蠟燭之類的，祝她生日快樂玩得開心」。
+   - 當天：滿版紙花＋蛋糕，文案是「生日快樂」
+   - 當週（前後 3 天內）：同一張卡片，文案改成「生日這幾天」，語氣輕一點
+   - 每年每台裝置各只跳一次（當週一次、當天一次，當天那次一定跳得到）
+   - 沒填生日、還沒登入的人完全不會看到 ---- */
+function bdayCheerState(){
+  const m=+($('#bmonth')?.value||0), d=+($('#bday')?.value||0);
+  if(!m || !d) return null;                     // 只填月份不知道是哪一天，不亂跳
+  const y=TODAY.getFullYear();
+  let t=new Date(y, m-1, d);
+  // 12 月底的生日、1 月初開網站（或反過來）也要算得出來，取最近的那一次
+  const diff=x=>Math.round((x-TODAY)/864e5);
+  [new Date(y-1,m-1,d), new Date(y+1,m-1,d)].forEach(alt=>{
+    if(Math.abs(diff(alt))<Math.abs(diff(t))) t=alt;
+  });
+  const days=diff(t);
+  if(days===0) return {kind:'today', days, year:y};
+  if(Math.abs(days)<=3) return {kind:'week', days, year:y};
+  return null;
+}
+function maybeShowBirthdayCheer(){
+  const st=bdayCheerState();
+  if(!st) return false;
+  const key=`sxr_bday_cheer_${st.kind}_${st.year}`;
+  try{ if(localStorage.getItem(key)) return false; }catch{}
+  if(!$('#surveyNudge')?.classList.contains('hidden')) return false;
+  const name=myProfile?.display_name||'';
+  const wishN=[...WISH].filter(id=>OFFERS.some(o=>String(o.id)===id)).length;
+  $('#bdayCheerTitle').textContent = st.kind==='today'
+    ? `生日快樂${name?`，${name}`:''}！🎉`
+    : `生日快到了${name?`，${name}`:''}！`;
+  $('#bdayCheerSub').textContent = st.kind==='today'
+    ? (wishN ? `今天是你的日子，待辦清單裡還有 ${wishN} 個優惠等你去拿，玩得開心！`
+             : '今天是你的日子，去挑幾個生日優惠犒賞自己，玩得開心！')
+    : (st.days>0 ? `再 ${st.days} 天就是你的生日${wishN?`，清單裡有 ${wishN} 個優惠可以先安排`:''}。`
+                 : `生日這幾天，優惠通常還能用${wishN?`，清單裡還有 ${wishN} 個沒用`:''}。`);
+  $('#bdayConfetti').innerHTML = st.kind==='today' ? confettiHtml(26) : confettiHtml(12);
+  $('#bdayCheer').classList.remove('hidden');
+  try{ localStorage.setItem(key,'1'); }catch{}
+  logEvent('bday_cheer', {kind:st.kind});
+  return true;
+}
+// 紙花：顏色、左右位置、掉落速度、延遲都隨機，看起來才不會像排隊掉下來
+function confettiHtml(n){
+  const colors=['var(--accent)','var(--viz-2)','var(--viz-3)','var(--viz-4)','var(--viz-6)'];
+  let out='';
+  for(let i=0;i<n;i++){
+    const left=Math.round(Math.random()*100), dur=(2.6+Math.random()*2.4).toFixed(2),
+          delay=(Math.random()*2.5).toFixed(2), c=colors[i%colors.length];
+    out+=`<i style="left:${left}%;background:${c};animation-duration:${dur}s;animation-delay:${delay}s"></i>`;
+  }
+  return out;
+}
+function closeBdayCheer(){ $('#bdayCheer').classList.add('hidden'); $('#bdayConfetti').innerHTML=''; }
+$('#btnBdayCheerClose').onclick=closeBdayCheer;
+$('#bdayCheer').onclick=e=>{ if(e.target===$('#bdayCheer')) closeBdayCheer(); };
+$('#btnBdayCheerGo').onclick=()=>{
+  closeBdayCheer();
+  document.querySelector('.tab[data-tab="mine"]')?.click();
+  const p=$('#wishlistPanel');
+  setTimeout(()=>p?.scrollIntoView({behavior:'smooth', block:'start'}), 120);
+};
+
 function maybeShowUpdatesNudge(){
   const latest=SITE_UPDATES[0];
   if(!(latest.date > updatesSeenDate())) return false;
   if(updatesNudgeDone() >= latest.date) return false;
   if(!$('#surveyNudge').classList.contains('hidden')) return false;
+  // 生日祝賀正在跳的話先讓給它，更新紀錄下次再說
+  if(!$('#bdayCheer').classList.contains('hidden')) return false;
   const newer=SITE_UPDATES.filter(u=>u.date>updatesSeenDate()).length;
   $('#updNudgeText').textContent = newer>1
     ? `最近有 ${newer} 次更新，最新是「${latest.title}」`
@@ -4098,6 +4232,32 @@ function renderReminders(){
         <span class="nb-icon" aria-hidden="true">🎁</span>
         <div style="flex:1">${esc(altTagName())}的生日還有 <b>${aleft}</b> 天，要幫他找優惠嗎？</div>
         <button type="button" class="btn plain" id="btnDismissAltBday">知道了</button>
+      </div>`;
+    }
+  }
+  /* 嵐：「九月份過期的，可以讓他們在月底前收到（提醒）」。
+     「當月」型的生日優惠沒有明確到期日，但對生日月在這個月的人來說，過了月底就沒了；
+     有寫到期日、而且就落在這個月的也一起算。月底前 7 天才跳，免得整個月都在催。 */
+  const monthEnd=new Date(TODAY.getFullYear(), TODAY.getMonth()+1, 0);
+  const daysToMonthEnd=Math.round((monthEnd-TODAY)/864e5);
+  const myBdayMonth=+($('#bmonth')?.value||0);
+  if(daysToMonthEnd<=7){
+    const thisYm=ISO(TODAY).slice(0,7);
+    const endingSoon=OFFERS.filter(o=>{
+      if(!WISH.has(String(o.id))) return false;
+      if(o.validUntil) return String(o.validUntil).slice(0,7)===thisYm;
+      // 沒寫到期日的「當月」型優惠：只有生日月正好是這個月的人會過期
+      return myBdayMonth===TODAY.getMonth()+1 && /當月/.test(o.timing||'');
+    });
+    if(endingSoon.length){
+      html+=`<div class="new-banner" style="margin-bottom:10px">
+        <span class="nb-icon" aria-hidden="true">⏳</span>
+        <div style="flex:1">${TODAY.getMonth()+1} 月只剩 <b>${daysToMonthEnd}</b> 天，
+          待辦清單裡有 <b>${endingSoon.length}</b> 個優惠這個月底就結束了，再不用就沒了。</div>
+      </div>
+      <div class="sub-list" style="margin-bottom:10px">
+        ${endingSoon.slice(0,8).map(o=>`<div class="sub-item dl-click" data-oid="${esc(o.id)}" style="cursor:pointer">
+          <b>${esc(o.brand)}</b><span>${esc(o.validUntil?o.validUntil+' 到期':'當月有效，過了月底就沒了')}</span></div>`).join('')}
       </div>`;
     }
   }
@@ -5808,7 +5968,9 @@ async function loadBoard(){
     // 拉到跟 view 本身的上限一致，資料才完整。
     sb.from('popular_offers').select('*').limit(50),
     sb.from('most_wished').select('*').limit(15),
-    sb.from('usage_reports').select('used_on,saved_twd,result').gte('used_on',trendSince).limit(8000),
+    // offer_id 是給「最近使用最多次」用的（renderPopBody）——這份資料本來就抓了
+    // 近 180 天的所有回報，多帶一欄就不用為了那個排序再打一次 API。
+    sb.from('usage_reports').select('offer_id,used_on,saved_twd,result').gte('used_on',trendSince).limit(8000),
     // 「大家累積省下」要固定代表全部人、近一年的總量，不能跟著排行榜的
     // 「本月／全部」切換一起變動——不然選「本月」時這個數字會突然縮水，
     // 看起來又像另一個對不起來的 bug。!monthly 時 lbQuery 本來就是抓
@@ -5858,6 +6020,7 @@ async function loadBoard(){
   (wishPrev||[]).forEach((r,i)=>{ if(!wishPrevRankMap.has(r.offer_id)) wishPrevRankMap.set(r.offer_id,i+1); });
   (wish||[]).forEach((r,i)=>{ r.prevRank = wishPrevRankMap.has(r.offer_id)?wishPrevRankMap.get(r.offer_id):null; });
   renderMostWished(wish||[], wishHasPrev);
+  POP_TREND=trendRows||[];
   renderBoardStats(lb||[], pop||[], allTimeSavedRows, usedRows||[], boardSiteStats, onlineErr?null:onlineNow, trendRows||[]);
   startBoardOnlineRefresh();
   renderBoardHoursChart(hourErr?null:hourRows);
@@ -6260,21 +6423,54 @@ async function loadPendingEditsPreview(){
 }
 
 /* ---- 大家都在用什麼 ---- */
-let POP_ROWS=[], POP_HAS_PREV=false;
+let POP_ROWS=[], POP_HAS_PREV=false, POP_TREND=[];
+// 「最近使用最多次」：直接用已經抓進來的近 180 天回報（POP_TREND）自己算，
+// 期間由使用者選（7／30／90／180 天）。成功、部分成功、失敗都算一次「有人去用」，
+// 但另外標出其中幾次是成功的，跟上面「名次」那張表看得到的欄位一致。
+function popRecentRows(days){
+  const since=ISO(new Date(Date.now()-(days-1)*864e5));
+  const m=new Map();
+  POP_TREND.forEach(r=>{
+    if(!r.offer_id || String(r.used_on||'')<since) return;
+    const k=String(r.offer_id);
+    const e=m.get(k)||{offer_id:r.offer_id, report_count:0, success_count:0, saved_total:0};
+    e.report_count++;
+    if(r.result==='success'){ e.success_count++; e.saved_total+=r.saved_twd||0; }
+    m.set(k,e);
+  });
+  return [...m.values()]
+    .map(e=>{
+      const o=OFFERS.find(x=>String(x.id)===String(e.offer_id));
+      return {...e, brand:o?.brand||'（已下架的優惠）', timing:o?.timing||''};
+    })
+    .sort((a,b)=>b.report_count-a.report_count || b.saved_total-a.saved_total)
+    .slice(0,50)
+    .map((r,i)=>({...r, rank:i+1}));
+}
 function renderPopBody(){
-  const climb=$('#popSortBy')?.value==='climb';
-  const rows=climb ? rankClimbRows(POP_ROWS) : POP_ROWS;
-  const entries=rows.map(r=>`<tr class="lb-click" data-oid="${r.offer_id}"><td class="rk ${r.rank<=3?'top':''}">${r.rank}${POP_HAS_PREV?`<br>${rankDeltaHtml(true,r.prevRank,r.rank)}`:''}</td>
+  const mode=$('#popSortBy')?.value||'rank';
+  const climb=mode==='climb', recent=mode==='recent';
+  $('#popRangeWrap')?.classList.toggle('hidden', !recent);
+  const days=Number($('#popRange')?.value||30);
+  const rows=climb ? rankClimbRows(POP_ROWS) : recent ? popRecentRows(days) : POP_ROWS;
+  const entries=rows.map(r=>`<tr class="lb-click" data-oid="${r.offer_id}"><td class="rk ${r.rank<=3?'top':''}">${r.rank}${(POP_HAS_PREV&&!recent)?`<br>${rankDeltaHtml(true,r.prevRank,r.rank)}`:''}</td>
       <td>${esc(r.brand)}<span style="color:var(--ink-3);font-size:.78rem">　${esc(r.timing||'')}</span></td>
       <td>${r.success_count}／${r.report_count}</td>
       <td class="amt">${nt(r.saved_total)}</td></tr>`);
   renderCollapsibleTable($('#popBody'), '<th class="rk">#</th><th>品牌</th><th>成功／回報</th><th class="amt">已省下</th>',
     entries, 5, 'pop-more-rows',
-    climb ? climbEmptyMsg(POP_HAS_PREV) : '<div style="color:var(--ink-3);font-size:.86rem">還沒有回報資料。</div>');
+    climb ? climbEmptyMsg(POP_HAS_PREV)
+      : recent ? `<div style="color:var(--ink-3);font-size:.86rem">近 ${days} 天還沒有人回報使用。</div>`
+      : '<div style="color:var(--ink-3);font-size:.86rem">還沒有回報資料。</div>');
+  const note=$('#popBody')?.closest('.panel')?.querySelector('.sub');
+  if(note) note.textContent = recent
+    ? `近 ${days} 天被回報最多次的優惠——最近大家真的在用的。`
+    : '被回報最多次的優惠。';
   wireShowMore($('#popBody'));
   $$('#popBody .lb-click').forEach(row=>row.onclick=()=>openDetail(row.dataset.oid));
 }
 $('#popSortBy').onchange=renderPopBody;
+$('#popRange').onchange=renderPopBody;
 
 /* ---- 最多人收藏 ---- */
 let WISH_ROWS=[], WISH_HAS_PREV=false;
@@ -8036,12 +8232,13 @@ async function renderSurveyResponses(){
   // 整塊可以收起來，每一份預設也只顯示一行（時間・誰・信箱・分數），點開才看答案。
   el.innerHTML=`<div class="dash-chart">
     <div class="sv-toolbar">
-      <b>逐筆回覆（${rows.length} 份${f?`，${esc(f.label)}`:''}）</b>
+      <b>逐筆回覆（${rows.length} 份）</b>
       ${rows.length?`<span class="sv-toolbar-btns">
         <button type="button" class="btn sm" id="btnSvExpandAll">${SV_OPEN.size?'全部收合':'全部展開'}</button>
         <button type="button" class="btn sm" id="btnSvFold" aria-expanded="${SV_LIST_OPEN}">${SV_LIST_OPEN?'收合':'展開'}</button>
       </span>`:''}
     </div>
+    ${f?`<div class="sv-filter-note">篩選：${esc(f.label)}</div>`:''}
     <div id="svRespWrap" class="${SV_LIST_OPEN?'':'hidden'}">
       <div class="sub-list" style="margin-top:8px">${shown.map(r=>{
         const email=r.user_id?ADMIN_EMAIL_CACHE.get(r.user_id):null;
@@ -8148,8 +8345,10 @@ function renderSurveySummary(d, label){
     const rows=entries(obj,list).filter(r=>r.idx>=0);
     if(!rows.some(r=>r.value)) return '';
     const max=Math.max(...rows.map(r=>r.value));
+    // 軸標籤縮寫：手機上六根直條各只有 50 幾 px，「18 歲以下」「45 歲以上」放不下
+    const short=l=>String(l).replace(/(\d+)\s*歲以下/,'$1↓').replace(/(\d+)\s*歲以上/,'$1+');
     // 「不想說」不在年紀的順序裡 → 灰色
-    return card(title, vizColumns(rows.map(r=>({label:r.label, value:r.value, text:`${r.value} 人`,
+    return card(title, vizColumns(rows.map(r=>({label:r.label, short:short(r.label), value:r.value, text:`${r.value} 人`,
         tip:`${r.label}：${pctTxt(r.value)}`, showValue:r.value===max, mute:r.key==='secret'})),{height:100}),
       {head:['選項','人數'], rows:rows.map(r=>[r.label,r.value])});
   };

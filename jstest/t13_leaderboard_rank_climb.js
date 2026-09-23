@@ -37,6 +37,42 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   win.renderPopBody();
   t.ok('沒有人往前進時講清楚', /沒有人（店家）的名次往前進/.test($('#popBody').textContent));
 
+  /* ---- 最近使用最多次（嵐：除了進步最多，也想看最近誰被用最多，時間範圍要能選）---- */
+  const day = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+  win.eval(`POP_TREND = [
+    // B店：近 7 天 3 次；A店：近 7 天 1 次、30 天內再 4 次；C店：50 天前 5 次
+    {offer_id:${JSON.stringify(offers[1].id)}, used_on:'${day(1)}', result:'success', saved_twd:50},
+    {offer_id:${JSON.stringify(offers[1].id)}, used_on:'${day(2)}', result:'success', saved_twd:50},
+    {offer_id:${JSON.stringify(offers[1].id)}, used_on:'${day(3)}', result:'failed', saved_twd:0},
+    {offer_id:${JSON.stringify(offers[0].id)}, used_on:'${day(2)}', result:'success', saved_twd:20},
+    {offer_id:${JSON.stringify(offers[0].id)}, used_on:'${day(10)}', result:'success', saved_twd:20},
+    {offer_id:${JSON.stringify(offers[0].id)}, used_on:'${day(11)}', result:'success', saved_twd:20},
+    {offer_id:${JSON.stringify(offers[0].id)}, used_on:'${day(12)}', result:'success', saved_twd:20},
+    {offer_id:${JSON.stringify(offers[0].id)}, used_on:'${day(13)}', result:'success', saved_twd:20},
+    {offer_id:${JSON.stringify(offers[2].id)}, used_on:'${day(50)}', result:'success', saved_twd:10},
+    {offer_id:${JSON.stringify(offers[2].id)}, used_on:'${day(51)}', result:'success', saved_twd:10},
+    {offer_id:${JSON.stringify(offers[2].id)}, used_on:'${day(52)}', result:'success', saved_twd:10},
+    {offer_id:${JSON.stringify(offers[2].id)}, used_on:'${day(53)}', result:'success', saved_twd:10},
+    {offer_id:${JSON.stringify(offers[2].id)}, used_on:'${day(54)}', result:'success', saved_twd:10}];`);
+  t.ok('平常看不到期間選單', $('#popRangeWrap').classList.contains('hidden'));
+  $('#popSortBy').value = 'recent'; $('#popSortBy').dispatchEvent(new win.Event('change'));
+  t.ok('切「最近使用最多次」才出現期間選單', !$('#popRangeWrap').classList.contains('hidden'));
+  t.eq('預設近 30 天：A 店 5 次排第一', names('#popBody'), [offers[0].brand, offers[1].brand]);
+  $('#popRange').value = '7'; $('#popRange').dispatchEvent(new win.Event('change'));
+  t.eq('改成近 7 天，換 B 店排第一', names('#popBody'), [offers[1].brand, offers[0].brand]);
+  t.ok('成功／回報分開算（B 店 3 次裡 2 次成功）',
+    [...doc.querySelectorAll('#popBody tbody tr')][0].children[2].textContent.trim() === '2／3',
+    [...doc.querySelectorAll('#popBody tbody tr')][0].textContent);
+  $('#popRange').value = '90'; $('#popRange').dispatchEvent(new win.Event('change'));
+  t.eq('拉到近 90 天，50 天前用很多次的 C 店才進來', names('#popBody').length, 3);
+  t.ok('說明文字跟著改成「近 N 天」', /近 90 天/.test($('#popBody').closest('.panel').querySelector('.sub').textContent));
+  $('#popRange').value = '7'; $('#popRange').dispatchEvent(new win.Event('change'));
+  win.eval('POP_TREND = [];');
+  win.renderPopBody();
+  t.ok('那段期間沒人用就講清楚', /近 7 天還沒有人回報使用/.test($('#popBody').textContent), $('#popBody').textContent);
+  $('#popSortBy').value = 'rank'; $('#popSortBy').dispatchEvent(new win.Event('change'));
+  t.ok('切回名次就收起期間選單', $('#popRangeWrap').classList.contains('hidden'));
+
   /* ---- 最多人收藏 ---- */
   win.renderMostWished([
     { offer_id: offers[0].id, brand: '甲', timing: '當月', wish_count: 9, value_twd: 100, prevRank: null },
