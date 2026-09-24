@@ -834,6 +834,12 @@
   .subtab{border:0;background:none;padding:7px 15px;border-radius:999px;font:inherit;font-size:.82rem;
     color:var(--ink-2);cursor:pointer;white-space:nowrap;min-height:34px}
   .subtab:hover{color:var(--ink)}
+  /* 待辦清單的「我的／○○的／全部」用同一套樣式，但清單名稱是使用者自己取的
+     （celine 取「我不知道」，整排就變成 338px），手機上放不下就會變成左右捲，
+     永遠有一個分頁被切掉一半——看起來就是跑版。這一排改成排不下就換行，
+     全部都看得到；換行時膠囊外框也改成圓角矩形，兩行的膠囊才不會怪怪的。 */
+  .subtabs.wrap{flex-wrap:wrap;width:auto;overflow:visible;border-radius:var(--r-sm);row-gap:4px}
+  .subtabs.wrap .subtab{max-width:100%;overflow:hidden;text-overflow:ellipsis}
   .subtab[aria-selected="true"]{background:var(--surface);color:var(--ink);font-weight:700;box-shadow:var(--shadow-sm)}
   /* ---------- 生日當天／當週的祝賀（嵐：「有寫生日的人，生日當天或當週點進來
      要有生日動畫跟小卡片，蠟燭之類的，祝她生日快樂玩得開心」）----------
@@ -1487,7 +1493,7 @@
     <div class="panel" id="wishlistPanel"><h2>待辦清單</h2>
       <p class="sub">點卡片上的星號收藏，勾起來代表用過了。</p>
       <!-- 嵐：幫別人記生日的話，待辦清單要獨立出來、不同份清單（schema_v71 的 wishlist.person） -->
-      <div class="subtabs hidden" role="tablist" id="wlPersonTabs"></div>
+      <div class="subtabs wrap hidden" role="tablist" id="wlPersonTabs"></div>
       <div class="row" style="margin:0 0 10px;flex-wrap:wrap;gap:8px 14px">
         <label class="lbl">排序<select id="wlSort">
           <option value="added_desc">最近加入</option>
@@ -3296,7 +3302,8 @@ const SITE_UPDATES=[
     '月底前 7 天會提醒你：待辦清單裡有哪幾個優惠這個月底就結束了',
     '「大家都在用什麼」多一個「最近使用最多次」，而且可以自己選近 7／30／90／180 天',
     '修正問卷篩選條件太長時整個畫面會被撐寬、可以左右滑動',
-    '修正「你的年紀」長條圖下面的文字疊在一起']},
+    '修正「你的年紀」長條圖下面的文字疊在一起',
+    '修正待辦清單上面那排「我的／○○的／全部」在手機上會被切掉，改成排不下就換行']},
   {date:'2026-09-21', title:'列表更順、數字對齊', items:[
     '修正往下滑優惠清單時網頁會出錯、整頁重載：改成先顯示 30 筆，滑到底自動接著顯示',
     '用 iPad／手機點開一筆優惠再關掉，會停在原本的位置，不會跳回最上面',

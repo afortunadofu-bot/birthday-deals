@@ -38,6 +38,9 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   const brands = () => [...doc.querySelectorAll('#myWishlist .wl-name')].map((x) => x.textContent.trim());
   t.ok('有第二組生日時出現清單切換', !$('#wlPersonTabs').classList.contains('hidden'));
   t.eq('列出我的／媽媽的／全部，各自標筆數', tabs(), ['我的（1）', '媽媽的（1）', '全部（2）']);
+  // celine 的清單叫「我不知道」，三個分頁加起來 338px 放不下手機，原本會變成左右捲、
+  // 永遠有一個被切掉半個。.wrap 讓它排不下就換行（版面驗證在瀏覽器上量過）。
+  t.ok('排不下要換行，不要變成左右捲把分頁切掉', $('#wlPersonTabs').classList.contains('wrap'));
   t.eq('預設只看我的清單', brands(), ['我的店']);
 
   const clickTab = (label) => [...doc.querySelectorAll('#wlPersonTabs .subtab')].find((b) => b.textContent.startsWith(label)).click();
