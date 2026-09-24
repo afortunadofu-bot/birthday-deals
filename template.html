@@ -1494,6 +1494,10 @@
       <p class="sub">點卡片上的星號收藏，勾起來代表用過了。</p>
       <!-- 嵐：幫別人記生日的話，待辦清單要獨立出來、不同份清單（schema_v71 的 wishlist.person） -->
       <div class="subtabs wrap hidden" role="tablist" id="wlPersonTabs"></div>
+      <!-- 嵐：「加入搜尋欄，就可以直接搜尋店家」——清單一長（十幾二十筆）用滑的找很久 -->
+      <div class="searchbar" style="margin:0 0 10px">
+        <input type="search" id="wlSearch" placeholder="搜尋清單裡的店家或優惠">
+      </div>
       <div class="row" style="margin:0 0 10px;flex-wrap:wrap;gap:8px 14px">
         <label class="lbl">排序<select id="wlSort">
           <option value="added_desc">最近加入</option>
@@ -2864,7 +2868,11 @@ function renderWishlistBody(){
     tagSel.value=[...tagSel.options].some(o=>o.value===prevTag)?prevTag:'all';
   }
   const tagFilter=tagSel?.value||'all';
+  // 搜尋：店名、優惠內容、自己寫的備註、標籤都比對得到（大小寫不分）
+  const kw=String($('#wlSearch')?.value||'').trim().toLowerCase();
   let list=[...WL_ROWS];
+  if(kw) list=list.filter(w=>[w.offers?.brand, w.offers?.offer, w.note, w.tag, w.person]
+    .some(x=>String(x||'').toLowerCase().includes(kw)));
   // 清單：我的（沒有 person）／某個人的／全部
   if(WL_PERSON==='me') list=list.filter(w=>!w.person);
   else if(WL_PERSON!=='all') list=list.filter(w=>w.person===WL_PERSON);
@@ -2962,7 +2970,9 @@ function renderWishlistBody(){
       <textarea class="wl-note${w.note?'':' hidden'}" data-id="${w.offer_id}" maxlength="200" rows="1"
         placeholder="加個備註，只有你自己看得到">${esc(w.note||'')}</textarea>
     </div>`;
-  }).join('') : '<div style="color:var(--ink-3);font-size:.86rem">還沒有收藏，去「優惠」分頁點卡片上的書籤圖示加入。</div>';
+  }).join('') : (kw
+    ? `<div style="color:var(--ink-3);font-size:.86rem">清單裡沒有符合「${esc(kw)}」的優惠。</div>`
+    : '<div style="color:var(--ink-3);font-size:.86rem">還沒有收藏，去「優惠」分頁點卡片上的書籤圖示加入。</div>');
   // 把剛剛發現「有回報但 wishlist.done 還沒同步」的幾筆補寫回資料庫，純粹是
   // 讓資料庫本身也保持一致（目前前端只有這裡讀 wishlist.done），不影響畫面
   // 已經正確顯示的結果，失敗也不用特別提示使用者。
@@ -3102,6 +3112,7 @@ async function moveWishlistItem(offerId, dir){
     renderMyWishlist(); // 重新拉一次乾淨的資料，避免畫面停在沒存到的交換結果
   }
 }
+$('#wlSearch').oninput=renderWishlistBody;
 $('#wlSort').onchange=renderWishlistBody;
 $('#wlYear').onchange=renderWishlistBody;
 $('#wlTagFilter').onchange=renderWishlistBody;
@@ -3303,7 +3314,9 @@ const SITE_UPDATES=[
     '「大家都在用什麼」多一個「最近使用最多次」，而且可以自己選近 7／30／90／180 天',
     '修正問卷篩選條件太長時整個畫面會被撐寬、可以左右滑動',
     '修正「你的年紀」長條圖下面的文字疊在一起',
-    '修正待辦清單上面那排「我的／○○的／全部」在手機上會被切掉，改成排不下就換行']},
+    '修正待辦清單上面那排「我的／○○的／全部」在手機上會被切掉，改成排不下就換行',
+    '待辦清單加了搜尋欄，清單一長可以直接搜店名',
+    '再修一次「點開優惠、按關閉之後跳回頁面最上面」：這次是瀏覽器的自動捲動還原在作怪']},
   {date:'2026-09-21', title:'列表更順、數字對齊', items:[
     '修正往下滑優惠清單時網頁會出錯、整頁重載：改成先顯示 30 筆，滑到底自動接著顯示',
     '用 iPad／手機點開一筆優惠再關掉，會停在原本的位置，不會跳回最上面',
@@ -4913,6 +4926,12 @@ function consumeDlgHistory(){
    會把背後的頁面捲回頂端，關掉之後也回不來。做法是打開時把 body 固定住（position:fixed
    配 top:-捲動位置），關掉時還原並捲回原來的位置——桌機瀏覽器本來就不會跳，這樣做也沒有副作用。
    每個 <dialog> 的 showModal 都包一層，不用每個呼叫點各改一次。 ---- */
+/* 關掉視窗之後會 history.back()（consumeDlgHistory），瀏覽器預設會「幫你」把捲動位置
+   還原成當初離開那一頁時記下來的值。我們是先 showModal()（body 變成 position:fixed，
+   文件的捲動位置等於 0）才 pushState()，所以瀏覽器記到的是 0——按「關閉」之後它就把頁面
+   捲回最上面，把我們剛剛還原好的位置蓋掉。celine：「按關閉鈕一直跳回去頁面最上面」。
+   捲動位置本來就由 unlockBodyScroll() 自己管，直接關掉瀏覽器的自動還原。 */
+try{ if('scrollRestoration' in history) history.scrollRestoration='manual'; }catch{}
 let SCROLL_LOCK_Y=0, SCROLL_LOCKS=0;
 function lockBodyScroll(){
   if(SCROLL_LOCKS++) return;
@@ -4927,7 +4946,11 @@ function unlockBodyScroll(){
   const b=document.body;
   delete b.dataset.scrollLocked;
   b.style.position=''; b.style.top=''; b.style.left=''; b.style.right=''; b.style.width='';
-  window.scrollTo(0, SCROLL_LOCK_Y);
+  const y=SCROLL_LOCK_Y;
+  window.scrollTo(0, y);
+  // 保險：有些瀏覽器在 fixed→static 那一瞬間文件高度還沒算完，scrollTo 會被夾到別的位置；
+  // 下一個影格再補一次（已經在對的位置就不會有任何視覺變化）。
+  requestAnimationFrame(()=>{ if(Math.abs((window.scrollY||0)-y)>2) window.scrollTo(0,y); });
 }
 $$('dialog').forEach(d=>{
   const open=d.showModal.bind(d), close=d.close.bind(d);

@@ -56,6 +56,17 @@ async function boot() {
         dlg.close = function () { this.open = false; };
         dlg.show = function () { this.open = true; };
       }
+      // 2.5 jsdom 的 history 沒有 scrollRestoration，頁面那段
+      //     `if('scrollRestoration' in history) history.scrollRestoration='manual'`
+      //     會整段跳過，測不到。補一個可寫的屬性，預設跟瀏覽器一樣是 'auto'。
+      if (!('scrollRestoration' in window.history)) {
+        let mode = 'auto';
+        Object.defineProperty(window.history, 'scrollRestoration', {
+          configurable: true,
+          get() { return mode; },
+          set(v) { mode = String(v); },
+        });
+      }
       // 3. scrollTo / scrollIntoView（jsdom 會噴 "not implemented"）
       window.__scrollCalls = [];
       window.scrollTo = (...a) => { window.__scrollCalls.push(a); };

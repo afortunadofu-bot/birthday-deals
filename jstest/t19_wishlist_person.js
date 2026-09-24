@@ -55,6 +55,26 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   clickTab('全部');
   t.eq('全部看得到兩份', brands().sort(), ['媽媽的店', '我的店'].sort());
 
+  /* ---- 搜尋清單裡的店家（celine：「加入搜尋欄，就可以直接搜尋店家」）---- */
+  clickTab('全部');
+  const search = (v) => { $('#wlSearch').value = v; $('#wlSearch').dispatchEvent(new win.Event('input')); };
+  win.eval("WL_ROWS[0].note='順便買蛋糕';");
+  win.renderWishlistBody();
+  t.eq('沒打字時全部都在', brands().length, 2);
+  search('媽媽的');
+  t.eq('搜店名', brands(), ['媽媽的店']);
+  search('蛋糕');
+  t.eq('自己寫的備註也搜得到', brands(), ['我的店']);
+  search('生日禮');
+  t.eq('優惠內容也搜得到', brands().length, 2);
+  search('不存在的店');
+  t.ok('搜不到時說的是「沒有符合的」，不是「還沒有收藏」',
+    /沒有符合「不存在的店」/.test($('#myWishlist').textContent) && !/還沒有收藏/.test($('#myWishlist').textContent),
+    $('#myWishlist').textContent);
+  search('');
+  t.eq('清掉關鍵字就全部回來', brands().length, 2);
+  clickTab('我的');
+
   /* ---- 移到別人的清單 ---- */
   clickTab('我的');
   const moveBtn = doc.querySelector('#myWishlist .wl-move-person');

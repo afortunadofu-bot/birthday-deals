@@ -75,6 +75,10 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.eq('關掉時還原', [doc.body.style.position, doc.body.style.top], ['', '']);
   t.eq('關掉時捲回原來的位置', scrolls[scrolls.length - 1], 1234);
 
+  // 關掉視窗之後會 history.back()，瀏覽器的「自動捲動還原」會把我們剛還原好的位置蓋掉
+  // （記到的是 body 被 fixed 住時的 0）——celine：「按關閉鈕一直跳回去頁面最上面」。
+  t.eq('關掉瀏覽器的自動捲動還原，捲動位置由我們自己管', win.history.scrollRestoration, 'manual');
+
   // 同一次點擊重複打開不會把鎖疊起來（疊起來就解不開了）
   dlg.showModal();
   dlg.showModal();

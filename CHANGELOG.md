@@ -9,6 +9,35 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## 待辦清單搜尋欄　＋　真正修好「按關閉跳回最上面」
+
+不用跑 SQL，重新上傳 `index.html` 就好。
+
+**1.「加入搜尋欄，就可以直接搜尋店家」**
+「優惠」分頁本來就有搜尋，缺的是**待辦清單**——清單一長只能用滑的找。
+待辦清單上方加一個搜尋欄，店名、優惠內容、自己寫的備註、標籤、清單名稱都比對得到；
+搜不到時寫的是「清單裡沒有符合『○○』的優惠」，不是「還沒有收藏」（那句會讓人以為清單被清空了）。
+
+**2.「按關閉鈕一直跳回去頁面最上面」——上一版的鎖背景捲動沒修乾淨**
+先確認過線上那份已經是新版（`lockBodyScroll` 在裡面），所以是真的還有 bug。真正的原因是
+**瀏覽器的自動捲動還原**：
+
+- 關掉視窗時會 `consumeDlgHistory()` → `history.back()`
+- `history.scrollRestoration` 預設是 `'auto'`，瀏覽器會把捲動位置還原成它記下來的值
+- 但我們是**先 `showModal()`（body 變成 `position:fixed`，文件捲動位置等於 0）才 `pushState()`**，
+  瀏覽器記到的就是 0 → 按「關閉」時把我們剛還原好的位置蓋掉，跳回最上面
+
+桌機因為時序不同常常剛好沒事，手機上就穩定重現。改法：`history.scrollRestoration='manual'`
+（捲動位置本來就由 `unlockBodyScroll()` 自己管），另外在 `requestAnimationFrame` 再補一次
+還原，擋掉「fixed→static 那一瞬間文件高度還沒算完、`scrollTo` 被夾掉」的情況。
+
+在瀏覽器上實測整條路徑（滑到 2600px → 點卡片 → 按「關閉」／✕／ESC）：三種關法都停在原位。
+
+jstest：`t19` 加搜尋那一段、`t18` 加 `scrollRestoration` 斷言；harness 補上 jsdom 缺的
+`history.scrollRestoration`（不補的話那段特性偵測會整段跳過、測不到）。
+
+---
+
 ## 跑版修正　待辦清單的「我的／○○的／全部」被切掉
 
 不用跑 SQL，重新上傳 `index.html` 就好。
