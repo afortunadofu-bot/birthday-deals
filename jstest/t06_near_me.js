@@ -185,11 +185,16 @@ function setGeo(win, mode) {
   const stored = Object.keys(win.localStorage).map((k) => `${k}=${win.localStorage.getItem(k)}`).join('|');
   t.ok('localStorage 裡找不到座標', !/25\.04|121\.5/.test(stored), stored);
 
-  /* ================= 地圖圖磚（celine：要能承受大流量）================= */
+  /* ================= 地圖圖磚 =================
+     原本用 CARTO 的免金鑰 CDN（celine：「圖磚改成可以承受大流量的」），但 2026-09 開始
+     它沒金鑰就只回一張印著「API KEY REQUIRED」的浮水印圖——celine 回報「地圖不見了」。
+     換回 OSM 官方圖磚：免金鑰、資料是同一份、中文地名正確。
+     流量真的需要 SLA 時，在 config.js 填 MAPTILER_KEY 就會自動改用 MapTiler。 */
   const tiles = () => win.mapTileConfig();
-  t.ok('預設不是 OSM 官方圖磚（使用政策不適合大流量）', !/tile\.openstreetmap\.org/.test(tiles().url), tiles().url);
-  t.ok('預設圖磚有標示出處', /OpenStreetMap/.test(tiles().attribution) && /CARTO/.test(tiles().attribution));
-  t.ok('預設放大到 20 級', tiles().maxZoom >= 19);
+  t.ok('預設圖磚不用金鑰（網址裡沒有 key）', !/[?&]key=/.test(tiles().url), tiles().url);
+  t.ok('預設不是 CARTO（它已經改成沒金鑰只給浮水印）', !/cartocdn/.test(tiles().url), tiles().url);
+  t.ok('預設圖磚有標示出處', /OpenStreetMap/.test(tiles().attribution));
+  t.ok('預設放大級數到得了 19（OSM 官方圖磚的上限）', tiles().maxZoom >= 19);
   win.MAPTILER_KEY = 'k e y/1';
   t.ok('設了 MapTiler 金鑰就改用 MapTiler', /api\.maptiler\.com/.test(tiles().url), tiles().url);
   t.ok('金鑰有做網址跳脫', tiles().url.includes('k%20e%20y%2F1'), tiles().url);
