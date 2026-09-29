@@ -24,11 +24,55 @@ const { boot, tick, makeAsserts } = require('./harness');
   //   . W . A / W A . . / . . A W / A . W .
   const dots = $$('.xsj-mark i').map((i) => (i.classList.contains('hi') ? 'A' : i.classList.contains('on') ? 'W' : '.'));
   t.eq('點陣標誌的點位跟品牌規範一樣', dots.join(''), '.W.A' + 'WA..' + '..AW' + 'A.W.');
-  t.eq('列出三個產品', $$('.xsj-apps a, .xsj-apps .xsj-soon').map((x) => x.textContent.trim()),
-    ['壽星日', 'Bandary', 'RelateStats']);
+  const apps = () => $$('.xsj-apps a').map((x) => [x.textContent.trim(), x.getAttribute('href')]);
+  t.eq('列出三個產品', apps().map((x) => x[0]),
+    ['壽星日', 'Bandary 聽團曆 · 封閉測試報名', 'RelateStats · 封閉測試報名']);
   t.eq('壽星日標成目前這一站', $('.xsj-apps [aria-current="page"]').textContent.trim(), '壽星日');
-  t.ok('還沒上線的 RelateStats 不做成連結', !$('.xsj-apps .xsj-soon').getAttribute('href'));
+  // celine：另外兩個連到封閉測試的報名表單
+  t.eq('Bandary 連到報名表單', apps()[1][1], 'https://forms.gle/FhBJgWBWb72MCg5x5');
+  t.eq('RelateStats 連到報名表單', apps()[2][1], 'https://forms.gle/6HT4LzRSsPA76b6s7');
+  t.ok('外部連結都開新分頁且加了 noopener',
+    $$('.xsj-apps a[href^="https://forms.gle"]').every((a) => a.target === '_blank' && /noopener/.test(a.rel)));
   t.eq('年份是今年', $('#xsjYear').textContent, String(new Date().getFullYear()));
+
+  /* ================= 1.5 「我的」看得到自己回報過的問題（v73）================= */
+  const { makeSb } = require('./harness');
+  const fbRows = [
+    { id: 2, type: 'bug', message: '地圖不見了', status: 'in_progress', admin_reply: null, created_at: '2026-09-28T02:00:00Z' },
+    { id: 1, type: 'suggestion', message: '希望有搜尋欄', status: 'resolved', admin_reply: '已經加上去了，謝謝！', created_at: '2026-09-20T02:00:00Z' },
+  ];
+  const sbFb = makeSb({ tables: { site_feedback: fbRows } });
+  win.__sb = sbFb;
+  win.eval('sb = window.__sb; LIVE = true; me = {id:"u-1"}; myProfile = {id:"u-1"};');
+  await win.loadMyFeedback();
+  await tick(win, 3);
+  const fbPanel = $('#myFeedbackPanel');
+  t.ok('有回報過就出現這一塊', !fbPanel.classList.contains('hidden'));
+  t.eq('標題旁標幾筆', $('#myFbCount').textContent, '2');
+  t.ok('查的是自己那幾筆', sbFb.__calls.select.some((c) => c.table === 'site_feedback'));
+  const fbText = $('#myFeedback').textContent;
+  t.ok('看得到內容跟狀態', /地圖不見了/.test(fbText) && /修改中/.test(fbText), fbText);
+  t.ok('看得到管理員的回覆', /已經加上去了/.test(fbText));
+  t.ok('看得到是問題回報還是建議', /問題回報/.test(fbText) && /建議/.test(fbText));
+
+  // 沒回報過就不要佔一塊版面
+  win.__sb = makeSb({ tables: { site_feedback: [] } });
+  win.eval('sb = window.__sb;');
+  await win.loadMyFeedback();
+  t.ok('沒回報過就不顯示', fbPanel.classList.contains('hidden'));
+
+  // v73 還沒跑（讀不到）：收起來就好，不要在「我的」放一塊紅字錯誤
+  const sbErr = makeSb({});
+  sbErr.from = () => ({ select: () => ({ eq: () => ({ order: () => ({ limit: () => Promise.resolve({ data: null, error: { message: 'permission denied for table site_feedback' } }) }) }) }) });
+  win.__sb = sbErr; win.eval('sb = window.__sb;');
+  await win.loadMyFeedback();
+  t.ok('v73 沒跑時安靜收起來', fbPanel.classList.contains('hidden'));
+
+  // 沒登入也不顯示
+  win.eval('me = null;');
+  await win.loadMyFeedback();
+  t.ok('沒登入不顯示', fbPanel.classList.contains('hidden'));
+  win.eval('LIVE = false; me = null;');
 
   /* ================= 2. 手機打中文搜尋 ================= */
   let renders = 0;

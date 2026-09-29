@@ -101,8 +101,11 @@
      實測有 0.8 以上，遠超過 Google 認定「不佳」的 0.25。改成不換行、靠
      #uName 的省略號截斷來擠進固定一行，header 高度就不會因為登入狀態改變。 */
   .htop{display:flex;align-items:center;gap:14px;padding:16px 0 12px;flex-wrap:nowrap}
+  /* 整個標題（圖示＋「壽星日」三個字）都可以點——連點會選到文字、也可能被
+     行動瀏覽器的雙擊縮放吃掉，所以關掉文字選取與雙擊縮放。 */
   .brand{font-size:1.28rem;font-weight:800;letter-spacing:-.01em;
-    margin:0;display:flex;align-items:center;gap:8px;color:var(--ink);flex:none;min-width:0}
+    margin:0;display:flex;align-items:center;gap:8px;color:var(--ink);flex:none;min-width:0;
+    cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation}
   .brand .mark{flex:none;color:var(--ink)}
   .brand .mark .flame{fill:var(--accent)}
   .brand span{color:var(--ink-3);font-weight:400;font-size:.78rem;
@@ -271,13 +274,19 @@
   .stat .v.free{color:var(--free)}
 
   /* ---------- 搜尋列（永遠可見，桌機/手機皆同） ---------- */
-  .searchbar{display:flex;gap:8px;align-items:center;position:sticky;top:var(--header-h,64px);z-index:40;
+  /* 手機上「排序＋篩選＋附近」三顆按鈕會把搜尋框擠成一個看不出是輸入框的小方塊
+     （嵐的截圖）。搜尋框給一個最小寬度、整排允許換行：寬度不夠時按鈕自己掉到第二行，
+     搜尋框永遠維持看得懂的大小。 */
+  .searchbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;position:sticky;top:var(--header-h,64px);z-index:40;
     background:var(--bg);padding:10px 0;max-width:100%}
-  .searchbar input[type=search]{flex:1;min-width:0;border-radius:12px;padding:11px 16px;min-height:44px}
+  .searchbar input[type=search]{flex:1 1 150px;min-width:150px;border-radius:12px;padding:11px 16px;min-height:44px}
   .sort-top{flex:none;min-height:44px;border-radius:12px;padding:0 30px 0 14px;font-size:.82rem;
     font-weight:600;color:var(--ink-2);border:1px solid var(--line);background:var(--surface);
     max-width:132px}
   @media(max-width:480px){ .sort-top{max-width:88px;font-size:.74rem;padding:0 22px 0 8px} }
+  /* 窄螢幕：搜尋框自己一行，三顆按鈕排第二行——比「搜尋框＋排序」「篩選＋附近」
+     這種一半一半的斷法整齊，搜尋框也拿得到完整寬度。 */
+  @media(max-width:560px){ .searchbar input[type=search]{flex:1 1 100%} }
   /* 手機版原生 select 排序選單很難讀（文字被截斷、觸控目標小），改用觸發
      按鈕開一個底部彈出選單；桌機維持原生 select，這顆按鈕預設隱藏。 */
   .sort-trigger{display:none;flex:none;align-items:center;gap:6px;min-height:44px;max-width:120px}
@@ -437,6 +446,7 @@
   /* 附近模式（feature/geo）：搜尋列下方的狀態列＋地圖，卡片上多一行「最近分店」 */
   .near-bar{margin:8px 0 4px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-sm);
     background:var(--bg);font-size:.84rem}
+  .near-trigger{flex:none;white-space:nowrap}
   .near-trigger.active{background:var(--accent);border-color:var(--accent);color:#fff}
   .line.near-line{color:var(--ink-2)}
   .near-line a{margin-left:6px;font-size:.78rem}
@@ -849,17 +859,30 @@
   #bdayCheer{position:fixed;inset:0;z-index:400;display:flex;align-items:center;justify-content:center;
     padding:20px;background:rgba(20,20,35,.42);backdrop-filter:blur(2px)}
   #bdayCheer.hidden{display:none}
-  .bday-card{position:relative;z-index:2;background:var(--surface);border-radius:var(--r);
-    box-shadow:var(--shadow-lg);padding:26px 22px 20px;max-width:340px;width:100%;text-align:center;
-    animation:bdayPop .45s var(--ease) both}
-  .bday-cake{font-size:3rem;line-height:1;position:relative;display:inline-block;
+  .bday-card{position:relative;z-index:2;border-radius:18px;overflow:hidden;
+    background:linear-gradient(170deg,#fff 0%,#fffaf6 58%,#fdf1ea 100%);
+    box-shadow:0 30px 70px -22px rgba(20,20,35,.5), 0 0 0 1px rgba(255,255,255,.7) inset;
+    padding:30px 24px 22px;max-width:340px;width:100%;text-align:center;
+    animation:bdayPop .5s var(--ease) both}
+  /* 卡片上緣的一條彩帶，跟紙花同一組顏色 */
+  .bday-card::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;
+    background:linear-gradient(90deg,var(--accent),var(--viz-4),var(--viz-3),var(--viz-2),var(--viz-6))}
+  /* 蛋糕後面一圈暖光，讓蠟燭看起來真的在發亮 */
+  .bday-cake-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;
+    width:96px;height:96px;margin-bottom:2px}
+  .bday-cake-wrap::after{content:"";position:absolute;inset:0;border-radius:50%;
+    background:radial-gradient(circle at 50% 42%, rgba(255,196,92,.42) 0%, rgba(255,196,92,0) 68%);
+    animation:bdayGlow 2.6s ease-in-out infinite}
+  .bday-cake{font-size:3.1rem;line-height:1;position:relative;display:inline-block;
+    filter:drop-shadow(0 6px 10px rgba(20,20,35,.18));
     animation:bdayBob 2.4s ease-in-out infinite}
   .bday-flame{position:absolute;left:50%;top:-6px;width:8px;height:12px;margin-left:-4px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;
     background:radial-gradient(circle at 50% 70%, #fff3b0 0%, #ffb320 55%, #f2711c 100%);
     animation:bdayFlame 1.1s ease-in-out infinite}
-  .bday-card h2{font-size:1.25rem;margin:12px 0 4px}
-  .bday-card p{font-size:.9rem;color:var(--ink-2);margin:0 0 16px}
+  .bday-card h2{font-size:1.32rem;margin:10px 0 6px;letter-spacing:.01em}
+  .bday-card p{font-size:.9rem;color:var(--ink-2);margin:0 0 18px;line-height:1.65}
   .bday-card .row{justify-content:center;gap:8px}
+  .bday-card .btn{min-height:40px}
   .bday-confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
   .bday-confetti i{position:absolute;top:-16px;width:8px;height:12px;border-radius:2px;
     animation:bdayFall linear infinite}
@@ -867,8 +890,9 @@
   @keyframes bdayBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
   @keyframes bdayFlame{0%,100%{transform:scaleY(1) rotate(-3deg);opacity:1}50%{transform:scaleY(1.25) rotate(4deg);opacity:.85}}
   @keyframes bdayFall{to{transform:translateY(105vh) rotate(540deg)}}
+  @keyframes bdayGlow{0%,100%{opacity:.75;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
   @media (prefers-reduced-motion:reduce){
-    .bday-card,.bday-cake,.bday-flame,.bday-confetti i{animation:none}
+    .bday-card,.bday-cake,.bday-flame,.bday-confetti i,.bday-cake-wrap::after{animation:none}
     .bday-confetti{display:none}
   }
   /* 問卷逐筆回覆：整列是一顆可以點開／收起的按鈕。
@@ -969,9 +993,9 @@
     --xsj-dim:rgba(18,22,26,.20); --xsj-rule:rgba(18,22,26,.12);
     background:var(--xsj-bg); color:var(--xsj-ink);
     border-top:1px solid var(--xsj-rule);
-    padding:36px 20px 40px;
+    padding:28px 20px 20px;
   }
-  .xsj-inner{max-width:720px;margin:0 auto;display:grid;gap:20px}
+  .xsj-inner{max-width:720px;margin:0 auto;display:grid;gap:16px}
   .xsj-lockup{display:flex;align-items:center;gap:16px}
   .xsj-mark{display:grid;grid-template-columns:repeat(4,9px);gap:6px;flex:0 0 auto}
   .xsj-mark i{width:9px;height:9px;border-radius:50%;background:var(--xsj-dim);display:block}
@@ -993,7 +1017,9 @@
   footer{border-top:1px solid var(--line);padding:24px 0 24px;font-size:.79rem;color:var(--ink-3)}
   footer p{margin:5px 0}
   @media(max-width:768px){
-    .xsj-footer{padding-bottom:calc(40px + var(--tabbar-h) + env(safe-area-inset-bottom))}
+    /* 底部分頁列本來就是固定在畫面上的，這裡只要讓最後一行不被它蓋住就好，
+       多留的空白會變成一大片灰（嵐：下方空白太多了）。 */
+    .xsj-footer{padding-bottom:calc(14px + var(--tabbar-h) + env(safe-area-inset-bottom))}
   }
   @media(max-width:600px){
     body{font-size:14px}
@@ -1029,7 +1055,7 @@
 <header>
   <div class="wrap">
     <div class="htop">
-      <h1 class="brand"><svg class="mark" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="cursor:pointer">
+      <h1 class="brand"><svg class="mark" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
           <ellipse class="flame" cx="12" cy="4.4" rx="1.7" ry="2.3"/>
           <rect x="11" y="7.5" width="2" height="3" fill="currentColor" opacity=".45"/>
           <rect x="4" y="10.5" width="16" height="4.5" rx="1.4" fill="currentColor"/>
@@ -1579,6 +1605,10 @@
     </div>
     <div class="panel" id="myReportsPanel"><h2>我的使用回報</h2><p class="sub">點一筆可以看詳情、編輯或刪除。</p><div id="myReports"></div></div>
     <div class="panel" id="myOffersPanel"><h2>我的投稿</h2><div id="myOffers"></div></div>
+    <!-- 嵐：「我填寫過的回報問題，要可以出現在我的頁面」（schema_v73 開的讀自己那幾筆的權限） -->
+    <div class="panel" id="myFeedbackPanel"><h2>我回報過的問題<span class="n hidden" id="myFbCount"></span></h2>
+      <p class="sub">你用頁尾「回報網站問題」送出的內容，還有管理員的回覆。</p>
+      <div id="myFeedback"></div></div>
     </div>
     <!-- 不管有沒有登入都看得到——加到主畫面是幫網站觸及更多人的入口，
          不應該卡在登入門檻後面。 -->
@@ -1802,9 +1832,9 @@
     <nav class="xsj-apps" aria-label="小數據所的產品">
       <a href="./" aria-current="page">壽星日</a>
       <span class="xsj-sep">·</span>
-      <a href="https://bandary.web.app" target="_blank" rel="noopener">Bandary</a>
+      <a href="https://forms.gle/FhBJgWBWb72MCg5x5" target="_blank" rel="noopener">Bandary 聽團曆 · 封閉測試報名</a>
       <span class="xsj-sep">·</span>
-      <span class="xsj-soon">RelateStats</span>
+      <a href="https://forms.gle/6HT4LzRSsPA76b6s7" target="_blank" rel="noopener">RelateStats · 封閉測試報名</a>
     </nav>
     <div class="xsj-meta">© <span id="xsjYear"></span> 小數據所 · Celine Fu</div>
   </div>
@@ -1912,7 +1942,7 @@
 <div class="hidden" id="bdayCheer" role="dialog" aria-modal="true" aria-labelledby="bdayCheerTitle">
   <div class="bday-confetti" id="bdayConfetti" aria-hidden="true"></div>
   <div class="bday-card">
-    <span class="bday-cake" aria-hidden="true">🎂<span class="bday-flame"></span></span>
+    <span class="bday-cake-wrap" aria-hidden="true"><span class="bday-cake">🎂<span class="bday-flame"></span></span></span>
     <h2 id="bdayCheerTitle">生日快樂！</h2>
     <p id="bdayCheerSub"></p>
     <div class="row">
@@ -3382,43 +3412,26 @@ $('#btnMineA2hsClose').onclick=()=>{
    的東西；還在 feature/geo 分支、沒上線的功能（附近分店、地圖模式）不列。
    新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
 const SITE_UPDATES=[
-  {date:'2026-09-29', title:'地圖修好了、可以自己指定地點', items:[
-    '修正地圖整片變成灰色、印著英文字看不到街道——換回 OpenStreetMap 的圖磚',
-    '「附近」多了一顆「換地點」：直接輸入台北車站、信義區市府路這種地名，就能查那附近的優惠',
-    '修正手機打中文搜尋時常常顯示「沒有符合的優惠」——選字打到一半就先去比對了',
-    '頁尾加上小數據所的署名']},
-  {date:'2026-09-23', title:'生日祝賀、月底提醒、排行榜看最近', items:[
-    '有填生日的話，生日當天（跟前後幾天）打開壽星日會跳出生日祝賀小卡片，還有蠟燭跟紙花 🎂',
-    '月底前 7 天會提醒你：待辦清單裡有哪幾個優惠這個月底就結束了',
-    '「大家都在用什麼」多一個「最近使用最多次」，而且可以自己選近 7／30／90／180 天',
-    '修正問卷篩選條件太長時整個畫面會被撐寬、可以左右滑動',
-    '修正「你的年紀」長條圖下面的文字疊在一起',
-    '修正待辦清單上面那排「我的／○○的／全部」在手機上會被切掉，改成排不下就換行',
-    '待辦清單加了搜尋欄，清單一長可以直接搜店名',
-    '再修一次「點開優惠、按關閉之後跳回頁面最上面」：這次是瀏覽器的自動捲動還原在作怪']},
+  {date:'2026-09-29', title:'地圖修好了', items:[
+    '地圖變灰色、看不到街道的問題修好了',
+    '「附近」可以直接打地名（台北車站、信義區市府路…）查那附近的優惠',
+    '修正手機打中文搜尋常常顯示「沒有符合的優惠」',
+    '「我的」看得到自己回報過的問題，處理到哪了、有沒有回覆都寫在上面']},
+  {date:'2026-09-23', title:'月底提醒、排行榜看最近', items:[
+    '月底前會提醒你：待辦清單裡有哪幾個優惠這個月底就結束',
+    '「大家都在用什麼」可以看最近 7／30／90／180 天誰被用最多',
+    '待辦清單加了搜尋欄',
+    '修了幾個手機上的跑版']},
   {date:'2026-09-21', title:'列表更順、數字對齊', items:[
-    '修正往下滑優惠清單時網頁會出錯、整頁重載：改成先顯示 30 筆，滑到底自動接著顯示',
-    '用 iPad／手機點開一筆優惠再關掉，會停在原本的位置，不會跳回最上面',
-    '排行榜「本月」的省下金額改成跟「走勢」分頁同一份資料，兩邊數字一致',
-    '幫家人／另一半記生日的話，待辦清單會分成「我的」「○○的」兩份，可以切換；每一筆也能互相搬',
-    '生日可以清除了（自己的旁邊多一顆「清除」）',
-    '重複、失效的優惠可以直接從站上清掉，不會再留在清單裡',
-    '修正整併重複店家時會挑錯店：店名裡有數字的（再睡5分鐘、定食8、31冰淇淋…）會被當成編號',
-    '整併重複店家時，「再睡5分鐘」跟「再睡五分鐘」這種中文數字寫法不同的，現在也認得出是同一家',
-    '新增隱私權政策與服務條款兩頁（頁尾有連結）：寫清楚我們收到哪些資料、哪些別人看得到、怎麼把資料刪掉，還有投稿與留言的規範']},
+    '修正往下滑優惠清單會整頁重載；點開一筆再關掉會停在原位',
+    '幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬',
+    '排行榜各頁的金額改成同一份資料，數字不再對不起來',
+    '新增隱私權政策與服務條款（頁尾有連結）']},
   {date:'2026-09-18', title:'圖表全面改版', items:[
-    '排行榜的站台數據、洞察分析，每一份數據都換成最適合的圖表：時間用直條、佔比用一條色塊、尖峰會特別標出來',
-    '每張圖手指按住（或滑鼠滑過）就看得到數字，也可以展開「看數字」看完整表格',
-    '站台數據、洞察分析分成幾個小分頁，不用一直往下滑',
-    '排行榜會直接告訴你自己排第幾名；每個排行榜都可以切「進步最多」，看最近衝最快的店家跟人',
-    '修正手機上排行榜最右邊那欄被切掉，還有優惠頁跟排行榜的「大家累積省下」數字不一樣',
-    '優惠內容、條件可以換行了，條列式 1. 2. 3. 比較好讀',
-    '「買一送一」跟「折扣」分成兩類，篩選更好找；優惠會直接寫清楚要不要本人出示證件',
-    '大頭貼可以自己上傳照片了（在「我的」→ 個人資料）',
-    'PK雙饗卡、多那之集團、瓦城泰統集團的優惠拆成一個品牌一張，回報時找得到自己去的那家',
-    '修正貢獻度排行榜：之前大家看到每個人的「建議」都是 0，名次也跟著算錯',
-    '成功率改成用所有回報來算（之前會一直顯示接近 100%）',
-    '修正填完問卷馬上再開一份時，新的那份會被自動關掉']},
+    '站台數據、洞察分析每一份數據都換成最適合的圖表，手指按住就看得到數字',
+    '排行榜會告訴你自己第幾名，也可以切「進步最多」',
+    '「買一送一」跟「折扣」分成兩類；優惠會寫清楚要不要本人出示證件',
+    '大頭貼可以自己上傳照片了']},
   {date:'2026-09-17', title:'待辦清單改版', items:[
     '待辦清單每一筆變成一張小卡：點店名就看詳情，「移到明年」「移除」收進「⋯」選單',
     '備註要寫的時候再按「📝 備註」，清單看起來清爽很多',
@@ -3620,6 +3633,11 @@ function maybeShowUpdatesNudge(){
   const latest=SITE_UPDATES[0];
   if(!(latest.date > updatesSeenDate())) return false;
   if(updatesNudgeDone() >= latest.date) return false;
+  // 嵐：「不要每次更新都跳通知，一週一次就夠了」
+  try{
+    const last=Number(localStorage.getItem('sxr_updates_nudge_at')||0);
+    if(last && Date.now()-last < 7*864e5) return false;
+  }catch{}
   if(!$('#surveyNudge').classList.contains('hidden')) return false;
   // 生日祝賀正在跳的話先讓給它，更新紀錄下次再說
   if(!$('#bdayCheer').classList.contains('hidden')) return false;
@@ -3628,6 +3646,7 @@ function maybeShowUpdatesNudge(){
     ? `最近有 ${newer} 次更新，最新是「${latest.title}」`
     : `最新更新：「${latest.title}」`;
   $('#updatesNudge').classList.remove('hidden');
+  try{ localStorage.setItem('sxr_updates_nudge_at', String(Date.now())); }catch{}
   logEvent('updates_nudge', {action:'show', date:latest.date});
   return true;
 }
@@ -4047,6 +4066,11 @@ $('#btnNearPlace').onclick=()=>{
   if(open) $('#nearPlaceQ').focus();
 };
 $('#btnNearPlaceGo').onclick=searchNearPlace;
+// 嵐：「地圖功能在輸入的時候不會自動捲動輸入框」——手機鍵盤一跳出來就把它蓋住了。
+// 聚焦後等鍵盤動畫跑完再把它捲到畫面中間。
+$('#nearPlaceQ').addEventListener('focus', ()=>{
+  setTimeout(()=>$('#nearPlaceQ')?.scrollIntoView({behavior:'smooth', block:'center'}), 320);
+});
 $('#nearPlaceQ').addEventListener('keydown', e=>{
   if(e.key==='Enter'){ e.preventDefault(); searchNearPlace(); }
 });
@@ -5885,8 +5909,45 @@ async function loadMyStuff(){
     loadMyStuff();
   });
   renderMySubmitHistory();
+  loadMyFeedback();
 }
 let MY_OFFERS=[];
+
+/* ---- 「我的」→ 我回報過的問題（schema_v73）----
+   嵐：「我填寫過的回報問題，要可以出現在我的頁面」。送出之後只有管理員看得到，
+   自己完全不知道處理到哪了。v73 多開一條「只讀自己那幾筆」的權限，這裡就查得到。
+   訪客送的沒有帳號可以對應，本來就查不到，不顯示這個區塊。 ---- */
+const MY_FB_STATUS={open:['⏳ 未完成',''], in_progress:['🔧 修改中','partial'], resolved:['✓ 已完成','ok']};
+async function loadMyFeedback(){
+  const panel=$('#myFeedbackPanel'), box=$('#myFeedback'), cnt=$('#myFbCount');
+  if(!panel||!box) return;
+  if(!LIVE||!me){ panel.classList.add('hidden'); return; }
+  const {data,error}=await sb.from('site_feedback')
+    .select('id,type,message,status,admin_reply,created_at')
+    .eq('user_id',me.id).order('created_at',{ascending:false}).limit(50);
+  if(error){
+    // v73 還沒跑：讀不到自己的那幾筆，直接把區塊收起來，不要在「我的」放一塊紅字
+    panel.classList.add('hidden');
+    return;
+  }
+  const rows=data||[];
+  panel.classList.toggle('hidden', !rows.length);
+  cnt.textContent=rows.length; cnt.classList.toggle('hidden', !rows.length);
+  box.innerHTML=rows.map(f=>{
+    const [label,cls]=MY_FB_STATUS[f.status]||MY_FB_STATUS.open;
+    return `<div class="rej-row" style="border-top:1px solid var(--line);padding:10px 0">
+      <div class="row" style="align-items:baseline;gap:6px">
+        <span class="flag${f.type==='suggestion'?' ok-flag':''}">${esc(FB_TYPE_LABEL[f.type||'bug'])}</span>
+        <span class="${cls}" style="font-size:.8rem">${label}</span>
+        <span style="margin-left:auto;color:var(--ink-3);font-size:.78rem">${esc(fmtD(f.created_at))}</span>
+      </div>
+      <div style="margin-top:4px;font-size:.86rem;white-space:pre-wrap;overflow-wrap:anywhere">${esc(f.message)}</div>
+      ${f.admin_reply?`<div style="margin-top:6px;font-size:.82rem;color:var(--ink-2);
+        background:var(--line-soft);border-radius:var(--r-xs);padding:7px 9px;
+        white-space:pre-wrap;overflow-wrap:anywhere">回覆：${esc(f.admin_reply)}</div>`:''}
+    </div>`;
+  }).join('');
+}
 
 /* ---- 「新增」分頁：先讓人看一下自己之前投過什麼，避免重複投稿 ---- */
 function renderMySubmitHistory(){
@@ -9240,7 +9301,7 @@ function makeCollapsiblePanel(id, defaultOpen){
 [['profilePanel',true],['remindersPanel',true],['wishlistPanel',true],['mySavingsPanel',true],
  // 第二組生日：celine 說預設收著，不用的人不會被打擾
  ['altBdayPanel',false],
- ['badgesPanel',false],['myReportsPanel',false],['myOffersPanel',false],
+ ['badgesPanel',false],['myReportsPanel',false],['myOffersPanel',false],['myFeedbackPanel',false],
  // 更新紀錄（celine：可以摺疊、預設展開）；收合時有新更新標題旁會標 NEW
  ['siteUpdatesPanel',true]]
   .forEach(([id,open])=>makeCollapsiblePanel(id,open));

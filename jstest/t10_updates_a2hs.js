@@ -98,7 +98,9 @@ const { boot, tick, makeAsserts } = require('./harness');
   /* ================= 有新更新時跳通知 ================= */
   const unudge = doc.querySelector('#updatesNudge');
   const snudge = doc.querySelector('#surveyNudge');
-  const resetUpd = () => { ls.setItem('sxr_updates_seen', updates[1].date); ls.removeItem('sxr_updates_nudge_done'); unudge.classList.add('hidden'); win.renderSiteUpdates(); };
+  // 嵐：「不要每次更新都跳通知，一週一次就夠了」——每次重設情境時也把「上次跳的時間」清掉
+  const resetUpd = () => { ls.setItem('sxr_updates_seen', updates[1].date); ls.removeItem('sxr_updates_nudge_done');
+    ls.removeItem('sxr_updates_nudge_at'); unudge.classList.add('hidden'); win.renderSiteUpdates(); };
 
   // 第一次來的人不跳
   ls.removeItem('sxr_updates_seen'); ls.removeItem('sxr_updates_nudge_done');
@@ -126,7 +128,15 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.ok('按「晚點再看」收起通知', unudge.classList.contains('hidden'));
   t.eq('「晚點再看」之後這次的更新不再跳', win.maybeShowUpdatesNudge(), false);
   t.ok('「晚點再看」不算看過，小紅點還在', tabDot() > 0);
-  t.eq('之後再有新的更新會再跳', (() => { ls.setItem('sxr_updates_nudge_done', updates[1].date); return win.maybeShowUpdatesNudge(); })(), true);
+  // 一週之內就算又有新的更新也不跳（嵐：不要每次更新都跳）
+  t.eq('一週內又有新更新也不再跳',
+    (() => { ls.setItem('sxr_updates_nudge_done', updates[1].date); return win.maybeShowUpdatesNudge(); })(), false);
+  // 滿一週之後才會再跳
+  t.eq('隔一週之後有新的更新才會再跳',
+    (() => { ls.setItem('sxr_updates_nudge_at', String(Date.now() - 8 * 864e5)); return win.maybeShowUpdatesNudge(); })(), true);
+  t.ok('跳出來的時候記下時間，當作一週的起算點',
+    Number(ls.getItem('sxr_updates_nudge_at')) > Date.now() - 5000, ls.getItem('sxr_updates_nudge_at'));
+  unudge.classList.add('hidden');
   unudge.classList.add('hidden');
 
   // 去看看：切到「我的」、展開更新紀錄、捲過去
