@@ -38,9 +38,14 @@ const { boot, tick, makeAsserts } = require('./harness');
   setBday(today);
   t.ok('生日當天會跳', win.maybeShowBirthdayCheer() === true && !$('#bdayCheer').classList.contains('hidden'));
   t.ok('寫出名字跟生日快樂', /生日快樂，嵐/.test($('#bdayCheerTitle').textContent), $('#bdayCheerTitle').textContent);
-  // celine：「卡片文字多一點生日祝福」——標題下面多一句祝福語，隨機從一組裡挑
+  // celine：「卡片文字多一點生日祝福」，後來又說「改成『祝你快樂，不只是生日』這種
+  // 留白感多的文字」——所以每句都是兩行、每行不超過 8 個字，不堆形容詞
   t.ok('有一句生日祝福', /[。！]/.test($('#bdayCheerWish').textContent) && $('#bdayCheerWish').textContent.length >= 10,
     $('#bdayCheerWish').textContent);
+  t.ok('祝福是留白感的兩行短句',
+    win.eval('BDAY_WISHES').every((w) => w.split('\n').length === 2
+      && w.split('\n').every((line) => line.length <= 9)),
+    win.eval('BDAY_WISHES'));
   // 沒有收藏的人，下面那行是空的——不要為了填版面硬推優惠（celine：不要太有行銷）
   t.eq('沒有收藏就不多說什麼', $('#bdayCheerSub').textContent, '');
   t.ok('祝福語裡不提優惠、不催人去用',
@@ -53,6 +58,39 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.ok('有紙花在掉', doc.querySelectorAll('#bdayConfetti i').length >= 20);
   t.ok('紙花不是排隊掉下來（延遲各自不同）',
     new Set([...doc.querySelectorAll('#bdayConfetti i')].map((x) => x.style.animationDelay)).size > 5);
+
+  /* ---- 卡片之前先演幾秒吹蠟燭（celine：「生日卡片前面多個幾秒的吹蠟燭動畫」）---- */
+  t.ok('先演吹蠟燭，卡片先不要出來', $('#bdayCheer').classList.contains('staging')
+    && !$('#bdayStage').classList.contains('hidden'));
+  t.eq('三根蠟燭', doc.querySelectorAll('#bdayStage .bday-candle').length, 3);
+  t.ok('一開始還沒吹', !$('#bdayStage').classList.contains('blow'));
+  t.ok('先叫人許願', /許個願/.test($('#bdayStageTxt').textContent), $('#bdayStageTxt').textContent);
+  await new Promise((r) => win.setTimeout(r, 1700));
+  t.ok('一秒多之後蠟燭被吹熄', $('#bdayStage').classList.contains('blow'));
+  t.ok('吹的時候有聲音感的字', /呼/.test($('#bdayStageTxt').textContent), $('#bdayStageTxt').textContent);
+  await new Promise((r) => win.setTimeout(r, 1400));
+  t.ok('演完就把舞台收掉、卡片接手',
+    !$('#bdayCheer').classList.contains('staging') && $('#bdayStage').classList.contains('hidden')
+    && !$('#bdayCheer').classList.contains('hidden'));
+
+  // 不想等的人點一下就跳過
+  clearKeys(); win.closeBdayCheer();
+  win.maybeShowBirthdayCheer();
+  t.ok('又在演了', $('#bdayCheer').classList.contains('staging'));
+  $('#bdayStage').dispatchEvent(new win.Event('click'));
+  t.ok('點一下直接跳到卡片', !$('#bdayCheer').classList.contains('staging')
+    && $('#bdayStage').classList.contains('hidden')
+    && !$('#bdayCheer').classList.contains('hidden'));
+
+  // 關掉的時候也要把舞台狀態清乾淨，不然下一次打開會卡在「演到一半」
+  clearKeys();
+  win.maybeShowBirthdayCheer();
+  win.closeBdayCheer();
+  t.ok('關掉時舞台一起清掉', !$('#bdayCheer').classList.contains('staging')
+    && $('#bdayStage').classList.contains('hidden')
+    && !$('#bdayStage').classList.contains('blow'));
+  clearKeys();
+  win.maybeShowBirthdayCheer();
 
   /* ---- 生日祝賀在跳的時候，更新紀錄通知先讓路 ---- */
   ls.removeItem('sxr_updates_seen'); ls.removeItem('sxr_updates_nudge_done');

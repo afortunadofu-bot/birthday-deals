@@ -103,9 +103,13 @@
   .htop{display:flex;align-items:center;gap:14px;padding:16px 0 12px;flex-wrap:nowrap}
   /* 整個標題（圖示＋「壽星日」三個字）都可以點——連點會選到文字、也可能被
      行動瀏覽器的雙擊縮放吃掉，所以關掉文字選取與雙擊縮放。 */
+  /* 手指的接觸面積比看起來的字大，連點時很容易有一兩下落在字的外框外面（就不算數了）。
+     用 padding 把可點範圍撐大、再用等量的負 margin 把版面拉回原位，看起來沒變、好點很多。 */
   .brand{font-size:1.28rem;font-weight:800;letter-spacing:-.01em;
-    margin:0;display:flex;align-items:center;gap:8px;color:var(--ink);flex:none;min-width:0;
-    cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+    margin:-8px -6px;padding:8px 6px;display:flex;align-items:center;gap:8px;color:var(--ink);
+    flex:none;min-width:0;
+    cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+    touch-action:manipulation}
   .brand .mark{flex:none;color:var(--ink)}
   .brand .mark .flame{fill:var(--accent)}
   .brand span{color:var(--ink-3);font-weight:400;font-size:.78rem;
@@ -691,7 +695,7 @@
   .sv-aspect>span{width:80px;font-size:.82rem;flex:none}
   .sv-aspect .sv-group{flex:1;flex-wrap:nowrap;gap:4px}
   .sv-aspect .sv-opt{flex:1;padding:6px 0;border-radius:8px;min-width:0;text-align:center}
-  #surveyNudge,#updatesNudge{position:fixed;left:12px;right:12px;max-width:360px;margin-left:auto;z-index:60;
+  #surveyNudge,#updatesNudge,#geoNudge{position:fixed;left:12px;right:12px;max-width:360px;margin-left:auto;z-index:60;
     bottom:calc(72px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom));
     background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
     box-shadow:0 8px 24px rgba(0,0,0,.14);padding:12px 14px;font-size:.86rem}
@@ -932,6 +936,53 @@
   #bdayCheer{position:fixed;inset:0;z-index:400;display:flex;align-items:center;justify-content:center;
     padding:20px;background:rgba(20,20,35,.42);backdrop-filter:blur(2px)}
   #bdayCheer.hidden{display:none}
+  /* ---- 卡片之前的吹蠟燭（celine：「生日卡片前面多個幾秒的吹蠟燭動畫」）----
+     三根蠟燭先各自搖曳，1.5 秒後加上 .blow：火苗被吹歪、縮掉，三縷白煙飄上去，
+     再過 1.4 秒整個舞台淡出、卡片進場。整段可以點一下跳過。 */
+  .bday-stage{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:18px;cursor:pointer;
+    animation:bdayStageIn .45s var(--ease) both}
+  .bday-stage.hidden{display:none}
+  .bday-stage.out{animation:bdayStageOut .45s var(--ease) both}
+  .bday-bigcake{position:relative;font-size:4.6rem;line-height:1;
+    filter:drop-shadow(0 14px 22px rgba(20,20,35,.45));animation:bdayBob 2.4s ease-in-out infinite}
+  .bday-candle{position:absolute;bottom:72%;width:6px;height:20px;border-radius:2px;
+    background:linear-gradient(180deg,#fff6ea,#f6d7bd)}
+  .bday-candle.c1{left:26%}
+  .bday-candle.c2{left:49%;height:24px}
+  .bday-candle.c3{left:70%}
+  /* 火苗本體：.blow 之前一直抖，.blow 之後被吹歪然後縮掉 */
+  .bday-candle>i{position:absolute;left:50%;top:-13px;width:9px;height:14px;margin-left:-4.5px;
+    border-radius:50% 50% 50% 50%/60% 60% 40% 40%;transform-origin:50% 100%;
+    background:radial-gradient(circle at 50% 70%, #fff6c2 0%, #ffb320 55%, #f2711c 100%);
+    box-shadow:0 0 16px 5px rgba(255,180,60,.5);
+    animation:bdayFlame 1.1s ease-in-out infinite}
+  .bday-stage.blow .bday-candle>i{animation:bdayBlowOut .55s ease-in forwards}
+  .bday-stage.blow .bday-candle.c2>i{animation-delay:.08s}
+  .bday-stage.blow .bday-candle.c3>i{animation-delay:.16s}
+  /* 吹熄之後飄上去的白煙 */
+  .bday-puff{position:absolute;bottom:80%;width:7px;height:7px;border-radius:50%;opacity:0;
+    background:radial-gradient(circle,rgba(255,255,255,.9) 0%,rgba(255,255,255,0) 70%)}
+  .bday-stage.blow .bday-puff{animation:bdaySmoke 1.6s ease-out forwards}
+  .bday-puff.p1{left:26%;animation-delay:.35s}
+  .bday-puff.p2{left:49%;animation-delay:.45s}
+  .bday-puff.p3{left:70%;animation-delay:.55s}
+  .bday-stage-txt{color:#fff;font-size:1rem;letter-spacing:.22em;text-indent:.22em;
+    text-shadow:0 2px 12px rgba(0,0,0,.45);margin:0;transition:opacity .3s}
+  @keyframes bdayStageIn{from{opacity:0}to{opacity:1}}
+  @keyframes bdayStageOut{from{opacity:1}to{opacity:0}}
+  @keyframes bdayBlowOut{
+    0%{transform:rotate(0) scale(1);opacity:1}
+    35%{transform:rotate(58deg) scaleY(.75) scaleX(1.25);opacity:.9}
+    100%{transform:rotate(80deg) scale(.05);opacity:0;box-shadow:none}}
+  @keyframes bdaySmoke{
+    0%{opacity:0;transform:translateY(0) scale(.7)}
+    25%{opacity:.75}
+    100%{opacity:0;transform:translateY(-60px) translateX(10px) scale(2.4)}}
+  /* 吹蠟燭的時候紙花先不要搶戲，蠟燭熄了才浮出來 */
+  #bdayCheer.staging .bday-card{visibility:hidden}
+  #bdayCheer.staging .bday-confetti{opacity:0}
+  .bday-confetti{transition:opacity .5s ease}
   .bday-card{position:relative;z-index:2;border-radius:18px;overflow:hidden;
     background:linear-gradient(170deg,#fff 0%,#fffaf6 58%,#fdf1ea 100%);
     box-shadow:0 30px 70px -22px rgba(20,20,35,.5), 0 0 0 1px rgba(255,255,255,.7) inset;
@@ -956,8 +1007,10 @@
   .bday-card h2{font-size:1.32rem;margin:10px 0 8px;letter-spacing:.01em;overflow-wrap:anywhere}
   .bday-card p{font-size:.88rem;color:var(--ink-2);margin:0 0 14px;line-height:1.7}
   /* 祝福那一句：字大一點、顏色深一點，是卡片的主角 */
-  .bday-card .bday-wish{font-size:.98rem;color:var(--ink);line-height:1.85;margin:0 0 10px;
-    white-space:pre-line}   /* 祝福語自己有斷行，照著排 */
+  /* celine：「祝你快樂，不只是生日」這種留白感多的文字——所以字距、行距都拉開，
+     上下也留白，整句話看起來像卡片上手寫的一行字，不像一段說明。 */
+  .bday-card .bday-wish{font-size:1.02rem;color:var(--ink);line-height:2.25;margin:6px 0 18px;
+    letter-spacing:.08em;white-space:pre-line}   /* 祝福語自己有斷行，照著排 */
   .bday-card .bday-sub{font-size:.84rem;color:var(--ink-3)}
   .bday-card .row{justify-content:center;gap:8px}
   .bday-card .btn{min-height:40px}
@@ -995,8 +1048,10 @@
   @keyframes bdayGlow{0%,100%{opacity:.75;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
   @media (prefers-reduced-motion:reduce){
     .bday-card,.bday-card::after,.bday-cake,.bday-flame,.bday-spark,
-    .bday-confetti i,.bday-confetti i::before,.bday-fallwrap,.bday-cake-wrap::after{animation:none}
+    .bday-confetti i,.bday-confetti i::before,.bday-fallwrap,.bday-cake-wrap::after,
+    .bday-stage,.bday-bigcake,.bday-candle>i,.bday-puff{animation:none}
     .bday-confetti{display:none}
+    .bday-stage{display:none}   /* 吹蠟燭那段整段跳過，直接看卡片 */
   }
   /* 使用者自己打的內容要能在任何地方斷行。中文標點（。、」…）有「不能出現在行首」
      的排版規則，所以「。。。。。。」這種一長串會被當成一個不能拆的東西——celine 的截圖裡
@@ -2057,6 +2112,17 @@
 <!-- 生日當天／當週打開網站時的祝賀（maybeShowBirthdayCheer） -->
 <div class="hidden" id="bdayCheer" role="dialog" aria-modal="true" aria-labelledby="bdayCheerTitle">
   <div class="bday-confetti" id="bdayConfetti" aria-hidden="true"></div>
+  <!-- 卡片之前先演幾秒吹蠟燭（celine：「生日卡片前面多個幾秒的吹蠟燭動畫」）。
+       點一下可以跳過；會暈的人（prefers-reduced-motion）直接看卡片。 -->
+  <div class="bday-stage hidden" id="bdayStage">
+    <div class="bday-bigcake" aria-hidden="true">🎂
+      <span class="bday-candle c1"><i></i></span>
+      <span class="bday-candle c2"><i></i></span>
+      <span class="bday-candle c3"><i></i></span>
+      <span class="bday-puff p1"></span><span class="bday-puff p2"></span><span class="bday-puff p3"></span>
+    </div>
+    <p class="bday-stage-txt" id="bdayStageTxt"></p>
+  </div>
   <div class="bday-card">
     <span class="bday-cake-wrap" aria-hidden="true"><span class="bday-cake">🎂<span class="bday-flame"></span></span>
       <span class="bday-spark" style="left:6px;top:26px;animation-delay:.2s"></span>
@@ -2085,6 +2151,22 @@
   <div class="row" style="margin-top:10px;gap:8px;justify-content:flex-end">
     <button type="button" class="btn sm" id="btnUpdNudgeLater">晚點再看</button>
     <button type="button" class="btn sm primary" id="btnUpdNudgeGo">去看看</button>
+  </div>
+</div>
+
+<!-- 一打開網站就問要不要開定位（celine）。先用自己的小視窗問一次，按「好」才叫
+     瀏覽器的定位權限——直接在開場叫瀏覽器跳權限視窗的話，順手按了「不允許」就
+     再也問不到了（那是瀏覽器層級的封鎖，網站自己解不開），得叫人去設定裡改。 -->
+<div class="hidden" id="geoNudge" role="dialog" aria-label="要不要開定位">
+  <div style="display:flex;gap:8px;align-items:flex-start">
+    <span aria-hidden="true" style="font-size:1.3rem;line-height:1">📍</span>
+    <div style="flex:1"><b>要看你附近有什麼優惠嗎？</b>
+      <div class="hint" style="margin-top:2px">開了定位就把地圖移到你這裡，位置只在這台裝置上用，不會存起來。</div></div>
+    <button type="button" class="btn plain" id="btnGeoNudgeClose" aria-label="先不要">✕</button>
+  </div>
+  <div class="row" style="margin-top:10px;gap:8px;justify-content:flex-end">
+    <button type="button" class="btn sm" id="btnGeoNudgeNo">先不要</button>
+    <button type="button" class="btn sm primary" id="btnGeoNudgeYes">好，開定位</button>
   </div>
 </div>
 
@@ -2585,7 +2667,13 @@ async function connectLive(){
   loadSiteStats(); loadSiteAnnouncement(); registerSW();
   logEvent('pageview', {tab: location.hash||'offers'});
   startSurveyNudges();
-  setTimeout(()=>{ maybeShowBirthdayCheer(); maybeShowUpdatesNudge(); }, 1200);
+  // 生日卡片最優先（一年就那幾天），再來是「要不要開定位」（celine：一打開網頁就問），
+  // 更新紀錄的通知排最後，前面兩個有在跳就讓它下次再說。
+  setTimeout(async()=>{
+    maybeShowBirthdayCheer();
+    await maybeAskLocation();
+    maybeShowUpdatesNudge();
+  }, 1200);
 }
 
 /* ---- 成效追蹤：極簡事件記錄，失敗就默默略過，不能影響網站正常使用 ---- */
@@ -3571,8 +3659,9 @@ $('#btnMineA2hsClose').onclick=()=>{
    的東西；還在 feature/geo 分支、沒上線的功能（附近分店、地圖模式）不列。
    新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
 const SITE_UPDATES=[
-  {date:'2026-09-30', title:'投稿前先幫你比對、版面全面檢查',items:[
+  {date:'2026-09-30', title:'投稿前先幫你比對、附近直接開地圖',items:[
     '投稿打店名時，站上已經有同一家就會列出來，可以一鍵改成對那筆提修改建議',
+    '第一次進來會問要不要用定位；按「📍 附近」就直接把地圖打開，不用再按一次',
     '小螢幕（含摺疊機）到平板、桌機都重新檢查過版面',
     '排行榜的站台數據多一個「收藏後真的去用」的比例',
     '生日祝福的卡片換了新文案，也加強了防灌水與資料保護']},
@@ -3760,6 +3849,7 @@ function maybeShowBirthdayCheer(force){
   $('#bdayCheerSub').classList.toggle('hidden', !subTxt);
   $('#bdayConfetti').innerHTML = st.kind==='today' ? confettiHtml(40) : confettiHtml(18);
   $('#bdayCheer').classList.remove('hidden');
+  runBdayStage(st.kind==='today');
   if(!force) try{ localStorage.setItem(key,'1'); }catch{}
   logEvent('bday_cheer', {kind:st.kind, force:!!force});
   return true;
@@ -3770,18 +3860,20 @@ function maybeShowBirthdayCheer(force){
 // 祝福語每行都短一點（手機上一行大約放得下 15 個字），才不會斷在奇怪的地方，
 // 像「接下來的每一天也都 / 是。」那樣把兩個字丟到下一行。
 const BR = String.fromCharCode(10);
+/* celine：「改成『祝你快樂，不只是生日』這種留白感多的文字」。
+   所以每一句都壓到兩行、每行不超過 8 個字，不解釋、不堆形容詞，留白自己會說話。 */
 const BDAY_WISHES=[
-  '祝你今天很快樂，' + BR + '接下來的每一天也都是。',
-  '願你新的一歲，' + BR + '少一點煩心事，多一點小確幸。',
-  '祝你平平安安、健健康康，' + BR + '想去的地方都去得成。',
-  '願你被好好對待，' + BR + '也記得好好對待自己。',
-  '願你煩惱都很小、開心都很長，' + BR + '喜歡的人剛好也喜歡你。',
-  '祝你每一天都快樂，' + BR + '不只是今天。'
+  '祝你快樂，' + BR + '不只是生日。',
+  '願你被好好對待，' + BR + '也包括被自己。',
+  '今天慢一點，' + BR + '世界等得起。',
+  '願你想去的地方，' + BR + '都去得成。',
+  '新的一歲，' + BR + '願你更喜歡自己。',
+  '祝你平安，' + BR + '祝你自由。'
 ];
 const BDAY_WISHES_SOON=[
-  '先跟你說一聲生日快樂，' + BR + '願你這一年都順順的。',
-  '生日這幾天，' + BR + '記得留點時間好好對自己一次。',
-  '願你新的一歲，' + BR + '每一天都比昨天再開心一點點。'
+  '生日快到了，' + BR + '先祝你快樂。',
+  '這幾天，' + BR + '留一點時間給自己。',
+  '新的一歲要來了，' + BR + '願你輕輕鬆鬆地過。'
 ];
 /* 紙花：每一片是兩層——外層 .bday-fallwrap 負責往下掉，內層 <i> 負責左右飄，
    <i>::before 再負責自轉。分三層才不會互相蓋掉 transform。
@@ -3806,20 +3898,58 @@ function confettiHtml(n){
   }
   return out;
 }
-function closeBdayCheer(){ $('#bdayCheer').classList.add('hidden'); $('#bdayConfetti').innerHTML=''; }
+/* ---- 卡片之前的吹蠟燭（celine：「生日卡片前面多個幾秒的吹蠟燭動畫」）----
+   0.0s 三根蠟燭亮著、微微搖　→　1.5s 被吹歪、縮掉，白煙飄上去
+   　　　　　　　　　　　　　　→　2.9s 舞台淡出，卡片跟紙花接手
+   點一下可以跳過；會暈的人（prefers-reduced-motion）整段不演，直接看卡片。 */
+let BDAY_STAGE_TIMERS=[];
+function bdayReduceMotion(){
+  try{ return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }
+  catch{ return false; }
+}
+function clearBdayStage(){
+  BDAY_STAGE_TIMERS.forEach(clearTimeout); BDAY_STAGE_TIMERS=[];
+  $('#bdayCheer').classList.remove('staging');
+  $('#bdayStage').classList.add('hidden');
+  $('#bdayStage').classList.remove('blow','out');
+}
+function runBdayStage(isToday){
+  clearBdayStage();
+  if(bdayReduceMotion()) return false;
+  const stage=$('#bdayStage');
+  $('#bdayCheer').classList.add('staging');
+  stage.classList.remove('hidden');
+  $('#bdayStageTxt').textContent = isToday ? '許個願吧' : '先幫你點上蠟燭';
+  const at=(ms,fn)=>BDAY_STAGE_TIMERS.push(setTimeout(fn, ms));
+  at(1500, ()=>{ stage.classList.add('blow'); $('#bdayStageTxt').textContent='呼——'; });
+  at(2450, ()=>stage.classList.add('out'));
+  at(2900, clearBdayStage);
+  return true;
+}
+// 點一下就跳過（舞台蓋住整個畫面，所以吹蠟燭時點哪裡都是點到它）
+$('#bdayStage').onclick=clearBdayStage;
+function closeBdayCheer(){ clearBdayStage(); $('#bdayCheer').classList.add('hidden'); $('#bdayConfetti').innerHTML=''; }
 $('#btnBdayCheerClose').onclick=closeBdayCheer;
 $('#bdayCheer').onclick=e=>{ if(e.target===$('#bdayCheer')) closeBdayCheer(); };
-/* 小彩蛋：連點頁首的 logo 五下就放一次生日動畫（不分今天是不是誰的生日）。
+/* 小彩蛋：連點頁首的 logo 三下就放一次生日動畫（不分今天是不是誰的生日）。
    刻意不寫進更新紀錄，讓人自己發現。 */
 let LOGO_TAPS=0, logoTapTimer=null;
-/* 用 pointerdown 而不是 click：手機上連點很容易被瀏覽器判成雙擊（縮放手勢）而把
-   第二、四下的 click 吞掉，點五下常常只算到兩三下。pointerdown 一按就算，
-   而且間隔從 1.2 秒放寬到 2.5 秒，慢慢點也數得到。 */
-$('.brand')?.addEventListener('pointerdown', ()=>{
+/* celine：「現在生日卡片動畫跳不出來」。三個地方一起改：
+   1. 手指的接觸面積比字大，連點時常常有一兩下落在字的外框外面就不算數了。
+      `.brand` 用 padding 把可點範圍撐大（見 CSS），看起來一樣、好點很多。
+   2. 五下太多，改成三下（2.5 秒內）。
+   3. pointerdown 之外再補一條 click 的路（少數瀏覽器在純文字元素上不送 pointerdown）。
+   另外 PointerEvent 在很舊的 iOS Safari 上沒有，退回 touchstart。 */
+let lastLogoPointer=0;
+function logoTap(){
   clearTimeout(logoTapTimer);
   logoTapTimer=setTimeout(()=>{ LOGO_TAPS=0; }, 2500);
-  if(++LOGO_TAPS>=5){ LOGO_TAPS=0; clearTimeout(logoTapTimer); maybeShowBirthdayCheer(true); }
-});
+  if(++LOGO_TAPS>=3){ LOGO_TAPS=0; clearTimeout(logoTapTimer); maybeShowBirthdayCheer(true); }
+}
+$('.brand')?.addEventListener('pointerdown', ()=>{ lastLogoPointer=Date.now(); logoTap(); });
+// 保險：少數瀏覽器（舊 iOS Safari、部分 Android WebView）在純文字元素上不一定送得出
+// pointerdown，但 click 一定有。剛剛已經用 pointerdown 算過的那一下不重複算。
+$('.brand')?.addEventListener('click', ()=>{ if(Date.now()-lastLogoPointer>600) logoTap(); });
 
 $('#btnBdayCheerGo').onclick=()=>{
   closeBdayCheer();
@@ -3838,6 +3968,7 @@ function maybeShowUpdatesNudge(){
     if(last && Date.now()-last < 7*864e5) return false;
   }catch{}
   if(!$('#surveyNudge').classList.contains('hidden')) return false;
+  if(!$('#geoNudge').classList.contains('hidden')) return false;
   // 生日祝賀正在跳的話先讓給它，更新紀錄下次再說
   if(!$('#bdayCheer').classList.contains('hidden')) return false;
   const newer=SITE_UPDATES.filter(u=>u.date>updatesSeenDate()).length;
@@ -3854,6 +3985,45 @@ function closeUpdatesNudge(action){
   $('#updatesNudge').classList.add('hidden');
   logEvent('updates_nudge', {action, date:SITE_UPDATES[0].date});
 }
+/* ---- 一打開網站就問要不要開定位（celine：「一打開網頁就會自動跳通知問你要不要
+   開定位，然後地圖預設開啟」）----
+   刻意不直接呼叫 navigator.geolocation：開場就叫瀏覽器跳權限視窗，很多人會反射性
+   按「不允許」，那是瀏覽器層級的封鎖，網站自己再也問不到（只能請人去設定裡改）。
+   所以先用自己的小視窗問一次，按「好」才去要權限——被按「先不要」也只是記在這台
+   裝置上，之後按「📍 附近」照樣問得到。
+   已經允許過的人不用再問，直接幫他開「附近」。 ---- */
+const GEO_ASK_KEY='sxr_geo_ask';
+function geoAsked(){ try{ return localStorage.getItem(GEO_ASK_KEY)||''; }catch{ return ''; } }
+function setGeoAsked(v){ try{ localStorage.setItem(GEO_ASK_KEY, v); }catch{} }
+async function maybeAskLocation(){
+  if(!LIVE || !navigator.geolocation) return false;
+  let state='';
+  try{ state=(await navigator.permissions?.query({name:'geolocation'}))?.state||''; }catch{}
+  if(state==='granted'){ if(!NEAR.active) startNear(); return true; }   // 早就允許過，直接開
+  if(state==='denied') return false;                                   // 已經封鎖，問了也沒用
+  if(geoAsked()) return false;                                         // 這台裝置回答過了
+  // 生日卡片／其他小視窗正在跳的時候先讓路，下次進來再問
+  if(!$('#bdayCheer').classList.contains('hidden')) return false;
+  if(!$('#surveyNudge').classList.contains('hidden')) return false;
+  if(!$('#updatesNudge').classList.contains('hidden')) return false;
+  $('#geoNudge').classList.remove('hidden');
+  logEvent('geo_ask', {action:'show'});
+  return true;
+}
+function closeGeoNudge(action){
+  $('#geoNudge').classList.add('hidden');
+  setGeoAsked(action==='yes'?'yes':'no');
+  logEvent('geo_ask', {action});
+}
+$('#btnGeoNudgeNo').onclick=()=>closeGeoNudge('no');
+$('#btnGeoNudgeClose').onclick=()=>closeGeoNudge('no');
+$('#btnGeoNudgeYes').onclick=()=>{
+  closeGeoNudge('yes');
+  document.querySelector('.tab[data-tab="browse"]')?.click();
+  startNear();          // 這裡才會跳瀏覽器的定位權限，而且地圖會直接打開
+  setTimeout(()=>$('#nearBar')?.scrollIntoView({behavior:'smooth', block:'center'}), 200);
+};
+
 $('#btnUpdNudgeLater').onclick=()=>closeUpdatesNudge('later');
 $('#btnUpdNudgeClose').onclick=()=>closeUpdatesNudge('later');
 $('#btnUpdNudgeGo').onclick=()=>{
@@ -4087,7 +4257,10 @@ function renderNearBar(){
 function startNear(){
   if(!LIVE){ alert('離線模式查不到分店位置，請先用 python serve.py 啟動並設定 config.js。'); return; }
   NEAR.active=true;
-  if(!navigator.geolocation){ renderNearBar(); openNearMap(); return; }
+  // celine：「地圖預設開啟」——開了「附近」就直接把地圖打開，不用再按一次「地圖」。
+  // 抓得到定位就把中心點移過去，抓不到也已經開著，可以直接點你要查的地方。
+  openNearMap();
+  if(!navigator.geolocation){ renderNearBar(); return; }
   NEAR.loading=true; renderNearBar();
   navigator.geolocation.getCurrentPosition(
     pos=>setNearCenter(pos.coords.latitude, pos.coords.longitude, '你目前的位置'),

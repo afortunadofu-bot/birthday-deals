@@ -163,14 +163,30 @@ const { boot, tick, makeAsserts } = require('./harness');
   /* ================= 4. logo 小彩蛋 ================= */
   win.localStorage.removeItem(`sxr_bday_cheer_today_${new Date().getFullYear()}`);
   $('#bmonth').value = ''; $('#bday').value = '';   // 沒填生日也要放得出來
-  // 改用 pointerdown：手機上連點的 click 常常被瀏覽器當成雙擊縮放吞掉，點五下只算到兩三下
+  // celine：「生日卡片動畫跳不出來」——五下太多（手指比字大，常常有一兩下落在字的
+  // 外框外面就不算數），改成三下；pointerdown 之外再補一條 click 的路
   const tapLogo = () => $('.brand').dispatchEvent(new win.Event('pointerdown', { bubbles: true }));
-  for (let i = 0; i < 4; i++) tapLogo();
-  t.ok('點四下還沒反應', $('#bdayCheer').classList.contains('hidden'));
+  const clickLogo = () => $('.brand').dispatchEvent(new win.Event('click', { bubbles: true }));
+  for (let i = 0; i < 2; i++) tapLogo();
+  t.ok('點兩下還沒反應', $('#bdayCheer').classList.contains('hidden'));
   tapLogo();
-  t.ok('連點五下放生日動畫', !$('#bdayCheer').classList.contains('hidden'));
+  t.ok('連點三下放生日動畫', !$('#bdayCheer').classList.contains('hidden'));
   t.ok('彩蛋不佔用「今年已經跳過了」的紀錄（真的生日那天還是要跳）',
     !win.localStorage.getItem(`sxr_bday_cheer_today_${new Date().getFullYear()}`));
+  win.closeBdayCheer();
+
+  // 同一下的 pointerdown＋隨後的 click 不能被算成兩下
+  win.eval('LOGO_TAPS = 0;');
+  tapLogo(); clickLogo();
+  tapLogo(); clickLogo();
+  t.ok('一下不會被算成兩下', $('#bdayCheer').classList.contains('hidden'));
+  tapLogo();
+  t.ok('第三下才跳', !$('#bdayCheer').classList.contains('hidden'));
+  win.closeBdayCheer();
+  // 不送 pointerdown 的瀏覽器（舊 iOS Safari 等）只有 click，也要算得到
+  win.eval('LOGO_TAPS = 0; lastLogoPointer = 0;');
+  for (let i = 0; i < 3; i++) clickLogo();
+  t.ok('只有 click 的瀏覽器也放得出來', !$('#bdayCheer').classList.contains('hidden'));
   win.closeBdayCheer();
 
   // 這是彩蛋，不要寫在更新紀錄裡（嵐特別交代）
