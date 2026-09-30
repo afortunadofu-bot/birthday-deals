@@ -189,6 +189,31 @@
      用 querySelector('.note') 抓「畫面上第一個提示」的地方互相干擾 */
   .dup-hint{padding:13px 16px;border-radius:var(--r-sm);font-size:.85rem;margin:16px 0;
     border:1px solid var(--alert-line);background:var(--alert-bg);color:#8a4f06}
+  /* 可能重複的既有優惠，一張一個按鈕，按下去就切成「對這筆提修改建議」 */
+  .dup-list{display:flex;flex-direction:column;gap:6px;margin:9px 0 0}
+  .dup-pick,.dup-pend{display:block;width:100%;min-width:0;text-align:left;padding:8px 10px;
+    border:1px solid var(--alert-line);border-radius:var(--r-sm);background:var(--surface);
+    color:var(--ink);font:inherit;font-size:.82rem}
+  .dup-pick{cursor:pointer}
+  .dup-pick:hover{border-color:var(--accent-line);background:var(--accent-bg)}
+  .dup-pick b,.dup-pend b{display:block;min-width:0;overflow-wrap:anywhere}
+  .dup-pick small,.dup-pend small{display:block;margin-top:2px;color:var(--ink-3);min-width:0;
+    overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .dup-go{display:block;margin-top:4px;color:var(--accent-dark);font-size:.78rem;font-weight:700}
+  .dup-foot{margin-top:8px;font-size:.78rem;opacity:.85}
+  /* 審核每一列裡的「站上可能已經有同一家」提醒 */
+  .pend-dup{margin:8px 0 0;padding:8px 10px;border:1px solid var(--alert-line);
+    background:var(--alert-bg);border-radius:var(--r-sm);font-size:.8rem;color:#8a4f06}
+  .pend-dup-item{margin-top:5px;padding-left:10px;border-left:2px solid var(--alert-line)}
+  .pend-dup-item small{display:block;color:var(--ink-3);overflow-wrap:anywhere}
+  /* 後台裡「先收起來、要看再展開」的區塊（審核分析等） */
+  .admin-fold{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}
+  .admin-fold>summary{cursor:pointer;font-size:.86rem;font-weight:700;color:var(--ink-2);
+    list-style:none;display:flex;align-items:baseline;flex-wrap:wrap;gap:2px}
+  .admin-fold>summary::-webkit-details-marker{display:none}
+  .admin-fold>summary::before{content:'▸';margin-right:6px;color:var(--ink-3);font-weight:400}
+  .admin-fold[open]>summary::before{content:'▾'}
+  .admin-fold>summary:hover{color:var(--accent-dark)}
   code{background:var(--line-soft);padding:1px 5px;border-radius:4px;font-size:.87em}
 
   /* 「本週新上架／自上次來訪新增」入口——卡片式、左側一條酒紅色細邊＋圓形
@@ -554,6 +579,8 @@
   .fb-msg, .sv-ans, .sv-comment, .sv-head .sv-name,
   .wl-offer, .wl-meta, .dtl-facts .sub-item span,
   #dtlBrand, #dtlOffer, #myFeedback div,
+  .dup-hint, .dup-pick, .dup-pend, .dup-pick b, .dup-pend b,
+  .pend-dup, .pend-dup-item, .pend-dup-item b,
   .dlg h2, .dlg > .sub, .dlg .sub
   { min-width:0; overflow-wrap:anywhere; }
   .cmt{padding:7px 0;border-bottom:1px solid var(--line-soft)}
@@ -1782,18 +1809,24 @@
   <div class="panel" id="pnlPending">
     <h2>待審佇列<span class="n hidden" id="pendQueueCount"></span></h2>
     <p class="sub">勾「已查證」代表你向品牌官方確認過。核可後才會出現在公開的「優惠」分頁。</p>
-    <div class="note" style="margin:0 0 16px">
-      <b>這裡只會出現公開投稿</b>——一開始用 <code>seed.py</code> 匯入的
-      113 筆是直接標記已上架，不會出現在待審清單。想試試審核流程，
-      可以先到「新增」分頁投稿一筆測試資料，再回這裡核可或退回。
-    </div>
-    <div id="reviewInsights" style="margin:0 0 16px"></div>
     <div class="row hidden" id="pendBulkBar" style="margin:0 0 10px;align-items:center;gap:10px">
       <label class="toggle"><input type="checkbox" id="pendSelectAll"> 全選</label>
       <button class="btn sm" id="pendBulkApprove" type="button" disabled>核可已勾選（已選 0 筆）</button>
     </div>
     <div id="pendMsg"></div>
     <div id="pendingList"></div>
+    <!-- 嵐：「待審佇列每次點開都會先看到一堆圖表才看的到要審核的店家，有點浪費時間」
+         ——要審的東西排最前面，圖表跟說明收到下面，按了才展開（展開狀態記在這台
+         裝置上，習慣看圖表的人不用每次重按）。 -->
+    <details class="admin-fold" id="pendInsightsFold">
+      <summary>審核分析與說明<span class="hint" style="margin-left:6px">核可率、平均耗時、待審類別</span></summary>
+      <div id="reviewInsights" style="margin:14px 0 0"></div>
+      <div class="note" style="margin:14px 0 0">
+        <b>這裡只會出現公開投稿</b>——一開始用 <code>seed.py</code> 匯入的
+        113 筆是直接標記已上架，不會出現在待審清單。想試試審核流程，
+        可以先到「新增」分頁投稿一筆測試資料，再回這裡核可或退回。
+      </div>
+    </details>
   </div>
   <div class="panel" id="pnlEdits">
     <h2>修改建議待審<span class="n hidden" id="editCount"></span></h2>
@@ -2321,15 +2354,38 @@ async function withScrollRestore(tasks){
    跟「大家最近投稿了什麼」共用同一份待審清單（PENDING_PREVIEW），這樣不只擋得住
    「跟已上架的重複」，也擋得住「別人剛好也在投同一家、還在審核中」這種情況。---- */
 let PENDING_PREVIEW=[];
-const normBrand = s => (s||'').toLowerCase().replace(/[\s（）()／/、,.．·・]/g,'');
-function findSimilarBrand(name){
+/* 比對用的正規化：全形轉半形（ＭＯＳ→MOS）、中文數字轉阿拉伯數字（五十嵐→50嵐、
+   再睡五分鐘→再睡5分鐘）、去掉空白與標點。只在「比對」時用，畫面上顯示的永遠
+   是原本的店名。合併面板的 mergeNorm 也指到這一支——兩邊用不同規則的話，會出現
+   「投稿時說沒有重複、合併面板卻把這兩張列成重複」這種自己打自己臉的情況。 */
+const CJK_D={'零':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9};
+function cjkNum(s){
+  return String(s||'')
+    // 先處理有「十」的：十→10、五十→50、十二→12、五十五→55
+    .replace(/([零一二三四五六七八九])?十([零一二三四五六七八九])?/g,
+      (m,a,b)=>String((a?CJK_D[a]:1)*10+(b?CJK_D[b]:0)))
+    .replace(/[零一二三四五六七八九]/g,c=>String(CJK_D[c]));
+}
+const normBrand = s => cjkNum(String(s||'').toLowerCase().normalize('NFKC'))
+  .replace(/[\s\-_.·・、,／/()!?'’"“”「」&]/g,'');
+/* 找出「可能是同一家」的既有優惠。回傳全部符合的（最多給呼叫端自己切），
+   不是只回第一筆——同一個品牌站上可能有好幾張（不同分店、不同年度檔期），
+   只丟第一筆出去，投稿的人很容易被導到不相干的那一張。
+   排序：完全一樣的排最前面，其次是回報次數多的（比較可能是主要那一張）。 */
+function similarBrands(name, pool){
   const bn=normBrand(name);
-  if(bn.length<2) return null;
-  const hit=o=>{ const on=normBrand(o.brand); return on && (on===bn || on.includes(bn) || bn.includes(on)); };
-  const approved=OFFERS.find(hit);
-  if(approved) return {kind:'approved', item:approved};
-  const pending=PENDING_PREVIEW.find(hit);
-  if(pending) return {kind:'pending', item:pending};
+  if(bn.length<2) return [];
+  return (pool||[]).filter(o=>{
+    const on=normBrand(o.brand);
+    return on && (on===bn || on.includes(bn) || bn.includes(on));
+  }).sort((a,b)=>(normBrand(a.brand)===bn?0:1)-(normBrand(b.brand)===bn?0:1)
+    || (b.reportCount||0)-(a.reportCount||0));
+}
+function findSimilarBrand(name){
+  const approved=similarBrands(name, OFFERS);
+  if(approved.length) return {kind:'approved', item:approved[0], items:approved.slice(0,3)};
+  const pending=similarBrands(name, PENDING_PREVIEW);
+  if(pending.length) return {kind:'pending', item:pending[0], items:pending.slice(0,3)};
   return null;
 }
 
@@ -3515,7 +3571,8 @@ $('#btnMineA2hsClose').onclick=()=>{
    的東西；還在 feature/geo 分支、沒上線的功能（附近分店、地圖模式）不列。
    新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
 const SITE_UPDATES=[
-  {date:'2026-09-30', title:'版面全面檢查、收藏轉換率',items:[
+  {date:'2026-09-30', title:'投稿前先幫你比對、版面全面檢查',items:[
+    '投稿打店名時，站上已經有同一家就會列出來，可以一鍵改成對那筆提修改建議',
     '小螢幕（含摺疊機）到平板、桌機都重新檢查過版面',
     '排行榜的站台數據多一個「收藏後真的去用」的比例',
     '生日祝福的卡片換了新文案，也加強了防灌水與資料保護']},
@@ -5629,15 +5686,26 @@ function renderBrandDupHint(){
   if(editingOfferId){ box.className='dup-hint hidden'; return; }
   const found=findSimilarBrand($('#fBrand').value);
   if(!found){ box.className='dup-hint hidden'; box.innerHTML=''; return; }
-  const {kind,item}=found;
+  const {kind,items}=found;
   box.className='dup-hint';
   if(kind==='approved'){
-    box.innerHTML=`已經有「${esc(item.brand)}」這筆優惠了，是同一家店嗎？
-      <button type="button" class="btn sm" id="brandDupToEdit" style="margin-left:6px">改成對這筆提修改建議</button>`;
-    $('#brandDupToEdit').onclick=()=>startEditOffer(item.id, false, true);
+    // 列出全部符合的（最多 3 張）並附上優惠內容——只寫店名的話，站上同一個品牌
+    // 有好幾張時根本分不出來該對哪一張提建議。
+    box.innerHTML=`站上已經有${items.length>1?` ${items.length} 筆`:''}看起來是同一家的優惠，${
+      items.length>1?'要改的是其中一筆嗎？':'是同一家店嗎？'}
+      <div class="dup-list">${items.map(o=>`
+        <button type="button" class="dup-pick" data-id="${esc(String(o.id))}">
+          <b>#${esc(String(o.id))}　${esc(o.brand)}</b>
+          <small>${esc(o.offer||'')}</small>
+          <span class="dup-go">改成對這筆提修改建議 →</span>
+        </button>`).join('')}</div>
+      <div class="dup-foot">確定是不同家（同名不同品牌），直接往下填就好。</div>`;
+    $$('#brandDupHint .dup-pick').forEach(b=>b.onclick=()=>startEditOffer(b.dataset.id, false, true));
   }else{
-    box.innerHTML=`已經有人投稿「${esc(item.brand)}」了，還在等審核，避免投到重複，
-      可以到下面「大家最近投稿了什麼」看一下內容。`;
+    box.innerHTML=`已經有人投稿${items.length>1?` ${items.length} 筆`:''}看起來是同一家的了，還在等審核：<div
+      class="dup-list">${items.map(o=>`<div class="dup-pend"><b>${esc(o.brand)}</b>
+        <small>${esc(o.offer||'')}</small></div>`).join('')}</div>
+      <div class="dup-foot">內容不一樣的話還是可以送出，審核時會兩筆一起看。</div>`;
   }
 }
 $('#fBrand').addEventListener('input',()=>{
@@ -5705,8 +5773,10 @@ $('#submitForm').onsubmit=async e=>{
   if(!editing){
     const found=findSimilarBrand(row.brand);
     if(found?.kind==='approved'){
-      const goEdit=confirm(`已經有「${found.item.brand}」這筆優惠了，是不是同一家店？\n\n`
-        +`按「確定」會改成對現有的「${found.item.brand}」提出修改建議；按「取消」則照原本這樣新增一筆投稿。`);
+      const it=found.item, snip=String(it.offer||'').replace(/\s+/g,' ').slice(0,40);
+      const goEdit=confirm(`站上已經有「#${it.id} ${it.brand}」了${snip?`：\n${snip}${(it.offer||'').length>40?'…':''}`:''}\n\n`
+        +`是同一家店的話，比較好的做法是對這一筆提修改建議，資料會集中在同一張，不會變成兩張半滿的。\n\n`
+        +`按「確定」改成對「${it.brand}」提出修改建議；按「取消」照原本這樣新增一筆。`);
       if(goEdit){ b.disabled=false; startEditOffer(found.item.id, false, true); return; }
     }else if(found?.kind==='pending'){
       const proceed=confirm(`已經有人投稿「${found.item.brand}」了，還在等審核，你這筆是不是同一家店？\n\n`
@@ -7529,6 +7599,28 @@ async function loadPending(){
   // #pendQueueCount 是兩個不同元素——嵐回饋「待審佇列旁邊要寫有幾個待審
   // 的」，之前這個 panel 標題本身沒有徽章，只有導覽列有，容易誤會沒更新。
   if(pqc){ pqc.textContent=list.length; pqc.classList.toggle('hidden',!list.length); }
+  /* 核可前先幫忙比對一次「站上是不是已經有同一家」——嵐：「管理員在核可的時候
+     也要可以直接看到有沒有相似的」。核可了才發現重複，就要再回去合併面板處理，
+     比在這裡多看一眼貴得多。同一批待審裡自己重複（同一家被投兩次）也一起抓。 */
+  const dupOf=o=>({
+    live:similarBrands(o.brand, OFFERS).slice(0,3),
+    pend:similarBrands(o.brand, list.filter(x=>String(x.id)!==String(o.id))).slice(0,2),
+  });
+  const dupHtml=o=>{
+    const d=dupOf(o);
+    if(!d.live.length && !d.pend.length) return '';
+    const ref=d.live[0] ? `#${d.live[0].id} ${d.live[0].brand}` : '';
+    return `<div class="pend-dup">
+      <b>${d.live.length?'⚠ 站上已經有看起來是同一家的':'⚠ 這批待審裡還有看起來是同一家的'}</b>
+      ${d.live.map(s=>`<div class="pend-dup-item"><b>#${esc(String(s.id))}　${esc(s.brand)}</b>
+        <small>${esc(String(s.offer||'').slice(0,80))}${String(s.offer||'').length>80?'…':''}
+        ・回報 ${s.reportCount||0} 次</small></div>`).join('')}
+      ${d.pend.map(s=>`<div class="pend-dup-item"><b>待審 #${esc(String(s.id))}　${esc(s.brand)}</b>
+        <small>${esc(String(s.offer||'').slice(0,80))}${String(s.offer||'').length>80?'…':''}</small></div>`).join('')}
+      ${ref?`<button type="button" class="btn sm pend-dup-note" data-id="${esc(String(o.id))}"
+        data-ref="${esc(ref)}" style="margin-top:7px">把重複寫進審核備註</button>`:''}
+    </div>`;
+  };
   $('#pendingList').innerHTML=list.map(o=>`
     <div class="pend-row" data-row="${o.id}" style="border-top:1px solid var(--line);padding:14px 0">
       <div class="chead" style="align-items:center;gap:8px">
@@ -7546,6 +7638,7 @@ async function loadPending(){
         <span class="flag wrap">${o.regions.length?esc(o.regions.join('、')):'未填地區'}</span>
       </div>
       <p class="offer">${esc(o.offer)}</p>
+      ${dupHtml(o)}
       <dl class="kv"><dt>提前</dt><dd>${o.advanceDays??'未填'} 天</dd>
         <dt>條件</dt><dd>${esc(o.conditions||'未填')}</dd>
         <dt>來源</dt><dd>${o.bestSource?`${esc(o.bestSource.tierLabel)} <a href="${
@@ -7561,6 +7654,13 @@ async function loadPending(){
   // 核可前發現內容需要修正，可以直接編輯——會切到「新增」分頁，改完存檔後
   // 這筆還是待審狀態，回到這裡再核可即可，不用先退回再叫對方重投。
   $$('.pend-edit').forEach(b=>b.onclick=()=>startEditOffer(b.dataset.id, true));
+  // 判斷是重複的話，退回理由通常就是那一句——直接幫忙填好，按「退回」就送出。
+  $$('.pend-dup-note').forEach(b=>b.onclick=()=>{
+    const input=document.querySelector(`.rn[data-id="${b.dataset.id}"]`);
+    if(!input) return;
+    input.value=`重複投稿：站上已經有 ${b.dataset.ref}`;
+    input.focus();
+  });
   // 批次核可工具列（嵐回饋：待審核清單也要一鍵審核全選）——跟「修改建議
   // 待審」的 editBulkBar 同一套，差別在投稿每一列本來就有自己的「已查證」
   // 勾選框跟「審核備註」輸入框，批次核可時照每一列當下的值送，不會一律
@@ -7629,9 +7729,15 @@ async function loadPending(){
 /* ---- 審核分析：核可率、平均審核耗時、待審類別分布、投稿最多的人 ----
    放在待審佇列上面，管理員一進來先看到「現在審核狀況大概怎樣」，
    再往下捲進到實際要一筆一筆核可/退回的清單。 ---- */
+let INSIGHTS_STALE=false;
 async function loadReviewInsights(){
   if(!LIVE||!myProfile?.is_admin) return;
   const box=$('#reviewInsights');
+  // 收起來的時候不要白跑一趟 RPC——審核分析現在預設收合（要審的清單排前面），
+  // 展開時才去算，之後每次核可／退回也只有在展開狀態才重算。
+  const fold=$('#pendInsightsFold');
+  if(fold && !fold.open){ INSIGHTS_STALE=true; return; }
+  INSIGHTS_STALE=false;
   const {data,error}=await sb.rpc('admin_review_insights');
   if(error){
     const hint=/function|does not exist/i.test(error.message)?'（Supabase 可能還沒跑 schema_v37_review_insights.sql）':'';
@@ -7663,6 +7769,18 @@ async function loadReviewInsights(){
         color:i===0?'var(--accent)':'var(--accent-line)'})))}</div></div>`:''}
   </div>`;
 }
+// 展開／收合狀態記在這台裝置上，習慣先看圖表的人不用每次重按。
+const PEND_FOLD_KEY='sxr_admin_pend_insights';
+(()=>{
+  const fold=$('#pendInsightsFold');
+  if(!fold) return;
+  try{ if(localStorage.getItem(PEND_FOLD_KEY)==='1') fold.open=true; }catch(e){}
+  fold.addEventListener('toggle',()=>{
+    try{ localStorage.setItem(PEND_FOLD_KEY, fold.open?'1':'0'); }catch(e){}
+    // 還沒算過（裡面是空的）或收著的時候有人核可／退回過，展開時補算一次
+    if(fold.open && (INSIGHTS_STALE || !$('#reviewInsights').innerHTML)) loadReviewInsights();
+  });
+})();
 
 /* ---- 修改建議待審：民眾對已上架優惠提的修改建議，新舊對照 + 可編輯 + 核可／退回 ----
    「新的內容」那一格直接是輸入框，不是純文字——管理員核可前可以先調整
@@ -9139,12 +9257,9 @@ function wireChartTooltips(root, registry=DASH_CHARTS){
 function mergeOfferLabel(o){ return `#${o.id} ${o.brand}`; }
 // 「再睡5分鐘」跟「再睡五分鐘」是同一家（真的兩張都在站上），中文數字換成阿拉伯數字
 // 才比得出來；只在比對時換，顯示出來的還是原本的店名。
-const CJK_NUM={'零':'0','一':'1','二':'2','三':'3','四':'4','五':'5','六':'6','七':'7','八':'8','九':'9','十':'10'};
-function mergeNorm(b){
-  return String(b||'').toLowerCase()
-    .replace(/[零一二三四五六七八九十]/g, c=>CJK_NUM[c])
-    .replace(/[\s\-_.·・!！'’]/g,'');
-}
+// 規則跟投稿表單的查重共用同一支 normBrand()——兩邊各寫一套的話，會變成
+// 「投稿時說沒重複，合併面板卻說這兩張重複」，管理員跟投稿者看到的結論不一樣。
+const mergeNorm = normBrand;
 /* 找出輸入的是哪一張優惠。
    celine：「我查不到我很確定有的店家」——舊版是 `/#?(\d+)/`，在字串裡抓到第一串數字就
    當成編號，所以打「再睡5」會跳出「#5 德克士」，而且完全沒有用名字找的路。品牌名字裡

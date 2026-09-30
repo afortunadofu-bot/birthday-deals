@@ -61,7 +61,11 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   t.eq('選好之後就不再列清單', hits('#mergeKeepHits').length, 0);
   // 「再睡5分鐘」跟「再睡五分鐘」：中文數字要認得是同一家
   t.ok('中文數字寫法不同也算可能重複', win.mergeSearch('再睡').length === 2, win.mergeSearch('再睡').map((o) => o.brand));
-  t.eq('比對時把中文數字換成阿拉伯數字', win.mergeNorm('再睡五分鐘'), win.mergeNorm('再睡5分鐘'));
+  // mergeNorm 現在是投稿查重那支 normBrand 的別名（兩邊用同一套規則，見 t24），
+  // 頂層 const 不會掛在 window 上，要用間接 eval 才叫得到
+  const mNorm = (s) => win.eval(`mergeNorm(${JSON.stringify(s)})`);
+  t.eq('比對時把中文數字換成阿拉伯數字', mNorm('再睡五分鐘'), mNorm('再睡5分鐘'));
+  t.eq('投稿查重跟合併面板用同一套比對規則', mNorm('五十嵐'), win.eval('normBrand("50嵐")'));
   win.renderMergePanel();
   const sugg2 = [...doc.querySelectorAll('#mergeSugg .merge-sugg-btn')].map((b) => b.textContent.replace(/\s+/g, ' ').trim());
   t.ok('「可能重複」列出 再睡5分鐘 ⇄ 再睡五分鐘', sugg2.some((x) => /再睡5分鐘/.test(x) && /再睡五分鐘/.test(x)), sugg2);
