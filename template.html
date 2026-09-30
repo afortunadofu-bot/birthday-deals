@@ -326,7 +326,13 @@
   .toggle{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;color:var(--ink-2);
     cursor:pointer;min-height:36px}
   .toggle input{accent-color:var(--accent);width:16px;height:16px}
-  .lbl{font-size:.82rem;color:var(--ink-3);display:inline-flex;align-items:center;gap:5px}
+  /* 原生 <select> 的寬度會長到跟「最寬的那一個選項」一樣。標籤篩選、問卷答案這種
+     選項內容是使用者自己打的，一個超長標籤就會把整排撐出面板外面。限制成最多跟
+     容器一樣寬，選項太長就由瀏覽器自己截掉。 */
+  .lbl{font-size:.82rem;color:var(--ink-3);display:inline-flex;align-items:center;gap:5px;
+    min-width:0;max-width:100%}
+  /* <input> 也一樣：預設寬度（size 屬性）在 320px 的小螢幕上就會超出去 */
+  .lbl select,.lbl input{min-width:0;max-width:100%}
   /* 生日那兩個 select 沒放在 .field 裡（.field select 才會 width:100%），沒特別限制
      寬度的話瀏覽器預設寬度看起來會偏大、手機版容易跟旁邊的儲存按鈕擠在一起或溢出。
      這裡收窄成剛好放得下「12」「31」這種兩位數字的寬度就好。 */
@@ -404,7 +410,11 @@
   @keyframes cardIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
   @keyframes rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
   .chead{display:flex;align-items:baseline;gap:8px;min-width:0}
-  .card h3{margin:0;font-size:1.03rem;font-weight:800;line-height:1.4;flex:1}
+  /* flex 子項目預設 min-width:auto，一長串沒有空白的英文／網址／中文標點會把整張卡
+     撐到比螢幕還寬（celine 回報的跑版）。min-width:0 讓它願意縮，overflow-wrap
+     讓沒有斷點的字串也能硬斷。 */
+  .card h3{margin:0;font-size:1.03rem;font-weight:800;line-height:1.4;flex:1;
+    min-width:0;overflow-wrap:anywhere}
   .val{font-size:.82rem;color:var(--accent-dark);white-space:nowrap;font-variant-numeric:tabular-nums;
     font-weight:700}
   .wish{flex:none;border:none;background:none;cursor:pointer;color:var(--ink-3);padding:2px;
@@ -415,7 +425,10 @@
   .wish[aria-pressed="true"]{color:var(--accent)}
   .wish[aria-pressed="true"] svg{fill:var(--accent)}
   .meta{display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-size:.75rem;color:var(--ink-3);min-width:0}
-  .meta span{white-space:nowrap}
+  /* 每一格（日期、投稿者…）本來就該維持在同一行，但「投稿者：<超長暱稱>」這種
+     使用者自己取的名字會因為 nowrap 完全不能斷，把整頁撐寬。nowrap 留著，
+     另外補上「最多跟容器一樣寬、超出就用…收尾」，短的那幾格看起來完全不變。 */
+  .meta span{white-space:nowrap;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis}
   /* 保險：萬一以後又有地方不小心把一整串沒有空格可斷行的網址（尤其是長長的
      臉書分享連結、中文網址編碼後的 %E5%85%AD...）直接印成連結文字，這裡強制
      可以斷行，不要讓單一個連結把整個手機版頁面撐寬、跑版。 */
@@ -434,7 +447,9 @@
   .meta span:last-child::after{content:''}
   .catdot{display:inline-block;width:7px;height:7px;border-radius:50%;
     background:var(--c,var(--ink-3));margin-right:1px;vertical-align:1px}
-  .flag{display:inline-block;font-size:.72rem;padding:2px 9px;border-radius:6px;
+  /* flex:0 0 auto：標籤放在 flex 列裡（例如已通過清單的「已查證」）時不要被壓扁，
+     被壓扁的話 nowrap 的字會直接畫到框外面、疊到隔壁的東西上。 */
+  .flag{display:inline-block;flex:0 0 auto;max-width:100%;font-size:.72rem;padding:2px 9px;border-radius:6px;
     border:1px solid var(--line);color:var(--ink-2);white-space:nowrap;font-weight:600}
   /* .flag 預設 white-space:nowrap 是為了「當月」「免費・需消費」這種短標籤
      不要從中間斷掉，但「適用地區」那顆標籤塞的是縣市清單，全台的店可以長到
@@ -500,7 +515,9 @@
   .sub-item span,.sub-item>div{min-width:0;overflow-wrap:anywhere;word-break:break-word}
   .sub-item span{color:var(--ink-2)}
 
-  .kv{margin:2px 0 0;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.82rem}
+  /* minmax(0,1fr)：1fr 的最小值預設是 min-content，一條長網址就會把整個 grid
+     撐得比容器寬。改成允許縮到 0，內容再由 overflow-wrap 自己斷行。 */
+  .kv{margin:2px 0 0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:.82rem}
   .kv dt{color:var(--ink-3)}
   .kv dd{margin:0}
   .line{font-size:.82rem;color:var(--ink-2);padding:8px 0;border-top:1px dashed var(--line)}
@@ -520,12 +537,34 @@
   }
 
   .thread{border-top:1px solid var(--line-soft);padding-top:10px;font-size:.83rem}
+  /* ---------- 版面溢出的統一防線（celine：「確定每個地方各種情況都不要跑版」）----------
+     使用者自己打的字可能是：一長串沒有空白的英文、一條很長的網址、或一整排中文標點
+     （「。。。。」在中文排版規則裡不能出現在行首，所以整串會被當成不能拆的一個東西）。
+     這些字放進 flex 容器時，flex 子項目預設的 min-width:auto 會讓它「絕不縮小」，
+     於是整張卡片／整個面板／甚至整頁被撐寬，就是一直被回報的跑版。
+     下面把所有「會放使用者輸入」的格子一次補上：願意縮小 ＋ 沒有斷點時可以硬斷。
+     短標籤、數字、按鈕不在這份清單裡，排版不受影響。 */
+  .card p.offer, .kv, .kv dt, .kv dd,
+  .rep > span, .rep > b, .rep > div,
+  .sub-item > span, .sub-item > b, .sub-item > div,
+  .cmt .body, .cmt .who,
+  .rej-row > div, .pend-row h3, .pend-row .meta,
+  .merge-card, .merge-card .offer, .merge-hit, .merge-hit small,
+  table.lb td .who, table.lb td,
+  .fb-msg, .sv-ans, .sv-comment, .sv-head .sv-name,
+  .wl-offer, .wl-meta, .dtl-facts .sub-item span,
+  #dtlBrand, #dtlOffer, #myFeedback div,
+  .dlg h2, .dlg > .sub, .dlg .sub
+  { min-width:0; overflow-wrap:anywhere; }
   .cmt{padding:7px 0;border-bottom:1px solid var(--line-soft)}
   .cmt .who{font-size:.75rem;color:var(--ink-3);display:flex;align-items:center;gap:6px}
   .cmt .body{white-space:pre-wrap}
   .cmt.hidden-cmt{opacity:.55}
   .cmt.hidden-cmt .body{text-decoration:line-through;text-decoration-color:var(--alert-line)}
-  .rep{display:flex;gap:9px;align-items:baseline;font-size:.81rem;padding:6px 0;
+  /* 允許換行：一列塞了日期、編號、店名、投稿者、標籤、兩顆按鈕，手機寬度不夠時
+     不換行就會把日期之類的短欄位壓成幾個 px、字直接疊出去。換行之後每一格都保持
+     原本的大小，擠不下的自己掉到第二行。 */
+  .rep{display:flex;flex-wrap:wrap;row-gap:4px;gap:9px;align-items:baseline;font-size:.81rem;padding:6px 0;
     border-bottom:1px solid var(--line-soft)}
   .rep.rep-click{cursor:pointer;border-radius:var(--r-xs);margin:0 -6px;padding:6px}
   .rep.rep-click:hover{background:var(--line-soft)}
@@ -569,18 +608,25 @@
   .wl-more>summary{list-style:none}
   .wl-more>summary::-webkit-details-marker{display:none}
   .wl-more[open]>summary{border-color:var(--accent-line);color:var(--accent-dark)}
+  /* 選單靠右展開，裡面有「移到 ○○ 的清單」，○○ 是使用者自己取的稱呼（最長 10 字）。
+     nowrap＋不限寬度的話，小螢幕（320px）上選單會整個戳出畫面右邊。
+     限制成最寬不超過畫面，字太長就換行。 */
   .wl-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:150px;padding:6px;
+    max-width:min(260px, calc(100vw - 40px));
     background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:var(--shadow-md);
     display:flex;flex-direction:column;gap:2px}
   .wl-menu button{background:none;border:0;border-radius:var(--r-xs);padding:9px 10px;text-align:left;
-    font:inherit;font-size:.84rem;color:var(--ink);cursor:pointer;white-space:nowrap}
+    font:inherit;font-size:.84rem;color:var(--ink);cursor:pointer;
+    white-space:normal;overflow-wrap:anywhere;line-height:1.4}
   .wl-menu button:hover{background:var(--line-soft)}
   .wl-menu .wl-danger{color:var(--accent-dark)}
   .wl-meta{margin:6px 0 0 28px;font-size:.8rem;color:var(--ink-2);line-height:1.55;overflow-wrap:anywhere}
   .wl-sep{margin:0 6px;color:var(--ink-3)}
   .wl-pills{display:inline-flex;gap:4px;margin-right:6px;vertical-align:1px}
   .wl-dl{color:var(--accent-dark);font-weight:600}
-  .wl-chips{margin:10px 0 0 28px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  /* 標籤是使用者自己取的，原生 select 會長到跟最寬的選項一樣，小螢幕上會戳出卡片 */
+  .wl-chips{margin:10px 0 0 28px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}
+  .wl-chips select,.wl-tag-wrap{max-width:100%;min-width:0}
   .wl-tag-wrap{display:inline-flex;align-items:center;gap:2px;height:28px;padding:0 4px 0 10px;border-radius:999px;
     background:var(--bg);color:var(--ink-3);font-size:.72rem}
   .wl-tag-wrap.on{background:var(--accent-soft);color:var(--accent-dark)}
@@ -879,22 +925,55 @@
   .bday-flame{position:absolute;left:50%;top:-6px;width:8px;height:12px;margin-left:-4px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;
     background:radial-gradient(circle at 50% 70%, #fff3b0 0%, #ffb320 55%, #f2711c 100%);
     animation:bdayFlame 1.1s ease-in-out infinite}
-  .bday-card h2{font-size:1.32rem;margin:10px 0 6px;letter-spacing:.01em}
-  .bday-card p{font-size:.9rem;color:var(--ink-2);margin:0 0 18px;line-height:1.65}
+  /* 名字是從 Google 帳號來的，可能很長也可能沒有空白 */
+  .bday-card h2{font-size:1.32rem;margin:10px 0 8px;letter-spacing:.01em;overflow-wrap:anywhere}
+  .bday-card p{font-size:.88rem;color:var(--ink-2);margin:0 0 14px;line-height:1.7}
+  /* 祝福那一句：字大一點、顏色深一點，是卡片的主角 */
+  .bday-card .bday-wish{font-size:.98rem;color:var(--ink);line-height:1.8;margin:0 0 10px}
+  .bday-card .bday-sub{font-size:.84rem;color:var(--ink-3)}
   .bday-card .row{justify-content:center;gap:8px}
   .bday-card .btn{min-height:40px}
   .bday-confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
-  .bday-confetti i{position:absolute;top:-16px;width:8px;height:12px;border-radius:2px;
-    animation:bdayFall linear infinite}
-  @keyframes bdayPop{from{opacity:0;transform:translateY(14px) scale(.94)}to{opacity:1;transform:none}}
+  /* 紙花：每一片是「外層負責往下掉＋左右飄，內層負責自轉」，兩層分開才不會互相蓋掉。
+     形狀有長方形、圓形、細長彩帶三種，掉落時間拉長到 5～9 秒，看起來比較慢、比較從容。 */
+  .bday-confetti i{display:block;border-radius:2px;
+    animation-name:bdaySway,bdaySpin;
+    animation-timing-function:ease-in-out,linear;
+    animation-iteration-count:infinite,infinite;
+    animation-direction:alternate,normal}
+  .bday-confetti i.dot{border-radius:50%}
+  .bday-confetti i.ribbon{border-radius:99px}
+  .bday-fallwrap{position:absolute;top:-24px;animation:bdayFall linear infinite}
+  /* 卡片進場：往上浮一點點、帶一下回彈，比單純淡入有精神 */
+  @keyframes bdayPop{
+    0%{opacity:0;transform:translateY(22px) scale(.92)}
+    60%{opacity:1;transform:translateY(-4px) scale(1.012)}
+    100%{opacity:1;transform:none}}
+  /* 卡面上掃過一次的光，只跑一輪，不會一直閃 */
+  .bday-card::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.55) 50%,transparent 62%);
+    transform:translateX(-120%);animation:bdaySheen 1.5s .45s ease-out 1 both}
+  @keyframes bdaySheen{to{transform:translateX(120%)}}
+  /* 蛋糕旁邊的小亮點，錯開時間一閃一閃 */
+  .bday-spark{position:absolute;width:5px;height:5px;border-radius:50%;
+    background:radial-gradient(circle,#fff 0%,var(--viz-4) 60%,rgba(242,167,59,0) 100%);
+    animation:bdayTwinkle 2.2s ease-in-out infinite}
   @keyframes bdayBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
   @keyframes bdayFlame{0%,100%{transform:scaleY(1) rotate(-3deg);opacity:1}50%{transform:scaleY(1.25) rotate(4deg);opacity:.85}}
-  @keyframes bdayFall{to{transform:translateY(105vh) rotate(540deg)}}
+  @keyframes bdayFall{from{transform:translateY(-6vh)}to{transform:translateY(112vh)}}
+  @keyframes bdaySpin{to{transform:rotate(720deg)}}
+  @keyframes bdaySway{from{margin-left:-14px}to{margin-left:14px}}
+  @keyframes bdayTwinkle{0%,100%{opacity:0;transform:scale(.6)}45%{opacity:1;transform:scale(1.25)}}
   @keyframes bdayGlow{0%,100%{opacity:.75;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
   @media (prefers-reduced-motion:reduce){
-    .bday-card,.bday-cake,.bday-flame,.bday-confetti i,.bday-cake-wrap::after{animation:none}
+    .bday-card,.bday-card::after,.bday-cake,.bday-flame,.bday-spark,
+    .bday-confetti i,.bday-confetti i::before,.bday-fallwrap,.bday-cake-wrap::after{animation:none}
     .bday-confetti{display:none}
   }
+  /* 使用者自己打的內容要能在任何地方斷行。中文標點（。、」…）有「不能出現在行首」
+     的排版規則，所以「。。。。。。」這種一長串會被當成一個不能拆的東西——celine 的截圖裡
+     它就直接穿過按鈕、撐到卡片外面去。overflow-wrap:anywhere 允許在任何位置硬斷。 */
+  .fb-msg{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;min-width:0}
   /* 問卷逐筆回覆：整列是一顆可以點開／收起的按鈕。
      原本那一行（時間・名字・信箱・分數）是 .sub-item 的 <b>，被 width:76px + ellipsis
      切成「2026-09-2…」，名字跟信箱根本看不到（嵐：「我都不知道什麼是誰填的」）——
@@ -1796,7 +1875,7 @@
     <p class="sub">用 email 新增管理員——對方要先自己登入過網站一次，系統才查得到帳號。</p>
     <div id="adminMsg"></div>
     <div class="row">
-      <input type="email" id="adminEmail" placeholder="要設為管理員的 email" style="flex:1;min-width:200px">
+      <input type="email" id="adminEmail" placeholder="要設為管理員的 email" style="flex:1;min-width:min(200px,100%)">
       <button class="btn primary sm" id="btnAddAdmin" type="button">設為管理員</button>
     </div>
     <div id="adminList" style="margin-top:14px"></div>
@@ -1942,8 +2021,14 @@
 <div class="hidden" id="bdayCheer" role="dialog" aria-modal="true" aria-labelledby="bdayCheerTitle">
   <div class="bday-confetti" id="bdayConfetti" aria-hidden="true"></div>
   <div class="bday-card">
-    <span class="bday-cake-wrap" aria-hidden="true"><span class="bday-cake">🎂<span class="bday-flame"></span></span></span>
+    <span class="bday-cake-wrap" aria-hidden="true"><span class="bday-cake">🎂<span class="bday-flame"></span></span>
+      <span class="bday-spark" style="left:6px;top:26px;animation-delay:.2s"></span>
+      <span class="bday-spark" style="right:8px;top:18px;animation-delay:.8s"></span>
+      <span class="bday-spark" style="left:16px;bottom:16px;animation-delay:1.4s"></span>
+      <span class="bday-spark" style="right:14px;bottom:22px;animation-delay:1.9s"></span>
+    </span>
     <h2 id="bdayCheerTitle">生日快樂！</h2>
+    <p class="bday-wish" id="bdayCheerWish"></p>
     <p id="bdayCheerSub"></p>
     <div class="row">
       <button type="button" class="btn sm" id="btnBdayCheerClose">知道了</button>
@@ -3412,6 +3497,9 @@ $('#btnMineA2hsClose').onclick=()=>{
    的東西；還在 feature/geo 分支、沒上線的功能（附近分店、地圖模式）不列。
    新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
 const SITE_UPDATES=[
+  {date:'2026-09-30', title:'跑版大掃除', items:[
+    '把店名、優惠內容、備註裡的超長網址或連續標點會把畫面撐寬的問題，全站一次修掉',
+    '小螢幕（含摺疊機）到平板、桌機都重新檢查過版面']},
   {date:'2026-09-29', title:'地圖修好了', items:[
     '地圖變灰色、看不到街道的問題修好了',
     '「附近」可以直接打地名（台北車站、信義區市府路…）查那附近的優惠',
@@ -3588,25 +3676,54 @@ function maybeShowBirthdayCheer(force){
   $('#bdayCheerTitle').textContent = st.kind==='today'
     ? `生日快樂${name?`，${name}`:''}！🎉`
     : `生日快到了${name?`，${name}`:''}！`;
+  // celine：「卡片文字多一點生日祝福」。祝福語每次隨機挑一句，重複看到也不會膩。
+  $('#bdayCheerWish').textContent = st.kind==='today'
+    ? BDAY_WISHES[Math.floor(Math.random()*BDAY_WISHES.length)]
+    : BDAY_WISHES_SOON[Math.floor(Math.random()*BDAY_WISHES_SOON.length)];
+  $('#bdayCheerSub').className='bday-sub';
   $('#bdayCheerSub').textContent = st.kind==='today'
-    ? (wishN ? `今天是你的日子，待辦清單裡還有 ${wishN} 個優惠等你去拿，玩得開心！`
-             : '今天是你的日子，去挑幾個生日優惠犒賞自己，玩得開心！')
+    ? (wishN ? `待辦清單裡還有 ${wishN} 個優惠等你去拿，別忘了 🎁`
+             : '今天站上的生日優惠都是為你準備的，去挑幾個犒賞自己。')
     : (st.days>0 ? `再 ${st.days} 天就是你的生日${wishN?`，清單裡有 ${wishN} 個優惠可以先安排`:''}。`
-                 : `生日這幾天，優惠通常還能用${wishN?`，清單裡還有 ${wishN} 個沒用`:''}。`);
-  $('#bdayConfetti').innerHTML = st.kind==='today' ? confettiHtml(26) : confettiHtml(12);
+                 : `生日這幾天優惠通常還能用${wishN?`，清單裡還有 ${wishN} 個沒用`:''}。`);
+  $('#bdayConfetti').innerHTML = st.kind==='today' ? confettiHtml(40) : confettiHtml(18);
   $('#bdayCheer').classList.remove('hidden');
   if(!force) try{ localStorage.setItem(key,'1'); }catch{}
   logEvent('bday_cheer', {kind:st.kind, force:!!force});
   return true;
 }
-// 紙花：顏色、左右位置、掉落速度、延遲都隨機，看起來才不會像排隊掉下來
+const BDAY_WISHES=[
+  '祝你這一年順順利利，想吃的都吃得到、想去的都去得成。',
+  '願你新的一歲少一點煩心事，多一點剛剛好的小確幸。',
+  '今天最重要的一件事，就是把自己照顧得好好的。',
+  '願你今年的每一天，都像今天一樣值得慶祝。',
+  '祝你被好好對待，也記得好好對待自己。'
+];
+const BDAY_WISHES_SOON=[
+  '快到了，先幫你把優惠準備好。',
+  '生日這幾天，記得留點時間給自己。',
+  '先說聲生日快樂，願你這一年都順順的。'
+];
+/* 紙花：每一片是兩層——外層 .bday-fallwrap 負責往下掉，內層 <i> 負責左右飄，
+   <i>::before 再負責自轉。分三層才不會互相蓋掉 transform。
+   形狀有長方形、圓形、細長彩帶三種；掉落時間 5～9 秒，比原本慢很多，比較從容。 */
 function confettiHtml(n){
-  const colors=['var(--accent)','var(--viz-2)','var(--viz-3)','var(--viz-4)','var(--viz-6)'];
+  const colors=['var(--accent)','var(--viz-2)','var(--viz-3)','var(--viz-4)','var(--viz-6)','var(--viz-5)'];
+  const shapes=['','dot','ribbon'];
   let out='';
   for(let i=0;i<n;i++){
-    const left=Math.round(Math.random()*100), dur=(2.6+Math.random()*2.4).toFixed(2),
-          delay=(Math.random()*2.5).toFixed(2), c=colors[i%colors.length];
-    out+=`<i style="left:${left}%;background:${c};animation-duration:${dur}s;animation-delay:${delay}s"></i>`;
+    const left=(Math.random()*100).toFixed(1);
+    const fall=(5+Math.random()*4).toFixed(2);          // 掉下來要多久
+    const sway=(1.6+Math.random()*1.6).toFixed(2);      // 左右飄一趟要多久
+    const spin=(1.8+Math.random()*2.6).toFixed(2);      // 自轉一圈要多久
+    const delay=(Math.random()*6).toFixed(2);
+    const shape=shapes[i%shapes.length];
+    const w = shape==='ribbon' ? 4 : shape==='dot' ? 7+Math.round(Math.random()*3) : 6+Math.round(Math.random()*4);
+    const h = shape==='ribbon' ? 16+Math.round(Math.random()*8) : shape==='dot' ? w : 9+Math.round(Math.random()*5);
+    const c=colors[Math.floor(Math.random()*colors.length)];
+    out+=`<span class="bday-fallwrap" style="left:${left}%;animation-duration:${fall}s;animation-delay:${delay}s">`
+      +`<i class="${shape}" style="width:${w}px;height:${h}px;background:${c};`
+      +`animation-duration:${sway}s,${spin}s;animation-delay:${delay}s,0s"></i></span>`;
   }
   return out;
 }
@@ -5852,7 +5969,7 @@ async function loadMyStuff(){
     .eq('user_id',me.id).order('used_on',{ascending:false});
   MY_REPORTS=reps||[];
   $('#myReports').innerHTML=MY_REPORTS.map(r=>`<div class="rep rep-click" data-id="${r.id}">
-    <span>${esc(r.used_on)}</span><b style="flex:1;min-width:0">${esc(r.offers?.brand||'（已下架）')}</b>
+    <span>${esc(r.used_on)}</span><b style="flex:1 1 auto;min-width:0">${esc(r.offers?.brand||'（已下架）')}</b>
     <span class="${R[r.result][1]}">${R[r.result][0]}</span>
     <span>${nt(r.saved_twd)}</span>
     <span style="color:var(--ink-3);font-size:.75rem;white-space:nowrap">編輯 ›</span></div>`).join('')
@@ -5874,7 +5991,7 @@ async function loadMyStuff(){
   $('#myOffers').innerHTML=MY_OFFERS.map(o=>`
     <div class="rej-row" style="border-top:1px solid var(--line);padding:10px 0">
       <div class="rep" style="padding:0">
-        <span>${esc(fmtD(o.createdAt))}</span><b style="flex:1;min-width:0">${esc(o.brand)}</b>
+        <span>${esc(fmtD(o.createdAt))}</span><b style="flex:1 1 auto;min-width:0">${esc(o.brand)}</b>
         <span class="${o.status==='pending'?'partial':o.status==='approved'?'ok':o.status==='rejected'?'fail':''}">${S[o.status]||o.status}</span>
         <button class="btn sm mo-detail" type="button" data-id="${o.id}">細節</button>
         ${o.status==='pending'?`<button class="btn sm eo" data-id="${o.id}">編輯</button>
@@ -5956,7 +6073,7 @@ function renderMySubmitHistory(){
   panel.style.display='';
   const S={pending:'待審核',approved:'已核可',rejected:'未採用',archived:'已下架'};
   const rowHtml=o=>`<div class="rep" style="padding:6px 0">
-    <span>${esc(fmtD(o.createdAt))}</span><b style="flex:1;min-width:0">${esc(o.brand)}</b>
+    <span>${esc(fmtD(o.createdAt))}</span><b style="flex:1 1 auto;min-width:0">${esc(o.brand)}</b>
     <span class="${o.status==='pending'?'partial':o.status==='approved'?'ok':o.status==='rejected'?'fail':''}">${S[o.status]||o.status}</span>
   </div>`;
   $('#mySubmitCount').textContent=MY_OFFERS.length; $('#mySubmitCount').classList.remove('hidden');
@@ -6613,7 +6730,7 @@ async function loadPendingPreview(){
   box.innerHTML = list.length ? list.map(o=>`
     <div class="rej-row" style="border-top:1px solid var(--line);padding:10px 0">
       <div class="rep" style="padding:0;align-items:flex-start">
-        <div style="flex:1;min-width:0">
+        <div style="flex:1 1 auto;min-width:0">
           <div><b>${esc(o.brand)}</b>
             <span class="flag" style="margin-left:6px">${esc(o.timing||o.offer_window||'')}</span>
             ${o.value_twd?`<span class="lbl">　約 ${nt(o.value_twd)}</span>`:''}</div>
@@ -7769,7 +7886,7 @@ async function loadRejected(){
       <div class="row" style="align-items:baseline">
         <span class="flag">${esc(x.type)}</span>
         ${x.oid?`<span class="oid">#${esc(String(x.oid))}</span>`:''}
-        <b style="flex:1;min-width:0">${esc(x.brand||'—')}</b>
+        <b style="flex:1 1 auto;min-width:0">${esc(x.brand||'—')}</b>
         <button class="btn sm rej-detail" type="button" data-k="${x.kind}-${x.id}" aria-expanded="false">細節</button>
         <button class="btn sm rej-restore" type="button" data-kind="${x.kind}" data-id="${x.id}">救回重審</button>
         <button class="btn sm rej-delete" type="button" data-kind="${x.kind}" data-id="${x.id}"
@@ -7889,7 +8006,7 @@ async function loadApproved(){
     <div class="rep ap-click" data-id="${o.id}" style="cursor:pointer">
       <span>${esc(fmtD(o.reviewed_at||o.created_at))}</span>
       <span class="oid">#${esc(String(o.id))}</span>
-      <b style="flex:1;min-width:0">${esc(o.brand)}</b>
+      <b style="flex:1 1 auto;min-width:0">${esc(o.brand)}</b>
       <span style="color:var(--ink-3);font-size:.78rem">${o.submitted_by?esc(o.profiles?.display_name||'匿名'):'系統匯入'}</span>
       ${o.verified?'<span class="flag ok-flag">已查證</span>':''}
       <button class="btn sm ap-archive" data-id="${o.id}">下架</button>
@@ -8061,13 +8178,13 @@ function renderFbList(){
     const acct=f.account_email||f.email||'';
     return `
     <div class="rep" style="align-items:flex-start">
-      <div style="flex:1;min-width:0">
+      <div style="flex:1 1 auto;min-width:0">
         <div>
           <span class="flag${f.type==='suggestion'?' ok-flag':' alert'}" style="margin-right:4px">${esc(FB_TYPE_LABEL[f.type||'bug'])}</span>
           <span class="flag${f.status==='resolved'?' ok-flag':''}"${f.status==='in_progress'?' style="background:var(--alert-bg);color:var(--alert);border-color:var(--alert-line)"':''}>${
             f.status==='resolved'?'✓ 已完成':f.status==='in_progress'?'🔧 修改中':'⏳ 未完成'}</span>
         </div>
-        <div style="margin-top:4px;${f.status==='resolved'?'color:var(--ink-3);text-decoration:line-through':''}">${esc(f.message)}</div>
+        <div class="fb-msg" style="margin-top:4px;${f.status==='resolved'?'color:var(--ink-3);text-decoration:line-through':''}">${esc(f.message)}</div>
         ${f.status==='resolved'&&f.admin_reply?`<div style="margin-top:4px;font-size:.8rem;color:var(--ink-2)">回覆：${esc(f.admin_reply)}</div>`:''}
         <div class="meta" style="margin-top:2px">
           <span>${esc(fmtDT(f.created_at))}</span>

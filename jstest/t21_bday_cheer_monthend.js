@@ -38,7 +38,15 @@ const { boot, tick, makeAsserts } = require('./harness');
   setBday(today);
   t.ok('生日當天會跳', win.maybeShowBirthdayCheer() === true && !$('#bdayCheer').classList.contains('hidden'));
   t.ok('寫出名字跟生日快樂', /生日快樂，嵐/.test($('#bdayCheerTitle').textContent), $('#bdayCheerTitle').textContent);
-  t.ok('有祝她玩得開心', /玩得開心/.test($('#bdayCheerSub').textContent), $('#bdayCheerSub').textContent);
+  // celine：「卡片文字多一點生日祝福」——標題下面多一句祝福語，隨機從一組裡挑
+  t.ok('有一句生日祝福', /[。！]/.test($('#bdayCheerWish').textContent) && $('#bdayCheerWish').textContent.length >= 10,
+    $('#bdayCheerWish').textContent);
+  t.ok('下面那行講待辦清單或去挑優惠',
+    /待辦清單|挑幾個/.test($('#bdayCheerSub').textContent), $('#bdayCheerSub').textContent);
+  t.ok('紙花有三種形狀（長方形／圓形／彩帶）',
+    new Set([...doc.querySelectorAll('#bdayConfetti i')].map((x) => x.className)).size === 3,
+    [...new Set([...doc.querySelectorAll('#bdayConfetti i')].map((x) => x.className))]);
+  t.ok('蛋糕旁邊有小亮點', doc.querySelectorAll('.bday-spark').length >= 4);
   t.ok('有蛋糕跟蠟燭', !!$('#bdayCheer .bday-cake') && !!$('#bdayCheer .bday-flame'));
   t.ok('有紙花在掉', doc.querySelectorAll('#bdayConfetti i').length >= 20);
   t.ok('紙花不是排隊掉下來（延遲各自不同）',
