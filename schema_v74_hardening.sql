@@ -27,27 +27,37 @@
 --      user id 進去問「這個人最近填過問卷嗎」。雖然只能問出是非，還是收掉：
 --      只能問自己（或不帶 user id 的訪客情境）。
 --
+--   順便補一個嵐要的東西：
+--
+--   4. site_wish_conversion()：收藏之後真的去用的比例。
+--      wishlist 的 RLS 是「只看得到自己的」，前端沒辦法把「誰收藏了什麼」跟
+--      「誰回報用了什麼」配起來，所以在資料庫算完只回三個彙總數字。
+--
 --   可重複執行。
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
 -- 1. site_events：限制事件種類與 meta 大小
 -- ---------------------------------------------------------------------
--- 舊資料可能有現在不在清單上的 event_type，所以用 not valid 先掛上去，
--- 只擋「之後寫進來的」，不去動已經存在的資料。
+-- 一開始寫成「白名單」，但實際比對前端送出的名稱時發現會擋掉 survey_open、
+-- survey_submit、suggest_edit、edit_offer——而且 logEvent() 的錯誤是吞掉不顯示的，
+-- 以後任何一個新事件名稱都會變成「靜靜地寫不進去」，很難發現。
+-- 改成限制「形狀」而不是列舉名稱：小寫英數字加底線、最長 40 個字。
+-- 擋掉灌垃圾字串的效果一樣，但不會因為新增一個事件名稱就壞掉。
 alter table public.site_events drop constraint if exists site_events_type_known;
-alter table public.site_events add constraint site_events_type_known
-  check (event_type in (
-    'pageview','submit','use_report','wish','rate','comment','edit_suggest',
-    'survey','survey_nudge','updates_nudge','bday_cheer','share','install','near'
-  )) not valid;
+alter table public.site_events drop constraint if exists site_events_type_shape;
+alter table public.site_events add constraint site_events_type_shape
+  check (event_type ~ '^[a-z][a-z0-9_]{0,39}$') not valid;
 
+-- CHECK 條件裡不能寫子查詢（Postgres 會回 0A000: cannot use subquery in check
+-- constraint），所以不用 count(jsonb_object_keys(...)) 去數有幾個鍵。
+-- 只限制「必須是物件」＋「整包序列化後不超過 1000 字元」就夠擋灌爆了：
+-- 鍵再多也塞不進 1000 字元，正常的 meta 都在 100 字元以內。
 alter table public.site_events drop constraint if exists site_events_meta_small;
 alter table public.site_events add constraint site_events_meta_small
   check (
     jsonb_typeof(meta) = 'object'
-    and length(meta::text) <= 1000          -- 正常的 meta 都在 100 字元以內
-    and (select count(*) from jsonb_object_keys(meta)) <= 12
+    and length(meta::text) <= 1000
   ) not valid;
 
 -- ---------------------------------------------------------------------

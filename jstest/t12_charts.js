@@ -40,6 +40,16 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   win.renderBoardStats([], pop, [], pop, { saved_total: 1, report_count: 4 }, 1,
     [{ result: 'success' }, { result: 'success' }, { result: 'success' }, { result: 'failed' }]);
   t.ok('成功率用所有回報算（3 成功／4 筆＝75%）', /75%\s*成功率（近半年）/.test($('#boardStats').textContent), $('#boardStats').textContent);
+  /* 收藏 → 真的去用的轉換率（嵐）。wishlist 的 RLS 是「只看得到自己的」，
+     前端配不出來，所以由 v74 的 site_wish_conversion() 在資料庫算好再傳進來。 */
+  win.renderBoardStats([], pop, [], pop, { saved_total: 1, report_count: 4 }, 1,
+    [{ result: 'success' }], { wished: 640, used: 214, rate: 33 });
+  t.ok('有「收藏後真的去用」這張卡', /收藏後真的去用/.test($('#boardStats').textContent));
+  t.ok('寫出百分比跟分子分母', /33%/.test($('#boardStats').textContent)
+    && /214\s*\/\s*640\s*筆收藏/.test($('#boardStats').textContent), $('#boardStats').textContent);
+  win.renderBoardStats([], pop, [], pop, { saved_total: 1, report_count: 4 }, 1,
+    [{ result: 'success' }], null);
+  t.ok('v74 還沒跑（拿不到資料）時整張卡不出現', !/收藏後真的去用/.test($('#boardStats').textContent));
   win.__sbS = makeSb({ tables: { site_stats: [{ offer_count: 5, saved_total: 123456, report_count: 789 }] } });
   win.eval('sb = window.__sbS; LIVE = true;');
   await win.loadSiteStats();
