@@ -41,8 +41,10 @@ const { boot, tick, makeAsserts } = require('./harness');
   // celine：「卡片文字多一點生日祝福」——標題下面多一句祝福語，隨機從一組裡挑
   t.ok('有一句生日祝福', /[。！]/.test($('#bdayCheerWish').textContent) && $('#bdayCheerWish').textContent.length >= 10,
     $('#bdayCheerWish').textContent);
-  t.ok('下面那行講待辦清單或去挑優惠',
-    /待辦清單|挑幾個/.test($('#bdayCheerSub').textContent), $('#bdayCheerSub').textContent);
+  // 沒有收藏的人，下面那行是空的——不要為了填版面硬推優惠（celine：不要太有行銷）
+  t.eq('沒有收藏就不多說什麼', $('#bdayCheerSub').textContent, '');
+  t.ok('祝福語裡不提優惠、不催人去用',
+    !/優惠|去拿|犒賞|快去/.test($('#bdayCheerWish').textContent), $('#bdayCheerWish').textContent);
   t.ok('紙花有三種形狀（長方形／圓形／彩帶）',
     new Set([...doc.querySelectorAll('#bdayConfetti i')].map((x) => x.className)).size === 3,
     [...new Set([...doc.querySelectorAll('#bdayConfetti i')].map((x) => x.className))]);
@@ -83,10 +85,12 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.ok('生日前 2 天也會跳', win.maybeShowBirthdayCheer() === true);
   t.ok('文案改成「生日快到了」', /生日快到了/.test($('#bdayCheerTitle').textContent), $('#bdayCheerTitle').textContent);
   t.ok('寫出還有幾天', /再 2 天/.test($('#bdayCheerSub').textContent), $('#bdayCheerSub').textContent);
+  t.ok('祝福語是完整的一段話（兩行）', /\n/.test($('#bdayCheerWish').textContent),
+    JSON.stringify($('#bdayCheerWish').textContent));
   closeAndClear();
   setBday(plus(-3));
   t.ok('生日過後 3 天內也還會跳', win.maybeShowBirthdayCheer() === true);
-  t.ok('過後的文案講「這幾天還能用」', /生日這幾天/.test($('#bdayCheerSub').textContent), $('#bdayCheerSub').textContent);
+  t.ok('過後的文案講「這幾天還能用」', /生日剛過/.test($('#bdayCheerSub').textContent), $('#bdayCheerSub').textContent);
 
   /* ---- 超過一週就不跳 ---- */
   closeAndClear();

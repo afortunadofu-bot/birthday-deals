@@ -163,9 +163,11 @@ const { boot, tick, makeAsserts } = require('./harness');
   /* ================= 4. logo 小彩蛋 ================= */
   win.localStorage.removeItem(`sxr_bday_cheer_today_${new Date().getFullYear()}`);
   $('#bmonth').value = ''; $('#bday').value = '';   // 沒填生日也要放得出來
-  for (let i = 0; i < 4; i++) $('.brand').click();
+  // 改用 pointerdown：手機上連點的 click 常常被瀏覽器當成雙擊縮放吞掉，點五下只算到兩三下
+  const tapLogo = () => $('.brand').dispatchEvent(new win.Event('pointerdown', { bubbles: true }));
+  for (let i = 0; i < 4; i++) tapLogo();
   t.ok('點四下還沒反應', $('#bdayCheer').classList.contains('hidden'));
-  $('.brand').click();
+  tapLogo();
   t.ok('連點五下放生日動畫', !$('#bdayCheer').classList.contains('hidden'));
   t.ok('彩蛋不佔用「今年已經跳過了」的紀錄（真的生日那天還是要跳）',
     !win.localStorage.getItem(`sxr_bday_cheer_today_${new Date().getFullYear()}`));

@@ -929,7 +929,8 @@
   .bday-card h2{font-size:1.32rem;margin:10px 0 8px;letter-spacing:.01em;overflow-wrap:anywhere}
   .bday-card p{font-size:.88rem;color:var(--ink-2);margin:0 0 14px;line-height:1.7}
   /* 祝福那一句：字大一點、顏色深一點，是卡片的主角 */
-  .bday-card .bday-wish{font-size:.98rem;color:var(--ink);line-height:1.8;margin:0 0 10px}
+  .bday-card .bday-wish{font-size:.98rem;color:var(--ink);line-height:1.85;margin:0 0 10px;
+    white-space:pre-line}   /* 祝福語自己有斷行，照著排 */
   .bday-card .bday-sub{font-size:.84rem;color:var(--ink-3)}
   .bday-card .row{justify-content:center;gap:8px}
   .bday-card .btn{min-height:40px}
@@ -1112,6 +1113,9 @@
   }
 
   /* ---------- 加到主畫面／回報問題：右下角(桌面)或貼底(手機)的提示條，不釘在頁首 ---------- */
+  /* --tabbar-h 是寫死的 64px，但實際量到是 72px（字級、安全區一變還會更高），
+     所有「幫分頁列留位置」的計算都會少留，最後一行就被蓋住（celine 的截圖）。
+     開場與視窗變動時用 JS 量真實高度寫回這個變數，下面這個值只當備援。 */
   .toast{position:fixed;left:12px;right:12px;bottom:calc(14px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom));
     z-index:60;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
     padding:13px 15px;box-shadow:0 10px 30px rgba(20,20,35,.16);display:flex;align-items:center;
@@ -2207,6 +2211,20 @@ let LIVE = false;
 // 頁尾版權年份直接用當下年份算，不用每年手動改一次。
 { const cy=$('#copyYear'); if(cy) cy.textContent=new Date().getFullYear();
   const xy=$('#xsjYear'); if(xy) xy.textContent=new Date().getFullYear(); }
+
+/* 底部分頁列的真實高度：CSS 裡寫死 64px，實際上是 72px，字級放大或有安全區時更高。
+   凡是「幫分頁列留位置」的地方都吃這個變數，量錯就會有東西被蓋住。 */
+function syncTabbarHeight(){
+  const bar=document.querySelector('nav.tabs');
+  if(!bar) return;
+  const h=Math.round(bar.getBoundingClientRect().height);
+  if(h>0) document.documentElement.style.setProperty('--tabbar-h', h+'px');
+}
+syncTabbarHeight();
+window.addEventListener('resize', syncTabbarHeight, {passive:true});
+window.addEventListener('orientationchange', ()=>setTimeout(syncTabbarHeight, 200));
+// 字體載入完寬高會變，再量一次
+if(document.fonts?.ready) document.fonts.ready.then(syncTabbarHeight).catch(()=>{});
 let sb=null, me=null, myProfile=null, OFFERS=[];
 let NEW_OFFER_IDS=new Set(), onlyNewActive=false;   // 「本週新上架／自上次來訪」入口用的狀態
 let PREV_SEEN_AT=null;   // checkNewOffers() 覆蓋 last_seen_at 之前的舊值，留給「自上次來訪省了多少」用
@@ -3497,34 +3515,30 @@ $('#btnMineA2hsClose').onclick=()=>{
    的東西；還在 feature/geo 分支、沒上線的功能（附近分店、地圖模式）不列。
    新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
 const SITE_UPDATES=[
-  {date:'2026-09-30', title:'跑版大掃除', items:[
-    '把店名、優惠內容、備註裡的超長網址或連續標點會把畫面撐寬的問題，全站一次修掉',
-    '小螢幕（含摺疊機）到平板、桌機都重新檢查過版面']},
-  {date:'2026-09-29', title:'地圖修好了', items:[
-    '地圖變灰色、看不到街道的問題修好了',
+  {date:'2026-09-30', title:'版面全面檢查、收藏轉換率',items:[
+    '小螢幕（含摺疊機）到平板、桌機都重新檢查過版面',
+    '排行榜的站台數據多一個「收藏後真的去用」的比例',
+    '生日祝福的卡片換了新文案，也加強了防灌水與資料保護']},
+  {date:'2026-09-29', title:'地圖可以自己指定地點',items:[
     '「附近」可以直接打地名（台北車站、信義區市府路…）查那附近的優惠',
-    '修正手機打中文搜尋常常顯示「沒有符合的優惠」',
     '「我的」看得到自己回報過的問題，處理到哪了、有沒有回覆都寫在上面']},
-  {date:'2026-09-23', title:'月底提醒、排行榜看最近', items:[
+  {date:'2026-09-23', title:'月底提醒、排行榜看最近',items:[
     '月底前會提醒你：待辦清單裡有哪幾個優惠這個月底就結束',
     '「大家都在用什麼」可以看最近 7／30／90／180 天誰被用最多',
-    '待辦清單加了搜尋欄',
-    '修了幾個手機上的跑版']},
-  {date:'2026-09-21', title:'列表更順、數字對齊', items:[
-    '修正往下滑優惠清單會整頁重載；點開一筆再關掉會停在原位',
+    '待辦清單加了搜尋欄']},
+  {date:'2026-09-21', title:'列表更順、數字對齊',items:[
     '幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬',
     '排行榜各頁的金額改成同一份資料，數字不再對不起來',
     '新增隱私權政策與服務條款（頁尾有連結）']},
-  {date:'2026-09-18', title:'圖表全面改版', items:[
+  {date:'2026-09-18', title:'圖表全面改版',items:[
     '站台數據、洞察分析每一份數據都換成最適合的圖表，手指按住就看得到數字',
     '排行榜會告訴你自己第幾名，也可以切「進步最多」',
     '「買一送一」跟「折扣」分成兩類；優惠會寫清楚要不要本人出示證件',
     '大頭貼可以自己上傳照片了']},
-  {date:'2026-09-17', title:'待辦清單改版', items:[
+  {date:'2026-09-17', title:'待辦清單改版',items:[
     '待辦清單每一筆變成一張小卡：點店名就看詳情，「移到明年」「移除」收進「⋯」選單',
-    '備註要寫的時候再按「📝 備註」，清單看起來清爽很多',
-    '修正手機上待辦清單的店名被擠成一個字一行、按鈕文字變直的；手機上地圖按鈕只留 📍']},
-  {date:'2026-09-16', title:'附近有優惠的店、家人的生日、清單標籤', items:[
+    '備註要寫的時候再按「📝 備註」，清單看起來清爽很多']},
+  {date:'2026-09-16', title:'附近有優惠的店、家人的生日、清單標籤',items:[
     '新增「📍 附近」：允許定位之後可以只看你附近有優惠的店，列表由近到遠排序，卡片上直接顯示最近的一家分店跟導航連結',
     '不想給定位也可以：打開地圖點一下任何地方，就會找那附近的優惠',
     '可以調整距離範圍（1 公里到 30 公里），想走路去還是開車去都找得到',
@@ -3535,7 +3549,7 @@ const SITE_UPDATES=[
     '「附近」多找到薄多義、微兜、波記的分店',
     '回饋問卷的題目分得更細：「多久來一次」分得出生日月跟平常，「用過幾個」分得出 3 個以上',
     '排行榜的站台數據：「上榜人數」換成「已上架店家」，「平均每人省下」改成完整數字（之前只算到前 50 名）']},
-  {date:'2026-09-15', title:'回饋問卷、按讚、Google 地圖', items:[
+  {date:'2026-09-15', title:'回饋問卷、按讚、Google 地圖',items:[
     '新增回饋問卷：在「我的」分頁「推薦給朋友」下面，全部用點的，大約 2 分鐘，歡迎隨時來填',
     '使用回報、留言可以按讚 👍，覺得有幫助就按一下',
     '每張優惠卡片多一顆「📍 地圖」，直接用 Google 地圖找附近分店',
@@ -3543,37 +3557,36 @@ const SITE_UPDATES=[
     '「我的」分頁新增更新紀錄，有新的更新時打開網站會通知你；還有加到主畫面的提醒',
     '回饋問卷多了幾題，一樣全部用點的；「還想說的話」直接就能寫',
     '更新善菓屋生日禮資訊：需要消費才能兌換']},
-  {date:'2026-09-14', title:'回報與待辦清單更好用', items:[
+  {date:'2026-09-14', title:'回報與待辦清單更好用',items:[
     '在優惠詳情看到自己的回報，旁邊就能直接編輯',
     '同一家店今年回報第二次時會先提醒，避免省下的金額算兩次',
     '待辦清單點「詳情」，直接看得到大家的使用回報和留言',
-    '第一次收藏時，會告訴你收藏的優惠放在「我的」分頁',
-    '修正清晨時回報「今天」會失敗的問題']},
-  {date:'2026-09-09', title:'看得到大家正在提的修改建議', items:[
+    '第一次收藏時，會告訴你收藏的優惠放在「我的」分頁']},
+  {date:'2026-09-09', title:'看得到大家正在提的修改建議',items:[
     '優惠詳情頁可以看到這筆優惠目前有哪些修改建議在審核中，不用重複提']},
-  {date:'2026-09-07', title:'排行榜新數據、手機版修正', items:[
+  {date:'2026-09-07', title:'排行榜新數據、手機版修正',items:[
     '排行榜多了即時在線人數、平台總瀏覽人次、大家都在什麼時段用',
     '排行榜「全部時間」也看得到名次升降',
     '手機版填新增表單時，鍵盤不會再蓋住底部導覽列',
     '修改建議裡很長的網址不會再把畫面撐爆',
     '回報使用狀況後，會邀請你順便幫店家評分']},
-  {date:'2026-09-04', title:'待辦清單分年度、入會死線提醒', items:[
+  {date:'2026-09-04', title:'待辦清單分年度、入會死線提醒',items:[
     '待辦清單可以分年度整理，還會提醒入會死線',
     '成就徽章點開就看得到怎麼解鎖',
     '排行榜分頁的區塊可以收合',
     '往下滑時搜尋列會一直固定在上方',
     '類別「連鎖餐廳」改名「餐廳」，並新增「其他」',
     '提修改建議時，改任何欄位都偵測得到']},
-  {date:'2026-09-03', title:'排行榜手機版排版', items:[
+  {date:'2026-09-03', title:'排行榜手機版排版',items:[
     '名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團']},
-  {date:'2026-08-06', title:'一大包使用體驗改善', items:[
+  {date:'2026-08-06', title:'一大包使用體驗改善',items:[
     '投稿可以取消、評分可以取消、暱稱可以自己改',
     '排行榜上的店家可以點進去看詳情',
     '資料來源連結最多可以放 5 個',
     '優惠詳情加了好按的關閉鈕，手機返回鍵也能關',
     '待辦清單勾選完成時，會順便邀請你回報省下多少',
     '網頁打開速度變快，畫面不再跳來跳去']},
-  {date:'2026-08-05', title:'壽星日上線 🎂', items:[
+  {date:'2026-08-05', title:'壽星日上線 🎂',items:[
     '整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況']},
 ];
 const SITE_UPDATES_SHOW=3;
@@ -3680,29 +3693,35 @@ function maybeShowBirthdayCheer(force){
   $('#bdayCheerWish').textContent = st.kind==='today'
     ? BDAY_WISHES[Math.floor(Math.random()*BDAY_WISHES.length)]
     : BDAY_WISHES_SOON[Math.floor(Math.random()*BDAY_WISHES_SOON.length)];
+  // 下面這行只是輕輕提一下清單，沒有收藏的人就什麼都不寫，不要變成推銷
   $('#bdayCheerSub').className='bday-sub';
-  $('#bdayCheerSub').textContent = st.kind==='today'
-    ? (wishN ? `待辦清單裡還有 ${wishN} 個優惠等你去拿，別忘了 🎁`
-             : '今天站上的生日優惠都是為你準備的，去挑幾個犒賞自己。')
-    : (st.days>0 ? `再 ${st.days} 天就是你的生日${wishN?`，清單裡有 ${wishN} 個優惠可以先安排`:''}。`
-                 : `生日這幾天優惠通常還能用${wishN?`，清單裡還有 ${wishN} 個沒用`:''}。`);
+  const subTxt = st.kind==='today'
+    ? (wishN ? `（待辦清單裡還留著 ${wishN} 個，想用再用就好）` : '')
+    : (st.days>0 ? `再 ${st.days} 天就是你的生日${wishN?`，清單裡有 ${wishN} 個`:''}`
+                 : `生日剛過，有些優惠這幾天還能用${wishN?`，清單裡還有 ${wishN} 個`:''}`);
+  $('#bdayCheerSub').textContent = subTxt;
+  $('#bdayCheerSub').classList.toggle('hidden', !subTxt);
   $('#bdayConfetti').innerHTML = st.kind==='today' ? confettiHtml(40) : confettiHtml(18);
   $('#bdayCheer').classList.remove('hidden');
   if(!force) try{ localStorage.setItem(key,'1'); }catch{}
   logEvent('bday_cheer', {kind:st.kind, force:!!force});
   return true;
 }
+/* celine：「文字多一點、溫暖一點，說一些祝你每一天都快樂之類的，不要太有行銷」。
+   所以這裡只說祝福，不提優惠、不催人去用——卡片下面那行才放清單的事，而且也改成
+   輕輕帶過。每次隨機挑一句，生日當天看兩次也不會一模一樣。 */
 const BDAY_WISHES=[
-  '祝你這一年順順利利，想吃的都吃得到、想去的都去得成。',
-  '願你新的一歲少一點煩心事，多一點剛剛好的小確幸。',
-  '今天最重要的一件事，就是把自己照顧得好好的。',
-  '願你今年的每一天，都像今天一樣值得慶祝。',
-  '祝你被好好對待，也記得好好對待自己。'
+  '祝你今天很快樂，接下來的每一天也都是。\n願你想做的事都順利，想見的人都在身邊。',
+  '新的一歲，願你少一點煩心事，多一點剛剛好的小確幸。\n記得留點時間，好好對自己一次。',
+  '祝你這一年平平安安、健健康康，\n想吃的都吃得到，想去的地方都去得成。',
+  '願你被好好對待，也記得好好對待自己。\n今天最重要的事，就是開開心心過完它。',
+  '生日快樂！願你往後的日子裡，\n煩惱都很小、開心都很長、喜歡的人都剛好也喜歡你。',
+  '祝你每一天都快樂，不只是今天。\n願你走的路都順，遇到的人都好。'
 ];
 const BDAY_WISHES_SOON=[
-  '快到了，先幫你把優惠準備好。',
-  '生日這幾天，記得留點時間給自己。',
-  '先說聲生日快樂，願你這一年都順順的。'
+  '再幾天就是你的日子了，\n先跟你說一聲：生日快樂，願你這一年都順順的。',
+  '生日這幾天，記得留點時間給自己，\n慢慢吃一頓飯、好好睡一覺都算數。',
+  '快到了。願你新的一歲，\n每一天都比昨天再開心一點點。'
 ];
 /* 紙花：每一片是兩層——外層 .bday-fallwrap 負責往下掉，內層 <i> 負責左右飄，
    <i>::before 再負責自轉。分三層才不會互相蓋掉 transform。
@@ -3733,9 +3752,12 @@ $('#bdayCheer').onclick=e=>{ if(e.target===$('#bdayCheer')) closeBdayCheer(); };
 /* 小彩蛋：連點頁首的 logo 五下就放一次生日動畫（不分今天是不是誰的生日）。
    刻意不寫進更新紀錄，讓人自己發現。 */
 let LOGO_TAPS=0, logoTapTimer=null;
-$('.brand')?.addEventListener('click', ()=>{
+/* 用 pointerdown 而不是 click：手機上連點很容易被瀏覽器判成雙擊（縮放手勢）而把
+   第二、四下的 click 吞掉，點五下常常只算到兩三下。pointerdown 一按就算，
+   而且間隔從 1.2 秒放寬到 2.5 秒，慢慢點也數得到。 */
+$('.brand')?.addEventListener('pointerdown', ()=>{
   clearTimeout(logoTapTimer);
-  logoTapTimer=setTimeout(()=>{ LOGO_TAPS=0; }, 1200);   // 手指停一下就重新算
+  logoTapTimer=setTimeout(()=>{ LOGO_TAPS=0; }, 2500);
   if(++LOGO_TAPS>=5){ LOGO_TAPS=0; clearTimeout(logoTapTimer); maybeShowBirthdayCheer(true); }
 });
 
@@ -5345,9 +5367,13 @@ $('#btnFbSubmit').onclick=async()=>{
   const message=$('#fbMsg').value.trim();
   if(!message){ note($('#fbMsgBox'),'alert','請簡單描述一下內容。'); return; }
   const btn=$('#btnFbSubmit'); btn.disabled=true;
-  const {error}=await sb.from('site_feedback').insert({
-    user_id: me?.id||null, type:$('#fbType').value, message,
-    page: location.hash||location.pathname, ua: navigator.userAgent.slice(0,300)});
+  const row={ user_id: me?.id||null, type:$('#fbType').value, message,
+    page: location.hash||location.pathname, ua: navigator.userAgent.slice(0,300) };
+  // v74 加了 session_id（同一台裝置一小時最多 5 筆，擋機器人灌爆後台）；
+  // 還沒跑 v74 的站台沒有這一欄，送不進去就拿掉再送一次。
+  let {error}=await sb.from('site_feedback').insert({...row, session_id:SESSION_ID});
+  if(error && /session_id|column|schema cache/i.test(error.message||''))
+    ({error}=await sb.from('site_feedback').insert(row));
   btn.disabled=false;
   if(error){
     const hint=/relation|does not exist/i.test(error.message)?'（Supabase 可能還沒跑 schema_v30_feedback_and_edit_preview.sql）':'';
@@ -6332,7 +6358,7 @@ async function loadBoard(){
   const trendSince = ISO(new Date(Date.now()-179*864e5));
   const yearSince = ISO(new Date(Date.now()-365*864e5));
   BOARD_CHARTS=[];
-  const [{data:lb,error:lbErr},{data:pop},{data:wish},{data:trendRows},{data:allTimeLb},{data:usedRows},{data:prevPeriodRows},{data:popPrev},{data:wishPrev},{data:allTimeLbPrev},{data:boardSiteStats},{data:onlineNow,error:onlineErr},{data:hourRows,error:hourErr}]=await Promise.all([
+  const [{data:lb,error:lbErr},{data:pop},{data:wish},{data:trendRows},{data:allTimeLb},{data:usedRows},{data:prevPeriodRows},{data:popPrev},{data:wishPrev},{data:allTimeLbPrev},{data:boardSiteStats},{data:onlineNow,error:onlineErr},{data:hourRows,error:hourErr},{data:wishConv}]=await Promise.all([
     lbQuery,
     // 之前這裡砍到只留前 20 名，但 popular_offers 這張 view 本身就已經排好
     // 「熱門前 50 家」了——多這層 20 的限制沒有任何好處，只會讓「站台數據」
@@ -6373,7 +6399,11 @@ async function loadBoard(){
     // 是公開 view，直接查就好，不用另外開權限。
     sb.from('site_stats').select('pageview_count,visitor_count,saved_total,report_count').single(),
     sb.rpc('site_online_now'),
-    sb.rpc('site_usage_hour_distribution',{p_days:30})
+    sb.rpc('site_usage_hour_distribution',{p_days:30}),
+    // 嵐：「能顯示收藏到使用的轉換率嗎」。wishlist 的 RLS 是「只看得到自己的」，
+    // 前端配不出「誰收藏了什麼、後來有沒有去用」，所以交給 v74 的函式在資料庫算，
+    // 只回三個彙總數字。還沒跑 v74 的站台會 error，下面用 ?. 接住就好。
+    sb.rpc('site_wish_conversion')
   ]);
   if(lbErr && monthly){
     $('#lbBody').innerHTML=`<div class="note alert">讀取本月排行失敗：${esc(lbErr.message)}
@@ -6393,7 +6423,7 @@ async function loadBoard(){
   (wish||[]).forEach((r,i)=>{ r.prevRank = wishPrevRankMap.has(r.offer_id)?wishPrevRankMap.get(r.offer_id):null; });
   renderMostWished(wish||[], wishHasPrev);
   POP_TREND=trendRows||[];
-  renderBoardStats(lb||[], pop||[], allTimeSavedRows, usedRows||[], boardSiteStats, onlineErr?null:onlineNow, trendRows||[]);
+  renderBoardStats(lb||[], pop||[], allTimeSavedRows, usedRows||[], boardSiteStats, onlineErr?null:onlineNow, trendRows||[], wishConv);
   startBoardOnlineRefresh();
   renderBoardHoursChart(hourErr?null:hourRows);
   renderCategoryBreakdown(pop||[]);
@@ -6867,7 +6897,7 @@ function renderMostWished(rows, hasPrev){
 $('#wishSortBy').onchange=()=>renderMostWished();
 
 /* ---- 排行榜上方的整站數據：全部從已載入的兩張表算，不用再多打 API ---- */
-function renderBoardStats(lb, pop, allTimeSavedRows, usedRows, siteStatsRow, onlineNow, resultRows){
+function renderBoardStats(lb, pop, allTimeSavedRows, usedRows, siteStatsRow, onlineNow, resultRows, wishConv){
   // 嵐：「大家累積省下」優惠頁跟站台數據兩邊數字不一樣——優惠頁用 site_stats（全部時間、所有回報），
   // 這裡原本用排行榜逐人加總（近一年、只算成功），「總回報次數」又只加了熱門前 50 家。
   // 改成兩邊都用同一份 site_stats；拿不到（舊站台）才退回原本的算法。
@@ -6912,6 +6942,14 @@ function renderBoardStats(lb, pop, allTimeSavedRows, usedRows, siteStatsRow, onl
   const liveStatsHtml=
     `<div><div class="v" id="boardOnlineNow">${onlineNow==null?'—':onlineNow}</div><div class="k">即時在線人數</div></div>
     <div><div class="v">${nt2(siteStatsRow?.pageview_count)}</div><div class="k">平台總瀏覽人次</div></div>`;
+  // 收藏之後真的去用的比例（v74 的 site_wish_conversion）。沒跑 v74 就整張卡不畫。
+  const convRate = wishConv && wishConv.rate!=null ? Number(wishConv.rate) : null;
+  const convHtml = convRate==null ? '' :
+    `<div title="收藏過的『某個人＋某一筆優惠』裡，後來真的有成功回報使用的比例">
+      <div class="v ${convRate>=40?'free':''}">${convRate}%</div>
+      <div class="k">收藏後真的去用</div>
+      <div class="k" style="color:var(--ink-3);font-size:.68rem">${nt2(wishConv.used)} / ${nt2(wishConv.wished)} 筆收藏</div>
+    </div>`;
   if(!reports){
     $('#boardStats').innerHTML=liveStatsHtml
       +'<div style="color:var(--ink-3);font-size:.86rem;flex-basis:100%">還沒有任何回報資料，去「優惠」分頁按「我用過了」就會開始累積。</div>';
@@ -6920,7 +6958,7 @@ function renderBoardStats(lb, pop, allTimeSavedRows, usedRows, siteStatsRow, onl
   // 形式：一個最重要的數字（大家累積省下）放大當主角；成功率是比例 → 加一條量表；其他是數字卡
   $('#boardStats').innerHTML=`
     <div class="hero"><div class="v">${nt(saved)}</div><div class="k">大家累積省下</div></div>`+liveStatsHtml+`
-    <div><div class="v">${reports}</div><div class="k">總回報次數</div></div>
+    <div><div class="v">${reports}</div><div class="k">總回報次數</div></div>`+convHtml+`
     <div><div class="v ${rate>=70?'free':''}">${rate==null?'—':rate+'%'}</div><div class="k">${rateLabel}</div>
       ${rate==null?'':`<div class="vm-track"><span class="vm-fill" style="width:${rate}%"></span></div>`}</div>
     <div><div class="v">${shopCount}</div><div class="k">已上架店家</div></div>
