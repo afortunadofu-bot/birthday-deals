@@ -3835,10 +3835,8 @@ function maybeShowBirthdayCheer(force){
   $('#bdayCheerTitle').textContent = st.kind==='today'
     ? `生日快樂${name?`，${name}`:''}！🎉`
     : `生日快到了${name?`，${name}`:''}！`;
-  // celine：「卡片文字多一點生日祝福」。祝福語每次隨機挑一句，重複看到也不會膩。
-  $('#bdayCheerWish').textContent = st.kind==='today'
-    ? BDAY_WISHES[Math.floor(Math.random()*BDAY_WISHES.length)]
-    : BDAY_WISHES_SOON[Math.floor(Math.random()*BDAY_WISHES_SOON.length)];
+  // 當天、當週都是同一句（celine 指定）
+  $('#bdayCheerWish').textContent = BDAY_WISH;
   // 下面這行只是輕輕提一下清單，沒有收藏的人就什麼都不寫，不要變成推銷
   $('#bdayCheerSub').className='bday-sub';
   const subTxt = st.kind==='today'
@@ -3854,27 +3852,12 @@ function maybeShowBirthdayCheer(force){
   logEvent('bday_cheer', {kind:st.kind, force:!!force});
   return true;
 }
-/* celine：「文字多一點、溫暖一點，說一些祝你每一天都快樂之類的，不要太有行銷」。
-   所以這裡只說祝福，不提優惠、不催人去用——卡片下面那行才放清單的事，而且也改成
-   輕輕帶過。每次隨機挑一句，生日當天看兩次也不會一模一樣。 */
-// 祝福語每行都短一點（手機上一行大約放得下 15 個字），才不會斷在奇怪的地方，
-// 像「接下來的每一天也都 / 是。」那樣把兩個字丟到下一行。
+/* 卡片上的祝福就這一句——celine：「祝你快樂，不只是生日。就好」。
+   原本是六句隨機挑，但這句本身就夠了：短、留白、不解釋，換來換去反而稀釋掉它。
+   生日當天跟生日那幾天都用同一句（標題已經分得出來是哪一種）。
+   兩行是刻意的，所以直接寫死換行，不交給版面去斷。 */
 const BR = String.fromCharCode(10);
-/* celine：「改成『祝你快樂，不只是生日』這種留白感多的文字」。
-   所以每一句都壓到兩行、每行不超過 8 個字，不解釋、不堆形容詞，留白自己會說話。 */
-const BDAY_WISHES=[
-  '祝你快樂，' + BR + '不只是生日。',
-  '願你被好好對待，' + BR + '也包括被自己。',
-  '今天慢一點，' + BR + '世界等得起。',
-  '願你想去的地方，' + BR + '都去得成。',
-  '新的一歲，' + BR + '願你更喜歡自己。',
-  '祝你平安，' + BR + '祝你自由。'
-];
-const BDAY_WISHES_SOON=[
-  '生日快到了，' + BR + '先祝你快樂。',
-  '這幾天，' + BR + '留一點時間給自己。',
-  '新的一歲要來了，' + BR + '願你輕輕鬆鬆地過。'
-];
+const BDAY_WISH = '祝你快樂，' + BR + '不只是生日。';
 /* 紙花：每一片是兩層——外層 .bday-fallwrap 負責往下掉，內層 <i> 負責左右飄，
    <i>::before 再負責自轉。分三層才不會互相蓋掉 transform。
    形狀有長方形、圓形、細長彩帶三種；掉落時間 5～9 秒，比原本慢很多，比較從容。 */

@@ -38,14 +38,9 @@ const { boot, tick, makeAsserts } = require('./harness');
   setBday(today);
   t.ok('生日當天會跳', win.maybeShowBirthdayCheer() === true && !$('#bdayCheer').classList.contains('hidden'));
   t.ok('寫出名字跟生日快樂', /生日快樂，嵐/.test($('#bdayCheerTitle').textContent), $('#bdayCheerTitle').textContent);
-  // celine：「卡片文字多一點生日祝福」，後來又說「改成『祝你快樂，不只是生日』這種
-  // 留白感多的文字」——所以每句都是兩行、每行不超過 8 個字，不堆形容詞
-  t.ok('有一句生日祝福', /[。！]/.test($('#bdayCheerWish').textContent) && $('#bdayCheerWish').textContent.length >= 10,
-    $('#bdayCheerWish').textContent);
-  t.ok('祝福是留白感的兩行短句',
-    win.eval('BDAY_WISHES').every((w) => w.split('\n').length === 2
-      && w.split('\n').every((line) => line.length <= 9)),
-    win.eval('BDAY_WISHES'));
+  // celine 最後指定就這一句：「祝你快樂，不只是生日。就好」——不要再隨機換句
+  t.eq('卡片上的祝福就是那一句', $('#bdayCheerWish').textContent, '祝你快樂，\n不只是生日。');
+  t.ok('刻意斷成兩行（留白感）', $('#bdayCheerWish').textContent.split('\n').length === 2);
   // 沒有收藏的人，下面那行是空的——不要為了填版面硬推優惠（celine：不要太有行銷）
   t.eq('沒有收藏就不多說什麼', $('#bdayCheerSub').textContent, '');
   t.ok('祝福語裡不提優惠、不催人去用',
@@ -123,8 +118,8 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.ok('生日前 2 天也會跳', win.maybeShowBirthdayCheer() === true);
   t.ok('文案改成「生日快到了」', /生日快到了/.test($('#bdayCheerTitle').textContent), $('#bdayCheerTitle').textContent);
   t.ok('寫出還有幾天', /再 2 天/.test($('#bdayCheerSub').textContent), $('#bdayCheerSub').textContent);
-  t.ok('祝福語是完整的一段話（兩行）', /\n/.test($('#bdayCheerWish').textContent),
-    JSON.stringify($('#bdayCheerWish').textContent));
+  // 生日那幾天用的也是同一句（標題已經分得出來是「快到了」還是「當天」）
+  t.eq('祝福語跟當天同一句', $('#bdayCheerWish').textContent, '祝你快樂，\n不只是生日。');
   closeAndClear();
   setBday(plus(-3));
   t.ok('生日過後 3 天內也還會跳', win.maybeShowBirthdayCheer() === true);
