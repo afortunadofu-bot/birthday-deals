@@ -22,13 +22,32 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
       {id:3, type:'suggestion', status:'resolved', message:'做好了', created_at:'2026-09-15T00:00:00Z'}];`);
   win.renderFbList();
   const msgs = () => [...doc.querySelectorAll('#fbList .rep')].map((r) => r.textContent.match(/壞掉了|想要地圖|做好了/)[0]);
-  t.eq('預設全部都看得到', msgs(), ['壞掉了', '想要地圖', '做好了']);
+  // celine：「預設看未完成跟修改中的」——已完成的做完了，不需要每次都佔著畫面
+  t.eq('預設只看還要做的（未完成＋修改中）', msgs(), ['壞掉了', '想要地圖']);
+  t.eq('預設選的就是那一格', $('#fbStatusFilter').value, 'active');
   t.eq('標題數字算還沒完成的（未完成＋修改中）', $('#fbCount').textContent, '2');
   const sel = $('#fbStatusFilter');
   const pick = (v) => { sel.value = v; sel.dispatchEvent(new win.Event('change')); };
+  pick('all'); t.eq('要看全部也切得過去', msgs(), ['壞掉了', '想要地圖', '做好了']);
   pick('open'); t.eq('篩未完成', msgs(), ['壞掉了']);
   pick('in_progress'); t.eq('篩修改中', msgs(), ['想要地圖']);
   pick('resolved'); t.eq('篩已完成', msgs(), ['做好了']);
+
+  // celine：「保留前一次關閉網頁的狀態」——選完就記在這台裝置上
+  t.eq('選了什麼就記下來', JSON.parse(win.localStorage.getItem('sxr_fb_filters')).status, 'resolved');
+  $('#fbTypeFilter').value = 'bug';
+  $('#fbTypeFilter').dispatchEvent(new win.Event('change'));
+  t.eq('類型也一起記', JSON.parse(win.localStorage.getItem('sxr_fb_filters')), { type: 'bug', status: 'resolved' });
+  // 重開網頁：restoreFbFilters() 會把兩個選單設回去
+  sel.value = 'active'; $('#fbTypeFilter').value = 'all';
+  win.restoreFbFilters();
+  t.eq('重開網頁回到上次選的', [$('#fbStatusFilter').value, $('#fbTypeFilter').value], ['resolved', 'bug']);
+  // 存著的值如果已經不是選項了（之後選項改過），不能把選單設成空白
+  win.localStorage.setItem('sxr_fb_filters', JSON.stringify({ type: 'nope', status: 'gone' }));
+  sel.value = 'active'; $('#fbTypeFilter').value = 'all';
+  win.restoreFbFilters();
+  t.eq('認不得的舊值就維持預設', [$('#fbStatusFilter').value, $('#fbTypeFilter').value], ['active', 'all']);
+  win.localStorage.removeItem('sxr_fb_filters');
   pick('all');
 
   const btns = (i) => [...doc.querySelectorAll('#fbList .rep')[i].querySelectorAll('.fb-toggle')].map((b) => b.textContent.trim());

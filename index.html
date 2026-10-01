@@ -1853,8 +1853,11 @@
     <div class="row" style="margin:0 0 10px;gap:8px 14px;flex-wrap:wrap"><label class="lbl">類型<select id="fbTypeFilter">
       <option value="all">全部</option><option value="bug">問題回報</option><option value="suggestion">建議</option>
     </select></label>
-    <!-- 嵐：可以篩選已完成、未完成跟修改中 -->
+    <!-- 嵐：可以篩選已完成、未完成跟修改中
+         celine：預設看「未完成＋修改中」（還要做的事），已完成的要看再切；
+         而且關掉網頁再回來要停在上次選的那個 -->
     <label class="lbl">狀態<select id="fbStatusFilter">
+      <option value="active">未完成＋修改中</option>
       <option value="all">全部</option><option value="open">未完成</option>
       <option value="in_progress">修改中</option><option value="resolved">已完成</option>
     </select></label></div>
@@ -2404,14 +2407,20 @@ const TIMINGS=['當日','當月','當週','當月＋當日','前後3天','前後
 // 界線更清楚，也不會逼單店老闆為了避嫌選到「其他」去。
 // 既有資料庫裡舊的 category='連鎖餐廳' 要記得跑 schema_v51_category_restaurant.sql
 // 把它們一起改成'餐廳'，不然舊資料的類別篩選會對不起來。
-const CATEGORIES=['速食','餐廳','火鍋燒肉','飲料','甜點烘焙','零售美妝','娛樂樂園','其他'];
+// celine：「提議新增分類標籤：燒肉、飲料、甜點、火鍋」——飲料、甜點（甜點烘焙，
+// 連麵包店一起收）本來就是獨立類別，真正要拆的是「火鍋燒肉」：站上 73 筆裡
+// 50 筆是鍋物、22 筆是燒肉，混在同一格等於兩種都篩不乾淨。
+// 既有資料要跑 schema_v77_split_hotpot_bbq.sql 把那 73 筆分開，沒跑之前舊資料
+// 還是顯示成「火鍋燒肉」（篩選列是照資料長出來的，所以不會壞，只是會多一格）。
+const CATEGORIES=['速食','餐廳','火鍋','燒肉','飲料','甜點烘焙','零售美妝','娛樂樂園','其他'];
 const COUNTIES=['全台','基隆市','台北市','新北市','桃園市','新竹市','新竹縣','苗栗縣','台中市',
  '彰化縣','南投縣','雲林縣','嘉義市','嘉義縣','台南市','高雄市','屏東縣','宜蘭縣','花蓮縣',
  '台東縣','澎湖縣','金門縣','連江縣'];
 
 // 卡片類別小圓點顏色（低調的可掃描性提示，避免用整條色邊造成視覺過重）
-const CAT_COLOR={'速食':'#c9852c','餐廳':'#8f5216','火鍋燒肉':'#a63d24','飲料':'#3d7a63',
-  '甜點烘焙':'#b5658a','零售美妝':'#5b6f94','娛樂樂園':'#6a8f3d'};
+const CAT_COLOR={'速食':'#c9852c','餐廳':'#8f5216','火鍋':'#a63d24','燒肉':'#7d3b2e',
+  '火鍋燒肉':'#a63d24',   // v77 還沒跑之前的舊資料
+  '飲料':'#3d7a63','甜點烘焙':'#b5658a','零售美妝':'#5b6f94','娛樂樂園':'#6a8f3d'};
 const ICONS={
   check:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
   chat:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
@@ -3659,12 +3668,15 @@ $('#btnMineA2hsClose').onclick=()=>{
    的東西；還在 feature/geo 分支、沒上線的功能（附近分店、地圖模式）不列。
    新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
 const SITE_UPDATES=[
+  {date:'2026-10-01', title:'火鍋跟燒肉分開篩',items:[
+    '「火鍋燒肉」拆成「火鍋」跟「燒肉」兩個類別，今天想吃哪一種就篩哪一種',
+    '類別篩選的每一格都會寫出有幾筆']},
   {date:'2026-09-30', title:'投稿前先幫你比對、附近直接開地圖',items:[
     '投稿打店名時，站上已經有同一家就會列出來，可以一鍵改成對那筆提修改建議',
     '第一次進來會問要不要用定位；按「📍 附近」就直接把地圖打開，不用再按一次',
     '小螢幕（含摺疊機）到平板、桌機都重新檢查過版面',
     '排行榜的站台數據多一個「收藏後真的去用」的比例',
-    '生日祝福的卡片換了新文案，也加強了防灌水與資料保護']},
+    '加強了防灌水與資料保護']},
   {date:'2026-09-29', title:'地圖可以自己指定地點',items:[
     '「附近」可以直接打地名（台北車站、信義區市府路…）查那附近的優惠',
     '「我的」看得到自己回報過的問題，處理到哪了、有沒有回覆都寫在上面']},
@@ -4110,8 +4122,13 @@ function buildControls(){
      [`買一送一（${cnt('freeTier','bogo')}）`,'bogo'],
      [`折扣（${cnt('freeTier','discount')}）`,'discount']],
     activeFree, 'g');
+  // 類別照 CATEGORIES 的順序排（火鍋、燒肉才會相鄰），資料裡出現但不在清單上的
+  // （例如 v77 還沒跑的「火鍋燒肉」、或以前留下來的舊值）排在後面，不會消失。
+  const catsInData=[...new Set(OFFERS.map(o=>o.category))];
+  const catOrder=CATEGORIES.filter(c=>catsInData.includes(c))
+    .concat(catsInData.filter(c=>c && !CATEGORIES.includes(c)));
   mkMulti($('#cats'),
-    [['全部類別','']].concat([...new Set(OFFERS.map(o=>o.category))].map(c=>[c,c])),
+    [['全部類別','']].concat(catOrder.map(c=>[`${c}（${cnt('category',c)}）`,c])),
     activeCat);
   // 地區固定列出全部 22 個縣市（不像上面幾組只列「目前資料裡有出現的」），
   // 這樣「全台」的比對邏輯才不會因為某個縣市剛好目前沒有優惠資料就選不到；
@@ -8483,10 +8500,12 @@ async function loadFeedbackList(){
 }
 function renderFbList(){
   const filter=$('#fbTypeFilter').value;
-  const sf=$('#fbStatusFilter')?.value||'all';
+  const sf=$('#fbStatusFilter')?.value||'active';
   let data=filter==='all'?FB_ROWS:FB_ROWS.filter(f=>(f.type||'bug')===filter);
   // 狀態：未完成＝待處理（open），修改中＝in_progress（schema_v68），已完成＝resolved
-  if(sf!=='all') data=data.filter(f=>f.status===sf);
+  // active＝「還要做的事」＝未完成＋修改中，是預設值（celine）
+  if(sf==='active') data=data.filter(f=>f.status!=='resolved');
+  else if(sf!=='all') data=data.filter(f=>f.status===sf);
   const open=FB_ROWS.filter(f=>f.status!=='resolved' && (filter==='all'||(f.type||'bug')===filter));
   $('#fbCount').textContent=open.length; $('#fbCount').classList.toggle('hidden',!open.length);
   $('#fbList').innerHTML=data.length?data.map(f=>{
@@ -8539,8 +8558,27 @@ function renderFbList(){
     loadFeedbackList();
   });
 }
-$('#fbTypeFilter').onchange=renderFbList;
-$('#fbStatusFilter').onchange=renderFbList;
+/* 兩個篩選條件都記在這台裝置上（celine：「保留前一次關閉網頁的狀態」）。
+   每次處理完一則就重畫清單，如果不記住，每次回來都要重選一次。 */
+const FB_FILTER_KEY='sxr_fb_filters';
+function saveFbFilters(){
+  try{ localStorage.setItem(FB_FILTER_KEY, JSON.stringify(
+    {type:$('#fbTypeFilter').value, status:$('#fbStatusFilter').value})); }catch{}
+}
+function restoreFbFilters(){
+  let v={};
+  try{ v=JSON.parse(localStorage.getItem(FB_FILTER_KEY)||'{}')||{}; }catch{}
+  const set=(sel,val)=>{
+    const el=$(sel);
+    // 存下來的值如果已經不存在（選項改過），就維持 HTML 裡的預設值
+    if(el && val && [...el.options].some(o=>o.value===val)) el.value=val;
+  };
+  set('#fbTypeFilter', v.type);
+  set('#fbStatusFilter', v.status);
+}
+restoreFbFilters();
+$('#fbTypeFilter').onchange=()=>{ saveFbFilters(); renderFbList(); };
+$('#fbStatusFilter').onchange=()=>{ saveFbFilters(); renderFbList(); };
 
 /* ---- 站台儀表板 ---- */
 /* ===================================================================== */
