@@ -7760,6 +7760,79 @@ async function bulkApproveOffers(ids){
     loadPending()
   ]);
 }
+/* ---- 重複投稿：把彼此沒填的欄位補齊（celine）----
+   「我要可以看到已送上來的投稿是否跟以前的重複，如果重複就把彼此沒填的欄位補齊。」
+
+   重複的投稿不見得是垃圾——同一家店，新投稿常常填了舊那筆沒填的東西（提前幾天、
+   適用縣市、資料來源），舊那筆也可能有新投稿漏掉的。與其二選一，不如先把兩邊
+   的空格互相補滿，再決定要核可還是退回。
+
+   只補「空的」，不覆蓋任何已經填好的值——兩邊都有填但內容不一樣時，那是判斷題，
+   留給人看（可以用「編輯」自己改），程式不猜。
+
+   DB 欄位 ↔ fromRow() 之後的屬性名。brand 不在清單裡：它是必填、永遠不會空，
+   而且把別家的店名寫進來只會更亂。requires_companion 也不在：它是布林值，
+   false 跟「沒填」長得一樣，分不出來就不要亂補。 ---- */
+const FILL_FIELDS=[
+  ['offer','offer'], ['category','category'], ['timing','timing'],
+  ['membership','membership'], ['membership_type','membershipType'], ['free_tier','freeTier'],
+  ['advance_days','advanceDays'], ['value_twd','valueTwd'], ['conditions','conditions'],
+  ['valid_from','validFrom'], ['valid_until','validUntil'],
+  ['transferable','transferable'], ['regions','regions'], ['sources','sources'],
+];
+function fillIsEmpty(v, col){
+  if(v===null||v===undefined||v==='') return true;
+  if(Array.isArray(v)) return v.length===0;
+  // 「尚未確認」就是還沒填，對方有確認過的話就補過來
+  if(col==='transferable') return v==='unknown';
+  return false;
+}
+/* target 缺、source 有的欄位清單：[[欄位, 要補的值, 中文名], …] */
+function fillPlan(target, source){
+  if(!target||!source) return [];
+  return FILL_FIELDS
+    .filter(([col,prop])=>fillIsEmpty(target[prop],col) && !fillIsEmpty(source[prop],col))
+    .map(([col,prop])=>[col, source[prop], EDIT_FIELD_LABEL[col]||col]);
+}
+function fillPatch(plan){
+  const patch={};
+  plan.forEach(([col,val])=>{
+    patch[col]=val;
+    // offers 同時有 timing 跟 offer_window 兩個欄位（舊名），寫入時要一起更新，
+    // 不然 fromRow() 讀到的還是舊值
+    if(col==='timing') patch.offer_window=val;
+  });
+  return patch;
+}
+async function fillMissingBetween(pend, live){
+  if(!LIVE||!myProfile?.is_admin||!pend||!live) return false;
+  const toLive=fillPlan(live,pend), toPend=fillPlan(pend,live);
+  if(!toLive.length && !toPend.length){
+    note($('#pendMsg'),'alert','兩邊該填的都填了，沒有可以互相補的欄位。'); return false;
+  }
+  // 有代碼的欄位要寫成人看得懂的字（transferable 的 'yes' 要寫「不用本人出示證件」）
+  const CODE_LABEL={transferable:TRANSFER_LABEL, free_tier:FREE_LABEL, membership_type:MEM_LABEL};
+  const showVal=(col,val)=>(CODE_LABEL[col]&&CODE_LABEL[col][val])||fmtEditVal(val);
+  const show=p=>p.map(([col,val,label])=>`・${label}：${showVal(col,val)}`).join(String.fromCharCode(10));
+  const parts=[];
+  if(toLive.length) parts.push(`補到站上的「#${live.id} ${live.brand}」：${String.fromCharCode(10)}${show(toLive)}`);
+  if(toPend.length) parts.push(`補到這筆待審投稿「#${pend.id} ${pend.brand}」：${String.fromCharCode(10)}${show(toPend)}`);
+  if(!confirm(`只補空白的欄位，已經填好的都不會被蓋掉：${String.fromCharCode(10,10)}`
+    +parts.join(String.fromCharCode(10,10))
+    +`${String.fromCharCode(10,10)}要補上去嗎？`)) return false;
+  if(toLive.length){
+    const {error}=await sb.from('offers').update(fillPatch(toLive)).eq('id',live.id);
+    if(error){ note($('#pendMsg'),'alert','補到站上那筆失敗：'+esc(error.message)); return false; }
+  }
+  if(toPend.length){
+    const {error}=await sb.from('offers').update(fillPatch(toPend)).eq('id',pend.id);
+    if(error){ note($('#pendMsg'),'alert','補到這筆投稿失敗：'+esc(error.message)); return false; }
+  }
+  note($('#pendMsg'),'good',`✓ 已補齊${toLive.length?`站上 #${live.id} 的 ${toLive.length} 個欄位`:''}`
+    +`${toLive.length&&toPend.length?'、':''}${toPend.length?`這筆投稿的 ${toPend.length} 個欄位`:''}`
+    +`。確定是同一家的話，這筆投稿可以退回了。`);
+  return true;
+}
 /* ===================================================================== */
 async function loadPending(){
   if(!LIVE||!myProfile?.is_admin) return;
@@ -7785,9 +7858,20 @@ async function loadPending(){
     const ref=d.live[0] ? `#${d.live[0].id} ${d.live[0].brand}` : '';
     return `<div class="pend-dup">
       <b>${d.live.length?'⚠ 站上已經有看起來是同一家的':'⚠ 這批待審裡還有看起來是同一家的'}</b>
-      ${d.live.map(s=>`<div class="pend-dup-item"><b>#${esc(String(s.id))}　${esc(s.brand)}</b>
+      ${d.live.map(s=>{
+        // 兩邊各缺什麼，直接寫在旁邊——重複不一定是壞事，新投稿常常補到了舊那筆
+        // 沒填的欄位（celine：「如果重複就把彼此沒填的欄位補齊」）
+        const toLive=fillPlan(s,o), toPend=fillPlan(o,s);
+        const n=toLive.length+toPend.length;
+        return `<div class="pend-dup-item"><b>#${esc(String(s.id))}　${esc(s.brand)}</b>
         <small>${esc(String(s.offer||'').slice(0,80))}${String(s.offer||'').length>80?'…':''}
-        ・回報 ${s.reportCount||0} 次</small></div>`).join('')}
+        ・回報 ${s.reportCount||0} 次</small>
+        ${n?`<button type="button" class="btn sm pend-dup-fill" data-pend="${esc(String(o.id))}"
+          data-live="${esc(String(s.id))}" style="margin-top:6px">補齊彼此沒填的欄位（${
+          [toLive.length?`補給 #${s.id} ${toLive.length} 項`:'', toPend.length?`補給這筆 ${toPend.length} 項`:'']
+            .filter(Boolean).join('、')}）</button>`
+         :'<small style="color:var(--ink-3)">兩邊該填的都填了，沒有可以互相補的欄位</small>'}
+        </div>`;}).join('')}
       ${d.pend.map(s=>`<div class="pend-dup-item"><b>待審 #${esc(String(s.id))}　${esc(s.brand)}</b>
         <small>${esc(String(s.offer||'').slice(0,80))}${String(s.offer||'').length>80?'…':''}</small></div>`).join('')}
       ${ref?`<button type="button" class="btn sm pend-dup-note" data-id="${esc(String(o.id))}"
@@ -7827,6 +7911,24 @@ async function loadPending(){
   // 核可前發現內容需要修正，可以直接編輯——會切到「新增」分頁，改完存檔後
   // 這筆還是待審狀態，回到這裡再核可即可，不用先退回再叫對方重投。
   $$('.pend-edit').forEach(b=>b.onclick=()=>startEditOffer(b.dataset.id, true));
+  // 把兩邊沒填的欄位互相補滿（補完這筆投稿通常就可以退回了）
+  $$('.pend-dup-fill').forEach(b=>b.onclick=async()=>{
+    const pend=list.find(x=>String(x.id)===b.dataset.pend);
+    const live=OFFERS.find(x=>String(x.id)===b.dataset.live);
+    b.disabled=true;
+    const ok=await fillMissingBetween(pend, live);
+    b.disabled=false;
+    if(!ok) return;
+    // 站上那筆改了，列表／卡片都要跟著重畫；待審清單重畫之後按鈕上的數字才會歸零
+    const keep=document.querySelector(`.rn[data-id="${b.dataset.pend}"]`)?.value||'';
+    await withScrollRestore([
+      (async()=>{ await loadOffers(); render(); })(),
+      loadPending(),
+    ]);
+    // 重畫會清掉輸入框，打到一半的審核備註要留著
+    const rn=document.querySelector(`.rn[data-id="${b.dataset.pend}"]`);
+    if(rn && keep) rn.value=keep;
+  });
   // 判斷是重複的話，退回理由通常就是那一句——直接幫忙填好，按「退回」就送出。
   $$('.pend-dup-note').forEach(b=>b.onclick=()=>{
     const input=document.querySelector(`.rn[data-id="${b.dataset.id}"]`);

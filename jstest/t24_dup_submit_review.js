@@ -149,6 +149,7 @@ const offer = (id, brand, extra = {}) => ({
     '重複投稿：站上已經有 #11 五十嵐');
 
   // 核可／退回的流程沒有被這塊提醒弄壞
+  const realLoadPending = win.loadPending;
   const hits = stubHeavy(win, ['loadOffers', 'render', 'loadSiteStats', 'loadReviewInsights']);
   sb2.__calls.rpc.length = 0;
   rowOf(101).querySelector('.rj').click();
@@ -158,6 +159,76 @@ const offer = (id, brand, extra = {}) => ({
     rev && rev.params.p_status === 'rejected' && /#11 五十嵐/.test(rev.params.p_note || ''),
     rev && rev.params);
   t.ok('退回後有重新整理清單', hits.loadOffers >= 1);
+
+  /* ===== 5. 重複的話，把彼此沒填的欄位補齊（celine）=====
+     重複的投稿不見得是垃圾：新投稿常常填了舊那筆沒填的東西，反過來也是。
+     只補空的，不蓋掉任何已經填好的值。 */
+  const sb3 = makeSb({
+    tables: {
+      offers: [
+        // 待審這筆：有提前天數、地區、來源；沒有優惠價值、使用條件
+        { ...offer(201, '五十嵐', { status: 'pending', submitted_by: 'u-1' }),
+          offer: '生日當月大杯免費', advance_days: 7, regions: ['台北市', '新北市'],
+          sources: [{ tierLabel: '官網', url: 'https://5050.tw/bday' }],
+          value_twd: null, conditions: '', valid_until: null, transferable: 'yes' },
+      ],
+      profiles_public: [{ id: 'u-1', display_name: '小明' }],
+    },
+  });
+  win.__sb = sb3;
+  win.eval('sb = window.__sb;');
+  // 站上那筆：有優惠價值、使用條件；沒有提前天數、地區、來源，本人證件也還沒確認
+  win.eval(`OFFERS = [{id:11, brand:'五十嵐', category:'飲料', offer:'生日當月飲料買一送一',
+    timing:'當月', membership:'', membershipType:'app', freeTier:'free_min',
+    advanceDays:null, valueTwd:120, conditions:'需出示證件', validFrom:null, validUntil:null,
+    transferable:'unknown', regions:[], sources:[], reportCount:8}];`);
+  win.loadPending = realLoadPending;   // 上面 stubHeavy 把它換成空殼了，這裡要用真的
+  await win.loadPending();
+  await tick(win, 2);
+  const fillBtn = () => doc.querySelector('.pend-row[data-row="201"] .pend-dup-fill');
+  t.ok('有可以互相補的欄位時才出現按鈕', !!fillBtn());
+  t.ok('按鈕上先寫清楚各補幾項',
+    /補給 #11 4 項/.test(fillBtn().textContent) && /補給這筆 2 項/.test(fillBtn().textContent),
+    fillBtn().textContent.replace(/\s+/g, ' '));
+
+  win.__confirmAnswer = true;
+  win.__confirms.length = 0;
+  win.loadPending = async () => {};   // 補完會重畫整份清單，這裡只驗寫了什麼
+  sb3.__calls.write.length = 0;
+  fillBtn().click();
+  await tick(win, 6);
+  t.ok('動手前先把要補什麼列出來給人確認',
+    /只補空白的欄位/.test(win.__confirms[0] || '') && /提前天數：7/.test(win.__confirms[0] || ''),
+    win.__confirms[0]);
+  const writes = sb3.__calls.write.filter((w) => w.op === 'update');
+  t.eq('兩邊各寫一次', writes.length, 2);
+  t.eq('補給站上那筆的欄位', Object.keys(writes[0].args[0]).sort(),
+    ['advance_days', 'regions', 'sources', 'transferable']);
+  t.eq('值是從投稿那筆抄過去的', [writes[0].args[0].advance_days, writes[0].args[0].regions],
+    [7, ['台北市', '新北市']]);
+  t.ok('不會蓋掉站上已經填好的（優惠價值、使用條件沒被動到）',
+    !('value_twd' in writes[0].args[0]) && !('conditions' in writes[0].args[0]),
+    Object.keys(writes[0].args[0]));
+  t.eq('補給投稿那筆的欄位', Object.keys(writes[1].args[0]).sort(), ['conditions', 'value_twd']);
+  t.ok('「尚未確認」算沒填，對方確認過就補過來', writes[0].args[0].transferable === 'yes');
+  t.ok('補完告訴你可以退回了', /可以退回/.test($('#pendMsg').textContent), $('#pendMsg').textContent);
+  t.ok('補完有重新整理站上的資料', hits.loadOffers >= 2, hits);
+
+  // 按取消就什麼都不做
+  win.__confirmAnswer = false;
+  sb3.__calls.write.length = 0;
+  await win.fillMissingBetween(
+    { id: 201, brand: '五十嵐', advanceDays: 7, regions: ['台北市'], sources: [], conditions: '', valueTwd: null },
+    win.eval('OFFERS')[0]);
+  t.eq('按取消不寫任何東西', sb3.__calls.write.length, 0);
+  win.__confirmAnswer = true;
+
+  // 兩邊都填滿了：不給按鈕，也不要讓人白按一次才知道
+  const full = { id: 301, brand: '一芳', category: '飲料', offer: 'x', timing: '當月', membership: '',
+    membershipType: 'app', freeTier: 'free_min', advanceDays: 3, valueTwd: 60, conditions: '要證件',
+    validFrom: null, validUntil: '2026-12-31', transferable: 'yes', regions: ['台北市'],
+    sources: [{ url: 'https://a.tw' }] };
+  t.eq('沒有空欄位就沒有要補的', win.fillPlan(full, { ...full, id: 302 }), []);
 
   process.exit(t.done() ? 0 : 1);
 })().catch((e) => { console.error(e); process.exit(1); });
