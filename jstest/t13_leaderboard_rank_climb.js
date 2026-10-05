@@ -39,35 +39,54 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
 
   /* ---- 最近使用最多次（嵐：除了進步最多，也想看最近誰被用最多，時間範圍要能選）---- */
   const day = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
-  win.eval(`POP_TREND = [
-    // B店：近 7 天 3 次；A店：近 7 天 1 次、30 天內再 4 次；C店：50 天前 5 次
-    {offer_id:${JSON.stringify(offers[1].id)}, used_on:'${day(1)}', result:'success', saved_twd:50},
-    {offer_id:${JSON.stringify(offers[1].id)}, used_on:'${day(2)}', result:'success', saved_twd:50},
-    {offer_id:${JSON.stringify(offers[1].id)}, used_on:'${day(3)}', result:'failed', saved_twd:0},
-    {offer_id:${JSON.stringify(offers[0].id)}, used_on:'${day(2)}', result:'success', saved_twd:20},
-    {offer_id:${JSON.stringify(offers[0].id)}, used_on:'${day(10)}', result:'success', saved_twd:20},
-    {offer_id:${JSON.stringify(offers[0].id)}, used_on:'${day(11)}', result:'success', saved_twd:20},
-    {offer_id:${JSON.stringify(offers[0].id)}, used_on:'${day(12)}', result:'success', saved_twd:20},
-    {offer_id:${JSON.stringify(offers[0].id)}, used_on:'${day(13)}', result:'success', saved_twd:20},
-    {offer_id:${JSON.stringify(offers[2].id)}, used_on:'${day(50)}', result:'success', saved_twd:10},
-    {offer_id:${JSON.stringify(offers[2].id)}, used_on:'${day(51)}', result:'success', saved_twd:10},
-    {offer_id:${JSON.stringify(offers[2].id)}, used_on:'${day(52)}', result:'success', saved_twd:10},
-    {offer_id:${JSON.stringify(offers[2].id)}, used_on:'${day(53)}', result:'success', saved_twd:10},
-    {offer_id:${JSON.stringify(offers[2].id)}, used_on:'${day(54)}', result:'success', saved_twd:10}];`);
+  // celine：「省下金額感覺都不對」——原本是把近半年的原始回報整包撈下來自己分組，
+  // 但 PostgREST 有 1000 筆上限又沒有 order by，拿到的是隨機一半。改成跟資料庫要
+  // 算好的彙總（v82 的 site_offer_usage），切天數才查一次，同一個天數不重複查。
+  const usageCalls = [];
+  const usageByDays = {
+    30: [
+      { offer_id: offers[0].id, report_count: 5, success_count: 5, saved_total: 100 },
+      { offer_id: offers[1].id, report_count: 3, success_count: 2, saved_total: 100 },
+    ],
+    7: [
+      { offer_id: offers[1].id, report_count: 3, success_count: 2, saved_total: 100 },
+      { offer_id: offers[0].id, report_count: 1, success_count: 1, saved_total: 20 },
+    ],
+    90: [
+      { offer_id: offers[0].id, report_count: 5, success_count: 5, saved_total: 100 },
+      { offer_id: offers[2].id, report_count: 5, success_count: 5, saved_total: 50 },
+      { offer_id: offers[1].id, report_count: 3, success_count: 2, saved_total: 100 },
+    ],
+  };
+  win.__sbUsage = {
+    rpc: (name, p) => {
+      usageCalls.push([name, p]);
+      return Promise.resolve({ data: usageByDays[p.p_days] || [], error: null });
+    },
+  };
+  win.eval('sb = window.__sbUsage; LIVE = true; POP_USAGE_CACHE = new Map();');
   t.ok('平常看不到期間選單', $('#popRangeWrap').classList.contains('hidden'));
   $('#popSortBy').value = 'recent'; $('#popSortBy').dispatchEvent(new win.Event('change'));
+  await tick(win, 3);
   t.ok('切「最近使用最多次」才出現期間選單', !$('#popRangeWrap').classList.contains('hidden'));
+  t.eq('跟資料庫要近 30 天的彙總', usageCalls[0], ['site_offer_usage', { p_days: 30 }]);
   t.eq('預設近 30 天：A 店 5 次排第一', names('#popBody'), [offers[0].brand, offers[1].brand]);
   $('#popRange').value = '7'; $('#popRange').dispatchEvent(new win.Event('change'));
+  await tick(win, 3);
   t.eq('改成近 7 天，換 B 店排第一', names('#popBody'), [offers[1].brand, offers[0].brand]);
   t.ok('成功／回報分開算（B 店 3 次裡 2 次成功）',
     [...doc.querySelectorAll('#popBody tbody tr')][0].children[2].textContent.trim() === '2／3',
     [...doc.querySelectorAll('#popBody tbody tr')][0].textContent);
   $('#popRange').value = '90'; $('#popRange').dispatchEvent(new win.Event('change'));
+  await tick(win, 3);
   t.eq('拉到近 90 天，50 天前用很多次的 C 店才進來', names('#popBody').length, 3);
   t.ok('說明文字跟著改成「近 N 天」', /近 90 天/.test($('#popBody').closest('.panel').querySelector('.sub').textContent));
+  // 切回去已經查過的天數不要再查一次
+  const before = usageCalls.length;
   $('#popRange').value = '7'; $('#popRange').dispatchEvent(new win.Event('change'));
-  win.eval('POP_TREND = [];');
+  await tick(win, 3);
+  t.eq('查過的天數不重複查', usageCalls.length, before);
+  win.eval('POP_USAGE_CACHE.set(7, []);');
   win.renderPopBody();
   t.ok('那段期間沒人用就講清楚', /近 7 天還沒有人回報使用/.test($('#popBody').textContent), $('#popBody').textContent);
   $('#popSortBy').value = 'rank'; $('#popSortBy').dispatchEvent(new win.Event('change'));

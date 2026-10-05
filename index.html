@@ -6946,7 +6946,13 @@ async function loadBoard(){
     sb.from('most_wished').select('*').limit(15),
     // offer_id 是給「最近使用最多次」用的（renderPopBody）——這份資料本來就抓了
     // 近 180 天的所有回報，多帶一欄就不用為了那個排序再打一次 API。
-    sb.from('usage_reports').select('offer_id,used_on,saved_twd,result').gte('used_on',trendSince).limit(8000),
+    // celine：「省下金額感覺都不對，沒更新到」。原本這裡是把近半年的原始回報全部
+    // 撈到瀏覽器再自己加總，但 PostgREST 有 max-rows 上限（這個專案是 1000），
+    // `.limit(8000)` 根本沒用——2100 多筆只回 1000 筆，而且沒有 order by，
+    // 回來的是資料表的實體順序（實測第一筆是 id 1239、第二筆是 id 3），
+    // 等於隨機拿一半去畫圖，最近幾天剛好沒被抓到，走勢圖就貼著 0。
+    // 改成在資料庫算好每天的彙總再回傳（最多 180 列），順便少傳一大包資料。
+    fetchUsageDaily(180, trendSince).then(rows=>({data:rows})),
     // 「大家累積省下」要固定代表全部人、近一年的總量，不能跟著排行榜的
     // 「本月／全部」切換一起變動——不然選「本月」時這個數字會突然縮水，
     // 看起來又像另一個對不起來的 bug。!monthly 時 lbQuery 本來就是抓
@@ -6958,7 +6964,9 @@ async function loadBoard(){
     // 「被使用過的店家數」之前是拿 popular_offers（熱門前 50 家）反查，優惠一多
     // 家數超過 50 就會被低估、看起來卡在某個數字不動。這裡直接查 usage_reports
     // 本身（對所有人開放讀取，不受 50 家上限），近一年、成功回報過的，才是真數字。
-    sb.from('usage_reports').select('offer_id').eq('result','success').gte('used_on',yearSince).limit(5000),
+    // 同一個 max-rows 的坑：`.limit(5000)` 也只會回 1000 筆。改用 v82 的彙總
+    // （一筆優惠一列），家數才是真的。
+    fetchOfferUsage(365).then(rows=>({data:rows})),
     prevPeriodQuery,
     // 「大家都在用什麼」／「最多人收藏」的名次升降：這兩張榜沒有本月/本週
     // 分期的概念，改跟「7 天前」比（schema_v49，view 內部用 created_at
@@ -7002,7 +7010,8 @@ async function loadBoard(){
   (wishPrev||[]).forEach((r,i)=>{ if(!wishPrevRankMap.has(r.offer_id)) wishPrevRankMap.set(r.offer_id,i+1); });
   (wish||[]).forEach((r,i)=>{ r.prevRank = wishPrevRankMap.has(r.offer_id)?wishPrevRankMap.get(r.offer_id):null; });
   renderMostWished(wish||[], wishHasPrev);
-  POP_TREND=trendRows||[];
+  // 切到排行榜就先把「最近 30 天」那份備好（預設的天數），之後切天數才去查
+  POP_USAGE_CACHE=new Map();
   renderBoardStats(lb||[], pop||[], allTimeSavedRows, usedRows||[], boardSiteStats, onlineErr?null:onlineNow, trendRows||[], wishConv);
   startBoardOnlineRefresh();
   renderBoardHoursChart(hourErr?null:hourRows);
@@ -7576,20 +7585,27 @@ async function loadPendingEditsPreview(){
 }
 
 /* ---- 大家都在用什麼 ---- */
-let POP_ROWS=[], POP_HAS_PREV=false, POP_TREND=[];
-// 「最近使用最多次」：直接用已經抓進來的近 180 天回報（POP_TREND）自己算，
-// 期間由使用者選（7／30／90／180 天）。成功、部分成功、失敗都算一次「有人去用」，
-// 但另外標出其中幾次是成功的，跟上面「名次」那張表看得到的欄位一致。
+let POP_ROWS=[], POP_HAS_PREV=false;
+// 「最近使用最多次」：期間由使用者選（7／30／90／180 天）。成功、部分成功、失敗
+// 都算一次「有人去用」，但另外標出其中幾次是成功的，跟上面「名次」那張表一致。
+/* 「最近使用最多次」：每一筆優惠在近 N 天被回報幾次。
+   以前是從前端撈回來的原始回報自己分組，但那包資料被 PostgREST 的 1000 筆上限
+   砍掉一半（而且砍掉的是哪一半還不固定），算出來的名次當然不對。改成切換天數時
+   跟資料庫要一份算好的（v82 的 site_offer_usage），一筆優惠一列、量很小。
+   同一個天數只查一次，切來切去不會一直打。 */
+let POP_USAGE_CACHE=new Map();
+async function ensurePopUsage(days){
+  if(POP_USAGE_CACHE.has(days)) return POP_USAGE_CACHE.get(days);
+  const rows=await fetchOfferUsage(days);
+  POP_USAGE_CACHE.set(days, rows);
+  return rows;
+}
 function popRecentRows(days){
-  const since=ISO(new Date(Date.now()-(days-1)*864e5));
   const m=new Map();
-  POP_TREND.forEach(r=>{
-    if(!r.offer_id || String(r.used_on||'')<since) return;
-    const k=String(r.offer_id);
-    const e=m.get(k)||{offer_id:r.offer_id, report_count:0, success_count:0, saved_total:0};
-    e.report_count++;
-    if(r.result==='success'){ e.success_count++; e.saved_total+=r.saved_twd||0; }
-    m.set(k,e);
+  (POP_USAGE_CACHE.get(days)||[]).forEach(r=>{
+    if(!r.offer_id) return;
+    m.set(String(r.offer_id), {offer_id:r.offer_id, report_count:r.report_count||0,
+      success_count:r.success_count||0, saved_total:r.saved_total||0});
   });
   return [...m.values()]
     .map(e=>{
@@ -7599,6 +7615,13 @@ function popRecentRows(days){
     .sort((a,b)=>b.report_count-a.report_count || b.saved_total-a.saved_total)
     .slice(0,50)
     .map((r,i)=>({...r, rank:i+1}));
+}
+async function refreshPopRecent(){
+  const days=Number($('#popRange')?.value||30);
+  if($('#popSortBy')?.value==='recent' && LIVE && !POP_USAGE_CACHE.has(days)){
+    await ensurePopUsage(days);
+  }
+  renderPopBody();
 }
 function renderPopBody(){
   const mode=$('#popSortBy')?.value||'rank';
@@ -7622,8 +7645,8 @@ function renderPopBody(){
   wireShowMore($('#popBody'));
   $$('#popBody .lb-click').forEach(row=>row.onclick=()=>openDetail(row.dataset.oid));
 }
-$('#popSortBy').onchange=renderPopBody;
-$('#popRange').onchange=renderPopBody;
+$('#popSortBy').onchange=refreshPopRecent;
+$('#popRange').onchange=refreshPopRecent;
 
 /* ---- 最多人收藏 ---- */
 let WISH_ROWS=[], WISH_HAS_PREV=false;
@@ -7670,19 +7693,23 @@ function renderBoardStats(lb, pop, allTimeSavedRows, usedRows, siteStatsRow, onl
   const avg     = people?Math.round(peopleRows.reduce((a,r)=>a+(r.saved_total||0),0)/people):0;
   // 成功率：popular_offers 的回報數只算成功的，拿來除一定接近 100%。改用近半年「所有」回報
   // （成功／部分／失敗）算；沒有這份資料時才退回舊算法。
-  const rr = (resultRows||[]).filter(r=>r.result);
-  const rate    = rr.length ? Math.round(100*rr.filter(r=>r.result==='success').length/rr.length)
+  // resultRows 現在是「每天一列」的彙總（v82）：uses 是全部回報、success_uses 是成功的
+  const allUses = (resultRows||[]).reduce((a,r)=>a+(r.uses||0),0);
+  const okUses  = (resultRows||[]).reduce((a,r)=>a+(r.success_uses||0),0);
+  const rate    = allUses ? Math.round(100*okUses/allUses)
     : popReports?Math.round(100*success/popReports):null;
-  const rateLabel = rr.length ? '成功率（近半年）' : '整體成功率';
+  const rateLabel = allUses ? '成功率（近半年）' : '整體成功率';
   const top     = pop.slice().sort((a,b)=>(b.report_count||0)-(a.report_count||0))[0];
   // 除了金額，也算「被用過的店家數」——跟金額比起來，這個數字比較能看出
   // 「大家實際試了多少不同的店」，不是只有少數幾家貴的優惠撐起總金額。
   // 這裡改成直接從 usage_reports 反查（近一年、成功回報），不要再用
   // popular_offers（熱門前 50 家）湊——優惠一多，實際被用過的店家數超過
   // 50 家的話，用 popular_offers 湊出來的數字就會低估、卡住不會再往上。
+  // usedRows 現在是 v82 的「每筆優惠近一年的使用狀況」，一筆優惠一列
   const brandSet=new Set();
   (usedRows||pop).forEach(r=>{
     if(usedRows && !r.offer_id) return;
+    if(usedRows && !(r.success_count||r.report_count)) return;
     if(!usedRows && !r.report_count) return;
     const o=OFFERS.find(x=>String(x.id)===String(r.offer_id));
     if(o?.brand) brandSet.add(o.brand);
@@ -7988,6 +8015,46 @@ function renderCategoryBreakdown(pop){
 // 能讀，跟 popular_offers 這些公開統計 view 依賴的是同一份開放度），所以這裡
 // 直接查表聚合就好，不用另外開一個 view／RPC。只算成功的回報，失敗/部分成功
 // 不代表真的省到錢。
+/* 洞察分析那幾張圖吃的是「每天一列」的彙總（v82 的 site_usage_daily）：
+     {used_on, uses, success_uses, saved}
+   以前是把近半年的原始回報整包撈下來自己加總，但 PostgREST 有 1000 筆上限、
+   又沒有 order by，等於隨機拿一半去畫——走勢圖最近幾天貼著 0 就是這樣來的。 */
+async function fetchUsageDaily(days, sinceIso){
+  const {data,error}=await sb.rpc('site_usage_daily',{p_days:days});
+  if(!error && Array.isArray(data))
+    return data.map(r=>({used_on:r.d, uses:r.uses||0, success_uses:r.success_uses||0, saved:r.saved||0}));
+  // v82 還沒跑：退回原本的做法，但至少照日期由新到舊排，最近的才不會被 1000 筆
+  // 上限切掉（這是使用者最在意的那一段）。更早的資料可能不完整。
+  const {data:raw}=await sb.from('usage_reports').select('used_on,saved_twd,result')
+    .gte('used_on',sinceIso).order('used_on',{ascending:false}).limit(1000);
+  const m=new Map();
+  (raw||[]).forEach(r=>{
+    const e=m.get(r.used_on)||{used_on:r.used_on, uses:0, success_uses:0, saved:0};
+    e.uses++;
+    if(r.result==='success'){ e.success_uses++; e.saved+=r.saved_twd||0; }
+    m.set(r.used_on,e);
+  });
+  return [...m.values()].sort((a,b)=>a.used_on<b.used_on?-1:1);
+}
+/* 每一筆優惠在近 N 天的使用狀況（v82 的 site_offer_usage）：
+   「最近使用最多次」跟「被使用過的店家數」用。 */
+async function fetchOfferUsage(days){
+  const {data,error}=await sb.rpc('site_offer_usage',{p_days:days});
+  if(!error && Array.isArray(data)) return data;
+  const since=ISO(new Date(Date.now()-(days-1)*864e5));
+  const {data:raw}=await sb.from('usage_reports').select('offer_id,used_on,saved_twd,result')
+    .gte('used_on',since).order('used_on',{ascending:false}).limit(1000);
+  const m=new Map();
+  (raw||[]).forEach(r=>{
+    if(!r.offer_id) return;
+    const k=String(r.offer_id);
+    const e=m.get(k)||{offer_id:r.offer_id, report_count:0, success_count:0, saved_total:0};
+    e.report_count++;
+    if(r.result==='success'){ e.success_count++; e.saved_total+=r.saved_twd||0; }
+    m.set(k,e);
+  });
+  return [...m.values()].sort((a,b)=>b.report_count-a.report_count);
+}
 let TREND_ROWS=[], TREND_SINCE='';
 function renderSavingsTrend(rows, sinceDate){
   TREND_ROWS=rows||[]; TREND_SINCE=sinceDate;
@@ -8011,10 +8078,10 @@ function renderTrendChart(){
   let totalUses=0;
   const cutoff=days[0]; // TREND_ROWS 現在涵蓋半年，累計次數只算落在這 30 天視窗內的
   TREND_ROWS.forEach(r=>{
-    if(r.result!=='success'||r.used_on<cutoff) return;
-    totalUses++;
-    byDaySaved.set(r.used_on, (byDaySaved.get(r.used_on)||0) + (r.saved_twd||0));
-    byDayCount.set(r.used_on, (byDayCount.get(r.used_on)||0) + 1);
+    if(r.used_on<cutoff) return;
+    totalUses += r.success_uses||0;
+    byDaySaved.set(r.used_on, (byDaySaved.get(r.used_on)||0) + (r.saved||0));
+    byDayCount.set(r.used_on, (byDayCount.get(r.used_on)||0) + (r.success_uses||0));
   });
   if(!totalUses){
     box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">近 30 天還沒有成功回報，累積之後這裡會畫出走勢圖。</div>';
@@ -8045,10 +8112,9 @@ function renderMonthlyBreakdown(rows){
   }
   const bySaved=new Map(), byCount=new Map();
   (rows||[]).forEach(r=>{
-    if(r.result!=='success') return;
     const ym=String(r.used_on||'').slice(0,7);
-    bySaved.set(ym,(bySaved.get(ym)||0)+(r.saved_twd||0));
-    byCount.set(ym,(byCount.get(ym)||0)+1);
+    bySaved.set(ym,(bySaved.get(ym)||0)+(r.saved||0));
+    byCount.set(ym,(byCount.get(ym)||0)+(r.success_uses||0));
   });
   const by = metric==='count' ? byCount : bySaved;
   const label = metric==='count' ? '使用次數' : '省下金額';
@@ -8076,8 +8142,8 @@ $('#trendMetric').onchange=()=>{ renderTrendChart(); renderMonthlyBreakdown(TREN
 function monthTotals(rows, ym){
   let saved=0, uses=0;
   (rows||[]).forEach(r=>{
-    if(r.result!=='success' || String(r.used_on||'').slice(0,7)!==ym) return;
-    saved += r.saved_twd||0; uses++;
+    if(String(r.used_on||'').slice(0,7)!==ym) return;
+    saved += r.saved||0; uses += r.success_uses||0;
   });
   return {saved, uses};
 }
@@ -8167,10 +8233,10 @@ function renderWeekdayBreakdown(rows){
   // 聚合資料也要真的只算最近 30 天，不然會偷偷把半年的資料混進來算。
   const cutoff=ISO(new Date(Date.now()-29*864e5));
   rows.forEach(r=>{
-    if(r.result!=='success'||r.used_on<cutoff) return;
+    if(r.used_on<cutoff || !r.success_uses) return;
     const d=new Date(r.used_on+'T00:00:00');
     if(isNaN(d)) return;
-    counts[d.getDay()]++; total++;
+    counts[d.getDay()] += r.success_uses; total += r.success_uses;
   });
   if(!total){ box.innerHTML=''; return; }
   const max=Math.max(...counts);

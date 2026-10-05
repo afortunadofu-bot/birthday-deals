@@ -37,8 +37,10 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   t.ok('站台數據的累積省下用 site_stats', /123,456/.test($('#boardStats .hero').textContent), $('#boardStats .hero').textContent);
   t.ok('總回報次數也用 site_stats', /789\s*總回報次數/.test($('#boardStats').textContent));
   // 成功率不能只拿「成功的回報」來除（會永遠接近 100%）
+  // v82 之後這一欄是「每天一列」的彙總（uses 全部／success_uses 成功）
   win.renderBoardStats([], pop, [], pop, { saved_total: 1, report_count: 4 }, 1,
-    [{ result: 'success' }, { result: 'success' }, { result: 'success' }, { result: 'failed' }]);
+    [{ used_on: '2026-10-01', uses: 3, success_uses: 2, saved: 100 },
+     { used_on: '2026-10-02', uses: 1, success_uses: 1, saved: 50 }]);
   t.ok('成功率用所有回報算（3 成功／4 筆＝75%）', /75%\s*成功率（近半年）/.test($('#boardStats').textContent), $('#boardStats').textContent);
   /* 收藏 → 真的去用的轉換率（嵐）。wishlist 的 RLS 是「只看得到自己的」，
      前端配不出來，所以由 v74 的 site_wish_conversion() 在資料庫算好再傳進來。 */
@@ -92,7 +94,8 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   for (let i = 0; i < 14; i++) {
     const d = new Date(today.getTime() - i * 864e5);
     const n = d.getDay() === 3 ? 5 : 1;
-    for (let k = 0; k < n; k++) rows.push({ used_on: iso(d), result: 'success', saved_twd: 100 });
+    // v82 之後是「每天一列」的彙總
+    rows.push({ used_on: iso(d), uses: n, success_uses: n, saved: 100 * n });
   }
   win.renderWeekdayBreakdown(rows);
   const wcols = [...doc.querySelectorAll('#boardWeekdayChart .vcol')];
