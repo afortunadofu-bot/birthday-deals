@@ -126,15 +126,27 @@ function stubSb(win, { rpcOk = true } = {}) {
     { id: 1, brand: '快取店', category: '飲料', regions: ['台北市'], offer: '生日免費',
       timing: '當月', status: 'approved', sources: [], report_count: 3 },
   ];
+  // 優惠清單改成用 range 分頁撈（PostgREST 的 max-rows 是 1000，`.limit(3000)` 擋不住）
   let offerFetches = 0;
+  const offerRanges = [];
   win.__sb3 = {
-    from: () => ({ select: () => ({ limit: () => { offerFetches += 1; return Promise.resolve({ data: offerRows, error: null }); } }) }),
+    from: () => ({
+      select: () => ({
+        order: () => ({
+          range: (a, b) => {
+            offerFetches += 1; offerRanges.push([a, b]);
+            return Promise.resolve({ data: offerRows, error: null });
+          },
+        }),
+      }),
+    }),
   };
   win.eval('sb = window.__sb3; LIVE = true;');
   win.localStorage.removeItem('sxr_offers_cache');
 
   await win.loadOffers();
   t.eq('第一次要去資料庫拿', offerFetches, 1);
+  t.eq('第一頁是 0-999', offerRanges[0], [0, 999]);
   t.eq('拿到的優惠有進 OFFERS', win.eval('OFFERS.length'), 1);
   t.ok('存成這台裝置上的快取', !!win.localStorage.getItem('sxr_offers_cache'));
 
@@ -160,6 +172,29 @@ function stubSb(win, { rpcOk = true } = {}) {
   offerFetches = 0;
   await win.loadOffers();
   t.eq('快取壞掉就當作沒有，照樣查得到', offerFetches, 1);
+
+  /* ---- 優惠超過 1000 筆時要自己翻下一頁（PostgREST 的 max-rows 上限）---- */
+  const bigPage = Array.from({ length: 1000 }, (_, i) => ({ ...offerRows[0], id: i + 1 }));
+  let pages = 0;
+  win.__sb4 = {
+    from: () => ({
+      select: () => ({
+        order: () => ({
+          range: (a) => {
+            pages += 1;
+            // 第一頁滿 1000 筆（代表可能被切掉），第二頁只有 3 筆
+            const tail = [1001, 1002, 1003].map((id) => ({ ...offerRows[0], id }));
+            return Promise.resolve({ data: a === 0 ? bigPage : tail, error: null });
+          },
+        }),
+      }),
+    }),
+  };
+  win.eval('sb = window.__sb4;');
+  win.localStorage.removeItem('sxr_offers_cache');
+  await win.loadOffers(true);
+  t.eq('第一頁滿了就去撈第二頁', pages, 2);
+  t.eq('兩頁接起來', win.eval('OFFERS.length'), 1003);
 
   process.exit(t.done() ? 0 : 1);
 })().catch((e) => { console.error(e); process.exit(1); });

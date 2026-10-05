@@ -3000,7 +3000,18 @@ async function loadOffers(force){
     const cached=readOffersCache();
     if(cached){ OFFERS=cached.map(fromRow); return; }
   }
-  const {data,error} = await sb.from('offers_public').select('*').limit(3000);
+  // PostgREST 的 max-rows 是 1000（v82 就是栽在這裡），`.limit(3000)` 擋不住。
+  // 現在站上 426 筆還沒到，但總有一天會到——到的時候不能默默只顯示前 1000 筆。
+  // 正好拿回 1000 筆就代表「可能被切掉了」，接著再撈下一頁，直到拿回來的不滿一頁。
+  let data=null, error=null, page=0;
+  for(;;){
+    const r = await sb.from('offers_public').select('*').order('id',{ascending:true})
+      .range(page*1000, page*1000+999);
+    if(r.error){ error=r.error; break; }
+    data = data ? data.concat(r.data||[]) : (r.data||[]);
+    if((r.data||[]).length<1000 || page>=4) break;   // 最多 5 頁，避免無限撈
+    page++;
+  }
   // 嵐：「明明很多人回報，但回報紀錄都是 0」。讀不到真資料時畫面會退回內建的
   // 示範資料，那份的回報次數、省下金額全部是 0——不講清楚的話，看起來就像
   // 「大家的回報都不見了」。這裡直接寫明現在看到的數字不是真的。
@@ -7795,9 +7806,16 @@ function renderBoardStats(lb, pop, allTimeSavedRows, usedRows, siteStatsRow, onl
   // 用完整的 leaderboard view 算，不要用畫面上那份前 50 名（拿不到時才退回舊算法）
   const peopleRows = allTimeSavedRows || lb;
   const people  = peopleRows.length;
+  // 「平均每人省下」原本是「排行榜加總 ÷ 排行榜人數」，但 leaderboard 這個 view
+  // 裡面寫死了 limit 100——分子只有前 100 名、分母也永遠是 100，算出來比真實情況
+  // 高好幾倍（實測：顯示約 $2,958，真正的平均是 295,837 ÷ 563 人 ＝ $525）。
+  // site_stats 本來就有「全部回報的總金額」跟「回報過的人數」，直接用那兩個。
+  const statPeople = Number(siteStatsRow?.user_count)||0;
+  const statSaved  = Number(siteStatsRow?.saved_total)||0;
   // celine：站台數據的「上榜人數」改成「已上架店家」——網站上目前有幾個不同品牌的優惠
   const shopCount = new Set(OFFERS.map(o=>o.brand).filter(Boolean)).size;
-  const avg     = people?Math.round(peopleRows.reduce((a,r)=>a+(r.saved_total||0),0)/people):0;
+  const avg     = (statPeople && statSaved) ? Math.round(statSaved/statPeople)
+    : people?Math.round(peopleRows.reduce((a,r)=>a+(r.saved_total||0),0)/people):0;
   // 成功率：popular_offers 的回報數只算成功的，拿來除一定接近 100%。改用近半年「所有」回報
   // （成功／部分／失敗）算；沒有這份資料時才退回舊算法。
   // resultRows 現在是「每天一列」的彙總（v82）：uses 是全部回報、success_uses 是成功的
@@ -7848,7 +7866,8 @@ function renderBoardStats(lb, pop, allTimeSavedRows, usedRows, siteStatsRow, onl
       ${rate==null?'':`<div class="vm-track"><span class="vm-fill" style="width:${rate}%"></span></div>`}</div>
     <div><div class="v">${shopCount}</div><div class="k">已上架店家</div></div>
     <div><div class="v">${brandSet.size}</div><div class="k">被使用過的店家數</div></div>
-    <div><div class="v">${nt(avg)}</div><div class="k">平均每人省下</div></div>
+    <div><div class="v">${nt(avg)}</div><div class="k">平均每人省下</div>
+      ${statPeople?`<div class="k" style="color:var(--ink-3);font-size:.68rem">${statPeople} 人回報過</div>`:''}</div>
     <div><div class="v" style="font-size:1.05rem">${esc(top?.brand||'—')}</div>
       <div class="k">最多人用（${top?.report_count||0} 次）</div></div>`;
   // 嵐：「可以分享的地方多一點」——整站的成績也能分享（推廣用，不需要登入）

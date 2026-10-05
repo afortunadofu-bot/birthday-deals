@@ -36,6 +36,15 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
     { pageview_count: 9, saved_total: 123456, report_count: 789 }, 1);
   t.ok('站台數據的累積省下用 site_stats', /123,456/.test($('#boardStats .hero').textContent), $('#boardStats .hero').textContent);
   t.ok('總回報次數也用 site_stats', /789\s*總回報次數/.test($('#boardStats').textContent));
+  // 「平均每人省下」以前是「排行榜加總 ÷ 排行榜人數」，但 leaderboard 這個 view 裡面
+  // 寫死 limit 100 —— 分子只有前 100 名、分母永遠是 100，算出來高好幾倍。
+  // 改用 site_stats 的「全部回報總金額 ÷ 回報過的人數」。
+  win.renderBoardStats([{ saved_total: 90000 }], pop, [{ saved_total: 90000 }], pop,
+    { saved_total: 295837, user_count: 563, report_count: 2149 }, 1);
+  t.ok('平均每人省下用全站人數算（295,837 ÷ 563 ＝ 525）',
+    /\$525\s*平均每人省下/.test($('#boardStats').textContent.replace(/\s+/g, ' ')),
+    $('#boardStats').textContent.replace(/\s+/g, ' '));
+  t.ok('旁邊標出分母是幾個人', /563 人回報過/.test($('#boardStats').textContent));
   // 成功率不能只拿「成功的回報」來除（會永遠接近 100%）
   // v82 之後這一欄是「每天一列」的彙總（uses 全部／success_uses 成功）
   win.renderBoardStats([], pop, [], pop, { saved_total: 1, report_count: 4 }, 1,

@@ -79,7 +79,8 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.ok('瀏覽次數不會因為重試被記兩次', /PAGEVIEW_LOGGED/.test(src));
 
   /* ---- 讀不到真資料時，不能讓人以為「回報都不見了」 ---- */
-  win.__sb = { from: () => ({ select: () => ({ limit: () => Promise.resolve({ data: null, error: { message: 'timeout' } }) }) }) };
+  // loadOffers 改成 .order().range() 分頁撈（PostgREST 的 max-rows 是 1000）
+  win.__sb = { from: () => ({ select: () => ({ order: () => ({ range: () => Promise.resolve({ data: null, error: { message: 'timeout' } }) }) }) }) };
   win.eval('sb = window.__sb; LIVE = true;');
   win.localStorage.removeItem('sxr_offers_cache');
   await win.loadOffers(true);
