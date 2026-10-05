@@ -1786,6 +1786,15 @@
         <p style="margin:0"><b>iPhone／iPad（Safari）</b>：點下方工具列的分享圖示 <span aria-hidden="true">⬆️</span> → 往下滑找「加入主畫面」。</p>
       </div>
     </div>
+    <!-- 嵐：「在我的頁面加一個 block，上面寫說因為目前網頁是用免費方案架設的，
+         所以有時候稍有延遲，請見諒」。與其讓人以為是自己的網路有問題（或以為
+         網站壞了），不如講清楚。訪客也看得到，所以放在會員專屬區塊外面。 -->
+    <div class="panel" id="freeTierNote">
+      <h2>🐢 有時候會慢一點</h2>
+      <p class="sub">壽星日目前是用免費方案架設的，人多的時候偶爾會慢個幾秒，或是要重新整理一次才打得開。
+        不是你的網路有問題，先跟你說聲抱歉 🙏</p>
+      <p class="sub" style="margin-top:6px">正在一點一點調快，請多包涵。</p>
+    </div>
     <!-- 更新紀錄：celine 要「我的」頁面有個小地方記每次更新的日期、簡單說改了哪裡。
          訪客也看得到，所以放在會員專屬區塊外面。內容在 SITE_UPDATES。 -->
     <div class="panel" id="siteUpdatesPanel">
@@ -3737,6 +3746,9 @@ $('#btnMineA2hsClose').onclick=()=>{
    的東西；還在 feature/geo 分支、沒上線的功能（附近分店、地圖模式）不列。
    新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
 const SITE_UPDATES=[
+  {date:'2026-10-05', title:'「附近」不會再自己打開',items:[
+    '允許過定位也不會每次打開就跳進「附近」，想用的時候再按「📍 附近」就好',
+    '開啟速度整個調過一輪，載入快很多']},
   {date:'2026-10-01', title:'火鍋跟燒肉分開篩',items:[
     '「火鍋燒肉」拆成「火鍋」跟「燒肉」兩個類別，今天想吃哪一種就篩哪一種',
     '類別篩選的每一格都會寫出有幾筆']},
@@ -4063,7 +4075,11 @@ async function maybeAskLocation(){
   if(!LIVE || !navigator.geolocation) return false;
   let state='';
   try{ state=(await navigator.permissions?.query({name:'geolocation'}))?.state||''; }catch{}
-  if(state==='granted'){ if(!NEAR.active) startNear(); return true; }   // 早就允許過，直接開
+  // 嵐：「我希望不要每次打開 app 都預設開啟附近」。本來這裡是「已經允許過定位的人
+  // 就自動幫他開附近」，結果變成每次打開都跳進附近模式、清單直接被距離篩過一遍——
+  // 大部分時候人只是想先看看有什麼優惠。允許過不等於每次都要用，改成不自作主張，
+  // 要用的人自己按「📍 附近」（按了還是會直接定位、直接開地圖，不會再問一次）。
+  if(state==='granted') return false;
   if(state==='denied') return false;                                   // 已經封鎖，問了也沒用
   if(geoAsked()) return false;                                         // 這台裝置回答過了
   // 生日卡片／其他小視窗正在跳的時候先讓路，下次進來再問

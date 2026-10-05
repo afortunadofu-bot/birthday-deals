@@ -98,12 +98,13 @@ function setGeo(win, ok = true) {
   await tick(win, 2);
   t.eq('但自己按「附近」還是能開', askCalls.length, 1);
 
-  // 已經允許過的人：不用再問，直接幫他開
+  // 嵐：「我希望不要每次打開 app 都預設開啟附近」——允許過定位不等於每次都要用，
+  // 不再問第二次，但也不要自作主張跳進附近模式（清單會直接被距離篩過一遍）
   clearAsk(); setPermission(win, 'granted');
   askCalls.length = 0;
   win.eval('NEAR.active = false;');
-  t.ok('已經允許過就直接開，不再問一次', (await win.maybeAskLocation()) === true && !shown());
-  t.eq('直接開附近', askCalls.length, 1);
+  t.ok('允許過定位就不再問一次', (await win.maybeAskLocation()) === false && !shown());
+  t.eq('但也不要自己打開附近', askCalls.length, 0);
 
   // 已經被封鎖：問了也沒用，不要跳
   clearAsk(); setPermission(win, 'denied');

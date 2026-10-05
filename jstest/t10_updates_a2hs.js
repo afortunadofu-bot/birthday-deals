@@ -18,6 +18,14 @@ const { boot, tick, makeAsserts } = require('./harness');
   const doc = win.document;
   const ls = win.localStorage;
 
+  /* ===== 免費方案的說明（嵐：「寫說目前是用免費方案架設的，有時候稍有延遲請見諒」）===== */
+  const ft = doc.querySelector('#freeTierNote');
+  t.ok('「我的」分頁有一塊說明速度', !!ft && !!ft.closest('#tab-mine'));
+  t.ok('訪客也看得到（不在會員專屬區塊裡）', ft && !ft.closest('#mineAuthedPanels'));
+  t.ok('講清楚是免費方案、會有延遲', /免費方案/.test(ft.textContent) && /慢/.test(ft.textContent),
+    ft.textContent.replace(/\s+/g, ' ').trim());
+  t.ok('講清楚不是使用者自己的網路有問題', /不是你的網路/.test(ft.textContent));
+
   /* ================= 更新紀錄 ================= */
   const panel = doc.querySelector('#siteUpdatesPanel');
   t.ok('「我的」分頁有更新紀錄', !!panel && !!panel.closest('#tab-mine'));
