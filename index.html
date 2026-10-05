@@ -488,8 +488,16 @@
   .flag.wrap{white-space:normal;max-width:100%;overflow-wrap:anywhere;word-break:break-word;
     text-align:left;line-height:1.5}
   /* 附近模式（feature/geo）：搜尋列下方的狀態列＋地圖，卡片上多一行「最近分店」 */
-  .near-bar{margin:8px 0 4px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-sm);
+  /* 嵐：「地圖跟打開定位的頁面有點佔版面，縮小一點垂直空間」——整塊的 padding、
+     按鈕高度、狀態列的行高都收一點，說明文字收進 ⓘ（見 #nearNotes）。
+     少掉的這幾十 px 直接換成「不用捲就看得到地圖」。 */
+  .near-bar{margin:8px 0 4px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-sm);
     background:var(--bg);font-size:.84rem}
+  .near-bar .btn.sm{min-height:30px;padding:4px 10px}
+  .near-bar .toggle{font-size:.8rem}
+  .near-head #nearStatus{line-height:1.45}
+  .near-info{font-size:1rem;line-height:1;padding:2px 6px;color:var(--ink-3)}
+  .near-info[aria-expanded="true"]{color:var(--accent)}
   .near-trigger{flex:none;white-space:nowrap}
   .near-trigger.active{background:var(--accent);border-color:var(--accent);color:#fff}
   .line.near-line{color:var(--ink-2)}
@@ -1352,9 +1360,14 @@
       <button class="btn sm near-trigger" id="btnNear" type="button" aria-pressed="false" title="找附近有優惠的分店">📍 附近</button>
     </div>
     <div class="near-bar hidden" id="nearBar">
-      <div class="row" style="align-items:center;gap:8px;flex-wrap:wrap">
-        <span id="nearStatus" style="flex:1;min-width:200px"></span>
-        <label class="toggle" style="gap:6px">距離
+      <div class="row near-head" style="align-items:center;gap:6px;flex-wrap:wrap">
+        <span id="nearStatus" style="flex:1;min-width:160px"></span>
+        <button class="btn sm plain near-info" id="btnNearInfo" type="button"
+          aria-expanded="false" aria-label="關於位置與分店資料" title="關於位置與分店資料">ⓘ</button>
+        <button class="btn sm plain" id="btnNearClose" type="button" aria-label="關閉附近模式">✕</button>
+      </div>
+      <div class="row near-tools" style="align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px">
+        <label class="toggle" style="gap:4px">距離
           <select id="nearKm" aria-label="距離範圍">
             <option value="1">1 公里</option><option value="3">3 公里</option><option value="5">5 公里</option>
             <option value="10">10 公里</option><option value="30">30 公里</option>
@@ -1362,7 +1375,6 @@
         <button class="btn sm" id="btnNearLocate" type="button">重新定位</button>
         <button class="btn sm" id="btnNearPlace" type="button">換地點</button>
         <button class="btn sm" id="btnNearMap" type="button">地圖</button>
-        <button class="btn sm plain" id="btnNearClose" type="button" aria-label="關閉附近模式">✕</button>
       </div>
       <!-- 嵐：「多一個可以輸入地點開地圖定位的功能（改定位地點到指定位置）」 -->
       <div class="hidden" id="nearPlaceWrap" style="margin-top:8px">
@@ -1374,8 +1386,13 @@
         <div class="hint" id="nearPlaceMsg" style="margin-top:4px">按 Enter 也可以。地點資料來自 OpenStreetMap。</div>
         <div class="merge-hits" id="nearPlaceHits"></div>
       </div>
-      <div class="hint" style="margin-top:4px">位置只用來算距離，不會存起來。分店資料來自 Google 地圖，可能有遺漏或已歇業。</div>
-      <div class="hint" id="nearMapHint" style="margin-top:4px"></div>
+      <!-- 嵐：「地圖跟打開定位的頁面有點佔版面，看能不能縮小一點垂直空間；
+           灰色小字能不能拿 ⓘ 隱藏之類的」——說明文字收進狀態列旁邊的 ⓘ，
+           按了才展開。地圖本來就在下面，少掉這兩三行就看得到了。 -->
+      <div class="hint hidden" id="nearNotes" style="margin-top:4px">
+        位置只用來算距離，不會存起來。分店資料來自 Google 地圖，可能有遺漏或已歇業。
+        <span id="nearMapHint"></span>
+      </div>
       <div class="hidden" id="nearMapWrap" style="margin-top:8px">
         <div id="nearMap" style="height:min(360px,55vh);border-radius:var(--r-sm);border:1px solid var(--line);overflow:hidden"></div>
       </div>
@@ -1498,6 +1515,8 @@
           <option value="90">近 90 天</option>
           <option value="180">近 180 天</option>
         </select></label>
+        <!-- 嵐：「可以看到每個月份的人數，現在都是混在一起」 -->
+        <label class="lbl" id="popMonthWrap">月份<select id="popMonth"></select></label>
       </div>
       <div id="popBody"></div>
     </div>
@@ -1509,6 +1528,8 @@
           <option value="rank">名次</option>
           <option value="climb">進步最多（跟 7 天前比）</option>
         </select></label>
+        <!-- 嵐：「可以看到每個月份的人數，現在都是混在一起」 -->
+        <label class="lbl" id="wishMonthWrap">月份<select id="wishMonth"></select></label>
       </div>
       <div id="wishBody"></div>
     </div>
@@ -4531,7 +4552,9 @@ async function openNearMap(){
   const ok=await loadLeaflet();
   if(!ok){
     closeNearMap();
-    $('#nearMapHint').textContent='地圖載入失敗，請檢查網路後再按一次「地圖」。';
+    // 錯誤訊息不能被 ⓘ 藏起來——看不到的話只會以為網站壞了
+    $('#nearMapHint').textContent='　地圖載入失敗，請檢查網路後再按一次「地圖」。';
+    $('#nearNotes').classList.remove('hidden');
     return;
   }
   const c=NEAR.lat!=null?{lat:NEAR.lat,lng:NEAR.lng}:NEAR_DEFAULT_CENTER;
@@ -4599,6 +4622,12 @@ async function loadNearPins(){
 }
 $('#btnNear').onclick=()=>NEAR.active?stopNear():startNear();
 $('#btnNearClose').onclick=stopNear;
+// 說明文字收在 ⓘ 裡（嵐：灰色小字拿 ⓘ 隱藏）
+$('#btnNearInfo').onclick=()=>{
+  const box=$('#nearNotes'), open=box.classList.contains('hidden');
+  box.classList.toggle('hidden', !open);
+  $('#btnNearInfo').setAttribute('aria-expanded', String(open));
+};
 $('#btnNearLocate').onclick=startNear;
 $('#btnNearMap').onclick=()=>$('#nearMapWrap').classList.contains('hidden')?openNearMap():closeNearMap();
 
@@ -7616,6 +7645,61 @@ function popRecentRows(days){
     .slice(0,50)
     .map((r,i)=>({...r, rank:i+1}));
 }
+/* ---- 月份切換（嵐：「大家都在用什麼跟最多人收藏，可以看到每個月份的人數，
+   現在都是混在一起」）----
+   「全部時間」混在一起的話，去年很紅、今年沒人用的優惠會永遠卡在前面。
+   另外「次數」跟「人數」是兩件事：同一個人在同一家店回報三次是 3 次、1 個人，
+   嵐要的是人數，所以月份模式下多一欄「人數」。 ---- */
+function monthOptionsHtml(){
+  const now=new Date();
+  let out='<option value="">全部時間</option>';
+  for(let i=0;i<12;i++){
+    const d=new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const ym=ISO(d).slice(0,7);
+    out+=`<option value="${ym}">${ym.replace('-',' 年 ')} 月${i===0?'（本月）':''}</option>`;
+  }
+  return out;
+}
+function fillMonthSelects(){
+  ['#popMonth','#wishMonth'].forEach(sel=>{
+    const el=$(sel);
+    if(el && !el.children.length) el.innerHTML=monthOptionsHtml();
+  });
+}
+fillMonthSelects();
+let POP_MONTH_ROWS=null, WISH_MONTH_ROWS=null;
+async function loadPopMonth(){
+  const ym=$('#popMonth')?.value||'';
+  if(!ym || !LIVE){ POP_MONTH_ROWS=null; renderPopBody(); return; }
+  const {data,error}=await sb.rpc('offer_usage_by_month',{p_ym:ym});
+  POP_MONTH_ROWS = error ? {err:error.message} : (data||[]);
+  renderPopBody();
+}
+async function loadWishMonth(){
+  const ym=$('#wishMonth')?.value||'';
+  if(!ym || !LIVE){ WISH_MONTH_ROWS=null; renderMostWished(); return; }
+  const {data,error}=await sb.rpc('offer_wish_by_month',{p_ym:ym});
+  WISH_MONTH_ROWS = error ? {err:error.message} : (data||[]);
+  renderMostWished();
+}
+$('#popMonth').onchange=loadPopMonth;
+$('#wishMonth').onchange=loadWishMonth;
+// 月份模式的列：接上品牌名稱，排序照「人數」
+function monthRows(rows, countKey){
+  return (Array.isArray(rows)?rows:[])
+    .map(r=>{
+      const o=OFFERS.find(x=>String(x.id)===String(r.offer_id));
+      return {...r, brand:o?.brand||'（已下架的優惠）', timing:o?.timing||'', value_twd:o?.valueTwd};
+    })
+    .sort((a,b)=>(b[countKey]||0)-(a[countKey]||0) || (b.report_count||0)-(a.report_count||0))
+    .slice(0,50)
+    .map((r,i)=>({...r, rank:i+1}));
+}
+function monthErrHtml(rows, sqlFile){
+  if(!rows || !rows.err) return '';
+  return `<div class="note alert">這個月份的資料讀取失敗：${esc(rows.err)}${
+    /function|does not exist/i.test(rows.err)?`（Supabase 可能還沒跑 ${sqlFile}）`:''}</div>`;
+}
 async function refreshPopRecent(){
   const days=Number($('#popRange')?.value||30);
   if($('#popSortBy')?.value==='recent' && LIVE && !POP_USAGE_CACHE.has(days)){
@@ -7627,20 +7711,32 @@ function renderPopBody(){
   const mode=$('#popSortBy')?.value||'rank';
   const climb=mode==='climb', recent=mode==='recent';
   $('#popRangeWrap')?.classList.toggle('hidden', !recent);
+  const ym=$('#popMonth')?.value||'';
+  // 月份模式跟「最近 N 天」「進步最多」是兩套比法，同時開會互相打架，所以選了月份
+  // 就把那兩個收起來（月份選回「全部時間」就恢復）
+  const monthMode=!!ym && !climb && !recent;
+  $('#popMonthWrap')?.classList.toggle('hidden', climb||recent);
   const days=Number($('#popRange')?.value||30);
-  const rows=climb ? rankClimbRows(POP_ROWS) : recent ? popRecentRows(days) : POP_ROWS;
-  const entries=rows.map(r=>`<tr class="lb-click" data-oid="${r.offer_id}"><td class="rk ${r.rank<=3?'top':''}">${r.rank}${(POP_HAS_PREV&&!recent)?`<br>${rankDeltaHtml(true,r.prevRank,r.rank)}`:''}</td>
+  const err=monthErrHtml(POP_MONTH_ROWS,'schema_v83_board_by_month.sql');
+  const rows=monthMode ? monthRows(POP_MONTH_ROWS,'user_count')
+    : climb ? rankClimbRows(POP_ROWS) : recent ? popRecentRows(days) : POP_ROWS;
+  const entries=rows.map(r=>`<tr class="lb-click" data-oid="${r.offer_id}"><td class="rk ${r.rank<=3?'top':''}">${r.rank}${(POP_HAS_PREV&&!recent&&!monthMode)?`<br>${rankDeltaHtml(true,r.prevRank,r.rank)}`:''}</td>
       <td>${esc(r.brand)}<span style="color:var(--ink-3);font-size:.78rem">　${esc(r.timing||'')}</span></td>
+      ${monthMode?`<td class="lb-primary">${r.user_count} 人</td>`:''}
       <td>${r.success_count}／${r.report_count}</td>
       <td class="amt">${nt(r.saved_total)}</td></tr>`);
-  renderCollapsibleTable($('#popBody'), '<th class="rk">#</th><th>品牌</th><th>成功／回報</th><th class="amt">已省下</th>',
+  renderCollapsibleTable($('#popBody'),
+    `<th class="rk">#</th><th>品牌</th>${monthMode?'<th>人數</th>':''}<th>成功／回報</th><th class="amt">已省下</th>`,
     entries, 5, 'pop-more-rows',
-    climb ? climbEmptyMsg(POP_HAS_PREV)
+    err || (climb ? climbEmptyMsg(POP_HAS_PREV)
       : recent ? `<div style="color:var(--ink-3);font-size:.86rem">近 ${days} 天還沒有人回報使用。</div>`
-      : '<div style="color:var(--ink-3);font-size:.86rem">還沒有回報資料。</div>');
+      : monthMode ? `<div style="color:var(--ink-3);font-size:.86rem">${esc(ym)} 這個月還沒有人回報使用。</div>`
+      : '<div style="color:var(--ink-3);font-size:.86rem">還沒有回報資料。</div>'));
   const note=$('#popBody')?.closest('.panel')?.querySelector('.sub');
   if(note) note.textContent = recent
     ? `近 ${days} 天被回報最多次的優惠——最近大家真的在用的。`
+    : monthMode
+    ? `${ym} 這個月有幾個人用過——同一個人用好幾次只算一個人。`
     : '被回報最多次的優惠。';
   wireShowMore($('#popBody'));
   $$('#popBody .lb-click').forEach(row=>row.onclick=()=>openDetail(row.dataset.oid));
@@ -7654,17 +7750,28 @@ function renderMostWished(rows, hasPrev){
   if(rows){ WISH_ROWS=rows.map((r,i)=>({...r, rank:i+1})); WISH_HAS_PREV=!!hasPrev; }
   hasPrev=WISH_HAS_PREV;
   const climb=$('#wishSortBy')?.value==='climb';
-  const list=climb ? rankClimbRows(WISH_ROWS) : WISH_ROWS;
+  const ym=$('#wishMonth')?.value||'';
+  const monthMode=!!ym && !climb;
+  $('#wishMonthWrap')?.classList.toggle('hidden', climb);
+  const err=monthErrHtml(WISH_MONTH_ROWS,'schema_v83_board_by_month.sql');
+  const list=monthMode ? monthRows(WISH_MONTH_ROWS,'wish_count')
+    : climb ? rankClimbRows(WISH_ROWS) : WISH_ROWS;
   const entries=list.map(r=>{
     const rank=r.rank, i=rank-1;
-    return `<tr class="lb-click" data-oid="${r.offer_id}"><td class="rk ${i<3?'top':''}">${rank}${hasPrev?`<br>${rankDeltaHtml(true,r.prevRank,rank)}`:''}</td>
+    return `<tr class="lb-click" data-oid="${r.offer_id}"><td class="rk ${i<3?'top':''}">${rank}${(hasPrev&&!monthMode)?`<br>${rankDeltaHtml(true,r.prevRank,rank)}`:''}</td>
       <td>${esc(r.brand)}<span style="color:var(--ink-3);font-size:.78rem">　${esc(r.timing||'')}</span></td>
-      <td>${r.wish_count}</td><td class="amt">${nt(r.value_twd)}</td></tr>`;
+      <td${monthMode?' class="lb-primary"':''}>${r.wish_count}${monthMode?' 人':''}</td><td class="amt">${nt(r.value_twd)}</td></tr>`;
   });
-  renderCollapsibleTable($('#wishBody'), '<th class="rk">#</th><th>品牌</th><th>收藏</th><th class="amt">可省</th>',
+  renderCollapsibleTable($('#wishBody'),
+    `<th class="rk">#</th><th>品牌</th><th>${monthMode?'收藏人數':'收藏'}</th><th class="amt">可省</th>`,
     entries, 5, 'wish-more-rows',
-    climb ? climbEmptyMsg(hasPrev) :
-    '<div style="color:var(--ink-3);font-size:.86rem">還沒有人收藏，去「優惠」分頁點卡片右上角的書籤圖示。</div>');
+    err || (climb ? climbEmptyMsg(hasPrev)
+      : monthMode ? `<div style="color:var(--ink-3);font-size:.86rem">${esc(ym)} 這個月還沒有人收藏。</div>`
+      : '<div style="color:var(--ink-3);font-size:.86rem">還沒有人收藏，去「優惠」分頁點卡片右上角的書籤圖示。</div>'));
+  const wnote=$('#wishBody')?.closest('.panel')?.querySelector('.sub');
+  if(wnote) wnote.textContent = monthMode
+    ? `${ym} 這個月有幾個人把它加進待辦清單。`
+    : '被加進待辦清單最多次的優惠——大家想用但還沒用的。';
   wireShowMore($('#wishBody'));
   $$('#wishBody .lb-click').forEach(row=>row.onclick=()=>openDetail(row.dataset.oid));
 }
