@@ -2891,7 +2891,7 @@ async function flushPendingReport(){
     return;
   }
   note($('#modeBanner'),'good','✓ 已幫你把登入前填的使用回報送出了。');
-  await loadOffers(); render(); loadMyStuff(); loadSiteStats(); loadMyUsedOffers();
+  await loadOffers(); render(); loadMyStuff(); loadSiteStats(true); loadMyUsedOffers();
 }
 
 /* ---- 收藏留言通知：收藏的店家有新留言時提醒你 ---- */
@@ -3504,9 +3504,47 @@ async function loadSiteAnnouncement(){
   };
 }
 
-async function loadSiteStats(){
+/* ---- 站台數據：一定要走快取 ----
+   Supabase 寄信說 Disk IO 預算快用完、執行個體可能沒回應，同一天有人回報
+   「點 Google 登入一直跳」（supabase.co 回 522）。查出來的原因是 site_stats
+   這個 view 裡有兩個 count 是掃 site_events 整張表的，而這裡每開一次網頁就查
+   一次、排行榜分頁再查一次——造訪數越多，每一次造訪要讀的資料就越多。
+
+   所以改成三層，能不碰資料庫就不碰：
+     1. 這次開著的分頁內：記憶體裡的 STATS_CACHE
+     2. 這台裝置 10 分鐘內：localStorage
+     3. 真的要查：呼叫 v78 的 site_stats_cached()（資料庫端也快取 10 分鐘）
+   v78 還沒跑的站台，RPC 會失敗，自動退回原本直接查 view 的寫法。
+
+   force=true 只在「使用者剛剛回報／投稿完」時用——那種時候數字要馬上跟著動，
+   而且一天也沒幾次，直接查最新的沒關係。 ---- */
+const STATS_TTL_MS=10*60*1000;
+let STATS_CACHE=null, STATS_CACHE_AT=0;
+async function siteStats(force){
+  if(!LIVE) return null;
+  const now=Date.now();
+  if(!force && STATS_CACHE && now-STATS_CACHE_AT<STATS_TTL_MS) return STATS_CACHE;
+  if(!force){
+    try{
+      const raw=JSON.parse(localStorage.getItem('sxr_site_stats')||'null');
+      if(raw && now-raw.at<STATS_TTL_MS){ STATS_CACHE=raw.data; STATS_CACHE_AT=raw.at; return raw.data; }
+    }catch{}
+  }
+  let data=null;
+  if(!force){
+    const r=await sb.rpc('site_stats_cached');
+    if(!r.error && r.data) data=r.data;
+  }
+  if(!data){ const r=await sb.from('site_stats').select('*').single(); data=r.data||null; }
+  if(data){
+    STATS_CACHE=data; STATS_CACHE_AT=now;
+    try{ localStorage.setItem('sxr_site_stats', JSON.stringify({at:now, data})); }catch{}
+  }
+  return data;
+}
+async function loadSiteStats(force){
   let s;
-  if(LIVE){ const {data}=await sb.from('site_stats').select('*').single(); s=data; }
+  if(LIVE) s=await siteStats(force);
   if(!s){
     const v=OFFERS.filter(o=>o.valueTwd).reduce((a,o)=>a+o.valueTwd,0);
     s={offer_count:OFFERS.length, free_count:OFFERS.filter(o=>o.freeTier==='free_no_min').length,
@@ -4233,6 +4271,7 @@ const NEAR={active:false, lat:null, lng:null, label:'', km:3, byOffer:null, load
   reqSeq:0, sortTouched:false};
 try{ const k=Number(localStorage.getItem('sxr_near_km')); if([1,3,5,10,30].includes(k)) NEAR.km=k; }catch{}
 let NEAR_MAP=null, NEAR_MAP_CENTER=null, NEAR_MAP_CIRCLE=null, NEAR_MAP_PINS=null, NEAR_PIN_TIMER=null;
+let NEAR_PIN_KEY='';   // 上一次查分店的畫面範圍，範圍沒變就不重查
 
 function fmtDistance(m){
   if(m==null) return '';
@@ -4334,7 +4373,10 @@ async function openNearMap(){
     attribution:tiles.attribution}).addTo(NEAR_MAP);
   NEAR_MAP_PINS=L.layerGroup().addTo(NEAR_MAP);
   NEAR_MAP.on('click', e=>setNearCenter(e.latlng.lat, e.latlng.lng, '地圖上選的位置'));
-  NEAR_MAP.on('moveend', ()=>{ clearTimeout(NEAR_PIN_TIMER); NEAR_PIN_TIMER=setTimeout(loadNearPins, 300); });
+  // 每次停下來都查一次分店，拖一下地圖就是一次查詢——地圖現在是預設開啟的，
+  // 這個量會直接反映在資料庫的負擔上。等久一點（600ms）再查，而且畫面範圍
+  // 沒有真的變（小數第三位以內，約 100 公尺）就不重查。
+  NEAR_MAP.on('moveend', ()=>{ clearTimeout(NEAR_PIN_TIMER); NEAR_PIN_TIMER=setTimeout(loadNearPins, 600); });
   // Leaflet 的 popup 會擋掉 click 往外冒泡，所以按鈕要在 popup 打開時直接綁
   NEAR_MAP.on('popupopen', e=>{
     const b=e.popup.getElement()?.querySelector('.map-open-offer');
@@ -4346,6 +4388,7 @@ async function openNearMap(){
 function closeNearMap(){
   $('#nearMapWrap').classList.add('hidden');
   $('#btnNearMap').textContent='地圖';
+  clearTimeout(NEAR_PIN_TIMER);   // 收起來之後不要再補查一次分店
 }
 function syncNearMapCenter(pan){
   if(!NEAR_MAP||NEAR.lat==null) return;
@@ -4360,8 +4403,15 @@ async function loadNearPins(){
   if(!NEAR_MAP) return;
   const hint=$('#nearMapHint');
   // 縮到整個縣市以上的大小，一次畫幾千個點手機會卡，也看不出什麼
-  if(NEAR_MAP.getZoom()<13){ NEAR_MAP_PINS.clearLayers(); hint.textContent='放大地圖一點，才會顯示有優惠的分店。'; return; }
+  if(NEAR_MAP.getZoom()<13){
+    NEAR_MAP_PINS.clearLayers(); NEAR_PIN_KEY='';   // 點清掉了，放大回來要重查
+    hint.textContent='放大地圖一點，才會顯示有優惠的分店。'; return;
+  }
   const b=NEAR_MAP.getBounds();
+  // 範圍沒有真的變就不要再查一次（手指放開後的回彈、小幅度的拖動都會觸發 moveend）
+  const key=[b.getSouth(),b.getWest(),b.getNorth(),b.getEast()].map(v=>v.toFixed(3)).join(',');
+  if(key===NEAR_PIN_KEY) return;
+  NEAR_PIN_KEY=key;
   const {data,error}=await sb.rpc('offer_stores_in_bounds',
     {p_south:b.getSouth(), p_west:b.getWest(), p_north:b.getNorth(), p_east:b.getEast(), p_limit:500});
   if(error){ hint.textContent='分店載入失敗：'+error.message; return; }
@@ -5676,7 +5726,7 @@ $('#btnSaveReport').onclick=async e=>{
   if(isNewReport) surveyAfterFirst('report');
   const justReportedId=repId;
   $('#dlgReport').close();
-  await loadOffers(); render(); loadMyStuff(); loadSiteStats(); loadMyUsedOffers();
+  await loadOffers(); render(); loadMyStuff(); loadSiteStats(true); loadMyUsedOffers();
   // 嵐回饋：送出使用回報以後，也順勢問一句要不要留言分享心得或提出修改建議——
   // 只有「第一次回報」才問，編輯舊回報（例如改個備註）不用每次都被問一輪。
   if(isNewReport){ POST_REPORT_PROMPT_ID=justReportedId; openDetail(justReportedId); }
@@ -5687,7 +5737,7 @@ $('#btnDeleteReport').onclick=async()=>{
   const {error}=await sb.from('usage_reports').delete().eq('id',editingReportId).eq('user_id',me.id);
   if(error){ alert('刪除失敗：'+error.message); return; }
   $('#dlgReport').close();
-  await loadOffers(); render(); loadMyStuff(); loadSiteStats(); loadMyUsedOffers();
+  await loadOffers(); render(); loadMyStuff(); loadSiteStats(true); loadMyUsedOffers();
 };
 
 // 找「今年已經回報過的同一筆／同品牌另一張卡片」。品牌比對沿用投稿查重的
@@ -6643,7 +6693,9 @@ async function loadBoard(){
     // 這三個原本只有管理員儀表板看得到（schema_v55 開了公開版 RPC，見
     // renderBoardStats() 跟 renderBoardHoursChart()）。site_stats 本來就
     // 是公開 view，直接查就好，不用另外開權限。
-    sb.from('site_stats').select('pageview_count,visitor_count,saved_total,report_count').single(),
+    // 走跟優惠頁同一份快取（見 siteStats()）——這裡本來直接查 site_stats，
+    // 等於每次切到排行榜就再掃一次 site_events。
+    siteStats().then(data=>({data})),
     sb.rpc('site_online_now'),
     sb.rpc('site_usage_hour_distribution',{p_days:30}),
     // 嵐：「能顯示收藏到使用的轉換率嗎」。wishlist 的 RLS 是「只看得到自己的」，

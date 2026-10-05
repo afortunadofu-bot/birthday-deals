@@ -9,6 +9,100 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v79　止血：Disk IO 燒光、資料庫 522（網站連不上）
+
+**要在 Supabase 執行 `schema_v78_io_relief.sql`**（檔名是 v78，排在這一則，因為它是
+緊急止血；前一則功能也叫 v78，兩者不衝突，SQL 只有這一支）。
+
+### 發生什麼事
+
+2026-10-05：Supabase 寄信說 `birthday-deal` 專案的 **Disk IO Budget 快用完**，
+「回應會變慢、CPU 因為 IO wait 升高、執行個體可能沒有回應」。同一天 Threads 上
+有人回報「**點 Google 登入一直跳**」，截圖是 `supabase.co | 522: Connection timed out`。
+
+我直接打 REST API 確認，不是前端的問題：
+
+```
+offers: HTTP 522 in 19.6s
+auth:   HTTP 522 in 19.6s
+```
+
+REST 跟 Auth 都 522、等 20 秒沒有回應——資料庫整個被拖垮了。
+
+### root cause：每開一次網頁，就把 site_events 整張表掃兩遍
+
+`site_stats`（schema_v17_misc.sql）這個 view 裡有兩個 count 是直接掃事件表的：
+
+```sql
+(select count(*) from site_events where event_type = 'pageview')                   as pageview_count,
+(select count(distinct nullif(session_id,'')) from site_events where event_type='pageview') as visitor_count
+```
+
+而前端**每一次開啟網頁**都 `select * from site_stats`（優惠頁上面那兩顆小藥丸），
+切到排行榜分頁再查一次。所以每一次造訪是：
+
+> 新增一列 site_events　→　把整張 site_events 掃過一遍
+
+造訪數 N 越大，每一次造訪要讀的資料就越多，**總 IO 是 O(N²)**。平常撐得住，
+Threads 一推、人一多就直接把 Disk IO 預算燒光。
+
+雪上加霜的是現有索引是 `(event_type, created_at)`，**沒有 session_id**，所以
+`count(distinct session_id)` 還得回原表把每一列撈出來——那段就是真正在磨磁碟的。
+
+### 修法
+
+**資料庫（`schema_v78_io_relief.sql`）**
+
+1. 加一支涵蓋 `session_id` 的部分索引，兩個計數都變成 index only scan：
+   ```sql
+   create index site_events_pageview_session_idx
+     on public.site_events (session_id) where event_type = 'pageview';
+   ```
+2. `site_stats_cache` 單列快取表（不開任何 RLS policy，只有下面那支函式碰得到）
+   ＋ `site_stats_cached()`：10 分鐘內直接回快取，過期才重算。
+   - **刻意不收參數**：收了就等於開放任何人指定「我要最新的」，一行迴圈就能
+     逼資料庫一直重算，等於沒有快取
+   - 用 `pg_try_advisory_xact_lock` 擋住「快取剛過期、一堆人同時湧入、大家一起
+     重算」；搶不到鎖的直接拿舊的回去
+
+**前端（`template.html`）**
+
+站台數據改成三層，能不碰資料庫就不碰：
+
+| 層 | 存活範圍 |
+| --- | --- |
+| `STATS_CACHE` | 這次開著的分頁 |
+| `localStorage.sxr_site_stats` | 這台裝置 10 分鐘 |
+| `site_stats_cached()` | 資料庫端再快取 10 分鐘 |
+
+- v78 還沒跑的站台 RPC 會失敗，**自動退回原本直接查 view 的寫法**——所以
+  **光是上傳新的 index.html 就已經止血**（每台裝置 10 分鐘最多查一次，
+  而不是每開一次網頁查一次），不用等 SQL 跑完
+- 排行榜分頁改成共用同一份，不再各查各的
+- 只有「使用者自己剛回報／投稿完」才 `loadSiteStats(true)` 強制拿最新的，
+  那種時候數字要馬上跟著動，而且一天也沒幾次
+
+**順手減少地圖的查詢量**（v76 把地圖改成預設開啟之後，這塊的量跟著變大）：
+
+- `moveend` 的 debounce 300ms → 600ms
+- 畫面範圍小數第三位以內（約 100 公尺）沒變就不重查，手指放開的回彈不會再觸發一次
+- 收起地圖時把待查的 timer 清掉
+
+### 要做的事（順序不能顛倒）
+
+1. Supabase Dashboard → **重啟專案**（Settings → General → Restart project）。
+   資料庫現在 522，不先把它叫醒，連 SQL Editor 都跑不動。
+2. 跑 `schema_v78_io_relief.sql`
+3. 上傳新的 `index.html`
+
+### 測試
+
+新增 `jstest/t27_io_relief.js`（19 項）：走快取 RPC 不直接查 view、同分頁／同裝置
+不重複查、10 分鐘過期、force 時拿最新的、**v78 沒跑時要能退回舊寫法且畫面不壞**、
+離線模式完全不查、地圖範圍沒變不重查、縮遠再放大要重查。**全部 28 支測試通過。**
+
+---
+
 ## v78　重複的投稿：把彼此沒填的欄位補齊
 
 **沒有資料庫變更**，只動 `template.html`。
