@@ -121,5 +121,45 @@ function stubSb(win, { rpcOk = true } = {}) {
   await win.loadNearPins();
   t.eq('縮遠再放大回來要重查', rpcCalls.filter((c) => c[0] === 'offer_stores_in_bounds').length, 3);
 
+  /* ---- 8. 優惠清單也在這台裝置上留一份（開場最重的那一趟往返）---- */
+  const offerRows = [
+    { id: 1, brand: '快取店', category: '飲料', regions: ['台北市'], offer: '生日免費',
+      timing: '當月', status: 'approved', sources: [], report_count: 3 },
+  ];
+  let offerFetches = 0;
+  win.__sb3 = {
+    from: () => ({ select: () => ({ limit: () => { offerFetches += 1; return Promise.resolve({ data: offerRows, error: null }); } }) }),
+  };
+  win.eval('sb = window.__sb3; LIVE = true;');
+  win.localStorage.removeItem('sxr_offers_cache');
+
+  await win.loadOffers();
+  t.eq('第一次要去資料庫拿', offerFetches, 1);
+  t.eq('拿到的優惠有進 OFFERS', win.eval('OFFERS.length'), 1);
+  t.ok('存成這台裝置上的快取', !!win.localStorage.getItem('sxr_offers_cache'));
+
+  win.eval('OFFERS = [];');
+  await win.loadOffers();
+  t.eq('十分鐘內重開不再查一次', offerFetches, 1);
+  t.eq('畫面照樣有資料（從快取還原）', win.eval('OFFERS.length'), 1);
+  t.eq('存的是原始資料列，不是畫面用的物件', win.eval('OFFERS[0].brand'), '快取店');
+
+  // 使用者自己剛回報／投稿完：要看到最新的，不能給他舊的
+  await win.loadOffers(true);
+  t.eq('force 一定重新查', offerFetches, 2);
+
+  // 過期就重新查
+  const raw = JSON.parse(win.localStorage.getItem('sxr_offers_cache'));
+  win.localStorage.setItem('sxr_offers_cache',
+    JSON.stringify({ at: Date.now() - 11 * 60 * 1000, rows: raw.rows }));
+  await win.loadOffers();
+  t.eq('超過 10 分鐘才會再查一次', offerFetches, 3);
+
+  // 快取壞掉（手動改壞、版本不合）不能讓整個網站打不開
+  win.localStorage.setItem('sxr_offers_cache', '{壞掉的 JSON');
+  offerFetches = 0;
+  await win.loadOffers();
+  t.eq('快取壞掉就當作沒有，照樣查得到', offerFetches, 1);
+
   process.exit(t.done() ? 0 : 1);
 })().catch((e) => { console.error(e); process.exit(1); });

@@ -9,6 +9,74 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v80　「之前開啟網頁也慢慢的」——第二條慢的路
+
+**要在 Supabase 執行 `schema_v79_offer_stats_fast.sql`**（在 v78 之後跑）。
+
+celine 問「這樣真的夠用嗎？之前開啟網頁也慢慢的」。**不夠**——v78 修掉的是
+會隨造訪數越來越慢的那條（site_events），但「一直都慢」是另一條，跟人多人少無關。
+
+### 開場那一筆查詢，資料庫要為「每一筆優惠」各跑四支子查詢
+
+前端開場一定會打 `select * from offers_public`，而 `offers_public` 是
+`offers ⟕ offer_stats`，`offer_stats`（schema_v13_ratings.sql）長這樣：
+
+```sql
+(select count(*) from comments      c where c.offer_id = o.id and not c.is_hidden)
+(select round(avg(g.score),1) from offer_ratings g where g.offer_id = o.id)
+(select count(*)              from offer_ratings g where g.offer_id = o.id)
+coalesce((select w.wish_count from wishlist_counts w where w.offer_id = o.id), 0)
+```
+
+那四個括號是**相關子查詢：每一筆優惠都要各跑一次**。站上 500 筆優惠就是 2000 次
+查找，其中 `offer_ratings` 被掃了兩遍（平均一次、筆數一次），`wishlist_counts`
+是 group by offer_id 但 wishlist 上**沒有 (offer_id) 索引**（現有兩支都是
+`(user_id, …)` 開頭，用不上），所以每次都整表掃。
+
+每一位訪客、每一次開啟網頁，資料庫都重算一次這些東西。
+
+### v79 改法：四支相關子查詢 → 三個先彙總好的 CTE
+
+每張來源表只掃一次、再 hash join 接回去，而不是每筆優惠掃一次。**欄位名稱、
+順序、型別跟原本一模一樣**，所以前端一行都不用改；`offers_public` 是
+`select o.*` 展開的，照 schema_v13 的老規矩先 drop 再原樣建回來。
+另外補上 `wishlist(offer_id)` 索引。
+
+SQL 最後面留了一行註解掉的 `explain analyze select * from offers_public;`，
+想自己看快了多少可以跑跑看。
+
+### 前端：這台裝置上留一份優惠清單
+
+開場這一筆是整個開場最重的往返（390 筆、每筆都帶 jsonb，大約 600KB）。
+現在 10 分鐘內重開、或在分頁之間切換，直接用 `localStorage` 那一份，不再跟
+資料庫要。
+
+**刻意不在快取還新的時候偷偷再查一次**——那樣畫面是快了，資料庫負擔一點都沒少，
+而現在要省的就是資料庫。只有「使用者自己剛回報／投稿／審核完」那 23 個呼叫點
+改成 `loadOffers(true)` 強制重新抓，開場那一個維持用快取。
+快取壞掉（手動改壞、容量滿、隱私模式）一律當作沒有，照常去查，不會把網站弄壞。
+
+### 前端：登入狀態跟優惠清單同時去拿
+
+原本是 `await getSession()` → `await onSession()` → `await loadOffers()` 排隊跑。
+優惠清單不需要先知道「你是誰」，改成同時發出，手機上少等一趟往返。
+（`checkNewOffers()` 要兩邊都好才算得出「上次來訪之後新增的」，所以留在後面。）
+
+### 還沒解決的、要知道的
+
+- 這是 Supabase **免費方案**的 Nano 執行個體，IO 預算本來就小。流量再往上長，
+  下一步只能是付費升級 compute，或把「讀」整個搬到邊緣快取（Cloudflare Worker
+  每 10 分鐘抓一次 offers 存起來，所有訪客讀 Worker 不讀資料庫）
+- `index.html` 壓縮後 210KB（未壓縮 742KB），其中內建種子資料佔 16%
+- Supabase 的 JS SDK 是從 CDN 載入的，開場多一次 DNS＋TLS
+
+### 測試
+
+`t27` 加 9 項：第一次去資料庫拿、10 分鐘內不再查、force 一定重查、過期重查、
+**快取壞掉不能讓網站打不開**。**全部 28 支測試通過。**
+
+---
+
 ## v79　止血：Disk IO 燒光、資料庫 522（網站連不上）
 
 **要在 Supabase 執行 `schema_v78_io_relief.sql`**（檔名是 v78，排在這一則，因為它是

@@ -2525,7 +2525,7 @@ async function mergeProfileNames(rows, idField){
 // 第二次重畫造成的跳動會小很多。代價是極少數情況下，使用者會有一兩秒看到
 // 略舊的資料（例如剛被管理員核可/退回的項目），之後就會自動換成最新的。
 // bestSource 不再放在種子資料裡（每筆都跟 sources[0] 一模一樣，白白重複
-// 存了一份），這裡自己算，跟下面 loadOffers() 讀 Supabase 資料時的
+// 存了一份），這裡自己算，跟下面 loadOffers(true) 讀 Supabase 資料時的
 // `bestSource:(r.sources||[])[0]||null` 是同一套邏輯，行為完全不變。
 const seedOffers=()=>SEED.offers.map((o,i)=>({...o, id:'seed'+i, status:'approved',
   bestSource:(o.sources||[])[0]||null,
@@ -2536,7 +2536,7 @@ function paintOffers(){
   renderA2hsPanel();
 }
 
-// 「本週新上架／自上次來訪新增」入口。要在 loadOffers() 把真正的優惠資料
+// 「本週新上架／自上次來訪新增」入口。要在 loadOffers(true) 把真正的優惠資料
 // 灌進 OFFERS 之後才能算（在那之前 OFFERS 還是種子資料，createdAt 沒意義）。
 // 登入的人用 profiles.last_seen_at 記上次來訪時間；訪客沒有帳號存這個，
 // 退而求其次存在 localStorage。無論哪一種，看過一次之後就把時間更新成現在，
@@ -2585,7 +2585,7 @@ async function checkNewOffers(){
 }
 
 // 分享連結（?offer=ID，見 #btnDtlShare）打開後，自動彈出該筆優惠的詳情視窗。
-// 要在 loadOffers() 把真正的資料灌進 OFFERS 之後才能找得到，跟 checkNewOffers()
+// 要在 loadOffers(true) 把真正的資料灌進 OFFERS 之後才能找得到，跟 checkNewOffers()
 // 一樣的道理。不管有沒有找到都會把網址參數清掉，避免使用者重新整理／再分享
 // 出去時網址一直帶著這個參數。
 function clearDeepLinkParam(){
@@ -2655,10 +2655,14 @@ async function connectLive(){
   },3000);
   try{
     sb.auth.onAuthStateChange((_e,s)=>onSession(s));
+    // 優惠清單不需要先知道「你是誰」，所以跟登入狀態同時去拿，不要排隊等——
+    // 手機上這兩趟各要好幾百毫秒，排隊就是多等一趟。
+    const offersP = loadOffers();
+    offersP.catch(()=>{});          // 先接住，真正的處理在下面的 await
     const {data:{session}} = await sb.auth.getSession();
     await onSession(session);
-    await loadOffers();
-    await checkNewOffers();
+    await offersP;
+    await checkNewOffers();         // 要先有 OFFERS 跟登入狀態才算得出「上次來訪之後新增的」
     renderSavingsSinceVisit();
     openDeepLinkedOffer();
     clearTimeout(slowTimer);
@@ -2836,10 +2840,37 @@ function paintAuth(){
   syncHeaderHeight();
 }
 
-async function loadOffers(){
+/* ---- 優惠清單：這台裝置上先存一份，10 分鐘內重開不用再跟資料庫要 ----
+   celine：「之前開啟網頁也慢慢的」。開場這一筆 `select * from offers_public`
+   是整個開場最重的一次往返：390 筆、每筆都帶 sources／sub_offers 等 jsonb，
+   大約 600KB，而且資料庫那邊還要現算每一筆的回報數／留言數／評分／收藏數
+   （v79 把那段從「每筆優惠各跑四支子查詢」改成先彙總再接回去）。
+   同一個人十分鐘內重開、或在分頁之間切來切去，沒必要再付一次這個成本。
+
+   刻意「不」在快取還新的時候偷偷再查一次——那樣畫面是快了，資料庫的負擔
+   卻一點都沒少，而現在要省的就是資料庫。過期（或剛回報完、剛投稿完要看最新
+   狀態）才真的去查。 ---- */
+const OFFERS_CACHE_KEY='sxr_offers_cache', OFFERS_TTL_MS=10*60*1000;
+function readOffersCache(){
+  try{
+    const raw=JSON.parse(localStorage.getItem(OFFERS_CACHE_KEY)||'null');
+    if(raw && Array.isArray(raw.rows) && Date.now()-raw.at<OFFERS_TTL_MS) return raw.rows;
+  }catch{}
+  return null;
+}
+function writeOffersCache(rows){
+  // 存不下（隱私模式、容量滿）就算了，純粹是加速用的東西，不能因此壞掉
+  try{ localStorage.setItem(OFFERS_CACHE_KEY, JSON.stringify({at:Date.now(), rows})); }catch{}
+}
+async function loadOffers(force){
+  if(!force){
+    const cached=readOffersCache();
+    if(cached){ OFFERS=cached.map(fromRow); return; }
+  }
   const {data,error} = await sb.from('offers_public').select('*').limit(3000);
   if(error){ note($('#modeBanner'),'alert','讀取失敗：'+esc(error.message)); return; }
   OFFERS = data.map(fromRow);
+  writeOffersCache(data);
 }
 
 /* ---- 待辦清單：未登入先存 localStorage，登入後自動合併上傳 ---- */
@@ -2891,7 +2922,7 @@ async function flushPendingReport(){
     return;
   }
   note($('#modeBanner'),'good','✓ 已幫你把登入前填的使用回報送出了。');
-  await loadOffers(); render(); loadMyStuff(); loadSiteStats(true); loadMyUsedOffers();
+  await loadOffers(true); render(); loadMyStuff(); loadSiteStats(true); loadMyUsedOffers();
 }
 
 /* ---- 收藏留言通知：收藏的店家有新留言時提醒你 ---- */
@@ -2973,7 +3004,7 @@ async function setVerified(id, v){
     .update({verified:v, last_checked:ISO(new Date())})
     .eq('brand',target.brand).eq('status','approved');
   if(error){ alert('更新失敗：'+error.message); return; }
-  await loadOffers(); render();
+  await loadOffers(true); render();
   loadApproved(); loadUsageReportsAdmin();
 }
 
@@ -2995,7 +3026,7 @@ async function bulkVerifyOffers(ids){
     .update({verified:true, last_checked:ISO(new Date())})
     .in('brand',brands).eq('status','approved');
   if(error){ alert('更新失敗：'+error.message); return; }
-  await loadOffers(); render();
+  await loadOffers(true); render();
   loadApproved(); loadUsageReportsAdmin();
 }
 
@@ -5285,7 +5316,7 @@ async function openDetail(id, fallback=null){
   dtlDelBtn.onclick=async()=>{
     if(!await adminDeleteOffer(id)) return;
     $('#dlgDetail').close();
-    loadOffers().then(render);
+    loadOffers(true).then(render);
     if(myProfile?.is_admin) loadApproved();
   };
   const body=$('#dtlBody');
@@ -5451,7 +5482,7 @@ async function openDetail(id, fallback=null){
       m.style.marginLeft='6px'; m.textContent='取消評分'; m.onclick=unrateHandler;
       $('#dtlStarMsg').insertAdjacentElement('afterend', m);
     }
-    await loadOffers(); render();
+    await loadOffers(true); render();
   });
   async function unrateHandler(){
     const btn=body.querySelector('#dtlUnrate'); if(btn) btn.disabled=true;
@@ -5460,7 +5491,7 @@ async function openDetail(id, fallback=null){
     [...body.querySelectorAll('.star-btn')].forEach(x=>x.classList.remove('on'));
     $('#dtlStarMsg').textContent='點星星評分';
     if(btn) btn.remove();
-    await loadOffers(); render();
+    await loadOffers(true); render();
   }
   const unrateBtn=body.querySelector('#dtlUnrate');
   if(unrateBtn) unrateBtn.onclick=unrateHandler;
@@ -5477,7 +5508,7 @@ async function openDetail(id, fallback=null){
     const {error}=await sb.from('comments').delete().eq('id',b.dataset.cid);
     if(error){ alert('刪除失敗：'+error.message); b.disabled=false; return; }
     openDetail(id);
-    loadOffers().then(render);
+    loadOffers(true).then(render);
   });
   const s=body.querySelector('.cs');
   if(s) s.onclick=async()=>{
@@ -5491,7 +5522,7 @@ async function openDetail(id, fallback=null){
     // 什麼；改成 openDetail() 重繪時插入留言區裡的常駐提示卡片。
     POST_COMMENT_REPORT_PROMPT_ID=id;
     openDetail(id);
-    loadOffers().then(render);   // 背景同步卡片上的留言數徽章
+    loadOffers(true).then(render);   // 背景同步卡片上的留言數徽章
   };
 }
 $('#btnDtlClose').onclick=()=>$('#dlgDetail').close();
@@ -5726,7 +5757,7 @@ $('#btnSaveReport').onclick=async e=>{
   if(isNewReport) surveyAfterFirst('report');
   const justReportedId=repId;
   $('#dlgReport').close();
-  await loadOffers(); render(); loadMyStuff(); loadSiteStats(true); loadMyUsedOffers();
+  await loadOffers(true); render(); loadMyStuff(); loadSiteStats(true); loadMyUsedOffers();
   // 嵐回饋：送出使用回報以後，也順勢問一句要不要留言分享心得或提出修改建議——
   // 只有「第一次回報」才問，編輯舊回報（例如改個備註）不用每次都被問一輪。
   if(isNewReport){ POST_REPORT_PROMPT_ID=justReportedId; openDetail(justReportedId); }
@@ -5737,7 +5768,7 @@ $('#btnDeleteReport').onclick=async()=>{
   const {error}=await sb.from('usage_reports').delete().eq('id',editingReportId).eq('user_id',me.id);
   if(error){ alert('刪除失敗：'+error.message); return; }
   $('#dlgReport').close();
-  await loadOffers(); render(); loadMyStuff(); loadSiteStats(true); loadMyUsedOffers();
+  await loadOffers(true); render(); loadMyStuff(); loadSiteStats(true); loadMyUsedOffers();
 };
 
 // 找「今年已經回報過的同一筆／同品牌另一張卡片」。品牌比對沿用投稿查重的
@@ -6050,7 +6081,7 @@ $('#submitForm').onsubmit=async e=>{
     :editing?(asAdmin?(wasPending?'已更新，這筆還在待審核，回「審核」分頁可以核可了。':'已更新。'):'已更新，等待審核。'):'已送出，等待審核。可到「我的」查看狀態。');
   logEvent(asSuggestion?'suggest_edit':editing?'edit_offer':'submit');
   if(asAdmin){
-    await loadOffers(); render();
+    await loadOffers(true); render();
     if(wasPending){ $('.tab[data-tab="admin"]').click(); loadPending(); loadPendingEdits(); loadRejected(); loadApproved(); }
   } else if(asSuggestion){ loadPendingEditsPreview(); }
   else { loadMyStuff(); }
@@ -7808,7 +7839,7 @@ async function bulkApproveOffers(ids){
   }
   // 跟單筆核可一樣，捲動位置的記錄／復位要包住所有會改變畫面高度的動作。
   await withScrollRestore([
-    (async()=>{ await loadOffers(); render(); loadSiteStats(); loadReviewInsights(); })(),
+    (async()=>{ await loadOffers(true); render(); loadSiteStats(); loadReviewInsights(); })(),
     loadPending()
   ]);
 }
@@ -7974,7 +8005,7 @@ async function loadPending(){
     // 站上那筆改了，列表／卡片都要跟著重畫；待審清單重畫之後按鈕上的數字才會歸零
     const keep=document.querySelector(`.rn[data-id="${b.dataset.pend}"]`)?.value||'';
     await withScrollRestore([
-      (async()=>{ await loadOffers(); render(); })(),
+      (async()=>{ await loadOffers(true); render(); })(),
       loadPending(),
     ]);
     // 重畫會清掉輸入框，打到一半的審核備註要留著
@@ -8038,7 +8069,7 @@ async function loadPending(){
     await withScrollRestore([
       (async()=>{ if(row){ await new Promise(r=>setTimeout(r,250)); row.remove(); } })(),
       (async()=>{
-        await loadOffers(); render(); loadSiteStats(); loadReviewInsights();
+        await loadOffers(true); render(); loadSiteStats(); loadReviewInsights();
         const {data:fresh}=await sb.from('offers').select('id').eq('status','pending');
         const pc2=$('#pendCount'), pqc2=$('#pendQueueCount');
         pc2.textContent=(fresh||[]).length;
@@ -8200,7 +8231,7 @@ async function bulkApproveEdits(ids){
   // 記錄 Y 值的時間點就抓早了，withScrollRestore 復位時可能已經跟畫面
   // 實際狀態對不上。
   await withScrollRestore([
-    (async()=>{ await loadOffers(); render(); })(),
+    (async()=>{ await loadOffers(true); render(); })(),
     loadPendingEdits(), loadRejected(), loadPendingEditsPreview()
   ]);
 }
@@ -8303,7 +8334,7 @@ async function loadPendingEdits(){
     if(error){ btns?.forEach(b=>b.disabled=false); note($('#editMsg'),'alert',`審核失敗：${esc(error.message)}`); return; }
     note($('#editMsg'),'good',`✓ 已${st==='approved'?(overridePatch?'調整後核可':'核可'):'退回'}這筆修改建議`);
     if(row){ row.style.transition='opacity .25s var(--ease)'; row.style.opacity='0'; }
-    if(st==='approved'){ await loadOffers(); render(); }
+    if(st==='approved'){ await loadOffers(true); render(); }
     // 同 loadPending() 的 act()：row 淡出後的 remove() 要跟重載清單一起
     // await，捲動位置才會在「所有」高度變化都做完之後才復位一次，不會
     // 核可完先跳回原位、250ms 後又因為 row 真的被移除再跳一次。
@@ -8506,14 +8537,14 @@ async function loadApproved(){
     b.disabled=true;
     const {error}=await sb.rpc('review_offer',{p_offer_id:Number(b.dataset.id),p_status:'archived'});
     if(error){ b.disabled=false; alert('下架失敗：'+error.message); return; }
-    loadApproved(); loadOffers().then(render);
+    loadApproved(); loadOffers(true).then(render);
   });
   $$('.ap-delete').forEach(b=>b.onclick=async(e)=>{
     e.stopPropagation();
     b.disabled=true;
     const ok=await adminDeleteOffer(b.dataset.id);
     b.disabled=false;
-    if(ok){ loadApproved(); loadOffers().then(render); }
+    if(ok){ loadApproved(); loadOffers(true).then(render); }
   });
 }
 $('#apSourceFilter').onchange=loadApproved;
@@ -9708,7 +9739,7 @@ function renderMergePanel(){
       const o=mergeFind($(sel).value);
       if(!o || String(o.id)===String(b.dataset.id)) $(sel).value='';
     });
-    await loadOffers();
+    await loadOffers(true);
     render();
     renderMergePanel();
   });
@@ -9743,7 +9774,7 @@ $('#btnMerge').onclick=async()=>{
   const d=data||{};
   note($('#mergeMsg'),'good',`✓ 已合併：搬了 ${d.reports||0} 筆回報、${d.comments||0} 則留言、${d.ratings||0} 個評分、${d.wishlist||0} 個收藏，「${esc(drop.brand)}」已下架。`);
   $('#mergeKeep').value=''; $('#mergeDrop').value='';
-  await loadOffers(); render(); renderMergePanel();
+  await loadOffers(true); render(); renderMergePanel();
 };
 
 async function loadAdminSettings(){
