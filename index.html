@@ -734,6 +734,9 @@
   table.lb .lb-detail td{padding:2px 0 12px;border-bottom:1px solid var(--line-soft)}
   table.lb .lb-detail .chip{font-size:.76rem;padding:3px 10px}
   table.lb .rk{width:34px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  /* 切成 PR 顯示時那一格要放得下「PR 93」，字小一點、不換行，欄寬放寬一些 */
+  table.lb .rk .pr{font-size:.74rem;font-weight:700;white-space:nowrap;letter-spacing:-.02em}
+  table.lb:has(.pr) .rk{width:52px}
   table.lb .rk.top{font-weight:800;font-size:1.05rem}
   /* 名次升降原本是裸露文字直接疊在名次數字下面，在窄螢幕（那格只有 34px
      寬）看起來很擠、很陽春。改成小圓角色塊（像個迷你徽章），色彩不變
@@ -1140,7 +1143,17 @@
   .foot{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
   .foot .btn{min-height:44px;padding:9px 18px}
   .regchips{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
-  .regchips .chip{font-size:.78rem;padding:5px 11px;min-height:30px}
+  /* 嵐：「排版不統一」。排行榜展開「顯示全部」之後，後面那些店家本來是包在
+     另一個 display:inline 的盒子裡——前 15 個照 flex 的 gap 排，後面的照
+     inline 的空白排，同一片區域兩套間距，看起來就是歪的。
+     display:contents 讓那個盒子不產生自己的框，裡面的 chip 直接變成外層
+     flex 的子項目，前後用同一套 gap。 */
+  .regchips-more{display:contents}
+  .regchips-more.hidden{display:none}
+  /* 認得的店家是 <button>、認不得的是 <span>，兩種元素的預設行高不一樣，
+     高度會差一兩 px。統一用 inline-flex 置中，排起來才一致。 */
+  .regchips .chip{font-size:.78rem;padding:5px 11px;min-height:30px;
+    display:inline-flex;align-items:center;justify-content:center;line-height:1.3}
 
   .empty{text-align:center;color:var(--ink-3);padding:64px 0;font-size:.88rem}
   .empty svg{color:var(--line);margin-bottom:12px}
@@ -1413,10 +1426,26 @@
         <button type="button" class="subtab" role="tab" data-pane="bsOverview">總覽</button>
         <button type="button" class="subtab" role="tab" data-pane="bsHours">使用時段</button>
         <button type="button" class="subtab" role="tab" data-pane="bsCat">類別</button>
+        <!-- 嵐：「收藏跟使用都可以區分成月份看，看每個月的人數」 -->
+        <button type="button" class="subtab" role="tab" data-pane="bsMonthly">每月人數</button>
       </div>
       <div class="subpane" id="bsOverview" role="tabpanel"><div class="bigstat" id="boardStats"></div></div>
       <div class="subpane" id="bsHours" role="tabpanel"><div id="boardHoursChart"></div></div>
       <div class="subpane" id="bsCat" role="tabpanel"><div id="boardCatChart"></div></div>
+      <div class="subpane" id="bsMonthly" role="tabpanel">
+        <div class="row" style="margin:0 0 10px;flex-wrap:wrap">
+          <label class="lbl">看<select id="monthlyMetric">
+            <option value="users">幾個人</option>
+            <option value="count">幾筆</option>
+          </select></label>
+          <label class="lbl">範圍<select id="monthlyMonths">
+            <option value="6">近 6 個月</option>
+            <option value="12" selected>近 12 個月</option>
+            <option value="24">近 24 個月</option>
+          </select></label>
+        </div>
+        <div id="boardMonthlyChart"></div>
+      </div>
     </div>
     <div class="panel" id="pnlBoardInsights">
       <h2>洞察分析</h2>
@@ -1499,6 +1528,9 @@
           <option value="climb">進步最多</option>
         </select></label>
         <label class="toggle"><input type="checkbox" id="lbHideAnon"> 隱藏匿名使用者</label>
+        <!-- 嵐：「排行榜可以切成 PR 值」。名次是「第幾個」，PR 是「贏過多少比例的人」——
+             500 人裡的第 50 名聽起來普通，PR 90 比較有感。 -->
+        <label class="toggle"><input type="checkbox" id="lbShowPr"> 用 PR 顯示</label>
       </div>
       <div class="note hidden" id="myRankBanner" style="margin-bottom:10px"></div>
       <div id="myRankShareWrap" class="hidden" style="margin-bottom:10px">
@@ -1573,6 +1605,11 @@
             <div class="field"><label>優惠價值（元）</label><input type="number" name="value_twd" min="0" max="100000">
               <div class="hint">用來統計省下多少，不確定就留空</div></div>
           </div>
+          <!-- 嵐：「讓人知道去這家店領生日優惠大概會花多少錢」。
+               低消是「規定要花多少」，詳情頁另外還會顯示大家回報的「實際平均花費」。 -->
+          <div class="field"><label>低消／最低消費（元）</label>
+            <input type="number" name="min_spend" min="0" max="100000" placeholder="例如 350">
+            <div class="hint">要消費才能領的話，寫最低要花多少。完全不用消費請把上面的「免費層級」選「免費・無低消」；不確定就留空</div></div>
           <div class="field"><label>會員取得方式</label>
             <input name="membership" maxlength="200" placeholder="例如：Ocard APP 會員" list="membershipPresets">
             <datalist id="membershipPresets">
@@ -1772,7 +1809,7 @@
     <div class="panel" id="myOffersPanel"><h2>我的投稿</h2><div id="myOffers"></div></div>
     <!-- 嵐：「我填寫過的回報問題，要可以出現在我的頁面」（schema_v73 開的讀自己那幾筆的權限） -->
     <div class="panel" id="myFeedbackPanel"><h2>我回報過的問題<span class="n hidden" id="myFbCount"></span></h2>
-      <p class="sub">你用頁尾「回報網站問題」送出的內容，還有管理員的回覆。</p>
+      <p class="sub">你用上面「回報網站問題」送出的內容，還有管理員的回覆。</p>
       <div id="myFeedback"></div></div>
     </div>
     <!-- 不管有沒有登入都看得到——加到主畫面是幫網站觸及更多人的入口，
@@ -1794,6 +1831,14 @@
       <p class="sub">壽星日目前是用免費方案架設的，人多的時候偶爾會慢個幾秒，或是要重新整理一次才打得開。
         不是你的網路有問題，先跟你說聲抱歉 🙏</p>
       <p class="sub" style="margin-top:6px">正在一點一點調快，請多包涵。</p>
+    </div>
+    <!-- 嵐：「回報網站問題移到『我的』」。原本只掛在頁尾的一行小字裡，幾乎沒人看得到；
+         放在「我的」這裡，跟上面那塊速度說明、下面自己回報過的紀錄排在一起。 -->
+    <div class="panel" id="feedbackPanel">
+      <h2>🛠 回報網站問題</h2>
+      <p class="sub">網站怪怪的、哪裡不好用、想要什麼功能，都可以告訴我。
+        優惠內容有誤的話，請直接在那張優惠卡片上用「建議修改」，處理起來比較快。</p>
+      <button type="button" class="btn primary" id="btnFeedback">回報問題或建議</button>
     </div>
     <!-- 更新紀錄：celine 要「我的」頁面有個小地方記每次更新的日期、簡單說改了哪裡。
          訪客也看得到，所以放在會員專屬區塊外面。內容在 SITE_UPDATES。 -->
@@ -1860,7 +1905,7 @@
     <h2>問題回報／建議<span class="n hidden" id="fbCount"></span></h2>
     <p class="sub">大家送出的問題回報與功能建議，訪客不用登入也能送。標記已處理時可以順手留一句回覆，登入的送出者會在通知裡看到；訪客沒有帳號，只會更新狀態。</p>
     <div class="row" style="margin:0 0 10px;gap:8px 14px;flex-wrap:wrap"><label class="lbl">類型<select id="fbTypeFilter">
-      <option value="all">全部</option><option value="bug">問題回報</option><option value="suggestion">建議</option>
+      <option value="all">全部</option><option value="bug">問題回報</option><option value="suggestion">建議</option><option value="duplicate">重複的優惠</option>
     </select></label>
     <!-- 嵐：可以篩選已完成、未完成跟修改中
          celine：預設看「未完成＋修改中」（還要做的事），已完成的要看再切；
@@ -1989,8 +2034,10 @@
 <footer class="wrap">
   <p>優惠隨時可能調整，出發前請以品牌官方公告為準。標「未查證」代表尚未向品牌確認。</p>
   <p id="footMode"></p>
+  <!-- 嵐：「回報網站問題移到『我的』」——按鈕搬到「我的」分頁（#feedbackPanel），
+       這裡只留聯絡信箱。頁尾那一顆沒人看得到，而「我的」本來就是出問題時會去翻的地方。 -->
   <p>問題回報／合作聯絡：<a href="mailto:celine.fu@gmail.com">celine.fu@gmail.com</a>
-    　<button type="button" class="btn sm" id="btnFeedback" style="margin-left:6px">回報網站問題</button></p>
+    　（也可以到「我的」分頁用「回報網站問題」）</p>
   <p><a href="privacy.html">隱私權政策</a>　·　<a href="terms.html">服務條款</a></p>
   <p>© <span id="copyYear"></span> 壽星日 Birthday Deals. All rights reserved.</p>
 </footer>
@@ -2032,6 +2079,9 @@
     <select id="fbType">
       <option value="bug">問題回報</option>
       <option value="suggestion">功能建議</option>
+      <!-- 嵐：「多一個發現重複可以回報的按鈕」。優惠卡片的詳情裡有一顆
+           「🔁 這筆重複了」，按了會開這個視窗並且先選好這一項。 -->
+      <option value="duplicate">重複的優惠</option>
     </select></div>
   <div class="field"><label id="fbMsgLabel">問題描述 *</label>
     <textarea id="fbMsg" required maxlength="1000" placeholder="在哪一頁、做了什麼操作、發生了什麼問題，越具體越好"></textarea></div>
@@ -2099,6 +2149,11 @@
       <div class="hint" id="repSavedHint"></div></div>
     <div class="field"><label>門市</label><input id="repStore" maxlength="80"></div>
   </div>
+  <!-- 嵐：「讓人知道去這家店領生日優惠大概會花多少錢」。低消是規定，這個是實際——
+       填的人多了，詳情頁就能顯示「大家平均花 $420」，比低消更接近真實體感。 -->
+  <div class="field"><label>這次總共花了多少（元）</label>
+    <input type="number" id="repSpent" min="0" max="100000" placeholder="選填">
+    <div class="hint">含低消、加點、其他人的餐點都算。填了之後大家就知道去這家店大概要準備多少錢</div></div>
   <div class="field"><label>補充說明</label><textarea id="repNote" maxlength="300"
     placeholder="例如：店員說要提前三天，我當天去被拒絕"></textarea></div>
   <div class="foot">
@@ -2216,6 +2271,9 @@
   <button type="button" class="btn sm hidden" id="dtlAdminEdit" style="margin:-6px 0 12px">編輯（管理員）</button>
   <button type="button" class="btn sm hidden" id="dtlAdminDelete"
     style="margin:-6px 0 12px;border-color:var(--alert-line);color:var(--alert)">刪除（管理員）</button>
+  <!-- 嵐：「多一個發現重複可以回報的按鈕」。同一家店被投稿兩次很常見，
+       看到的人按一下就好，不用自己去寫「我覺得這兩筆一樣」。 -->
+  <button type="button" class="btn sm" id="btnDtlDup" style="margin:-6px 0 12px">🔁 這筆重複了</button>
   <div id="dtlBody"></div>
   <div class="foot"><button type="button" class="btn" id="btnDtlClose">關閉</button></div>
 </div></dialog>
@@ -2494,7 +2552,7 @@ function fromRow(r){return{
   offer:r.offer, membership:r.membership||'', membershipType:r.membership_type||'brand',
   membershipCost:r.membership_cost||'free', freeTier:r.free_tier||'discount',
   advanceDays:r.advance_days, advanceNote:r.advance_note||'',
-  timing:r.timing||r.offer_window||'當月', valueTwd:r.value_twd,
+  timing:r.timing||r.offer_window||'當月', valueTwd:r.value_twd, minSpend:r.min_spend,
   conditions:r.conditions||'', validity:r.validity||'', validityType:r.validity_type||'rolling',
   validFrom:r.valid_from, validUntil:r.valid_until,
   sources:r.sources||[], bestSource:(r.sources||[])[0]||null,
@@ -2633,12 +2691,33 @@ function loadScriptTag(src, timeoutMs){
 
 // 第二階段：背景非同步接上 Supabase。config.js／SDK 最多各等 5 秒，
 // 逾時就直接當離線模式繼續運作（畫面已經有種子資料撐著，不會整頁空白）。
-async function connectLive(){
+/* SDK 的來源不只一個：主要用 jsdDelivr，連不上就換 unpkg 再試一次。
+   手機網路或某些地區偶爾會卡在單一 CDN，備援一條路比什麼都有效。 */
+const SDK_URLS=[
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
+  'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js'
+];
+async function loadSupabaseSdk(){
+  if(window.supabase) return true;
+  for(const url of SDK_URLS){
+    await loadScriptTag(url, 10000);
+    if(window.supabase) return true;
+  }
+  return false;
+}
+let PAGEVIEW_LOGGED=false;
+/* celine／嵐：「google 登入還是按不下去」「回報紀錄都是 0」。
+   兩個症狀其實是同一件事：config.js 或 Supabase SDK 只要載超過 5 秒就被判定逾時，
+   整頁直接降級成「離線示範模式」——登入鈕變成「尚未啟用」、畫面換成內建種子資料
+   （那份的回報次數全部是 0）。而且**一旦降級就再也不會自己好**，使用者要自己重新整理。
+   手機網路慢一點、CDN 卡一下就會中，網站掛掉那幾天更是一直中。
+
+   改法：逾時放寬到 10 秒、SDK 多一個備援 CDN、而且降級之後**背景繼續重試**，
+   接上了就自動升級回連線模式（登入鈕、真實回報數自己回來，不用重新整理）。 */
+async function connectLive(retry=0){
   const mb=$('#modeBanner');
-  await Promise.all([
-    loadScriptTag('config.js', 5000),
-    loadScriptTag('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js', 5000)
-  ]);
+  if(!window.SUPABASE_CONFIG) await loadScriptTag('config.js', 8000);
+  if(!window.supabase) await loadSupabaseSdk();
   CFG = window.SUPABASE_CONFIG;
   HAS_CFG = !!(CFG && CFG.url && CFG.anonKey && !String(CFG.url).includes('你的專案代號'));
   HAS_SDK = !!window.supabase;
@@ -2653,10 +2732,16 @@ async function connectLive(){
     paintSubmitGate();
     $('#footMode').textContent = '離線示範模式：資料為內建種子，無法登入或回報。';
     loadSiteStats(); registerSW();
-    logEvent('pageview', {tab: location.hash||'offers'});
+    if(!PAGEVIEW_LOGGED){ PAGEVIEW_LOGGED=true; logEvent('pageview', {tab: location.hash||'offers'}); }
     clearDeepLinkParam();   // 離線模式打不開留言視窗，網址殘留 ?offer= 也沒意義，清掉就好
+    // 不要就這樣放棄。檔案本來就不是從網站上載入的（IS_FILE）才沒救，
+    // 其餘情況多半只是網路慢，等一下再試一次通常就接上了。
+    if(!IS_FILE && retry<3) setTimeout(()=>connectLive(retry+1), 15000);
     return;
   }
+  // 接上了（可能是重試才接上的）：把剛才降級時改掉的字樣復原
+  $('#btnLogin').textContent = 'Google 登入';
+  $('#btnLogin').style.opacity = '';
 
   sb = window.supabase.createClient(CFG.url, CFG.anonKey);
   const slowTimer=setTimeout(()=>{
@@ -2681,13 +2766,15 @@ async function connectLive(){
     clearTimeout(slowTimer);
     // Supabase 連不上時，畫面已經是種子資料撐著了，不會整頁空白
     note(mb,'alert',
-      `<b>連不上 Supabase</b>（${esc(e.message||e)}）——先用內建資料顯示。<br>
-       常見原因：免費專案閒置 7 天被自動暫停，到 Supabase Dashboard 按
-       <b>Restore project</b> 即可；或 config.js 裡的網址／金鑰有誤。`);
+      `<b>連不上資料庫</b>（${esc(e.message||e)}）——現在畫面上是內建的示範資料，
+       <b>回報次數與省下金額都還不是真的</b>，等一下重新整理通常就會回來。<br>
+       <span class="hint">（站方自己看：免費專案閒置 7 天會被自動暫停，到 Supabase Dashboard 按
+       Restore project；流量尖峰被 Disk IO 拖垮的話要重啟專案。）</span>`);
   }
   paintOffers();   // 不管成功或失敗，都用目前最新的 OFFERS 重畫一次
   loadSiteStats(); loadSiteAnnouncement(); registerSW();
-  logEvent('pageview', {tab: location.hash||'offers'});
+  // 先降級成離線模式、後來重試才接上的話，上面已經記過一次瀏覽了，不要再記一次
+  if(!PAGEVIEW_LOGGED){ PAGEVIEW_LOGGED=true; logEvent('pageview', {tab: location.hash||'offers'}); }
   startSurveyNudges();
   // 生日卡片最優先（一年就那幾天），再來是「要不要開定位」（celine：一打開網頁就問），
   // 更新紀錄的通知排最後，前面兩個有在跳就讓它下次再說。
@@ -2877,7 +2964,15 @@ async function loadOffers(force){
     if(cached){ OFFERS=cached.map(fromRow); return; }
   }
   const {data,error} = await sb.from('offers_public').select('*').limit(3000);
-  if(error){ note($('#modeBanner'),'alert','讀取失敗：'+esc(error.message)); return; }
+  // 嵐：「明明很多人回報，但回報紀錄都是 0」。讀不到真資料時畫面會退回內建的
+  // 示範資料，那份的回報次數、省下金額全部是 0——不講清楚的話，看起來就像
+  // 「大家的回報都不見了」。這裡直接寫明現在看到的數字不是真的。
+  if(error){
+    note($('#modeBanner'),'alert',
+      `<b>優惠資料暫時讀不到</b>（${esc(error.message)}）——現在畫面上是內建的示範資料，`
+      +`<b>回報次數與省下金額都還不是真的</b>，重新整理一次通常就會回來。`);
+    return;
+  }
   OFFERS = data.map(fromRow);
   writeOffersCache(data);
 }
@@ -3527,10 +3622,20 @@ $('#wlCompact').onchange=renderWishlistBody;
    不用登入也讀得到——這是跟通知鈴鐺分開的公開管道，訪客也看得到最新公告。
    關掉之後用 localStorage 記住這則公告的 id，同一則不會再跳出來，但換一則
    新公告就會是新的 id，照樣會顯示。 ---- */
+/* 公告也在這台裝置上留 10 分鐘。它是一張很小的表，但「每開一次網頁就查一次」
+   乘上流量就不是小事——站台數據跟優惠清單都快取了，這是開場最後一筆沒省到的查詢。
+   公告本來就不是急件（而且關掉的公告會記在 localStorage，不會再跳）。 */
 async function loadSiteAnnouncement(){
   if(!LIVE) return;
-  const {data,error}=await sb.from('current_announcement').select('*').maybeSingle();
   const box=$('#siteAnnBanner');
+  let data=null, error=null, fresh=null;
+  try{ fresh=JSON.parse(localStorage.getItem('sxr_ann_cache')||'null'); }catch{}
+  if(fresh && Date.now()-fresh.at<10*60*1000){
+    data=fresh.data;
+  } else {
+    ({data,error}=await sb.from('current_announcement').select('*').maybeSingle());
+    if(!error) try{ localStorage.setItem('sxr_ann_cache', JSON.stringify({at:Date.now(), data})); }catch{}
+  }
   if(error||!data){ box.classList.add('hidden'); return; }
   const dismissKey=`sxr_ann_dismissed_${data.id}`;
   if(localStorage.getItem(dismissKey)){ box.classList.add('hidden'); return; }
@@ -4688,8 +4793,11 @@ function offerCardHtml(o, idx){
         ${o.timing.includes('當日')?`<span class="flag today">${esc(o.timing)}</span>`
           :`<span class="flag">${esc(o.timing)}</span>`}
         ${o.freeTier==='free_no_min'?'<span class="flag free">免費・無低消</span>':
-          o.freeTier==='free_min'?'<span class="flag">免費・需消費</span>':
+          o.freeTier==='free_min'?`<span class="flag">免費・需消費${o.minSpend!=null?`（低消 ${nt(o.minSpend)}）`:''}</span>`:
           o.freeTier==='bogo'?'<span class="flag">買一送一</span>':''}
+        ${/* 嵐：「讓人知道去這家店領生日優惠大概會花多少錢」。免費・需消費以外的類型
+             （買一送一、折扣）有低消也要寫出來，上面那一格只處理「免費・需消費」。 */''}
+        ${(o.minSpend!=null && o.freeTier!=='free_min')?`<span class="flag">低消 ${nt(o.minSpend)}</span>`:''}
         <span class="flag">${esc(MEM_LABEL[o.membershipType]||'會員')}${cost}</span>
         ${o.verified?'<span class="flag ok-flag">已查證</span>':'<span class="flag alert">未查證</span>'}
         ${o.ratingCount?`<span class="flag star">★ ${o.ratingAvg}（${o.ratingCount}）</span>`:''}
@@ -5084,6 +5192,8 @@ $('#filterBackdrop').onclick=closeFilterSheet;
 /* ===================================================================== */
 const CMT_SHOW=8;   // 留言超過這個數量先收合，避免討論串把視窗拉得太長
 let dtlId=null;
+// 目前這筆優惠「大家實際花多少」的彙總（{n,avg,min,max}），沒人填就是 null
+let DTL_SPEND=null;
 // 留言送出後「要不要順便回報使用結果」的提示，原本是 confirm() 系統彈窗，
 // 太容易被當成一般跳窗按掉、根本沒看清楚在問什麼。改成留言區裡一個常駐的
 // 提示卡片，openDetail() 重繪畫面時如果偵測到剛剛送出留言的是這一筆，就把
@@ -5213,6 +5323,7 @@ function offerFactsHtml(o){
       ${o.freeTier==='free_no_min'?'<span class="flag free">免費・無低消</span>':
         o.freeTier==='free_min'?'<span class="flag">免費・需消費</span>':
           o.freeTier==='bogo'?'<span class="flag">買一送一</span>':''}
+      ${o.minSpend!=null?`<span class="flag">低消 ${nt(o.minSpend)}</span>`:''}
       <span class="flag">${esc(MEM_LABEL[o.membershipType]||'會員')}</span>
       ${o.verified?'<span class="flag ok-flag">已查證</span>':'<span class="flag alert">未查證</span>'}
       ${o.valueTwd?`<span class="flag">約 ${nt(o.valueTwd)}</span>`:''}
@@ -5224,6 +5335,12 @@ function offerFactsHtml(o){
       ${kv('同行需求',o.requiresCompanion?'需要同行者才能用（例如內用買一送一）':'一個人也能用')}
       ${kv('本人出示證件',TRANSFER_LABEL[o.transferable]||TRANSFER_LABEL.unknown)}
       ${kv('使用條件',o.conditions||'—')}
+      ${o.minSpend!=null?kv('低消',`${nt(o.minSpend)}（規定最低消費）`):''}
+      ${/* 嵐：「每人平均消費……讓人知道大概會花多少錢」。低消是規定，這一行是大家
+           實際回報的，沒人填就不出現（寧可沒有，也不要給一個樣本數 1 的平均） */''}
+      ${DTL_SPEND && DTL_SPEND.n ? kv('大家實際花',
+        `平均 ${nt(DTL_SPEND.avg)}（${DTL_SPEND.n} 筆回報${DTL_SPEND.min!==DTL_SPEND.max
+          ? `，${nt(DTL_SPEND.min)}～${nt(DTL_SPEND.max)}`:''}）`) : ''}
       ${kv('期限',o.validity||'—')}
       ${kv('會員取得',o.membership||'—')}
       ${kv('需提前',advText(o))}
@@ -5336,6 +5453,7 @@ async function openDetail(id, fallback=null){
     if(myProfile?.is_admin) loadApproved();
   };
   const body=$('#dtlBody');
+  DTL_SPEND=null;   // 這一筆的「大家實際花多少」，等下面的回報撈回來才算得出來
   // 先保留跟「留言＋評分區都載入完成」差不多的高度，
   // 免得留言／評分資料回來後視窗一次跳一大截（拖累 CLS）。
   body.innerHTML=offerFactsHtml(o)+'<div class="thread" style="min-height:min(260px,40vh)">載入中…</div>';
@@ -5344,7 +5462,9 @@ async function openDetail(id, fallback=null){
   const [{data:c},{data:r},{data:myR},{data:eh},{data:pe}]=await Promise.all([
     sb.from('comments').select('id,body,created_at,is_hidden,user_id')
       .eq('offer_id',id).order('created_at',{ascending:false}).limit(50),
-    sb.from('usage_reports').select('id,used_on,result,store,note,saved_twd,user_id,created_at')
+    // spent_twd（實際花多少，v81）用 select('*') 帶回來——明列欄位的話，
+    // 還沒跑 v81 的站台會因為「沒有這一欄」整支查詢失敗，連留言都看不到
+    sb.from('usage_reports').select('*')
       .eq('offer_id',id).order('used_on',{ascending:false}).limit(30),
     me? sb.from('offer_ratings').select('score').eq('offer_id',id).eq('user_id',me.id).maybeSingle()
       : Promise.resolve({data:null}),
@@ -5373,6 +5493,14 @@ async function openDetail(id, fallback=null){
   }
   (c||[]).forEach(x=>x.profiles=nameMap[x.user_id]||null);
   (r||[]).forEach(x=>x.profiles=nameMap[x.user_id]||null);
+  // 嵐：「讓人知道去這家店領生日優惠大概會花多少錢」。有人填了「這次花多少」
+  // 才算，失敗的那幾筆不算（沒領到的花費不代表領優惠要花多少）。
+  const spends=(r||[]).filter(x=>x.result!=='failed' && Number.isFinite(Number(x.spent_twd)))
+    .map(x=>Number(x.spent_twd));
+  DTL_SPEND = spends.length ? {
+    n:spends.length,
+    avg:Math.round(spends.reduce((a,b)=>a+b,0)/spends.length),
+    min:Math.min(...spends), max:Math.max(...spends)} : null;
   const myScore=myR?.score||0;
   const R={success:['成功','ok'],partial:['部分','partial'],failed:['失敗','fail']};
   const cmts=c||[];
@@ -5675,21 +5803,37 @@ $('#dlgSharePreview').addEventListener('close', consumeDlgHistory);
 /* ---- 問題回報／建議：訪客也能填，不用登入。不收信箱了——處理完成後改用
    站內通知（notifications 表）回覆登入的送出者，見 admin_resolve_feedback()
    這個 RPC；訪客沒有帳號收不到通知，表單上會提示。 ---- */
+const FB_TYPE_UI={
+  bug:        ['問題回報','問題描述 *','在哪一頁、做了什麼操作、發生了什麼問題，越具體越好'],
+  suggestion: ['功能建議','建議內容 *','想要什麼功能、覺得哪裡可以更好用，越具體越好'],
+  duplicate:  ['回報重複的優惠','重複的是哪兩筆 *','例如：「#41 再睡5分鐘」跟「#391 再睡五分鐘」是同一家'],
+};
 function paintFbType(){
-  const isSuggestion=$('#fbType').value==='suggestion';
-  $('#fbDlgTitle').textContent = isSuggestion?'功能建議':'問題回報';
-  $('#fbMsgLabel').textContent = isSuggestion?'建議內容 *':'問題描述 *';
-  $('#fbMsg').placeholder = isSuggestion
-    ? '想要什麼功能、覺得哪裡可以更好用，越具體越好'
-    : '在哪一頁、做了什麼操作、發生了什麼問題，越具體越好';
+  const [title,label,ph]=FB_TYPE_UI[$('#fbType').value]||FB_TYPE_UI.bug;
+  $('#fbDlgTitle').textContent=title;
+  $('#fbMsgLabel').textContent=label;
+  $('#fbMsg').placeholder=ph;
 }
 $('#fbType').onchange=paintFbType;
-$('#btnFeedback').onclick=()=>{
-  $('#fbType').value='bug'; paintFbType();
-  $('#fbMsg').value=''; $('#fbMsgBox').innerHTML='';
+function openFeedback(type='bug', prefill=''){
+  $('#fbType').value=type; paintFbType();
+  $('#fbMsg').value=prefill; $('#fbMsgBox').innerHTML='';
   $('#fbLoggedInHint').classList.toggle('hidden', !me);
   $('#fbGuestHint').classList.toggle('hidden', !!me);
   $('#dlgFeedback').showModal(); pushDlgHistory();
+  // 帶了內容進來就把游標放到最後面，讓人直接接著打「跟哪一筆重複」
+  const ta=$('#fbMsg');
+  if(prefill){ ta.focus(); try{ ta.setSelectionRange(prefill.length, prefill.length); }catch{} }
+}
+$('#btnFeedback').onclick=()=>openFeedback('bug');
+// 詳情視窗裡的「🔁 這筆重複了」：先把是哪一筆填好，使用者只要補「跟誰重複」
+$('#btnDtlDup').onclick=()=>{
+  if(!dtlId) return;
+  // 待審投稿那種 OFFERS 裡找不到的，就用標題上的店名（後面可能帶 #編號，去掉）
+  const o=OFFERS.find(x=>String(x.id)===String(dtlId))
+    || {id:dtlId, brand:$('#dtlBrand').textContent.trim().replace(/\s*#\d+$/,'')};
+  $('#dlgDetail').close();
+  openFeedback('duplicate', `#${o.id} ${o.brand} 這筆跟別筆重複：`);
 };
 $('#btnFbCancel').onclick=()=>$('#dlgFeedback').close();
 $('#btnFbSubmit').onclick=async()=>{
@@ -5704,6 +5848,14 @@ $('#btnFbSubmit').onclick=async()=>{
   let {error}=await sb.from('site_feedback').insert({...row, session_id:SESSION_ID});
   if(error && /session_id|column|schema cache/i.test(error.message||''))
     ({error}=await sb.from('site_feedback').insert(row));
+  // 'duplicate' 這個類型要 v80 才認得（type 的 check constraint）。還沒跑的站台
+  // 會被擋下來，退回 'bug' 並在內文前面標 [重複]，至少不會讓使用者白填一次。
+  if(error && row.type==='duplicate' && /check constraint|violates|type/i.test(error.message||'')){
+    const fallback={...row, type:'bug', message:'[重複] '+row.message};
+    ({error}=await sb.from('site_feedback').insert({...fallback, session_id:SESSION_ID}));
+    if(error && /session_id|column|schema cache/i.test(error.message||''))
+      ({error}=await sb.from('site_feedback').insert(fallback));
+  }
   btn.disabled=false;
   if(error){
     const hint=/relation|does not exist/i.test(error.message)?'（Supabase 可能還沒跑 schema_v30_feedback_and_edit_preview.sql）':'';
@@ -5744,15 +5896,17 @@ async function openReport(id, existing=null){
   $('#repSavedHint').textContent = (!existing&&o?.valueTwd)
     ? `預設帶入估算值 ${nt(o.valueTwd)}，可依實際情況修改` : '不確定就留空';
   $('#repStore').value=existing?.store||''; $('#repNote').value=existing?.note||'';
+  $('#repSpent').value = existing?.spent_twd ?? '';
   $('#btnDeleteReport').classList.toggle('hidden',!editingReportId);
   $('#btnSaveReport').textContent=editingReportId?'更新':'送出';
   $('#dlgReport').showModal(); pushDlgHistory();
 }
 $('#btnSaveReport').onclick=async e=>{
   e.preventDefault();
-  const sv=$('#repSaved').value;
+  const sv=$('#repSaved').value, sp=$('#repSpent').value;
   const p={used_on:$('#repDate').value, result:$('#repResult').value,
-    saved_twd: sv===''?null:Number(sv), store:$('#repStore').value.trim(), note:$('#repNote').value.trim()};
+    saved_twd: sv===''?null:Number(sv), store:$('#repStore').value.trim(), note:$('#repNote').value.trim(),
+    spent_twd: sp===''?null:Number(sp)};
   if(!p.used_on){ alert('請選擇使用日期'); return; }
   // 未登入的人到這一步才問：先把填好的內容暫存起來，登入回來自動送出
   if(!me){
@@ -5764,10 +5918,17 @@ $('#btnSaveReport').onclick=async e=>{
   }
   let error;
   const isNewReport=!editingReportId;
+  // spent_twd 要 v81 才有這一欄；還沒跑的站台拿掉它再送一次，不要讓人白填一張表
+  const noSpend=({spent_twd, ...rest})=>rest;
+  const missingCol=e=>/spent_twd|column|schema cache/i.test(e?.message||'');
   if(editingReportId){
     ({error}=await sb.from('usage_reports').update(p).eq('id',editingReportId).eq('user_id',me.id));
+    if(error && missingCol(error))
+      ({error}=await sb.from('usage_reports').update(noSpend(p)).eq('id',editingReportId).eq('user_id',me.id));
   }else{
     ({error}=await sb.from('usage_reports').insert({...p, offer_id:Number(repId), user_id:me.id}));
+    if(error && missingCol(error))
+      ({error}=await sb.from('usage_reports').insert({...noSpend(p), offer_id:Number(repId), user_id:me.id}));
   }
   if(error){ alert(error.code==='23505'?'你今天已經回報過這筆優惠了。':'回報失敗：'+error.message); return; }
   if(isNewReport) surveyAfterFirst('report');
@@ -5935,6 +6096,7 @@ async function startEditOffer(id, asAdmin=false, asSuggestion=false){
   const f=$('#submitForm').elements;
   f.brand.value=o.brand||''; f.category.value=o.category||''; f.offer.value=o.offer||'';
   f.timing.value=o.timing||o.offer_window||'當月'; f.value_twd.value=o.value_twd??'';
+  f.min_spend.value=o.min_spend??'';
   f.membership_type.value=o.membership_type||''; f.free_tier.value=o.free_tier||'';
   f.advance_days.value=o.advance_days??''; f.membership.value=o.membership||'';
   f.conditions.value=o.conditions||''; f.valid_from.value=o.valid_from||''; f.valid_until.value=o.valid_until||'';
@@ -5993,7 +6155,7 @@ $('#fBrand').addEventListener('input',()=>{
 // 任何一項變動都抓得到；regions／sources 是陣列，不能直接用 !== 比（陣列
 // 參考不同就永遠判定「不同」，或整個沒被比到），另外寫 sameOfferVal 處理。
 const OFFER_DIFF_FIELDS=['brand','category','offer','membership','membership_type','free_tier',
-  'advance_days','value_twd','timing','conditions','valid_from','valid_until',
+  'advance_days','value_twd','min_spend','timing','conditions','valid_from','valid_until',
   'requires_companion','transferable','regions','sources'];
 function offerDiffVal(src,k){
   if(k==='timing') return src.timing||src.offer_window||null;
@@ -6023,11 +6185,13 @@ $('#submitForm').onsubmit=async e=>{
     if(!proceed){ b.disabled=false; return; }
   }
   const ad=fd.get('advance_days'), vt=fd.get('value_twd'), tm=fd.get('timing')||'當月';
+  const ms=fd.get('min_spend');
   const row={
     brand:fd.get('brand').trim(), category:fd.get('category'), regions,
     offer:fd.get('offer').trim(), membership:(fd.get('membership')||'').trim(),
     membership_type:fd.get('membership_type'), free_tier:fd.get('free_tier'),
     advance_days: ad===''?null:Number(ad), value_twd: vt===''?null:Number(vt),
+    min_spend: (ms===''||ms==null)?null:Number(ms),
     timing: tm, offer_window: tm,
     conditions:(fd.get('conditions')||'').trim(),
     valid_from:fd.get('valid_from')||null, valid_until:fd.get('valid_until')||null,
@@ -6856,14 +7020,37 @@ async function showMyBoardRank(el, board, period, key, fallback, unit){
   if(error && !fallback){ el.classList.add('hidden'); return; }
   el.classList.remove('hidden');
   const val = d ? unit(Number(d.value)||0) : '';
+  // 嵐：「不同區間都能看到自己第幾名」＋「排行榜可以切成 PR 值」——這一行每一種
+  // 排行榜、每一種區間都會出現，所以 PR 直接寫在這裡，不用切換（名次跟 PR 一起看）
+  const pr = d ? prOf(d.rank, d.total) : null;
   el.innerHTML = d && d.rank
-    ? `🎯 你目前排第 <b>${d.rank}</b> 名${d.total?`（共 ${d.total} 人）`:''}　${val}`
+    ? `🎯 你目前排第 <b>${d.rank}</b> 名${d.total?`（共 ${d.total} 人${pr!=null?`，PR ${pr}、贏過 ${pr}% 的人`:''}）`:''}　${val}`
     : (board==='savings'
       ? '🎯 你這一期還沒上榜——回報一次成功使用就會出現在排行榜上。'
       : '🎯 你這一期還沒上榜——投稿新優惠或修改建議被核可，就會出現在排行榜上。');
 }
+/* 嵐：「排行榜可以切成 PR 值」。
+   PR＝贏過多少百分比的人。用 (總人數 − 名次) ÷ (總人數 − 1)：第一名是 99（台灣的
+   PR 習慣上最高就是 99，不寫 100），最後一名是 1。只有一個人的時候沒得比，不顯示。 */
+function prOf(rank, total){
+  if(!rank || !total || total<2) return null;
+  return Math.max(1, Math.min(99, Math.round((total-rank)/(total-1)*100)));
+}
+/* 目前看的是哪一段期間——分享卡的標題跟檔名都要寫清楚（嵐：「並且標月份」）。
+   LB_YM 是 YYYY-MM；本週用當週的 ISO 週數（跟 leaderboard_weekly 同一套）。 */
+function lbPeriodLabel(){
+  if(LB_MONTHLY) return `${(LB_YM||'').replace(/^(\d{4})-(\d{2})$/,'$1 年 $2 月')} `;
+  if(LB_WEEKLY) return `${isoWeekStr(new Date()).replace(/^(\d{4})-W(\d+)$/,'$1 年第 $2 週')} `;
+  return '總累積 ';
+}
+function lbPeriodSlug(){
+  if(LB_MONTHLY) return LB_YM||'month';
+  if(LB_WEEKLY) return isoWeekStr(new Date());
+  return '總累積';
+}
 function renderLbBody(){
   const hideAnon=$('#lbHideAnon').checked;
+  const showPr=!!$('#lbShowPr')?.checked;
   const sortMode=$('#lbSortBy').value;
   const sortByCount=sortMode==='count';
   let rows=hideAnon ? LB_ROWS.filter(r=>!String(r.display_name||'').startsWith('匿名使用者')) : LB_ROWS;
@@ -6875,7 +7062,12 @@ function renderLbBody(){
   }
   const allRows=rows;
   if(sortMode==='climb') rows=rankClimbRows(rows);
-  const lbEntries=rows.map((r,i)=>`<tr class="lb-row" data-lb="${i}"><td class="rk ${r.rank<=3?'top':''}">${r.rank}${LB_HAS_PREV?`<br>${rankChangeHtml(r)}`:''}</td>
+  const lbTotal=allRows.length;
+  const rkText=r=>{
+    const pr=showPr?prOf(r.rank,lbTotal):null;
+    return pr==null ? String(r.rank) : `<span class="pr" title="贏過 ${pr}% 的人">PR ${pr}</span>`;
+  };
+  const lbEntries=rows.map((r,i)=>`<tr class="lb-row" data-lb="${i}"><td class="rk ${r.rank<=3?'top':''}">${rkText(r)}${LB_HAS_PREV?`<br>${rankChangeHtml(r)}`:''}</td>
       <td><div class="who"><div class="who-main">${r.avatar_url?`<img class="avatar who-avatar" ${r.email?'data-email="1"':''} src="${esc(r.avatar_url)}" alt="">`
         :`<span class="initial who-avatar" ${r.email?'data-email="1"':''}>${esc((r.display_name||'壽')[0])}</span>`}
         <span class="who-name">${esc(r.display_name||'壽星')}</span></div>${r.email?`<span class="who-email hidden">（${esc(r.email)}）</span>`:''}</div></td>
@@ -6885,7 +7077,7 @@ function renderLbBody(){
       <tr class="lb-detail hidden" data-lbd="${i}"><td colspan="5">
         ${(r.brands&&r.brands.length)?brandChipsHtml(r.brands,i):'<span style="color:var(--ink-3);font-size:.82rem">還沒有成功回報的店家</span>'}
       </td></tr>`);
-  renderCollapsibleTable($('#lbBody'), '<th class="rk">#</th><th>使用者</th><th>成功</th><th>品牌</th><th class="amt">累積省下</th>',
+  renderCollapsibleTable($('#lbBody'), `<th class="rk">${showPr?'PR':'#'}</th><th>使用者</th><th>成功</th><th>品牌</th><th class="amt">累積省下</th>`,
     lbEntries, 5, 'lb-more-rows',
     sortMode==='climb' ? climbEmptyMsg(LB_HAS_PREV) :
     `<div style="color:var(--ink-3);font-size:.86rem">${hideAnon&&LB_ROWS.length?'隱藏匿名使用者後這裡暫時空的，取消勾選可以看全部。':
@@ -6934,11 +7126,17 @@ function renderLbBody(){
   if(shareWrap && shareBtn){
     if(myRow){
       shareWrap.classList.remove('hidden');
+      // 嵐：「你的分享都要能選區間，例如『本月省錢排行榜』，並且標月份」——
+      // 分享卡只寫「第 3 名」看不出是哪一段期間的，標題直接把區間寫進去。
+      const pr=prOf(myRow.rank, lbTotal);
       shareBtn.onclick=()=>shareStatsCard({
         emoji:myRow.rank<=3?'🏆':'🎉',
-        title:(sortByCount?'成功使用次數':'省錢排行榜')+' 第 '+myRow.rank+' 名',
-        lines:[{label:'累積省下', value:nt(myRow.saved_total)}, {label:'成功次數', value:String(myRow.success_count)+' 次'}],
-        footer:'一起找生日優惠，去壽星日看看吧', filename:'我的排名'
+        title:`${lbPeriodLabel()}${sortByCount?'成功使用次數':'省錢排行榜'} 第 ${myRow.rank} 名`,
+        lines:[{label:'累積省下', value:nt(myRow.saved_total)},
+               {label:'成功次數', value:String(myRow.success_count)+' 次'}]
+          .concat(pr!=null?[{label:'PR 值', value:`${pr}（贏過 ${pr}% 的人）`}]:[]),
+        footer:'一起找生日優惠，去壽星日看看吧',
+        filename:`我的排名_${lbPeriodSlug()}`
       });
     } else {
       shareWrap.classList.add('hidden');
@@ -6947,6 +7145,7 @@ function renderLbBody(){
 }
 $('#lbHideAnon').onchange=renderLbBody;
 $('#lbSortBy').onchange=renderLbBody;
+$('#lbShowPr').onchange=renderLbBody;
 
 /* ---- 貢獻度排行榜：投稿／修改建議被核可的次數，跟省錢排行榜是分開的
    兩件事——有人可能沒回報過使用心得，但一直在投稿新優惠、幫忙抓錯，
@@ -7080,8 +7279,10 @@ function brandChipsHtml(brands, idx){
   if(brands.length<=VISIBLE) return `<div class="regchips">${shown}</div>`;
   const rest=brands.slice(VISIBLE).map(brandChipHtml).join('');
   const moreId=`brand-more-${idx}`;
+  // 展開的那一段用 display:contents（見 .regchips-more），讓它的 chip 跟前 15 個
+  // 待在同一個 flex 容器裡，前後間距才會一樣（嵐：排版不統一）
   return `<div class="regchips">${shown}
-    <span class="regchips hidden" id="${moreId}" style="display:inline;padding:0">${rest}</span>
+    <span class="regchips-more hidden" id="${moreId}">${rest}</span>
     <button class="btn sm brand-showmore" type="button" data-target="${moreId}" aria-expanded="false">顯示全部 ${brands.length} 個</button>
   </div>`;
 }
@@ -7514,6 +7715,9 @@ function wireSubtabs(root=document){
         document.getElementById(t.dataset.pane)?.classList.toggle('hidden', !on);
       });
       try{ localStorage.setItem(key,id); }catch{}
+      // 「每月人數」要另外跟資料庫要（site_monthly_activity），切到才查——
+      // 開排行榜就先查的話，大部分人根本不會點進來看，白白多一次查詢。
+      if(id==='bsMonthly' && typeof refreshMonthlyActivity==='function') refreshMonthlyActivity();
     };
     tabs.forEach(t=>t.onclick=()=>show(t.dataset.pane));
     let saved=null; try{ saved=localStorage.getItem(key); }catch{}
@@ -7765,6 +7969,71 @@ function renderWeekdayBreakdown(rows){
      table:{head:['星期','成功使用次數','佔比'], rows:items.map(it=>[it.label,it.value,vizPct(it.value,total)+'%'])}});
 }
 
+/* ---- 每個月有多少人在收藏、多少人真的去用（嵐）----
+   「收藏跟使用都可以區分成月份看，看每個月的人數」。
+
+   收藏數要用 v81 的 site_monthly_activity()：wishlist 的 RLS 是「只看得到自己的」，
+   前端只知道自己收藏了什麼，算不出全站每個月有幾個人在收藏。那支函式在資料庫
+   算完，只回每個月的「幾個人、幾筆」，不吐 user_id。
+
+   兩條並排比，才看得出「收藏了但沒去用」的落差——這跟站台數據那張
+   「收藏後真的去用」的轉換率是同一件事，只是攤開到每個月。 ---- */
+let MONTHLY_ROWS=null, MONTHLY_ERR='';
+async function loadMonthlyActivity(force){
+  if(!LIVE) return null;
+  const months=Number($('#monthlyMonths')?.value||12);
+  if(!force && MONTHLY_ROWS && MONTHLY_ROWS.__months===months) return MONTHLY_ROWS;
+  const {data,error}=await sb.rpc('site_monthly_activity',{p_months:months});
+  if(error){ MONTHLY_ERR=error.message; MONTHLY_ROWS=null; return null; }
+  MONTHLY_ERR=''; MONTHLY_ROWS=(data||[]); MONTHLY_ROWS.__months=months;
+  return MONTHLY_ROWS;
+}
+function renderMonthlyActivity(){
+  const box=$('#boardMonthlyChart');
+  if(!box) return;
+  if(!LIVE){ box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">這份數據需要連線 Supabase。</div>'; return; }
+  const rows=MONTHLY_ROWS;
+  if(!rows){
+    box.innerHTML=`<div class="note${MONTHLY_ERR?' alert':''}">${MONTHLY_ERR
+      ? `每月人數讀取失敗：${esc(MONTHLY_ERR)}${/function|does not exist/i.test(MONTHLY_ERR)
+          ? '（Supabase 可能還沒跑 schema_v81_monthly_and_spend.sql）':''}`
+      : '載入中…'}</div>`;
+    return;
+  }
+  const byUsers=$('#monthlyMetric').value==='users';
+  const unit=byUsers?'人':'筆';
+  const wish=rows.map(r=>byUsers?r.wish_users:r.wish_count);
+  const use=rows.map(r=>byUsers?r.use_users:r.use_count);
+  if(!wish.some(v=>v) && !use.some(v=>v)){
+    box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">這段期間還沒有收藏或使用紀錄。</div>';
+    return;
+  }
+  const short=ym=>`${Number(ym.slice(5))}月`;
+  const cur=rows.length?rows[rows.length-1].ym:'';
+  const cols=(vals,emphColor)=>rows.map((r,i)=>({
+    label:r.ym, short:short(r.ym)+(r.ym===cur?'＊':''), value:vals[i],
+    text:`${vals[i]} ${unit}`,
+    tip:`${r.ym}${r.ym===cur?'（進行中）':''}：${vals[i]} ${unit}`,
+    soft:r.ym===cur, emph:emphColor && vals[i]===Math.max(...vals) && vals[i]>0,
+    showValue:vals[i]===Math.max(...vals) && vals[i]>0}));
+  const sum=a=>a.reduce((x,y)=>x+y,0);
+  box.innerHTML=
+    vizCard(`每月收藏的${byUsers?'人數':'筆數'}`, vizColumns(cols(wish,true),{height:110}),
+      {sub:`這段期間合計 ${sum(wish)} ${unit}${byUsers?'（同一個人在不同月份各算一次）':''}`,
+       table:{head:['月份',`收藏${unit}數`], rows:rows.map((r,i)=>[r.ym, wish[i]])}})
+    + vizCard(`每月真的去用的${byUsers?'人數':'筆數'}`, vizColumns(cols(use,true),{height:110}),
+      {sub:'＊這個月還沒結束，數字會繼續增加',
+       table:{head:['月份',`使用${unit}數`,'省下金額'],
+              rows:rows.map((r,i)=>[r.ym, use[i], nt(r.saved_total)])}});
+}
+async function refreshMonthlyActivity(force){
+  renderMonthlyActivity();          // 先把「載入中」畫出來
+  await loadMonthlyActivity(force);
+  renderMonthlyActivity();
+}
+$('#monthlyMetric').onchange=()=>renderMonthlyActivity();
+$('#monthlyMonths').onchange=()=>refreshMonthlyActivity(true);
+
 /* ---- 大頭貼：自己上傳照片（schema_v70）----
    選照片 → 在瀏覽器裁成正方形、縮成 256×256 JPEG（手機拍的照片動輒好幾 MB，縮完通常幾十 KB）→
    上傳到 avatars/<自己的 id>/ → 更新 profiles.avatar_url。檔名每次都不一樣，瀏覽器快取不會卡住舊照片；
@@ -7875,7 +8144,7 @@ async function bulkApproveOffers(ids){
 const FILL_FIELDS=[
   ['offer','offer'], ['category','category'], ['timing','timing'],
   ['membership','membership'], ['membership_type','membershipType'], ['free_tier','freeTier'],
-  ['advance_days','advanceDays'], ['value_twd','valueTwd'], ['conditions','conditions'],
+  ['advance_days','advanceDays'], ['value_twd','valueTwd'], ['min_spend','minSpend'], ['conditions','conditions'],
   ['valid_from','validFrom'], ['valid_until','validUntil'],
   ['transferable','transferable'], ['regions','regions'], ['sources','sources'],
 ];
@@ -8163,7 +8432,7 @@ const PEND_FOLD_KEY='sxr_admin_pend_insights';
    內容還留著；只有「實際套用到 offers 的值」跟歷史紀錄的措辭會反映
    管理員是否調整過（見 schema_v42／schema_v40）。 ---- */
 const EDIT_FIELD_LABEL={brand:'品牌名稱',offer:'優惠內容',conditions:'使用條件',membership:'會員取得方式',
-  timing:'適用期間',advance_days:'提前天數',value_twd:'優惠價值',valid_until:'檔期迄日',
+  timing:'適用期間',advance_days:'提前天數',value_twd:'優惠價值',min_spend:'低消',valid_until:'檔期迄日',
   category:'類別',requires_companion:'需同行',regions:'適用地區',transferable:'本人出示證件',
   membership_type:'會員種類',free_tier:'免費層級',valid_from:'檔期起日',sources:'資料來源'};
 // regions/sources 是陣列、requires_companion 是布林值——「新舊對照」畫面原本
@@ -8209,7 +8478,7 @@ function patchFieldInputHtml(editId, field, value){
       <span style="color:var(--ink-3);font-size:.76rem">（此欄位僅供預覽，如需調整請退回）</span></div>`;
   const v = value==null ? '' : String(value);
   const common = `class="edit-patch-field" data-edit="${esc(String(editId))}" data-field="${esc(field)}"`;
-  if(field==='advance_days'||field==='value_twd')
+  if(field==='advance_days'||field==='value_twd'||field==='min_spend')
     return `<input type="number" ${common} value="${esc(v)}" style="width:100%;margin-top:2px">`;
   if(field==='valid_until'||field==='valid_from')
     return `<input type="date" ${common} value="${esc(v)}" style="width:100%;margin-top:2px">`;
@@ -8339,7 +8608,7 @@ async function loadPendingEdits(){
       $$(`.edit-patch-field[data-edit="${id}"]`).forEach(inp=>{
         const field=inp.dataset.field;
         let val=inp.value;
-        if(field==='advance_days'||field==='value_twd') val = val===''?null:Number(val);
+        if(field==='advance_days'||field==='value_twd'||field==='min_spend') val = val===''?null:Number(val);
         else if(field==='valid_until'||field==='valid_from') val = val || null;
         finalPatch[field]=val;
         if(orig[field]!==val) changed=true;
@@ -8685,7 +8954,7 @@ async function loadAdminCommentList(){
 
 /* ---- 問題回報／建議清單：用 admin_list_feedback() RPC，這樣才能連 auth.users
    一起查到已登入使用者綁定的信箱，不用靠他自己填的聯絡方式那欄 ---- */
-const FB_TYPE_LABEL={bug:'問題回報',suggestion:'建議'};
+const FB_TYPE_LABEL={bug:'問題回報',suggestion:'建議',duplicate:'🔁 重複的優惠'};
 let FB_ROWS=[];
 async function loadFeedbackList(){
   if(!LIVE||!myProfile?.is_admin) return;

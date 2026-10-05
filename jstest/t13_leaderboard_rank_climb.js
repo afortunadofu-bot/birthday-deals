@@ -96,6 +96,47 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   await tick(win, 3);
   t.ok('名次在前 50 名以外也看得到自己排第幾', /第\s*73\s*名/.test($('#myRankBanner').textContent) && /共 210 人/.test($('#myRankBanner').textContent), $('#myRankBanner').textContent);
   t.eq('查的是總累積的省錢榜', rpcCalls[rpcCalls.length - 1], { p_board: 'savings', p_period: 'all', p_key: null });
+
+  /* ---- PR 值（嵐：「排行榜可以切成 pr 值」）---- */
+  // 210 人裡的第 73 名 → (210-73)/209 ≈ 66
+  t.ok('自己那一行一起寫 PR，不用切換', /PR\s*66/.test($('#myRankBanner').textContent),
+    $('#myRankBanner').textContent);
+  t.ok('講人話：贏過多少人', /贏過 66% 的人/.test($('#myRankBanner').textContent));
+  t.eq('第一名是 PR 99（不是 100）', win.prOf(1, 210), 99);
+  t.eq('最後一名是 PR 1', win.prOf(210, 210), 1);
+  t.eq('只有一個人沒得比', win.prOf(1, 1), null);
+  const rkCells = () => [...doc.querySelectorAll('#lbBody tbody tr.lb-row .rk')].map((c) => c.textContent.trim());
+  t.ok('預設還是看名次', /^1/.test(rkCells()[0]) && !/PR/.test(rkCells().join('')), rkCells());
+  $('#lbShowPr').checked = true; $('#lbShowPr').dispatchEvent(new win.Event('change'));
+  await tick(win, 2);
+  t.ok('切過去就變 PR', rkCells().every((x) => /^PR/.test(x)), rkCells());
+  // 同一格下面還有名次升降的小徽章（▲2／NEW），只看前面的 PR
+  t.eq('三個人的第一名 PR 99、最後一名 PR 1',
+    rkCells().map((x) => (x.match(/^PR \d+/) || [''])[0]), ['PR 99', 'PR 50', 'PR 1']);
+  t.eq('表頭跟著換', doc.querySelector('#lbBody thead .rk').textContent, 'PR');
+  $('#lbShowPr').checked = false; $('#lbShowPr').dispatchEvent(new win.Event('change'));
+  await tick(win, 2);
+  t.eq('切回來還是名次', doc.querySelector('#lbBody thead .rk').textContent, '#');
+
+  /* ---- 分享卡要標區間（嵐：「分享都要能選區間，ex 本月省錢排行榜，並且標月份」）---- */
+  const shared = [];
+  win.shareStatsCard = (o) => { shared.push(o); };
+  win.eval(`myProfile = {id:'me-1', display_name:'甲', show_on_leaderboard:true};`);
+  win.renderLbBody();
+  await tick(win, 2);
+  $('#btnShareRank').click();
+  t.ok('總累積的卡片寫「總累積」', /^總累積 省錢排行榜 第 1 名$/.test(shared[0].title), shared[0].title);
+  t.ok('卡片上也有 PR', shared[0].lines.some((l) => /PR/.test(l.label)), shared[0].lines);
+
+  win.eval(`LB_MONTHLY = true; LB_YM = '2026-10'; LB_ROWS = LB_ROWS.map(r=>({...r, user_id:'me-1'}));`);
+  win.renderLbBody();
+  await tick(win, 2);
+  shared.length = 0;
+  $('#btnShareRank').click();
+  t.ok('本月的卡片要標出是哪一個月', /2026 年 10 月 省錢排行榜/.test(shared[0].title), shared[0].title);
+  t.ok('檔名也帶月份', /2026-10/.test(shared[0].filename), shared[0].filename);
+  win.eval(`LB_MONTHLY = false; LB_YM = ''; LB_ROWS = LB_ROWS.map(({user_id, ...r})=>r);
+    myProfile = {id:'me-1', display_name:'我', show_on_leaderboard:true};`);
   $('#lbSortBy').value = 'climb'; $('#lbSortBy').dispatchEvent(new win.Event('change'));
   await tick(win, 2);
   // 甲：第 3 → 第 1（進步 2 名）；丙：新上榜，當作從榜外第 4 名衝到第 3（進步 1 名）；乙退步不列

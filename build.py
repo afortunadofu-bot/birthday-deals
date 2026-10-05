@@ -49,6 +49,41 @@ payload = {
 html = (HERE / "template.html").read_text(encoding="utf-8")
 html = html.replace("/*__OFFERS_DATA__*/",
                     json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+
+
+def check_js(page: str) -> None:
+    """產生出來的 index.html 裡那包 JS 必須語法正確才算數。
+
+    踩過一次：編輯時不小心多留了一行 `if(...){`，整包腳本從那裡開始就解析失敗，
+    網站變成「畫得出來但什麼都不會動」——登入鈕沒反應、優惠永遠是內建種子資料。
+    瀏覽器只在 console 裡講一句，不看 console 根本不知道。
+    有 node 就用 `node --check` 擋下來，沒有就只提醒一句，不擋住建置。
+    """
+    import re, shutil, subprocess, tempfile
+    scripts = re.findall(r"<script>(.*?)</script>", page, re.S)
+    if not scripts:
+        return
+    node = shutil.which("node")
+    if not node:
+        print("（找不到 node，跳過 JS 語法檢查）")
+        return
+    big = max(scripts, key=len)
+    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as f:
+        f.write(big)
+        path = f.name
+    try:
+        r = subprocess.run([node, "--check", path], capture_output=True)
+    finally:
+        try:
+            Path(path).unlink()
+        except OSError:
+            pass
+    if r.returncode != 0:
+        msg = r.stderr.decode("utf-8", "replace").strip()
+        raise SystemExit("JS 語法錯誤，index.html 沒有產生：\n" + msg)
+
+
+check_js(html)
 (HERE / "index.html").write_text(html, encoding="utf-8")
 
 print(f"index.html 已產生，共 {len(payload['offers'])} 筆優惠。")

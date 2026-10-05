@@ -188,8 +188,9 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   t.eq('點「星期」就只顯示星期那塊', panes(), ['biWeek']);
   t.eq('分頁按鈕標出目前選的', bar.querySelector('[aria-selected="true"]').dataset.pane, 'biWeek');
   t.eq('記住上次看的分頁', win.localStorage.getItem('sxr_subtab_boardInsights'), 'biWeek');
-  t.ok('站台數據也分成小分頁', doc.querySelectorAll('.subtabs[data-group="boardStats"] .subtab').length === 3
-    && [...doc.querySelectorAll('#bsOverview, #bsHours, #bsCat')].filter((p) => !p.classList.contains('hidden')).length === 1);
+  // 總覽／使用時段／類別／每月人數（嵐：「收藏跟使用都可以區分成月份看」）
+  t.ok('站台數據也分成小分頁', doc.querySelectorAll('.subtabs[data-group="boardStats"] .subtab').length === 4
+    && [...doc.querySelectorAll('#bsOverview, #bsHours, #bsCat, #bsMonthly')].filter((p) => !p.classList.contains('hidden')).length === 1);
 
   /* ---- 滑過看數字 ---- */
   const tip = doc.querySelector('.viz-tip');
