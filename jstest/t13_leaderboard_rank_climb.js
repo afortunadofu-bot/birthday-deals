@@ -119,22 +119,40 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   t.eq('切回來還是名次', doc.querySelector('#lbBody thead .rk').textContent, '#');
 
   /* ---- 分享卡要標區間（嵐：「分享都要能選區間，ex 本月省錢排行榜，並且標月份」）---- */
+  // 嵐：「也可以換成依照次數算的跟金額算的兩種」——一次給兩張可切換的卡
   const shared = [];
-  win.shareStatsCard = (o) => { shared.push(o); };
+  win.shareStatsCard = (list, active) => { shared.push({ list: [].concat(list), active }); };
+  const card = (i, key) => shared[i].list.find((c) => c.key === key) || shared[i].list[0];
   win.eval(`myProfile = {id:'me-1', display_name:'甲', show_on_leaderboard:true};`);
   win.renderLbBody();
   await tick(win, 2);
   $('#btnShareRank').click();
-  t.ok('總累積的卡片寫「總累積」', /^總累積 省錢排行榜 第 1 名$/.test(shared[0].title), shared[0].title);
-  t.ok('卡片上也有 PR', shared[0].lines.some((l) => /PR/.test(l.label)), shared[0].lines);
+  t.eq('給金額跟次數兩張', shared[0].list.map((c) => c.key), ['amount', 'count']);
+  t.ok('總累積的卡片寫「總累積」', /^總累積 省錢排行榜 第 1 名$/.test(card(0, 'amount').title), card(0, 'amount').title);
+  t.ok('次數那張用次數的名次', /使用次數排行榜 第 \d+ 名/.test(card(0, 'count').title), card(0, 'count').title);
+  t.ok('卡片上也有 PR', card(0, 'amount').lines.some((l) => /PR/.test(l.label)), card(0, 'amount').lines);
+  // 嵐：「分享頁面都要標年份日期」
+  const today = new Date().toISOString().slice(0, 10);
+  t.ok('標題下面標了期間跟製作日期',
+    /總累積/.test(card(0, 'amount').sub) && card(0, 'amount').sub.includes(today), card(0, 'amount').sub);
 
   win.eval(`LB_MONTHLY = true; LB_YM = '2026-10'; LB_ROWS = LB_ROWS.map(r=>({...r, user_id:'me-1'}));`);
   win.renderLbBody();
   await tick(win, 2);
   shared.length = 0;
   $('#btnShareRank').click();
-  t.ok('本月的卡片要標出是哪一個月', /2026 年 10 月 省錢排行榜/.test(shared[0].title), shared[0].title);
-  t.ok('檔名也帶月份', /2026-10/.test(shared[0].filename), shared[0].filename);
+  t.ok('本月的卡片要標出是哪一個月', /2026 年 10 月 省錢排行榜/.test(card(0, 'amount').title), card(0, 'amount').title);
+  t.ok('小字也標月份跟日期', /2026 年 10 月/.test(card(0, 'amount').sub), card(0, 'amount').sub);
+  t.ok('檔名也帶月份', /2026-10/.test(card(0, 'amount').filename), card(0, 'amount').filename);
+
+  // 沒上榜也能分享這一期的榜單（嵐：「可以分享的地方多一點」）
+  shared.length = 0;
+  t.ok('有「分享這一期榜單」', !$('#btnShareLbTop').classList.contains('hidden'));
+  $('#btnShareLbTop').click();
+  t.ok('榜單卡列出前幾名', card(0, 'amount').lines.length >= 3 && /第 1 名/.test(card(0, 'amount').lines[0].label),
+    card(0, 'amount').lines.map((l) => l.label));
+  t.ok('榜單卡也標期間與日期', /2026 年 10 月/.test(card(0, 'amount').sub), card(0, 'amount').sub);
+  win.eval(`LB_MONTHLY = false; LB_YM = '';`);
   win.eval(`LB_MONTHLY = false; LB_YM = ''; LB_ROWS = LB_ROWS.map(({user_id, ...r})=>r);
     myProfile = {id:'me-1', display_name:'我', show_on_leaderboard:true};`);
   $('#lbSortBy').value = 'climb'; $('#lbSortBy').dispatchEvent(new win.Event('change'));
@@ -172,11 +190,38 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   await tick(win, 2);
   t.eq('貢獻度「進步最多」', [...doc.querySelectorAll('#contribBody tbody tr')].map((tr) => tr.querySelector('.who-name').textContent), ['B']);
 
+  $('#contribSortBy').value = 'rank'; $('#contribSortBy').dispatchEvent(new win.Event('change'));
+  await tick(win, 2);
+
+  /* ---- 貢獻度也能分享（嵐：「可以分享的地方多一點……貢獻度也是」）---- */
+  // 名次在畫面這份名單之外（第 5 名、名單只有兩個人）：用資料庫算的名次做一張
+  shared.length = 0;
+  t.ok('不在名單裡也分享得出去', !$('#btnShareContrib').classList.contains('hidden'));
+  $('#btnShareContrib').click();
+  t.ok('用資料庫算的名次', /2026 年 09 月 貢獻度排行榜 第 5 名/.test(shared[0].list[0].title), shared[0].list[0].title);
+
+  // 自己就在名單裡：給「總貢獻／投稿數」兩張可切換
+  win.eval(`CONTRIB_ROWS = CONTRIB_ROWS.map((r,i)=> i===0 ? {...r, user_id:'me-1'} : r);`);
+  win.renderContribBody();
+  await tick(win, 3);
+  shared.length = 0;
+  $('#btnShareContrib').click();
+  t.eq('給總貢獻跟投稿數兩張', shared[0].list.map((c) => c.key), ['total', 'submitted']);
+  t.ok('標題帶區間', /2026 年 09 月 貢獻度排行榜 第 \d+ 名/.test(card(0, 'total').title), card(0, 'total').title);
+  t.ok('小字帶區間與製作日期',
+    /2026 年 09 月/.test(card(0, 'total').sub) && card(0, 'total').sub.includes(today), card(0, 'total').sub);
+  shared.length = 0;
+  t.ok('貢獻度也能分享整份榜單', !$('#btnShareContribTop').classList.contains('hidden'));
+  $('#btnShareContribTop').click();
+  t.ok('榜單卡列出前幾名', /第 1 名/.test(shared[0].list[0].lines[0].label), shared[0].list[0].lines[0]);
+
   // 沒登入不顯示
   win.eval('me = null;');
   win.renderContribBody();
   await tick(win, 2);
   t.ok('沒登入不顯示自己的名次', $('#contribMyRank').classList.contains('hidden'));
+  t.ok('沒登入不顯示「分享我的貢獻」', $('#btnShareContrib').classList.contains('hidden'));
+  t.ok('但榜單還是分享得了', !$('#btnShareContribTop').classList.contains('hidden'));
 
   process.exit(t.done() ? 0 : 1);
 })().catch((e) => { console.error(e); process.exit(1); });

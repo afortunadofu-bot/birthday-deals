@@ -1429,7 +1429,11 @@
         <!-- 嵐：「收藏跟使用都可以區分成月份看，看每個月的人數」 -->
         <button type="button" class="subtab" role="tab" data-pane="bsMonthly">每月人數</button>
       </div>
-      <div class="subpane" id="bsOverview" role="tabpanel"><div class="bigstat" id="boardStats"></div></div>
+      <div class="subpane" id="bsOverview" role="tabpanel">
+        <div class="bigstat" id="boardStats"></div>
+        <!-- 嵐：「可以分享的地方多一點」——整站的成績也能分享，不用登入 -->
+        <button type="button" class="btn sm hidden" id="btnShareSiteStats" style="margin-top:10px">📤 分享站台數據</button>
+      </div>
       <div class="subpane" id="bsHours" role="tabpanel"><div id="boardHoursChart"></div></div>
       <div class="subpane" id="bsCat" role="tabpanel"><div id="boardCatChart"></div></div>
       <div class="subpane" id="bsMonthly" role="tabpanel">
@@ -1533,8 +1537,12 @@
         <label class="toggle"><input type="checkbox" id="lbShowPr"> 用 PR 顯示</label>
       </div>
       <div class="note hidden" id="myRankBanner" style="margin-bottom:10px"></div>
-      <div id="myRankShareWrap" class="hidden" style="margin-bottom:10px">
-        <button type="button" class="btn sm" id="btnShareRank">📤 分享我的排名</button>
+      <div class="row" style="margin-bottom:10px;gap:8px;flex-wrap:wrap">
+        <span id="myRankShareWrap" class="hidden">
+          <button type="button" class="btn sm" id="btnShareRank">📤 分享我的排名</button>
+        </span>
+        <!-- 嵐：「可以分享的地方多一點」——沒上榜也可以分享這一期的榜單 -->
+        <button type="button" class="btn sm hidden" id="btnShareLbTop">📤 分享這一期榜單</button>
       </div>
       <div id="lbBody"></div>
     </div>
@@ -1554,6 +1562,11 @@
         </select></label>
       </div>
       <div class="note hidden" id="contribMyRank" style="margin-bottom:10px"></div>
+      <!-- 嵐：「可以分享的地方多一點……貢獻度也是」 -->
+      <div class="row" style="margin-bottom:10px;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn sm hidden" id="btnShareContrib">📤 分享我的貢獻</button>
+        <button type="button" class="btn sm hidden" id="btnShareContribTop">📤 分享這一期榜單</button>
+      </div>
       <div id="contribBody"></div>
     </div>
   </main>
@@ -2110,6 +2123,9 @@
 <dialog id="dlgSharePreview"><form method="dialog" class="dlg">
   <h2>分享前先看一下</h2>
   <p class="sub">確認內容沒問題再分享或儲存，不滿意可以直接關掉。</p>
+  <!-- 嵐：「也可以換成依照次數算的跟金額算的兩種」——同一張圖卡可以直接在
+       預覽裡切換要用哪個數字當主角，不用關掉重來一次。只有一種版本時整列會收起來。 -->
+  <div class="row hidden" id="sharePreviewTabs" style="gap:6px;margin:0 0 10px;flex-wrap:wrap"></div>
   <img id="sharePreviewImg" alt="分享圖卡預覽" style="width:100%;border-radius:var(--r-sm);border:1px solid var(--line)">
   <div class="foot">
     <button class="btn" value="cancel">取消</button>
@@ -6317,8 +6333,9 @@ $('#btnSaveBirthday').onclick=async()=>{
    出系統分享面板；不支援就退回下載圖片，使用者自己存起來分享。刻意做成
    通用函式，「省錢成果」跟「排行榜名次」共用同一套畫圖邏輯，只是傳入的
    標題／數字不同。 ---- */
-async function shareStatsCard(opts){
-  // opts: {emoji, title, lines:[{label,value}], footer, filename}
+/* 畫一張圖卡並回傳 blob（不開視窗）。
+   opts: {emoji, title, sub, lines:[{label,value}], footer, filename} */
+async function drawStatsCard(opts){
   const W=760, H=980, scale=2;
   const canvas=document.createElement('canvas');
   canvas.width=W*scale; canvas.height=H*scale;
@@ -6345,9 +6362,19 @@ async function shareStatsCard(opts){
 
   ctx.font='700 42px system-ui,-apple-system,"Noto Sans TC",sans-serif';
   ctx.fillStyle='#fff';
-  wrapCenterText(ctx, opts.title||'', W/2, 280, W-120, 52);
+  const titleBottom=wrapCenterText(ctx, opts.title||'', W/2, 280, W-120, 52);
 
+  // 嵐：「分享頁面都要標年份日期」。期間（2026 年 10 月／第 40 週／總累積）跟
+  // 製作日期寫在標題下面一行小字——沒有這行的話，圖卡傳出去隔幾個月再看，
+  // 根本分不出是哪一段期間的成績。
   let y=390;
+  if(opts.sub){
+    ctx.font='500 22px system-ui,-apple-system,"Noto Sans TC",sans-serif';
+    ctx.fillStyle='#b9a7a5';
+    const subY=Math.max(titleBottom+16, 326);
+    ctx.fillText(opts.sub, W/2, subY);
+    y=Math.max(y, subY+64);
+  }
   (opts.lines||[]).forEach(line=>{
     ctx.font='500 22px system-ui,-apple-system,"Noto Sans TC",sans-serif';
     ctx.fillStyle='#c9b8b6';
@@ -6362,26 +6389,57 @@ async function shareStatsCard(opts){
   ctx.fillStyle='#8f8482';
   ctx.fillText(opts.footer||'一起找生日優惠，去 birthdaydeals.celine-fu-work.workers.dev', W/2, H-50);
 
-  const blob = await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
-  if(!blob) return;
-  // 之前畫完直接跳系統分享面板或直接下載，使用者完全沒看過長怎樣就分享
-  // 出去了，常常事後才發現數字算錯、文字被切到、或根本不是自己以為的
-  // 那張——現在畫完先開預覽視窗秀出來，確認過再手動按分享或儲存。
-  const filename=(opts.filename||'card')+'.png';
-  const url=URL.createObjectURL(blob);
-  const dlg=$('#dlgSharePreview');
-  $('#sharePreviewImg').src=url;
+  return await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+}
+
+/* 分享一張（或多張可切換的）圖卡。
+   shareStatsCard(opts)                     → 單張
+   shareStatsCard([{key,label,...opts}, …]) → 多張，預覽視窗上方可以切換
+                                              （嵐：「可以換成依照次數算的跟金額算的兩種」）
+
+   畫完先開預覽視窗，確認過再手動按分享或儲存——之前是畫完直接跳系統分享面板，
+   使用者完全沒看過長怎樣就傳出去了。 */
+let SHARE_URL_POOL=[];
+async function shareStatsCard(optsOrList, activeKey){
+  const list=Array.isArray(optsOrList)?optsOrList:[optsOrList];
+  if(!list.length) return;
+  const dlg=$('#dlgSharePreview'), tabs=$('#sharePreviewTabs');
+  // 上一次開預覽留下來的 blob URL 先收乾淨
+  SHARE_URL_POOL.forEach(u=>URL.revokeObjectURL(u)); SHARE_URL_POOL=[];
+  let current=null, blob=null, url=null;
+
+  const paint=async(opts)=>{
+    current=opts;
+    blob=await drawStatsCard(opts);
+    if(!blob) return false;
+    url=URL.createObjectURL(blob); SHARE_URL_POOL.push(url);
+    $('#sharePreviewImg').src=url;
+    tabs.classList.toggle('hidden', list.length<2);
+    tabs.innerHTML = list.length<2 ? '' : list.map(v=>
+      `<button type="button" class="btn sm share-var${v===opts?' primary':''}" data-k="${esc(v.key||v.label||'')}">${esc(v.label||'這一張')}</button>`).join('');
+    $$('#sharePreviewTabs .share-var').forEach(b=>b.onclick=()=>{
+      const next=list.find(v=>String(v.key||v.label||'')===b.dataset.k);
+      if(next && next!==current) paint(next);
+    });
+    return true;
+  };
+  const first=list.find(v=>activeKey && v.key===activeKey) || list[0];
+  if(!await paint(first)) return;
   dlg.showModal(); pushDlgHistory();
-  dlg.addEventListener('close', ()=>URL.revokeObjectURL(url), {once:true});
+  dlg.addEventListener('close', ()=>{
+    SHARE_URL_POOL.forEach(u=>URL.revokeObjectURL(u)); SHARE_URL_POOL=[];
+  }, {once:true});
+
   const download=()=>{
-    const a=document.createElement('a'); a.href=url; a.download=filename;
+    const a=document.createElement('a'); a.href=url; a.download=(current.filename||'card')+'.png';
     document.body.appendChild(a); a.click(); a.remove();
   };
   $('#btnSharePreviewSave').onclick=download;
   $('#btnSharePreviewShare').onclick=async()=>{
+    const filename=(current.filename||'card')+'.png';
     const file = typeof File!=='undefined' ? new File([blob], filename, {type:'image/png'}) : null;
     if(file && navigator.canShare && navigator.canShare({files:[file]})){
-      try{ await navigator.share({files:[file], title:opts.title, text:opts.footer}); dlg.close(); }
+      try{ await navigator.share({files:[file], title:current.title, text:current.footer}); dlg.close(); }
       catch(e){ if(!(e && e.name==='AbortError')) alert('分享失敗，改用「儲存圖片」存下來手動傳送。'); }
       // AbortError（使用者自己取消系統分享面板）就留著預覽視窗，讓他可以
       // 改點「儲存圖片」，不要直接關掉害他要整個重來一次。
@@ -6403,6 +6461,7 @@ function wrapCenterText(ctx, text, cx, y, maxW, lh){
   if(line) lines.push(line);
   lines=lines.slice(0,2);
   lines.forEach((l,i)=>ctx.fillText(l, cx, y+i*lh));
+  return y+(lines.length-1)*lh;   // 最後一行的基準線，下面那行小字要接在這之後
 }
 
 /* ---- 「自上次來訪省了多少」——用 PREV_SEEN_AT（checkNewOffers() 覆蓋掉
@@ -6489,11 +6548,23 @@ async function loadMyStuff(){
   const shareBtn=$('#btnShareSavings');
   if(shareBtn){
     shareBtn.classList.toggle('hidden', !sv || !sv.saved_total);
-    shareBtn.onclick=()=>shareStatsCard({
-      emoji:'💰', title:'我靠生日優惠省下了',
-      lines:[{label:'累積省下', value:nt(sv.saved_total)}, {label:'成功使用次數', value:String(sv.success_count)+' 次'}],
-      footer:'一起找生日優惠，去壽星日看看吧', filename:'我的省錢成果'
-    });
+    // 嵐：「分享都要能選區間」「標年份日期」——累積跟今年兩張可以切換
+    const yr=new Date().getFullYear();
+    shareBtn.onclick=()=>shareStatsCard([
+      {key:'all', label:'總累積',
+       emoji:'💰', title:'我靠生日優惠省下了',
+       sub:shareSub('總累積'),
+       lines:[{label:'累積省下', value:nt(sv.saved_total)},
+              {label:'成功使用次數', value:String(sv.success_count)+' 次'},
+              {label:'用過品牌', value:String(sv.brands_used)+' 家'}],
+       footer:'一起找生日優惠，去壽星日看看吧', filename:'我的省錢成果_總累積'},
+      {key:'year', label:`${yr} 年`,
+       emoji:'💰', title:`${yr} 年我靠生日優惠省下了`,
+       sub:shareSub(`${yr} 年`),
+       lines:[{label:`${yr} 年省下`, value:nt(sv.saved_this_year)},
+              {label:'累積省下', value:nt(sv.saved_total)}],
+       footer:'一起找生日優惠，去壽星日看看吧', filename:`我的省錢成果_${yr}`},
+    ]);
   }
 
   const R={success:['成功','ok'],partial:['部分','partial'],failed:['失敗','fail']};
@@ -7008,16 +7079,17 @@ function climbEmptyMsg(hasPrev){
 }
 // 嵐：所有排行榜都要讓使用者知道自己是第幾名。用 my_board_rank()（schema_v67）直接在資料庫算，
 // 名次在 50 名以後、或自己沒公開暱稱也找得到。v67 還沒跑時退回「在抓回來的名單裡找自己」。
-async function showMyBoardRank(el, board, period, key, fallback, unit){
+async function showMyBoardRank(el, board, period, key, fallback, unit, after){
   if(!el) return;
-  if(!LIVE || !me || !sb){ el.classList.add('hidden'); return; }
+  const done=d=>{ if(typeof after==='function') after(d); };
+  if(!LIVE || !me || !sb){ el.classList.add('hidden'); done(null); return; }
   const seq=(el._seq=(el._seq||0)+1);
   let data=null, error=null;
   try{ ({data,error}=await sb.rpc('my_board_rank',{p_board:board, p_period:period, p_key:key||null})); }
   catch(e){ error=e; }
   if(seq!==el._seq) return;
   let d = (!error && data) ? data : (fallback ? {rank:fallback.rank, total:null, value:fallback.value} : null);
-  if(error && !fallback){ el.classList.add('hidden'); return; }
+  if(error && !fallback){ el.classList.add('hidden'); done(null); return; }
   el.classList.remove('hidden');
   const val = d ? unit(Number(d.value)||0) : '';
   // 嵐：「不同區間都能看到自己第幾名」＋「排行榜可以切成 PR 值」——這一行每一種
@@ -7028,6 +7100,9 @@ async function showMyBoardRank(el, board, period, key, fallback, unit){
     : (board==='savings'
       ? '🎯 你這一期還沒上榜——回報一次成功使用就會出現在排行榜上。'
       : '🎯 你這一期還沒上榜——投稿新優惠或修改建議被核可，就會出現在排行榜上。');
+  // 名次是資料庫算的，所以就算你不在畫面上這份名單裡（名次很後面）也分享得出去
+  // ——嵐：「不同月份的排行也要可以按分享，不同週也是」
+  done(d && d.rank ? d : null);
 }
 /* 嵐：「排行榜可以切成 PR 值」。
    PR＝贏過多少百分比的人。用 (總人數 − 名次) ÷ (總人數 − 1)：第一名是 99（台灣的
@@ -7035,6 +7110,23 @@ async function showMyBoardRank(el, board, period, key, fallback, unit){
 function prOf(rank, total){
   if(!rank || !total || total<2) return null;
   return Math.max(1, Math.min(99, Math.round((total-rank)/(total-1)*100)));
+}
+/* 名次在畫面這份名單之外（例如第 80 名）的人，用資料庫算出來的名次做分享卡。
+   拿得到的只有名次、總人數、值（省下金額），沒有成功次數，所以這張只有一種版本。 */
+function wireRankShareFromRpc(d){
+  const wrap=$('#myRankShareWrap'), btn=$('#btnShareRank');
+  if(!wrap||!btn) return;
+  wrap.classList.remove('hidden');
+  const pr=prOf(d.rank, d.total);
+  btn.onclick=()=>shareStatsCard({
+    emoji:d.rank<=3?'🏆':'🎉',
+    title:`${lbPeriodLabel()}省錢排行榜 第 ${d.rank} 名`,
+    sub:shareSub(),
+    lines:[{label:'累積省下', value:nt(Number(d.value)||0)}]
+      .concat(d.total?[{label:'參加人數', value:`${d.total} 人`}]:[])
+      .concat(pr!=null?[{label:`PR 值・贏過 ${pr}% 的人`, value:String(pr)}]:[]),
+    footer:'一起找生日優惠，去壽星日看看吧',
+    filename:`我的排名_${lbPeriodSlug()}`});
 }
 /* 目前看的是哪一段期間——分享卡的標題跟檔名都要寫清楚（嵐：「並且標月份」）。
    LB_YM 是 YYYY-MM；本週用當週的 ISO 週數（跟 leaderboard_weekly 同一套）。 */
@@ -7046,6 +7138,23 @@ function lbPeriodLabel(){
 function lbPeriodSlug(){
   if(LB_MONTHLY) return LB_YM||'month';
   if(LB_WEEKLY) return isoWeekStr(new Date());
+  return '總累積';
+}
+/* 分享圖卡標題下面那行小字（嵐：「分享頁面都要標年份日期」）：
+   期間 ＋ 製作日期。圖卡傳出去之後隔一陣子再看，才知道是哪一段期間、哪天做的。 */
+function shareSub(periodLabel){
+  const p=(periodLabel!=null?periodLabel:lbPeriodLabel()).trim();
+  return `${p}　${ISO(new Date())} 製作`;
+}
+/* 貢獻度排行榜的區間字樣，跟省錢榜同一套寫法 */
+function contribPeriodLabel(){
+  if(CONTRIB_MONTHLY) return `${(CONTRIB_YM||'').replace(/^(\d{4})-(\d{2})$/,'$1 年 $2 月')} `;
+  if(CONTRIB_WEEKLY) return `${isoWeekStr(new Date()).replace(/^(\d{4})-W(\d+)$/,'$1 年第 $2 週')} `;
+  return '總累積 ';
+}
+function contribPeriodSlug(){
+  if(CONTRIB_MONTHLY) return CONTRIB_YM||'month';
+  if(CONTRIB_WEEKLY) return isoWeekStr(new Date());
   return '總累積';
 }
 function renderLbBody(){
@@ -7119,28 +7228,64 @@ function renderLbBody(){
     } else {
       showMyBoardRank(rankBanner, 'savings', LB_MONTHLY?'month':LB_WEEKLY?'week':'all',
         LB_MONTHLY?LB_YM:LB_WEEKLY?isoWeekStr(new Date()):null,
-        myRow?{rank:myRow.rank, value:myRow.saved_total}:null, v=>`累積省下 ${nt(v)}`);
+        myRow?{rank:myRow.rank, value:myRow.saved_total}:null, v=>`累積省下 ${nt(v)}`,
+        // 名次很後面、不在畫面這份名單裡的人，也要分享得出去
+        d=>{ if(!myRow && d) wireRankShareFromRpc(d); });
     }
   }
   const shareWrap=$('#myRankShareWrap'), shareBtn=$('#btnShareRank');
   if(shareWrap && shareBtn){
     if(myRow){
       shareWrap.classList.remove('hidden');
-      // 嵐：「你的分享都要能選區間，例如『本月省錢排行榜』，並且標月份」——
-      // 分享卡只寫「第 3 名」看不出是哪一段期間的，標題直接把區間寫進去。
+      // 嵐：「你的分享都要能選區間」「標年份日期」「可以換成依照次數算的跟金額算的兩種」
+      // → 同一次分享給兩張可切換的圖卡：一張以金額為主角、一張以次數為主角。
+      //   金額那張的名次是榜上的名次；次數那張要另外照次數重排才算得出名次，
+      //   不然會變成「用金額的名次配次數的數字」。
       const pr=prOf(myRow.rank, lbTotal);
-      shareBtn.onclick=()=>shareStatsCard({
-        emoji:myRow.rank<=3?'🏆':'🎉',
-        title:`${lbPeriodLabel()}${sortByCount?'成功使用次數':'省錢排行榜'} 第 ${myRow.rank} 名`,
-        lines:[{label:'累積省下', value:nt(myRow.saved_total)},
-               {label:'成功次數', value:String(myRow.success_count)+' 次'}]
-          .concat(pr!=null?[{label:'PR 值', value:`${pr}（贏過 ${pr}% 的人）`}]:[]),
-        footer:'一起找生日優惠，去壽星日看看吧',
-        filename:`我的排名_${lbPeriodSlug()}`
-      });
+      const byCount=[...allRows].sort((a,b)=>(b.success_count-a.success_count)||(b.saved_total-a.saved_total));
+      const myCountRank=byCount.findIndex(r=>r===myRow)+1;
+      const prCount=prOf(myCountRank, lbTotal);
+      shareBtn.onclick=()=>shareStatsCard([
+        {key:'amount', label:'依金額',
+         emoji:myRow.rank<=3?'🏆':'🎉',
+         title:`${lbPeriodLabel()}省錢排行榜 第 ${myRow.rank} 名`,
+         sub:shareSub(),
+         lines:[{label:'累積省下', value:nt(myRow.saved_total)},
+                {label:'成功次數', value:String(myRow.success_count)+' 次'}]
+           .concat(pr!=null?[{label:`PR 值・贏過 ${pr}% 的人`, value:String(pr)}]:[]),
+         footer:'一起找生日優惠，去壽星日看看吧',
+         filename:`我的排名_金額_${lbPeriodSlug()}`},
+        {key:'count', label:'依次數',
+         emoji:myCountRank<=3?'🏆':'🎉',
+         title:`${lbPeriodLabel()}使用次數排行榜 第 ${myCountRank} 名`,
+         sub:shareSub(),
+         lines:[{label:'成功次數', value:String(myRow.success_count)+' 次'},
+                {label:'累積省下', value:nt(myRow.saved_total)}]
+           .concat(prCount!=null?[{label:`PR 值・贏過 ${prCount}% 的人`, value:String(prCount)}]:[]),
+         footer:'一起找生日優惠，去壽星日看看吧',
+         filename:`我的排名_次數_${lbPeriodSlug()}`},
+      ], sortByCount?'count':'amount');
     } else {
       shareWrap.classList.add('hidden');
     }
+  }
+  // 嵐：「可以分享的地方多一點」——沒上榜（或根本沒登入）也可以分享「這一期的榜單」。
+  // 這張不分個人，任何人、任何區間都按得下去。
+  const topBtn=$('#btnShareLbTop');
+  if(topBtn){
+    topBtn.classList.toggle('hidden', !allRows.length);
+    const top5=allRows.slice(0,5);
+    topBtn.onclick=()=>shareStatsCard([
+      {key:'amount', label:'依金額',
+       emoji:'🏆', title:`${lbPeriodLabel()}省錢排行榜`, sub:shareSub(),
+       lines:top5.map((r,i)=>({label:`第 ${i+1} 名　${r.display_name||'壽星'}`, value:nt(r.saved_total)})),
+       footer:'一起找生日優惠，去壽星日看看吧', filename:`省錢排行榜_${lbPeriodSlug()}`},
+      {key:'count', label:'依次數',
+       emoji:'🏆', title:`${lbPeriodLabel()}使用次數排行榜`, sub:shareSub(),
+       lines:[...allRows].sort((a,b)=>(b.success_count-a.success_count)||(b.saved_total-a.saved_total))
+         .slice(0,5).map((r,i)=>({label:`第 ${i+1} 名　${r.display_name||'壽星'}`, value:`${r.success_count} 次`})),
+       footer:'一起找生日優惠，去壽星日看看吧', filename:`使用次數排行榜_${lbPeriodSlug()}`},
+    ], sortByCount?'count':'amount');
   }
 }
 $('#lbHideAnon').onchange=renderLbBody;
@@ -7223,7 +7368,67 @@ function renderContribBody(){
   const mine = me ? CONTRIB_ROWS.find(r=>r.user_id===me.id) : null;
   showMyBoardRank($('#contribMyRank'), 'contrib', CONTRIB_MONTHLY?'month':CONTRIB_WEEKLY?'week':'all',
     CONTRIB_MONTHLY?CONTRIB_YM:CONTRIB_WEEKLY?isoWeekStr(new Date()):null,
-    mine?{rank:mine.rank, value:mine.total_count}:null, v=>`貢獻 ${v} 次`);
+    mine?{rank:mine.rank, value:mine.total_count}:null, v=>`貢獻 ${v} 次`,
+    // 不在畫面這份名單裡（名次比較後面）也要分享得出去
+    d=>{
+      if(mine || !d) return;
+      const btn=$('#btnShareContrib');
+      if(!btn) return;
+      btn.classList.remove('hidden');
+      const pr=prOf(d.rank, d.total);
+      btn.onclick=()=>shareStatsCard({
+        emoji:d.rank<=3?'🏅':'✨',
+        title:`${contribPeriodLabel()}貢獻度排行榜 第 ${d.rank} 名`,
+        sub:shareSub(contribPeriodLabel()),
+        lines:[{label:'總貢獻', value:`${Number(d.value)||0} 次`}]
+          .concat(d.total?[{label:'參加人數', value:`${d.total} 人`}]:[])
+          .concat(pr!=null?[{label:`PR 值・贏過 ${pr}% 的人`, value:String(pr)}]:[]),
+        footer:'一起把生日優惠整理得更完整，來壽星日投稿',
+        filename:`我的貢獻_${contribPeriodSlug()}`});
+    });
+
+  /* 分享（嵐：「可以分享的地方多一點，貢獻度也是」）。
+     兩張可切換：一張以「總貢獻」為主角，一張以「投稿數」為主角——投稿跟修改建議
+     是兩件不同的事，有人幾乎只投稿、有人幾乎只在幫忙抓錯。 */
+  const total=CONTRIB_ROWS.length;
+  const myBtn=$('#btnShareContrib');
+  if(myBtn){
+    myBtn.classList.toggle('hidden', !mine);
+    if(mine){
+      const pr=prOf(mine.rank, total);
+      const bySub=[...CONTRIB_ROWS].sort((a,b)=>(b.submitted_count-a.submitted_count)||(b.total_count-a.total_count));
+      const subRank=bySub.findIndex(r=>r===mine)+1;
+      myBtn.onclick=()=>shareStatsCard([
+        {key:'total', label:'依總貢獻',
+         emoji:mine.rank<=3?'🏅':'✨',
+         title:`${contribPeriodLabel()}貢獻度排行榜 第 ${mine.rank} 名`,
+         sub:shareSub(contribPeriodLabel()),
+         lines:[{label:'總貢獻', value:`${mine.total_count} 次`},
+                {label:'投稿／修改建議', value:`${mine.submitted_count} ／ ${mine.edit_count}`}]
+           .concat(pr!=null?[{label:`PR 值・贏過 ${pr}% 的人`, value:String(pr)}]:[]),
+         footer:'一起把生日優惠整理得更完整，來壽星日投稿',
+         filename:`我的貢獻_總計_${contribPeriodSlug()}`},
+        {key:'submitted', label:'依投稿數',
+         emoji:subRank<=3?'🏅':'✨',
+         title:`${contribPeriodLabel()}投稿排行榜 第 ${subRank} 名`,
+         sub:shareSub(contribPeriodLabel()),
+         lines:[{label:'投稿被採用', value:`${mine.submitted_count} 次`},
+                {label:'修改建議被採用', value:`${mine.edit_count} 次`}],
+         footer:'一起把生日優惠整理得更完整，來壽星日投稿',
+         filename:`我的貢獻_投稿_${contribPeriodSlug()}`},
+      ]);
+    }
+  }
+  const topBtn=$('#btnShareContribTop');
+  if(topBtn){
+    topBtn.classList.toggle('hidden', !CONTRIB_ROWS.length);
+    topBtn.onclick=()=>shareStatsCard({
+      emoji:'🏅', title:`${contribPeriodLabel()}貢獻度排行榜`,
+      sub:shareSub(contribPeriodLabel()),
+      lines:CONTRIB_ROWS.slice(0,5).map((r,i)=>({label:`第 ${i+1} 名　${r.display_name||'壽星'}`, value:`${r.total_count} 次`})),
+      footer:'一起把生日優惠整理得更完整，來壽星日投稿',
+      filename:`貢獻度排行榜_${contribPeriodSlug()}`});
+  }
 }
 $('#contribSortBy').onchange=renderContribBody;
 // 貢獻度排行榜的月份選擇器，跟省錢排行榜的 #lbPeriod/#lbMonth 是同一套
@@ -7512,6 +7717,18 @@ function renderBoardStats(lb, pop, allTimeSavedRows, usedRows, siteStatsRow, onl
     <div><div class="v">${nt(avg)}</div><div class="k">平均每人省下</div></div>
     <div><div class="v" style="font-size:1.05rem">${esc(top?.brand||'—')}</div>
       <div class="k">最多人用（${top?.report_count||0} 次）</div></div>`;
+  // 嵐：「可以分享的地方多一點」——整站的成績也能分享（推廣用，不需要登入）
+  const siteBtn=$('#btnShareSiteStats');
+  if(siteBtn){
+    siteBtn.classList.remove('hidden');
+    siteBtn.onclick=()=>shareStatsCard({
+      emoji:'🎂', title:'大家在壽星日省下了',
+      sub:shareSub('總累積'),
+      lines:[{label:'大家累積省下', value:nt(saved)},
+             {label:'已上架店家', value:`${shopCount} 家`},
+             {label:'總回報次數', value:`${reports} 次`}],
+      footer:'生日優惠一站查，去壽星日看看吧', filename:'壽星日站台數據'});
+  }
 }
 // 「即時在線」不是真的 WebSocket 推播，是每隔一段時間重打一次公開版
 // site_online_now() RPC。排行榜分頁不像管理員儀表板那樣有獨立生命週期
