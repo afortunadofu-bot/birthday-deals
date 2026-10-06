@@ -2995,10 +2995,36 @@ function writeOffersCache(rows){
   // 存不下（隱私模式、容量滿）就算了，純粹是加速用的東西，不能因此壞掉
   try{ localStorage.setItem(OFFERS_CACHE_KEY, JSON.stringify({at:Date.now(), rows})); }catch{}
 }
+/* 邊緣快取（Cloudflare Worker，見 worker/offers-cache.js）。
+   config.js 裡有設 window.OFFERS_API 才會用；沒設就跟以前一樣直接問 Supabase。
+
+   前端的 localStorage 快取只能讓「同一台裝置」不重複查，新訪客還是每人各查一次；
+   這一層是大家共用的——不管一小時來 10 個人還是 10000 個人，Supabase 都只被打 6 次。
+   Supabase 掛掉時 Worker 還會把最後一份好的資料頂出來（最多 24 小時）。 */
+function edgeApi(){
+  const base=String(window.OFFERS_API||'').trim().replace(/\/+$/,'');
+  return /^https?:\/\//.test(base) ? base : '';
+}
+async function edgeFetch(path){
+  const base=edgeApi();
+  if(!base) return null;
+  try{
+    const r=await fetch(`${base}${path}`);
+    if(!r.ok) return null;
+    const j=await r.json();
+    return (j && j.data!=null) ? j.data : null;
+  }catch{ return null; }
+}
 async function loadOffers(force){
   if(!force){
     const cached=readOffersCache();
     if(cached){ OFFERS=cached.map(fromRow); return; }
+    // force 時刻意跳過邊緣快取：那是「自己剛回報／投稿完」才會用的路徑，
+    // 要拿到最新的狀態，不能拿一份最多舊 10 分鐘的共用快取。
+    const rows=await edgeFetch('/offers');
+    if(Array.isArray(rows) && rows.length){
+      OFFERS=rows.map(fromRow); writeOffersCache(rows); return;
+    }
   }
   // PostgREST 的 max-rows 是 1000（v82 就是栽在這裡），`.limit(3000)` 擋不住。
   // 現在站上 426 筆還沒到，但總有一天會到——到的時候不能默默只顯示前 1000 筆。
@@ -3725,8 +3751,11 @@ async function siteStats(force){
   }
   let data=null;
   if(!force){
-    const r=await sb.rpc('site_stats_cached');
-    if(!r.error && r.data) data=r.data;
+    data=await edgeFetch('/stats');          // 先問邊緣快取（大家共用那一層）
+    if(!data){
+      const r=await sb.rpc('site_stats_cached');
+      if(!r.error && r.data) data=r.data;
+    }
   }
   if(!data){ const r=await sb.from('site_stats').select('*').single(); data=r.data||null; }
   if(data){
