@@ -109,6 +109,12 @@ v61 的「有幫助」按鈕本來是 `👍 3`，改成 `♡ 3`／按過的 `♥
 
 **沒有資料庫變更。** 新增 `worker/offers-cache.js`（部署說明在 `worker/README.md`）。
 
+**已上線（2026-10-06）**：celine 部署在
+`https://birthdaydeals-api.celine-fu-work.workers.dev`，`config.js` 加上
+`window.OFFERS_API` 指過去。實測 `/offers` MISS 2.19s → HIT 1.11s（561KB、430 筆）、
+`/stats` 200、`/health` 200；本機頁面接上去後清單與站台數據都是從 Worker 來的
+（拿到的是 10 分鐘前的快照，數字比直接打 Supabase 舊一點，正好證明走的是快取）。
+
 celine：「Cloudflare Worker 邊緣快取做」。
 
 ### 問題
