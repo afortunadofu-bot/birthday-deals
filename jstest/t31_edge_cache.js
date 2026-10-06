@@ -103,6 +103,21 @@ function fakeCaches() {
 
   res = await get('/health');
   t.eq('健康檢查', res.status, 200);
+
+  /* 根目錄：原本回 404「not found」，celine 每次點開網址就看到一行錯誤訊息，
+     看起來像整支掛了。改成一張看得懂的狀態頁。 */
+  upstream = [];
+  res = await get('/', { headers: { accept: 'text/html' } });
+  const home = await res.text();
+  t.eq('打開網址不再看到 404', res.status, 200);
+  t.ok('是給人看的網頁', /text\/html/.test(res.headers.get('content-type')));
+  t.ok('寫著現在是正常的', /運作中/.test(home));
+  t.ok('三個端點都列出來', /\/offers/.test(home) && /\/stats/.test(home) && /\/health/.test(home));
+  t.ok('說得出快取現在熱不熱', /快取中|等第一個人來/.test(home));
+  t.ok('狀態頁本身不要被快取住', /no-store/.test(res.headers.get('cache-control')));
+  res = await get('/');
+  t.eq('用程式打（沒要 html）還是回 JSON', (await res.json()).ok, true);
+  t.ok('狀態頁不會去碰 Supabase', upstream.filter((u) => /supabase|rest\/v1/.test(u)).length === 0, upstream);
   res = await get('/nope');
   t.eq('沒有的路徑回 404', res.status, 404);
   res = await get('/offers', { method: 'OPTIONS' });
@@ -113,6 +128,12 @@ function fakeCaches() {
     ASSETS: { fetch: async () => { assetHits += 1; return new Response('html'); } },
   }, ctx);
   t.eq('其餘路徑交給靜態檔處理', assetHits, 1);
+  // 併進主站時根目錄是網站首頁，不能被狀態頁蓋掉
+  assetHits = 0;
+  res = await worker.fetch(new Request('https://api.test/', { headers: { accept: 'text/html' } }), {
+    ASSETS: { fetch: async () => { assetHits += 1; return new Response('<html>壽星日</html>'); } },
+  }, ctx);
+  t.eq('併進主站時 / 還是網站首頁，不是狀態頁', assetHits, 1);
   // 掛在 /api 底下也要認得
   globalThis.caches = fakeCaches();
   res = await worker.fetch(new Request('https://api.test/api/offers'), {}, ctx);

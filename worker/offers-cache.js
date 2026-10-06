@@ -136,6 +136,66 @@ async function serve(request, env, ctx, kind) {
   }
 }
 
+/**
+ * 首頁（/）。
+ * 原本根目錄直接回 404 `{"error":"not found"}`——celine 每次點開網址就看到一行
+ * 錯誤訊息，看起來像整支掛了（其實只是「根目錄不是端點」）。改成回一張狀態頁：
+ * 用瀏覽器打開就看得懂現在是正常的、三個端點各是什麼、快取有沒有熱著；
+ * 用 curl／程式打就還是回 JSON。
+ * 只讀快取的「有沒有」，不解析內容，CPU 幾乎不花。
+ */
+async function statusPage(request) {
+  const origin = new URL(request.url).origin;
+  const cache = caches.default;
+  const warm = {};
+  for (const kind of ['offers', 'stats']) {
+    warm[kind] = !!(await cache.match(new Request(`${origin}/__cache/${kind}/fresh`, { method: 'GET' })));
+  }
+  const now = new Date().toISOString();
+
+  if (!(request.headers.get('accept') || '').includes('text/html')) {
+    return json({ ok: true, service: '壽星日 edge cache', paths: ['/offers', '/stats', '/health'], cache: warm, now },
+      { ttl: 0 });
+  }
+
+  const mark = (on) => on
+    ? '<b class="on">快取中</b><span class="dim">10 分鐘內的資料，不會碰資料庫</span>'
+    : '<b class="off">等第一個人來</b><span class="dim">下一次請求會去抓一份回來</span>';
+  const html = `<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>壽星日 邊緣快取</title><style>
+:root{color-scheme:light dark}
+body{margin:0;padding:40px 20px;font:16px/1.7 system-ui,-apple-system,"Noto Sans TC",sans-serif;
+  background:#faf7f6;color:#1d1413;display:flex;justify-content:center}
+@media(prefers-color-scheme:dark){body{background:#140f0f;color:#f2e9e7}}
+.box{width:100%;max-width:520px}
+h1{font-size:1.25rem;margin:0 0 2px}
+.ok{display:inline-block;font-size:.8rem;font-weight:700;color:#16a34a;
+  background:#eefbf2;border:1px solid #c9ecd6;border-radius:99px;padding:2px 10px;margin-bottom:18px}
+@media(prefers-color-scheme:dark){.ok{background:#0e2416;border-color:#1c4a2c}}
+.row{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;
+  padding:11px 0;border-top:1px solid rgba(128,110,108,.25)}
+code{font:600 .9rem/1.4 ui-monospace,SFMono-Regular,Menlo,monospace}
+a{color:#e8483c}
+b{font-size:.8rem}.on{color:#16a34a}.off{color:#8f8482}
+.dim{font-size:.78rem;color:#8f8482;flex-basis:100%}
+p.note{font-size:.84rem;color:#8f8482;margin-top:22px}
+</style></head><body><div class="box">
+<h1>壽星日 邊緣快取</h1>
+<div class="ok">● 運作中</div>
+<div class="row"><code><a href="/offers">/offers</a></code>　優惠清單　${mark(warm.offers)}</div>
+<div class="row"><code><a href="/stats">/stats</a></code>　站台數據　${mark(warm.stats)}</div>
+<div class="row"><code><a href="/health">/health</a></code>　健康檢查<span class="dim">不快取，拿來確認這支還活著</span></div>
+<p class="note">這個網址是給網站呼叫的，不是給人看的——看到這頁就代表一切正常。
+壽星日本體在 <a href="https://birthdaydeals.celine-fu-work.workers.dev">birthdaydeals.celine-fu-work.workers.dev</a>。</p>
+<p class="note">${now}</p>
+</div></body></html>`;
+  return new Response(html, {
+    status: 200,
+    headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', ...CORS },
+  });
+}
+
 const handler = {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -151,7 +211,10 @@ const handler = {
     }
 
     // 如果把這支併進主站的 worker（有 assets 繫結），其餘路徑照原本的靜態檔處理
+    // ——包含 `/`，那時候根目錄是網站首頁，不是下面那張狀態頁
     if (env && env.ASSETS && typeof env.ASSETS.fetch === 'function') return env.ASSETS.fetch(request);
+
+    if (path === '/' && (request.method === 'GET' || request.method === 'HEAD')) return statusPage(request);
 
     return json({ error: 'not found', paths: ['/offers', '/stats', '/health'] }, { status: 404, ttl: 0 });
   },

@@ -9,6 +9,33 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v90　Worker 的根目錄改成狀態頁，不要再長得像壞掉
+
+**沒有資料庫變更。** 只動 `worker/offers-cache.js`（要重新貼一次到 Cloudflare 才會生效）。
+
+celine 連兩次貼 `https://birthdaydeals-api.celine-fu-work.workers.dev/` 的截圖，
+畫面上是：
+
+```json
+{"error":"not found","paths":["/offers","/stats","/health"]}
+```
+
+功能上沒錯——根目錄本來就不是端點——但每次點開網址就看到一行紅字 `error`，
+看起來像整支掛了。會讓人不敢相信它正在運作的東西，就算技術上正確也是個 bug。
+
+改成：
+- 用瀏覽器打開（`accept: text/html`）→ 一張狀態頁：「● 運作中」、三個端點各是什麼、
+  `/offers` 與 `/stats` 的快取現在熱不熱、連回壽星日本體的連結。
+- 用 `curl`／程式打 → 還是 JSON：`{ok:true, service, paths, cache, now}`。
+- 狀態頁只問快取「有沒有」，不解析內容、不碰 Supabase，CPU 幾乎不花。
+- 併進主站 worker（有 `ASSETS` 繫結）時根目錄照常是網站首頁——狀態頁排在
+  ASSETS 之後，不會蓋掉它。
+
+`t31` 加 8 個檢查（狀態頁 200、是 html、寫著運作中、列出三個端點、說得出快取狀態、
+本身不被快取、沒要 html 時回 JSON、不碰 Supabase、併進主站時不蓋掉首頁）。
+
+---
+
 ## v89　公告看不到標題、分享榜單跑版、投稿要填地點與證件
 
 **沒有資料庫變更。** 只動 `template.html`。
