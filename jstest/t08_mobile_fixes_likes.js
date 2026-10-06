@@ -5,7 +5,7 @@
    2. 手機編輯回報，一點開就跳日曆
       → 對話框打開時焦點放在標題，不是日期欄（驗 autofocus 在標題、不在日期欄）
    3. 收藏備註字多顯示不完整 → 改成會長高的 textarea（驗元素型別、長備註完整保留、存檔照舊）
-   4. 想幫回報／留言按讚 → v61 兩張表＋按鈕（驗讚數、自己的不能按、按／收回、失敗改回來、
+   4. 想幫回報／留言按愛心 → v61 兩張表＋按鈕（驗愛心數、自己的不能按、按／收回、失敗改回來、
       沒登入提示、還沒跑 v61 時整個功能不出現） */
 const { boot, tick, makeSb, makeAsserts } = require('./harness');
 
@@ -37,7 +37,7 @@ function detailTables(extra = {}) {
 }
 
 (async () => {
-  const t = makeAsserts('t08 手機版回報／備註、按讚');
+  const t = makeAsserts('t08 手機版回報／備註、按愛心');
   const { win } = await boot();
   const doc = win.document;
   win.__offer = OFFER;
@@ -69,32 +69,37 @@ function detailTables(extra = {}) {
   const focusables = [...doc.querySelectorAll('#dlgReport [autofocus]')];
   t.eq('整個回報視窗只有標題有 autofocus', focusables.map((e) => e.id), ['repTitle']);
 
-  /* ================= 4. 按讚 ================= */
+  /* ================= 4. 按愛心（v88：原本是 👍）================= */
   const likeOf = (kind, id) => doc.querySelector(`#dtlBody .like-btn[data-kind="${kind}"][data-id="${id}"]`);
-  t.ok('讚數查回來後按鈕顯示出來', !likeOf('report', 61).classList.contains('hidden'));
-  t.eq('別人的回報讚數正確', likeOf('report', 61).querySelector('.like-n').textContent, '2');
+  t.ok('數字查回來後按鈕顯示出來', !likeOf('report', 61).classList.contains('hidden'));
+  t.eq('別人的回報愛心數正確', likeOf('report', 61).querySelector('.like-n').textContent, '2');
   t.eq('我沒按過：未按下狀態', likeOf('report', 61).getAttribute('aria-pressed'), 'false');
+  t.eq('沒按過是空心愛心', likeOf('report', 61).querySelector('.like-ic').textContent, '♡');
+  t.eq('按過的是實心愛心', likeOf('comment', 501).querySelector('.like-ic').textContent, '♥');
+  t.ok('讀螢幕軟體聽得懂（不是唸一個符號）', /愛心/.test(likeOf('report', 61).getAttribute('aria-label') || ''));
   t.ok('自己的回報不能按', likeOf('report', 62).disabled);
-  t.eq('自己的回報照樣看得到讚數', likeOf('report', 62).querySelector('.like-n').textContent, '1');
+  t.eq('自己的回報照樣看得到愛心數', likeOf('report', 62).querySelector('.like-n').textContent, '1');
   t.eq('我按過的留言：已按下狀態', likeOf('comment', 501).getAttribute('aria-pressed'), 'true');
   t.ok('自己的留言不能按', likeOf('comment', 502).disabled);
 
-  // 按讚
+  // 按愛心
   const btn = likeOf('report', 61);
   btn.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
   await tick(win, 3);
   const ins = sb.__calls.write.filter((w) => w.table === 'report_likes' && w.op === 'insert');
-  t.eq('按讚送出 insert，帶自己的 user_id', ins.length && ins[0].args[0], { report_id: 61, user_id: 'u-1' });
-  t.eq('讚數 +1', btn.querySelector('.like-n').textContent, '3');
+  t.eq('按愛心送出 insert，帶自己的 user_id', ins.length && ins[0].args[0], { report_id: 61, user_id: 'u-1' });
+  t.eq('愛心 +1', btn.querySelector('.like-n').textContent, '3');
   t.eq('變成已按下', btn.getAttribute('aria-pressed'), 'true');
+  t.eq('按下去愛心跟著變實心', btn.querySelector('.like-ic').textContent, '♥');
 
-  // 收回讚
+  // 收回愛心
   btn.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
   await tick(win, 3);
   const del = sb.__calls.write.filter((w) => w.table === 'report_likes' && w.op === 'delete');
-  t.eq('收回讚送出 delete', del.length, 1);
-  t.eq('讚數 -1', btn.querySelector('.like-n').textContent, '2');
+  t.eq('收回愛心送出 delete', del.length, 1);
+  t.eq('愛心 -1', btn.querySelector('.like-n').textContent, '2');
   t.eq('變回未按下', btn.getAttribute('aria-pressed'), 'false');
+  t.eq('收回後愛心變回空心', btn.querySelector('.like-ic').textContent, '♡');
 
   // 失敗要改回來
   const realFrom = sb.from;
@@ -105,9 +110,9 @@ function detailTables(extra = {}) {
   btn.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
   await tick(win, 3);
   sb.from = realFrom;
-  t.eq('送出失敗時讚數改回原本', btn.querySelector('.like-n').textContent, '2');
+  t.eq('送出失敗時愛心數改回原本', btn.querySelector('.like-n').textContent, '2');
   t.eq('送出失敗時狀態改回未按下', btn.getAttribute('aria-pressed'), 'false');
-  t.ok('送出失敗有提示', /按讚失敗/.test(win.__alerts[0] || ''), win.__alerts);
+  t.ok('送出失敗有提示', /按愛心失敗/.test(win.__alerts[0] || ''), win.__alerts);
 
   // 沒登入
   win.eval('me = null; myProfile = null;');
@@ -115,11 +120,11 @@ function detailTables(extra = {}) {
   const before = sb.__calls.write.length;
   btn.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
   await tick(win, 2);
-  t.ok('沒登入按讚會提示登入', /登入/.test(win.__alerts[0] || ''), win.__alerts);
+  t.ok('沒登入按愛心會提示登入', /登入/.test(win.__alerts[0] || ''), win.__alerts);
   t.eq('沒登入不會送出任何寫入', sb.__calls.write.length, before);
   win.eval('me = {id:"u-1"}; myProfile = {id:"u-1", is_admin:false, display_name:"celine"};');
 
-  // 還沒跑 v61：讚數查詢失敗 → 整個按讚功能不出現
+  // 還沒跑 v61：查詢失敗 → 整個愛心功能不出現
   const sbNoTable = makeSb({ tables: detailTables() });
   const rf = sbNoTable.from;
   sbNoTable.from = (table) => (table === 'report_likes' || table === 'comment_likes')
@@ -129,7 +134,7 @@ function detailTables(extra = {}) {
   await win.openDetail(7);
   await tick(win, 6);
   const shown = [...doc.querySelectorAll('#dtlBody .like-btn')].filter((b) => !b.classList.contains('hidden'));
-  t.eq('資料庫還沒有按讚表時，一顆讚都不顯示', shown.length, 0);
+  t.eq('資料庫還沒有愛心表時，一顆都不顯示', shown.length, 0);
   t.eq('回報跟留言本身照常顯示', doc.querySelectorAll('#dtlBody .rep.rep-full').length + doc.querySelectorAll('#dtlBody .cmt').length, 4);
 
   /* ================= 3. 收藏備註改成會長高的多行框 ================= */

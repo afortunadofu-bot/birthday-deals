@@ -681,9 +681,13 @@
     #myWishlist .wl-item{padding:11px 12px}
     .wl-map-txt{display:none}
   }
-  /* 回報／留言的「有幫助」讚 */
+  /* 回報／留言的「有幫助」愛心（v88 從 👍 改成愛心） */
   .like-btn{padding:2px 8px;font-size:.72rem;white-space:nowrap}
-  .like-btn.on{background:var(--free-bg);border-color:var(--free-line);color:var(--free)}
+  .like-btn.on{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent-dark)}
+  /* 用 ♡／♥ 兩個字而不是 emoji：顏色才能跟著按鈕狀態走（emoji 吃不到 color），
+     而且舊一點的 Android 也畫得出來 */
+  .like-ic{font-size:.86rem;line-height:1}
+  .like-btn.on .like-ic{color:var(--accent)}
   .like-btn:disabled{opacity:.6;cursor:default}
   #repTitle:focus{outline:none}
   /* 回饋問卷（v62）：celine 要「填法越簡單越好，像是勾選之類」，全部做成大顆可點的按鈕 */
@@ -3928,6 +3932,9 @@ $('#btnMineA2hsClose').onclick=()=>{
    的東西；還在 feature/geo 分支、沒上線的功能（附近分店、地圖模式）不列。
    新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
 const SITE_UPDATES=[
+  {date:'2026-10-06', title:'按讚改成按愛心',items:[
+    '覺得哪則回報、留言有幫助，改成按愛心 ♥（原本是 👍），按過的愛心會變實心',
+    '之前按過的都還在，數字不會歸零']},
   {date:'2026-10-05', title:'「附近」不會再自己打開',items:[
     '允許過定位也不會每次打開就跳進「附近」，想用的時候再按「📍 附近」就好',
     '開啟速度整個調過一輪，載入快很多']},
@@ -5448,22 +5455,26 @@ function offerFactsHtml(o){
   </div>`;
 }
 
-/* ---- 使用回報、留言按讚（v61）----
+/* ---- 使用回報、留言按愛心（v61 原本是 👍，v88 改成愛心）----
    celine 回饋：「不知道能不能幫回報人或是分享經驗的人按讚，有些他們提供的資訊很好、很想
-   按讚」。按鈕一開始是隱藏的，等讚數查回來才顯示——資料庫還沒跑 v61（表不存在）的話查詢
-   會失敗，這時整個按讚功能就不出現，不會變成一顆按了只會噴錯的按鈕。
-   自己的回報／留言看得到讚數但不能按（資料庫也會擋）；沒登入按下去提示登入。
-   按下去先改畫面再送出，失敗才改回來，手機上按了立刻有反應。 ---- */
+   按讚」。按鈕一開始是隱藏的，等數字查回來才顯示——資料庫還沒跑 v61（表不存在）的話查詢
+   會失敗，這時整個功能就不出現，不會變成一顆按了只會噴錯的按鈕。
+   自己的回報／留言看得到幾顆愛心但不能按（資料庫也會擋）；沒登入按下去提示登入。
+   按下去先改畫面再送出，失敗才改回來，手機上按了立刻有反應。
+   v88 只改外觀與文案，資料表還是 report_likes／comment_likes（不用再跑 SQL）。 ---- */
 function likeBtnHtml(kind, x){
   const own = !!(me && x.user_id===me.id);
   return `<button type="button" class="btn sm like-btn hidden" data-kind="${kind}" data-id="${esc(String(x.id))}"
-    data-owner="${own?'1':''}" aria-pressed="false">👍 <span class="like-n">0</span></button>`;
+    data-owner="${own?'1':''}" aria-pressed="false"><span class="like-ic">♡</span> <span class="like-n">0</span></button>`;
 }
 function setLikeBtn(b, n, mine){
   b.querySelector('.like-n').textContent = n;
+  // 空心／實心分開，不用只靠顏色看出按過沒按過
+  b.querySelector('.like-ic').textContent = mine ? '♥' : '♡';
   b.setAttribute('aria-pressed', String(mine));
+  b.setAttribute('aria-label', `愛心 ${n}`);
   b.classList.toggle('on', mine);
-  b.title = b.dataset.owner ? '不能幫自己按讚' : mine ? '收回讚' : '這則很有幫助';
+  b.title = b.dataset.owner ? '不能幫自己按愛心' : mine ? '收回愛心' : '這則很有幫助';
 }
 async function loadHelpfulLikes(root, reports, comments){
   const rIds=(reports||[]).map(x=>x.id), cIds=(comments||[]).map(x=>x.id);
@@ -5491,7 +5502,7 @@ async function loadHelpfulLikes(root, reports, comments){
   });
 }
 async function toggleHelpfulLike(b){
-  if(!me){ alert('登入後就可以幫有幫助的回報和留言按讚。'); return; }
+  if(!me){ alert('登入後就可以幫有幫助的回報和留言按愛心。'); return; }
   if(b.dataset.owner) return;
   const isReport = b.dataset.kind==='report';
   const table = isReport ? 'report_likes' : 'comment_likes';
@@ -5505,7 +5516,7 @@ async function toggleHelpfulLike(b){
     ? await sb.from(table).delete().eq(col,id).eq('user_id',me.id)
     : await sb.from(table).insert({[col]:id, user_id:me.id});
   b.disabled = false;
-  if(error){ setLikeBtn(b, n, wasOn); alert('按讚失敗：'+error.message); }
+  if(error){ setLikeBtn(b, n, wasOn); alert('按愛心失敗：'+error.message); }
 }
 
 async function openDetail(id, fallback=null){
