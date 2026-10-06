@@ -551,6 +551,14 @@
      在容器邊界換行，兩個一起才會真的排整齊。 */
   .sub-item span,.sub-item>div{min-width:0;overflow-wrap:anywhere;word-break:break-word}
   .sub-item span{color:var(--ink-2)}
+  /* 通知列：標題不能吃 .sub-item b 的 76px 欄寬，公告標題會被切成「📢 202610…」，
+     完全看不出是哪一則（celine：「公告看不到標題」）。跟問卷逐筆回覆同一個毛病、
+     同一個修法——標題獨佔一行、該換行就換行。 */
+  .notif-item{display:block;padding:9px 11px}
+  .notif-item>b{display:block;width:auto;white-space:normal;overflow:visible;
+    line-height:1.4;margin-bottom:2px}
+  .notif-item>span{display:block}
+  .notif-when{display:block;color:var(--ink-3);font-size:.74rem;margin-top:3px}
 
   /* minmax(0,1fr)：1fr 的最小值預設是 min-content，一條長網址就會把整個 grid
      撐得比容器寬。改成允許縮到 0，內容再由 overflow-wrap 自己斷行。 */
@@ -1619,6 +1627,21 @@
         </div>
         <div class="field"><label>免費層級 *</label><select name="free_tier" id="fFreeTier" required></select>
           <div class="hint">東西免費但要先點餐 → 選「免費・需消費」；買一送一另外選「買一送一」</div></div>
+        <!-- celine：「必填要多加地點及證件」。這兩格本來收在下面「補充更多細節」裡，
+             十筆有九筆是空的——可是「這家在哪個縣市」「要不要帶證件」正好是出門前
+             最需要知道的兩件事。搬上來變必填。 -->
+        <div class="field"><label>適用縣市 *</label><div class="regchips" id="fRegions"></div>
+          <div class="hint">全國連鎖選「全台」就好；跨好幾個縣市就都點起來</div></div>
+        <!-- celine：「證件預設是要」。台灣的生日優惠絕大多數都要核對證件，預設成
+             最常見、也最保守的那一邊——以為要帶而沒用到，比以為不用帶、到現場領不到好。 -->
+        <div class="field"><label>需要本人出示證件嗎？ *</label>
+          <select name="transferable" id="fSubmitTransferable" required>
+            <option value="no">要，需本人出示證件</option>
+            <option value="yes">不用（例如 App 序號／QR code，別人拿著也能兌換）</option>
+            <!-- 以前投的資料可能是「尚未確認」，編輯那種舊資料時要顯示得出來，
+                 但 disabled 讓人沒辦法新選這一項，新投稿不會再產生 unknown -->
+            <option value="unknown" disabled>尚未確認（以前投的舊資料）</option>
+          </select></div>
         <div class="field hidden" id="fEditReasonField"><label>修改原因 *</label>
           <textarea name="edit_reason" id="fEditReason" maxlength="300"
             placeholder="例如：優惠已經改成 88 折、官網公告的期限不一樣了"></textarea>
@@ -1655,8 +1678,6 @@
               <option value="LINE 官方帳號好友"><option value="官網會員"><option value="門市登記會員">
               <option value="免會員"><option value="信用卡會員">
             </datalist></div>
-          <div class="field"><label>適用縣市</label><div class="regchips" id="fRegions"></div>
-            <div class="hint">全國連鎖只選「全台」；不確定就都不選</div></div>
           <div class="field"><label>使用條件</label>
             <textarea name="conditions" maxlength="600" placeholder="低消、訂位人數、需出示證件等&#10;可以換行，例如：&#10;1. 需 4 人以上&#10;2. 每桌限用一次"></textarea></div>
           <div class="two">
@@ -1665,12 +1686,6 @@
           </div>
           <label class="toggle"><input type="checkbox" name="requires_companion" id="fRequiresCompanion">
             需要同行者才能用（例如內用買一送一，一個人用不了）</label>
-          <div class="field"><label>需要本人出示證件嗎？</label>
-            <select name="transferable" id="fSubmitTransferable">
-              <option value="unknown">尚未確認</option>
-              <option value="yes">不用（例如 App 序號／QR code，別人拿著也能兌換）</option>
-              <option value="no">要，需本人出示證件</option>
-            </select></div>
         </div>
         <div class="foot">
           <button type="button" class="btn hidden" id="btnCancelEdit">取消編輯</button>
@@ -3137,22 +3152,19 @@ async function openNotifDialog(){
   const rows=data||[];
   // 三種通知分開寫文案：管理員公告／問題回報的處理回覆／收藏店家留言。
   // 公告和問題回報回覆都沒有 offer_id，點了也不用（也不能）開優惠詳情視窗。
+  const when=n=>`<span class="notif-when">${esc(fmtDT(n.created_at))}</span>`;
   const rowHtml=n=>{
-    if(n.kind==='announcement') return `<div class="sub-item" style="${n.read_at?'':'background:var(--accent-soft)'}">
+    if(n.kind==='announcement') return `<div class="sub-item notif-item" style="${n.read_at?'':'background:var(--accent-soft)'}">
         <b>📢 ${esc(n.title||'公告')}</b>
-        ${n.body_preview?`<span>${esc(n.body_preview)}
-          <br><span style="color:var(--ink-3);font-size:.74rem">${esc(fmtDT(n.created_at))}</span></span>`
-          :`<span><span style="color:var(--ink-3);font-size:.74rem">${esc(fmtDT(n.created_at))}</span></span>`}
+        ${n.body_preview?`<span>${esc(n.body_preview)}</span>`:''}${when(n)}
       </div>`;
-    if(n.kind==='feedback_reply') return `<div class="sub-item" style="${n.read_at?'':'background:var(--accent-soft)'}">
+    if(n.kind==='feedback_reply') return `<div class="sub-item notif-item" style="${n.read_at?'':'background:var(--accent-soft)'}">
         <b>你的問題回報已回覆</b>
-        <span>${esc(n.body_preview||'')}
-          <br><span style="color:var(--ink-3);font-size:.74rem">${esc(fmtDT(n.created_at))}</span></span>
+        <span>${esc(n.body_preview||'')}</span>${when(n)}
       </div>`;
-    return `<div class="sub-item notif-row" data-offer="${esc(n.offer_id)}" style="cursor:pointer;${n.read_at?'':'background:var(--accent-soft)'}">
+    return `<div class="sub-item notif-item notif-row" data-offer="${esc(n.offer_id)}" style="cursor:pointer;${n.read_at?'':'background:var(--accent-soft)'}">
         <b>${esc(n.brand||'一則優惠')}</b>
-        <span>${esc(n.actor_name||'一位使用者')} 留言：${esc(n.body_preview||'')}
-          <br><span style="color:var(--ink-3);font-size:.74rem">${esc(fmtDT(n.created_at))}</span></span>
+        <span>${esc(n.actor_name||'一位使用者')} 留言：${esc(n.body_preview||'')}</span>${when(n)}
       </div>`;
   };
   box.innerHTML = rows.length ? rows.map(rowHtml).join('')
@@ -3932,9 +3944,11 @@ $('#btnMineA2hsClose').onclick=()=>{
    的東西；還在 feature/geo 分支、沒上線的功能（附近分店、地圖模式）不列。
    新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
 const SITE_UPDATES=[
-  {date:'2026-10-06', title:'按讚改成按愛心',items:[
+  {date:'2026-10-06', title:'按愛心、公告標題、投稿要填地點',items:[
     '覺得哪則回報、留言有幫助，改成按愛心 ♥（原本是 👍），按過的愛心會變實心',
-    '之前按過的都還在，數字不會歸零']},
+    '通知裡的公告看得到完整標題了，以前長標題會被切成「📢 202610…」',
+    '分享排行榜的圖卡不會再把第 5 名切掉、文字疊在一起',
+    '新增優惠時「適用縣市」跟「要不要本人出示證件」改成必填，證件預設是「要」']},
   {date:'2026-10-05', title:'「附近」不會再自己打開',items:[
     '允許過定位也不會每次打開就跳進「附近」，想用的時候再按「📍 附近」就好',
     '開啟速度整個調過一輪，載入快很多']},
@@ -6271,6 +6285,14 @@ $('#submitForm').onsubmit=async e=>{
   const b=$('#btnSubmitOffer'); b.disabled=true;
   const fd=new FormData(e.target);
   const regions=$$('#fRegions .chip').filter(c=>c.getAttribute('aria-pressed')==='true').map(c=>c.dataset.r);
+  // 適用縣市是一排自製的 chip，不是 <input>，瀏覽器的 required 管不到，自己擋。
+  // （celine：「必填要多加地點及證件」；證件那格是 <select>，預設就有值，不用另外擋）
+  if(!regions.length){
+    b.disabled=false;
+    note($('#submitMsg'),'alert','請選「適用縣市」——全國連鎖選「全台」就好。');
+    $('#fRegions').scrollIntoView({block:'center',behavior:'smooth'});
+    return;
+  }
   const sources=collectSources();
   const url=sources[0]?.url||'', tier=sources[0]?.tier||3;
   // 資料來源改成建議填寫、不是強制——有人是到現場用餐才知道有生日優惠，
@@ -6416,7 +6438,22 @@ $('#btnSaveBirthday').onclick=async()=>{
 /* 畫一張圖卡並回傳 blob（不開視窗）。
    opts: {emoji, title, sub, lines:[{label,value}], footer, filename} */
 async function drawStatsCard(opts){
-  const W=760, H=980, scale=2;
+  const W=760, scale=2;
+  const LINE_H=140;                 // 每一行（小字標籤 + 大字數值）佔的高度
+  const rows=opts.lines||[];
+  /* 高度本來寫死 980：排行榜一次畫 5 個名次（5×140=700，從 y=390 開始畫到 1090）
+     就超出畫布——第 5 名被切掉一半，頁尾那行字還壓在它身上（celine：「分享榜單跑版」）。
+     改成先用一個不畫東西的 context 量一次版面（標題會不會折行、小字接在哪），
+     算出內容真正要多高，再開那麼高的畫布。只有一兩行的舊圖卡算出來還是 980，
+     一模一樣，不會因為這次修改變了樣子。 */
+  const layout=(ctx)=>{
+    ctx.font='700 42px system-ui,-apple-system,"Noto Sans TC",sans-serif';
+    const titleBottom=wrapCenterText(ctx, opts.title||'', W/2, 280, W-120, 52, false);
+    const subY=opts.sub ? Math.max(titleBottom+16, 326) : 0;
+    return {titleBottom, subY, bodyTop: opts.sub ? Math.max(390, subY+64) : 390};
+  };
+  const L=layout(document.createElement('canvas').getContext('2d'));
+  const H=Math.max(980, L.bodyTop + rows.length*LINE_H + 40);
   const canvas=document.createElement('canvas');
   canvas.width=W*scale; canvas.height=H*scale;
   const ctx=canvas.getContext('2d');
@@ -6442,27 +6479,25 @@ async function drawStatsCard(opts){
 
   ctx.font='700 42px system-ui,-apple-system,"Noto Sans TC",sans-serif';
   ctx.fillStyle='#fff';
-  const titleBottom=wrapCenterText(ctx, opts.title||'', W/2, 280, W-120, 52);
+  wrapCenterText(ctx, opts.title||'', W/2, 280, W-120, 52);
 
   // 嵐：「分享頁面都要標年份日期」。期間（2026 年 10 月／第 40 週／總累積）跟
   // 製作日期寫在標題下面一行小字——沒有這行的話，圖卡傳出去隔幾個月再看，
   // 根本分不出是哪一段期間的成績。
-  let y=390;
+  let y=L.bodyTop;
   if(opts.sub){
     ctx.font='500 22px system-ui,-apple-system,"Noto Sans TC",sans-serif';
     ctx.fillStyle='#b9a7a5';
-    const subY=Math.max(titleBottom+16, 326);
-    ctx.fillText(opts.sub, W/2, subY);
-    y=Math.max(y, subY+64);
+    ctx.fillText(opts.sub, W/2, L.subY);
   }
-  (opts.lines||[]).forEach(line=>{
+  rows.forEach(line=>{
     ctx.font='500 22px system-ui,-apple-system,"Noto Sans TC",sans-serif';
     ctx.fillStyle='#c9b8b6';
     ctx.fillText(line.label, W/2, y);
     ctx.font='700 54px system-ui,-apple-system,"Noto Sans TC",sans-serif';
     ctx.fillStyle='#e8483c';
     ctx.fillText(line.value, W/2, y+64);
-    y+=140;
+    y+=LINE_H;
   });
 
   ctx.font='500 20px system-ui,-apple-system,"Noto Sans TC",sans-serif';
@@ -6530,7 +6565,8 @@ async function shareStatsCard(optsOrList, activeKey){
     dlg.close();
   };
 }
-function wrapCenterText(ctx, text, cx, y, maxW, lh){
+/* draw=false 只算版面不畫（決定畫布要多高時先量一次用的） */
+function wrapCenterText(ctx, text, cx, y, maxW, lh, draw=true){
   const chars=String(text).split('');
   let line='', lines=[];
   for(const ch of chars){
@@ -6540,7 +6576,7 @@ function wrapCenterText(ctx, text, cx, y, maxW, lh){
   }
   if(line) lines.push(line);
   lines=lines.slice(0,2);
-  lines.forEach((l,i)=>ctx.fillText(l, cx, y+i*lh));
+  if(draw) lines.forEach((l,i)=>ctx.fillText(l, cx, y+i*lh));
   return y+(lines.length-1)*lh;   // 最後一行的基準線，下面那行小字要接在這之後
 }
 
