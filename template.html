@@ -28,6 +28,27 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="壽星日">
+<!-- Google Analytics（GA4, G-L5LSDESD9F）
+     本機開發時不要送：不然 python serve.py 跟 jsdom 測試的流量會混進正式報表，
+     「昨天有幾個人來」就不準了。判斷用 hostname，不用任何設定檔。
+     async 載入，擋不到頁面顯示；載入失敗（擋廣告的外掛、中國網路）也只是沒有
+     統計，網站其他功能完全不受影響——所以不需要 try/catch 之外的保護。
+     隱私權政策第 6、8 節有寫到這件事，改這裡的話那邊也要一起改。 -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  (function(){
+    var h = location.hostname;
+    if(!h || h === 'localhost' || h === '127.0.0.1' || h === '[::1]'
+       || /\.localhost$/.test(h) || /\.test$/.test(h) || location.protocol === 'file:') return;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-L5LSDESD9F';
+    document.head.appendChild(s);
+    gtag('js', new Date());
+    gtag('config', 'G-L5LSDESD9F');
+  })();
+</script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebSite","name":"壽星日",
  "url":"https://birthdaydeals.celine-fu-work.workers.dev/",
@@ -1261,6 +1282,16 @@
     transition:opacity .18s var(--ease),transform .18s var(--ease);pointer-events:none}
   #btnToTop.show{opacity:1;transform:none;pointer-events:auto}
   #btnToTop:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+  /* Buy Me a Coffee 的浮動按鈕：腳本用行內樣式把自己釘在角落，所以只能用 !important 蓋掉。
+     z-index 從 9999 降到 54（導覽列 50、回到頂端 55）——它是一顆加分的小按鈕，
+     不該蓋在網站自己的東西上面。展開的視窗維持腳本自己的 9999：那是一張要蓋住畫面的
+     彈出視窗，本來就該在最上面（網站自己的彈窗是原生 <dialog>，在 top layer，照樣蓋得過它）。 */
+  #bmc-wbtn{z-index:54 !important}
+  @media(max-width:768px){
+    /* 手機才有底部導覽列。墊上去，跟「回到頂端」同一個算式，不然整顆被導覽列蓋住。
+       只動按鈕不動展開的視窗——手機上那張是整頁滿版的，動它只會多出一條縫。 */
+    #bmc-wbtn{bottom:calc(16px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom)) !important}
+  }
 </style>
 </head>
 <body>
@@ -3976,7 +4007,9 @@ $('#btnMineA2hsClose').onclick=()=>{
    的東西；還在 feature/geo 分支、沒上線的功能（附近分店、地圖模式）不列。
    新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
 const SITE_UPDATES=[
-  {date:'2026-10-07', title:'排行榜跟「我的」可以自己排版面',items:[
+  {date:'2026-10-07', title:'排行榜跟「我的」可以自己排版面；左下角多了一顆咖啡',items:[
+    '左下角多了一顆「請我喝杯咖啡」——壽星日是一個人做的免費網站，覺得有幫到你再按就好，不按完全不影響任何功能',
+    '開始用 Google Analytics 看「有多少人來、哪幾頁最多人看」，隱私權政策第 8 節寫清楚了，也寫了怎麼擋掉',
     '「排行榜」跟「我的」最上面有一顆「⇅ 調整區塊順序」，按下去就能用上下箭頭把常看的往前搬',
     '排好的順序會記在這台裝置上，下次打開還在；按「↺ 回復預設」就排回原本的樣子']},
   {date:'2026-10-06', title:'按愛心、公告標題、投稿要填地點',items:[
@@ -11014,5 +11047,27 @@ function makeCollapsiblePanel(id, defaultOpen){
 paintSeedNow();   // 先畫（零延遲，不等網路）
 connectLive();    // 再背景接上 Supabase（有逾時保護）
 </script>
+
+<!-- Buy Me a Coffee 浮動按鈕（buymeacoffee.com/celinefu）
+     放在 </body> 前面、用 defer：
+       - async 不行。這支腳本是「開頭先 querySelector 自己這個 <script>，
+         其餘工作掛在 DOMContentLoaded 上」。async 有機會在 DOMContentLoaded
+         之後才執行，那個事件不會再來一次，按鈕就永遠不會出現。
+         defer 保證「解析完、DOMContentLoaded 之前」執行，兩個條件都成立。
+       - 載不到（擋廣告的外掛）就只是沒有按鈕，網站其他地方完全不受影響。
+     位置放左邊：右下角已經被「回到頂端」佔住了。注意 data-position 要寫小寫的
+     "left"——腳本裡是 `"left"==dataset.position`，官方產生的程式碼卻給大寫的
+     "Right"，所以寫 "Left" 會比不中、默默掉回右邊壓在「回到頂端」上面（實測踩到）。
+     高度用下面的 CSS 墊到手機底部導覽列上面——腳本是用行內樣式釘位置的，要 !important。
+
+     data-message 故意留空：那顆對話泡泡是另外一個沒有 id 的 div，位置寫死在
+     bottom:14px，手機上會被底部導覽列切掉一半，又沒有東西可以用 CSS 選到它。
+     邀請的話寫在 data-description，點開之後就看得到。 -->
+<script data-name="BMC-Widget" data-cfasync="false" defer
+  src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js"
+  data-id="celinefu"
+  data-description="壽星日是一個人做的免費網站。覺得有幫到你的話，請我喝杯咖啡 ☕"
+  data-message=""
+  data-color="#e8483c" data-position="left" data-x_margin="16" data-y_margin="16"></script>
 </body>
 </html>
