@@ -1080,6 +1080,21 @@
      的排版規則，所以「。。。。。。」這種一長串會被當成一個不能拆的東西——celine 的截圖裡
      它就直接穿過按鈕、撐到卡片外面去。overflow-wrap:anywhere 允許在任何位置硬斷。 */
   .fb-msg{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;min-width:0}
+  /* 「我的」的五塊會員專屬區塊：原本靠外層 div 一起隱藏，拆開後各自掛這個 class。
+     跟 hidden 分開，兩套各管各的（見 renderAuthUI 那段註解）。 */
+  .authed-off{display:none !important}
+  /* 自訂區塊順序（嵐）。平常只有一顆小按鈕，進了排序模式才長出上下箭頭。 */
+  .order-bar{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}
+  .blk-move{display:flex;align-items:center;gap:8px;margin:-4px 0 10px;padding:6px 8px;
+    background:var(--accent-soft);border:1px dashed var(--accent-line);border-radius:var(--r-xs)}
+  .blk-move .blk-name{flex:1 1 auto;min-width:0;font-size:.8rem;font-weight:700;color:var(--accent-dark);
+    overflow-wrap:anywhere}
+  .blk-move button{flex:none;min-width:38px}
+  /* 排序模式下整塊的內容壓低存在感，一眼看到的是「現在在排順序」而不是內容 */
+  .ordering [data-block]{outline:1px dashed var(--accent-line);outline-offset:3px}
+  /* 重複回報：按下合併之前先寫清楚會變成什麼樣子 */
+  .fb-plan{margin-top:4px;font-size:.78rem;color:var(--ink-2);overflow-wrap:anywhere}
+  .fb-plan .dim,.fb-plan.dim{color:var(--ink-3)}
   /* 問卷逐筆回覆：整列是一顆可以點開／收起的按鈕。
      原本那一行（時間・名字・信箱・分數）是 .sub-item 的 <b>，被 width:76px + ellipsis
      切成「2026-09-2…」，名字跟信箱根本看不到（嵐：「我都不知道什麼是誰填的」）——
@@ -1447,7 +1462,11 @@
 <!-- ==================== 排行榜 ==================== -->
 <section id="tab-board" class="hidden">
   <main class="wrap">
-    <div class="panel" id="pnlBoardStats">
+    <!-- 嵐：「要可以自訂移動各個 block 的順序，固定」。按下去才進入排序模式，
+         平常不佔版面，也不會有人不小心拖到。順序記在這台裝置上。 -->
+    <div class="order-bar"><button type="button" class="btn sm blk-order-toggle" data-page="board">⇅ 調整區塊順序</button>
+      <button type="button" class="btn sm hidden blk-order-reset" data-page="board">↺ 回復預設</button></div>
+    <div class="panel" id="pnlBoardStats" data-block>
       <h2>站台數據</h2>
       <p class="sub">整站累積的使用狀況。</p>
       <!-- 嵐：站台數據跟洞察分析每次看完都佔很長的垂直空間 → 分成幾個小分頁，一次只看一塊 -->
@@ -1480,7 +1499,7 @@
         <div id="boardMonthlyChart"></div>
       </div>
     </div>
-    <div class="panel" id="pnlBoardInsights">
+    <div class="panel" id="pnlBoardInsights" data-block>
       <h2>洞察分析</h2>
       <p class="sub">大家用優惠的一些趨勢跟結構，不只是名次表。</p>
       <div class="subtabs" role="tablist" data-group="boardInsights">
@@ -1506,12 +1525,12 @@
       </div>
       <div class="subpane" id="biWeek" role="tabpanel"><div id="boardWeekdayChart"></div></div>
     </div>
-    <div class="panel" id="pnlRecentActivity">
+    <div class="panel" id="pnlRecentActivity" data-block>
       <h2>最近動態</h2>
       <p class="sub">大家最近用了什麼、留了什麼言。想不顯示暱稱可以到「我的」分頁關掉。</p>
       <div id="recentActivity"></div>
     </div>
-    <div class="panel" id="pnlPopular">
+    <div class="panel" id="pnlPopular" data-block>
       <h2>大家都在用什麼</h2>
       <p class="sub">被回報最多次的優惠。</p>
       <div class="row" style="margin-bottom:10px">
@@ -1532,7 +1551,7 @@
       </div>
       <div id="popBody"></div>
     </div>
-    <div class="panel" id="pnlWished">
+    <div class="panel" id="pnlWished" data-block>
       <h2>最多人收藏</h2>
       <p class="sub">被加進待辦清單最多次的優惠——大家想用但還沒用的。</p>
       <div class="row" style="margin-bottom:10px">
@@ -1545,7 +1564,7 @@
       </div>
       <div id="wishBody"></div>
     </div>
-    <div class="panel" id="pnlLb">
+    <div class="panel" id="pnlLb" data-block>
       <h2>省錢排行榜</h2>
       <p class="sub">每個人只要有成功回報就會上榜，暱稱要不要公開可以自己到「我的」分頁調整。金額跟次數都能排序——省最多不代表用最勤，反過來也一樣。</p>
       <div class="note hidden" id="lbLoginHint" style="margin:0 0 12px">
@@ -1579,7 +1598,7 @@
       </div>
       <div id="lbBody"></div>
     </div>
-    <div class="panel" id="pnlContrib">
+    <div class="panel" id="pnlContrib" data-block>
       <h2>貢獻度排行榜</h2>
       <p class="sub">投稿新優惠、提出修改建議，只要被管理員核可就算一次貢獻——退回的不算。跟省錢排行榜是分開計算的兩件事。</p>
       <div class="row" style="margin-bottom:10px;flex-wrap:wrap">
@@ -1730,7 +1749,11 @@
     </div>
     <!-- 回饋問卷入口：訪客、會員都看得到，所以不能放在 #mineAuthedPanels 裡。
          這裡先寫在最上面，開機時 JS 會把它搬到「推薦給朋友」正下方（見 surveyPanel 搬移那段）。 -->
-    <div class="panel" id="surveyPanel">
+    <!-- 嵐：「要可以自訂移動各個 block 的順序，固定」。按下去才進入排序模式，
+         平常不佔版面，也不會有人不小心拖到。順序記在這台裝置上。 -->
+    <div class="order-bar"><button type="button" class="btn sm blk-order-toggle" data-page="mine">⇅ 調整區塊順序</button>
+      <button type="button" class="btn sm hidden blk-order-reset" data-page="mine">↺ 回復預設</button></div>
+    <div class="panel" id="surveyPanel" data-block>
       <h2>💬 給壽星日一點回饋</h2>
       <p class="sub">全部用點的，大約 2 分鐘。可以重複填——不同時候的感受都想知道。</p>
       <div class="row" style="gap:10px;align-items:center">
@@ -1748,7 +1771,7 @@
       </ul>
       <button class="btn primary" id="btnMineLogin" type="button">Google 登入</button>
     </div>
-    <div class="panel" id="profilePanel">
+    <div class="panel" id="profilePanel" data-block>
       <h2>個人資料</h2>
       <!-- 使用者回饋：大頭貼可以自己換，不要只能用 Google 帳號的照片（schema_v70 開了 avatars 儲存空間） -->
       <div class="avatar-edit">
@@ -1786,18 +1809,18 @@
     <!-- 不管有沒有登入都看得到——分享網站是幫網站觸及更多人的入口，不應該
          卡在登入門檻後面；位置也刻意放在最前面幾個 panel，不是滑到最下面
          才看得到，才有機會真的被點到。 -->
-    <div class="panel" id="shareSitePanel">
+    <div class="panel" id="shareSitePanel" data-block>
       <h2>推薦給朋友</h2>
       <p class="sub">找生日優惠很花時間，你已經幫自己省到了——分享給朋友，讓他們也不用自己一家一家查。</p>
       <button type="button" class="btn primary" id="btnShareSite">📤 分享壽星日</button>
       <p class="sub" style="margin:8px 0 0">朋友生日快到時傳一下，是最實用的生日提醒。</p>
     </div>
-    <div class="panel hidden" id="remindersPanel">
+    <div class="panel hidden" id="remindersPanel" data-block>
       <h2>提醒</h2>
       <div id="remindersBody"></div>
     </div>
     <!-- 第二組生日（嵐許願）：幫家人／另一半也記一個生日。預設收著，不想用的人不會被打擾。 -->
-    <div class="panel" id="altBdayPanel">
+    <div class="panel" id="altBdayPanel" data-block>
       <h2>🎁 幫家人／另一半也記一個生日</h2>
       <p class="sub">記一組就好。生日快到時會提醒你，待辦清單裡貼上他的標籤，入會死線也會照他的生日算。只有你自己看得到。</p>
       <label class="lbl">稱呼<input id="altLabel" maxlength="10" placeholder="例如：媽媽、老公、女兒"></label>
@@ -1812,7 +1835,7 @@
       <div id="altBdayMsg"></div>
       <p class="hint" id="altBdayHint" style="margin-top:6px"></p>
     </div>
-    <div class="panel" id="wishlistPanel"><h2>待辦清單</h2>
+    <div class="panel" id="wishlistPanel" data-block><h2>待辦清單</h2>
       <p class="sub">點卡片上的星號收藏，勾起來代表用過了。</p>
       <!-- 嵐：幫別人記生日的話，待辦清單要獨立出來、不同份清單（schema_v71 的 wishlist.person） -->
       <div class="subtabs wrap hidden" role="tablist" id="wlPersonTabs"></div>
@@ -1834,7 +1857,7 @@
       </div>
       <div id="myWishlist"></div>
     </div>
-    <section class="planner" id="planner">
+    <section class="planner" id="planner" data-block>
       <h2 style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>註冊死線</span>
         <button type="button" class="sub-toggle" id="btnDlCollapse" aria-expanded="true"
@@ -1843,8 +1866,12 @@
       <p id="plannerSub"></p>
       <div id="deadlines"></div>
     </section>
-    <div id="mineAuthedPanels">
-    <div class="panel" id="mySavingsPanel">
+    <!-- 原本這五塊包在 <div id="mineAuthedPanels"> 裡面一起顯示／隱藏。為了讓
+         「自訂區塊順序」能把它們跟其他區塊一起排（外層 div 會讓它們永遠黏在一起），
+         拆掉外層，改成每一塊自己掛 .authed-only，登入狀態變了就一起切。
+         用 .authed-off 而不是 hidden：badgesPanel 自己也會用 hidden 控制要不要出現，
+         兩套各管各的才不會互相蓋掉。 -->
+    <div class="panel authed-only" id="mySavingsPanel" data-block>
       <h2>我省下多少</h2>
       <p class="sub">只計算回報「成功」的紀錄。</p>
       <div id="savingsSinceVisit" class="hidden"></div>
@@ -1853,21 +1880,20 @@
       <label class="toggle"><input type="checkbox" id="optLeaderboard"> 在排行榜顯示我的暱稱與頭像</label>
       <p class="sub" style="margin-top:4px">省下金額本來就會計入排行榜；這個選項只決定要不要顯示你的暱稱跟頭像——關掉的話還是會上榜，但顯示成「匿名使用者」。</p>
     </div>
-    <div class="panel hidden" id="badgesPanel">
+    <div class="panel hidden authed-only" id="badgesPanel" data-block>
       <h2>成就徽章</h2>
       <p class="sub">用回報紀錄自動累積，達成門檻就會亮起來。</p>
       <div id="badgesBody" class="badge-grid"></div>
     </div>
-    <div class="panel" id="myReportsPanel"><h2>我的使用回報</h2><p class="sub">點一筆可以看詳情、編輯或刪除。</p><div id="myReports"></div></div>
-    <div class="panel" id="myOffersPanel"><h2>我的投稿</h2><div id="myOffers"></div></div>
+    <div class="panel authed-only" id="myReportsPanel" data-block><h2>我的使用回報</h2><p class="sub">點一筆可以看詳情、編輯或刪除。</p><div id="myReports"></div></div>
+    <div class="panel authed-only" id="myOffersPanel" data-block><h2>我的投稿</h2><div id="myOffers"></div></div>
     <!-- 嵐：「我填寫過的回報問題，要可以出現在我的頁面」（schema_v73 開的讀自己那幾筆的權限） -->
-    <div class="panel" id="myFeedbackPanel"><h2>我回報過的問題<span class="n hidden" id="myFbCount"></span></h2>
+    <div class="panel authed-only" id="myFeedbackPanel" data-block><h2>我回報過的問題<span class="n hidden" id="myFbCount"></span></h2>
       <p class="sub">你用上面「回報網站問題」送出的內容，還有管理員的回覆。</p>
       <div id="myFeedback"></div></div>
-    </div>
     <!-- 不管有沒有登入都看得到——加到主畫面是幫網站觸及更多人的入口，
          不應該卡在登入門檻後面。 -->
-    <div class="panel" id="a2hsPanel">
+    <div class="panel" id="a2hsPanel" data-block>
       <h2>加到主畫面</h2>
       <p class="sub">加到主畫面後可以像 App 一樣直接點圖示打開，不用再開瀏覽器慢慢找網址。</p>
       <button type="button" class="btn primary hidden" id="btnA2hsDirect" style="margin-bottom:10px">加到主畫面</button>
@@ -1879,7 +1905,7 @@
     <!-- 嵐：「在我的頁面加一個 block，上面寫說因為目前網頁是用免費方案架設的，
          所以有時候稍有延遲，請見諒」。與其讓人以為是自己的網路有問題（或以為
          網站壞了），不如講清楚。訪客也看得到，所以放在會員專屬區塊外面。 -->
-    <div class="panel" id="freeTierNote">
+    <div class="panel" id="freeTierNote" data-block>
       <h2>🐢 有時候會慢一點</h2>
       <p class="sub">壽星日目前是用免費方案架設的，人多的時候偶爾會慢個幾秒，或是要重新整理一次才打得開。
         不是你的網路有問題，先跟你說聲抱歉 🙏</p>
@@ -1887,7 +1913,7 @@
     </div>
     <!-- 嵐：「回報網站問題移到『我的』」。原本只掛在頁尾的一行小字裡，幾乎沒人看得到；
          放在「我的」這裡，跟上面那塊速度說明、下面自己回報過的紀錄排在一起。 -->
-    <div class="panel" id="feedbackPanel">
+    <div class="panel" id="feedbackPanel" data-block>
       <h2>🛠 回報網站問題</h2>
       <p class="sub">網站怪怪的、哪裡不好用、想要什麼功能，都可以告訴我。
         優惠內容有誤的話，請直接在那張優惠卡片上用「建議修改」，處理起來比較快。</p>
@@ -1895,7 +1921,7 @@
     </div>
     <!-- 更新紀錄：celine 要「我的」頁面有個小地方記每次更新的日期、簡單說改了哪裡。
          訪客也看得到，所以放在會員專屬區塊外面。內容在 SITE_UPDATES。 -->
-    <div class="panel" id="siteUpdatesPanel">
+    <div class="panel" id="siteUpdatesPanel" data-block>
       <h2>🆕 更新紀錄 <span class="upd-new hidden" id="updHeadNew">NEW</span></h2>
       <p class="sub">壽星日最近改了什麼，都記在這裡。</p>
       <div id="siteUpdatesList"></div>
@@ -1969,6 +1995,9 @@
       <option value="in_progress">修改中</option><option value="resolved">已完成</option>
     </select></label></div>
     <div id="fbMsg2"></div>
+    <!-- 嵐：「有人回報重複的優惠，我要可以一鍵全部合併」。能從回報內容認出
+         兩筆以上還在站上的優惠時，這條才會出現。 -->
+    <div id="fbBulkBar" class="hidden" style="margin:0 0 10px"></div>
     <div id="fbList"></div>
   </div>
   <div class="panel" id="pnlPending">
@@ -2953,7 +2982,10 @@ function paintAuth(){
   // 都要 user_id 才查得到資料），與其讓訪客看到一片空白覺得網站壞了，不如
   // 收起來、換成上面那張「登入解鎖」卡片講清楚登入能多拿到什麼。
   $('#mineLoginCta').classList.toggle('hidden',on);
-  $('#mineAuthedPanels').classList.toggle('hidden',!on);
+  // 這五塊本來包在 #mineAuthedPanels 裡一起切，拆開是為了讓「自訂順序」能把它們
+  // 跟其他區塊一起排。用 authed-off（不是 hidden）才不會跟 badgesPanel 自己的
+  // hidden 打架：登入了但還沒拿到徽章時，徽章那塊要繼續藏著。
+  $$('.authed-only').forEach(el=>el.classList.toggle('authed-off',!on));
   // 排行榜本身公開不用登入就看得到，但「自己有沒有機會上榜」是登入才有意義
   // 的事——訪客逛排行榜時正是最容易被「原來還可以這樣」說服的時機點。
   $('#lbLoginHint').classList.toggle('hidden',on);
@@ -3944,6 +3976,9 @@ $('#btnMineA2hsClose').onclick=()=>{
    的東西；還在 feature/geo 分支、沒上線的功能（附近分店、地圖模式）不列。
    新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
 const SITE_UPDATES=[
+  {date:'2026-10-07', title:'排行榜跟「我的」可以自己排版面',items:[
+    '「排行榜」跟「我的」最上面有一顆「⇅ 調整區塊順序」，按下去就能用上下箭頭把常看的往前搬',
+    '排好的順序會記在這台裝置上，下次打開還在；按「↺ 回復預設」就排回原本的樣子']},
   {date:'2026-10-06', title:'按愛心、公告標題、投稿要填地點',items:[
     '覺得哪則回報、留言有幫助，改成按愛心 ♥（原本是 👍），按過的愛心會變實心',
     '通知裡的公告看得到完整標題了，以前長標題會被切成「📢 202610…」',
@@ -4085,6 +4120,123 @@ $('#siteUpdatesPanel h2').addEventListener('click',()=>{
     if(updatesPanelOpen()) setTimeout(()=>{ if(updatesPanelOpen()) markUpdatesSeen(); }, 2500);
   }, 0);
 });
+
+/* ---- 自訂區塊順序（嵐：「要可以自訂移動排行榜那頁各個 block 的順序，固定」「我的頁也是」）----
+
+   做法：可以搬的區塊在 HTML 上掛 data-block，順序存成一串 id 放在這台裝置的
+   localStorage。重排時只動這些區塊「彼此之間」的位置——先在每個區塊前面插一個
+   註解當作位置記號，再照新順序把區塊塞回那些記號前面。這樣夾在中間、不能搬的
+   東西（登入提示、橫幅）會留在原地，不會被一起洗掉。
+
+   為什麼用上下箭頭不是拖曳：這兩頁主要在手機上看，拖曳要跟頁面本身的捲動搶手勢，
+   一不小心就把區塊丟到莫名其妙的地方；箭頭按幾下就到位，而且讀螢幕軟體也能用。
+
+   以後新增的區塊（存檔時還不存在的 id）不會跑到最後面，而是留在它原本的鄰居後面
+   ——不然每次改版都要重排一次。 */
+const BLK_PAGES={
+  board:{main:'#tab-board .wrap', key:'sxr_order_board'},
+  mine: {main:'#tab-mine .wrap',  key:'sxr_order_mine'},
+};
+function blkList(page){
+  const main=$(BLK_PAGES[page]?.main);
+  return main ? [...main.children].filter(el=>el.hasAttribute('data-block')) : [];
+}
+function blkSaved(page){
+  try{ const v=JSON.parse(localStorage.getItem(BLK_PAGES[page].key)||'[]'); return Array.isArray(v)?v:[]; }
+  catch{ return []; }
+}
+function blkName(el){
+  const h=el.querySelector('h2');
+  // 「待辦清單」後面常跟著一顆計數小標籤；標題裡的收合箭頭（▾）也不用寫進來
+  return (h?h.textContent:el.id).replace(/[▾▸►▼▲]/g,'').replace(/\s+/g,' ').trim().slice(0,24) || el.id;
+}
+/* 照存下來的順序排。沒存過的 id 接在「前一個有存過的」後面，保持原本的相對位置。 */
+function blkDesired(blocks, saved){
+  if(!saved.length) return blocks.slice();
+  const rank=new Map(saved.map((id,i)=>[id,i]));
+  let last=-1;
+  const score=blocks.map(el=>{
+    if(rank.has(el.id)){ last=rank.get(el.id); return last; }
+    last+=1e-3; return last;
+  });
+  return blocks.map((el,i)=>({el,k:score[i],i}))
+    .sort((a,b)=>a.k-b.k || a.i-b.i).map(x=>x.el);
+}
+/* 把區塊照 want 的順序塞回去。
+   關鍵是「只用區塊自己原本佔的那幾個位置」：先在每個區塊前面插一個註解當位置記號，
+   再照新順序把區塊放回記號前面。夾在區塊之間、不能搬的東西（登入解鎖卡片、橫幅）
+   完全不會被碰到——第一版是直接拿兩個區塊互換 insertBefore，結果中間那張
+   「登入解鎖」卡片會被擠著一路往上飄。 */
+function placeBlocks(page, want){
+  const blocks=blkList(page);
+  if(blocks.length<2) return;
+  if(want.every((el,i)=>el===blocks[i])) return;          // 已經是想要的順序
+  const slots=blocks.map(el=>{
+    const m=el.ownerDocument.createComment('blk');
+    el.parentNode.insertBefore(m, el);
+    return m;
+  });
+  want.forEach((el,i)=>slots[i]&&slots[i].parentNode.insertBefore(el, slots[i]));
+  slots.forEach(m=>m.remove());
+}
+function applyBlockOrder(page){
+  const blocks=blkList(page);
+  if(blocks.length<2) return;
+  placeBlocks(page, blkDesired(blocks, blkSaved(page)));
+}
+function saveBlockOrder(page){
+  try{ localStorage.setItem(BLK_PAGES[page].key, JSON.stringify(blkList(page).map(el=>el.id))); }catch{}
+}
+/* 排序模式：每個區塊頂端長出一條「名稱 ＋ ↑ ↓」。離開時整條拿掉。 */
+function renderBlockMovers(page){
+  const main=$(BLK_PAGES[page].main);
+  const on=main.classList.contains('ordering');
+  main.querySelectorAll(':scope > [data-block] > .blk-move').forEach(el=>el.remove());
+  $$(`.blk-order-toggle[data-page="${page}"]`).forEach(b=>b.textContent=on?'✓ 完成':'⇅ 調整區塊順序');
+  $$(`.blk-order-reset[data-page="${page}"]`).forEach(b=>b.classList.toggle('hidden',!on));
+  if(!on) return;
+  const blocks=blkList(page);
+  blocks.forEach((el,i)=>{
+    const bar=document.createElement('div');
+    bar.className='blk-move';
+    bar.innerHTML=`<span class="blk-name">${esc(blkName(el))}</span>
+      <button type="button" class="btn sm blk-up" ${i===0?'disabled':''} aria-label="往上移">↑</button>
+      <button type="button" class="btn sm blk-down" ${i===blocks.length-1?'disabled':''} aria-label="往下移">↓</button>`;
+    bar.querySelector('.blk-up').onclick=()=>moveBlock(page, el, -1);
+    bar.querySelector('.blk-down').onclick=()=>moveBlock(page, el, 1);
+    el.insertBefore(bar, el.firstChild);
+  });
+}
+function moveBlock(page, el, dir){
+  const blocks=blkList(page);
+  const i=blocks.indexOf(el), j=i+dir;
+  if(i<0 || j<0 || j>=blocks.length) return;
+  const want=blocks.slice();
+  want[i]=blocks[j]; want[j]=blocks[i];
+  placeBlocks(page, want);
+  saveBlockOrder(page);
+  renderBlockMovers(page);
+  el.scrollIntoView({block:'center',behavior:'smooth'});
+}
+function toggleBlockOrdering(page, on){
+  const main=$(BLK_PAGES[page].main);
+  if(!main) return;
+  main.classList.toggle('ordering', on===undefined ? !main.classList.contains('ordering') : !!on);
+  renderBlockMovers(page);
+}
+$$('.blk-order-toggle').forEach(b=>b.onclick=()=>toggleBlockOrdering(b.dataset.page));
+$$('.blk-order-reset').forEach(b=>b.onclick=()=>{
+  const page=b.dataset.page;
+  if(!confirm('把這一頁的區塊順序還原成預設嗎？')) return;
+  try{ localStorage.removeItem(BLK_PAGES[page].key); }catch{}
+  // 存檔清掉之後，照「HTML 裡原本的順序」重排：用每個區塊的 data-block 原始位置
+  const main=$(BLK_PAGES[page].main);
+  placeBlocks(page, BLK_DEFAULT[page].map(id=>main.querySelector(`#${CSS.escape(id)}`)).filter(Boolean));
+  renderBlockMovers(page);
+});
+// 預設順序＝頁面剛載入、還沒套用使用者設定之前的樣子
+const BLK_DEFAULT={board:blkList('board').map(el=>el.id), mine:blkList('mine').map(el=>el.id)};
+Object.keys(BLK_PAGES).forEach(applyBlockOrder);
 
 /* ---- 有新更新時跳通知 ----
    celine：新打開 App 時跳通知，引導大家去看近期的更新紀錄。
@@ -9441,6 +9593,64 @@ async function loadAdminCommentList(){
    一起查到已登入使用者綁定的信箱，不用靠他自己填的聯絡方式那欄 ---- */
 const FB_TYPE_LABEL={bug:'問題回報',suggestion:'建議',duplicate:'🔁 重複的優惠'};
 let FB_ROWS=[];
+
+/* ---- 「重複的優惠」回報 → 一鍵合併（嵐：「有人回報重複的優惠，我要可以一鍵全部合併」）----
+   回報內容長這樣：「#515 武藏野森 這筆跟別筆重複：#372 武藏野森珈琲Diner #516 武藏野森珈琲」。
+   先把裡面所有 #編號 撈出來；沒附編號、只寫店名的（「這筆跟別筆重複：唐吉訶德 DON DON DONKI」）
+   再拿冒號後面那段去查一次店名——只在編號不足兩筆時才查，避免自作聰明把不相干的店拖進來。
+
+   保留哪一張：回報次數最多的那張（資料最多），一樣多就留編號小的（先投的那張）。
+   跟合併面板的 mergeSuggestions() 同一套規則，兩個地方給的答案要一致。 */
+function dupTargets(msg){
+  const text=String(msg||'');
+  const ids=[...String(text).matchAll(/#(\d+)/g)].map(m=>Number(m[1]));
+  const found=[], missing=[];
+  [...new Set(ids)].forEach(id=>{
+    const o=OFFERS.find(x=>Number(x.id)===id);
+    if(o){ if(!found.some(f=>f.id===o.id)) found.push(o); }
+    else missing.push(id);          // 已經被併掉／下架／刪掉了
+  });
+  if(found.length<2){
+    const tail=(text.split(/重複[：:]/).pop()||'').replace(/#\d+/g,' ').trim();
+    if(tail.length>=2){
+      const o=mergeFind(tail);
+      if(o && !found.some(f=>f.id===o.id)) found.push(o);
+    }
+  }
+  if(found.length<2) return {ok:false, found, missing};
+  const sorted=found.slice().sort((a,b)=>(b.reportCount||0)-(a.reportCount||0) || Number(a.id)-Number(b.id));
+  return {ok:true, keep:sorted[0], drops:sorted.slice(1), found, missing};
+}
+function dupPlanText(t){
+  return `${mergeOfferLabel(t.keep)}　←　${t.drops.map(mergeOfferLabel).join('、')}`;
+}
+/* 真的去合併。回傳 {ok, moved} 或 {ok:false, error}。
+   一次一筆、照順序來——admin_merge_offers 是一對一的，而且中途失敗時
+   已經搬過去的那幾筆要留著（資料沒有遺失，只是還有幾筆沒併完）。 */
+async function runDupMerge(t){
+  const moved={reports:0, comments:0, ratings:0, wishlist:0};
+  for(const d of t.drops){
+    const {data,error}=await sb.rpc('admin_merge_offers',{p_keep:Number(t.keep.id), p_drop:Number(d.id)});
+    if(error) return {ok:false, error, moved};
+    const r=data||{};
+    moved.reports+=r.reports||0; moved.comments+=r.comments||0;
+    moved.ratings+=r.ratings||0; moved.wishlist+=r.wishlist||0;
+  }
+  return {ok:true, moved};
+}
+function mergeErrText(error){
+  return /function|does not exist/i.test(error.message||'')
+    ? '合併功能要先在 Supabase 執行 schema_v70_split_groups_merge_avatars.sql。'
+    : '合併失敗：'+error.message;
+}
+/* 合併完把那則回報標成已完成，順手寫清楚併了哪幾筆——登入的回報者會在通知裡看到。
+   合併本身已經成功了，所以這一步失敗不算失敗，只是狀態沒更新。 */
+async function resolveDupFeedback(f, t, moved){
+  const reply=`已經把 ${t.drops.map(mergeOfferLabel).join('、')} 併進 ${mergeOfferLabel(t.keep)}，`
+    +`回報、留言、評分、收藏都搬過去了。謝謝你回報！`;
+  const {error}=await sb.rpc('admin_resolve_feedback',{p_id:Number(f.id), p_reply:reply});
+  return !error;
+}
 async function loadFeedbackList(){
   if(!LIVE||!myProfile?.is_admin) return;
   const {data,error}=await sb.rpc('admin_list_feedback');
@@ -9463,8 +9673,12 @@ function renderFbList(){
   else if(sf!=='all') data=data.filter(f=>f.status===sf);
   const open=FB_ROWS.filter(f=>f.status!=='resolved' && (filter==='all'||(f.type||'bug')===filter));
   $('#fbCount').textContent=open.length; $('#fbCount').classList.toggle('hidden',!open.length);
+  // 還沒處理完的「重複的優惠」回報，先算好各自要併哪幾筆（下面的按鈕跟上面那條都要用）
+  const dupMap=new Map();
+  data.forEach(f=>{ if((f.type||'bug')==='duplicate' && f.status!=='resolved') dupMap.set(f.id, dupTargets(f.message)); });
   $('#fbList').innerHTML=data.length?data.map(f=>{
     const acct=f.account_email||f.email||'';
+    const dup=dupMap.get(f.id);
     return `
     <div class="rep" style="align-items:flex-start">
       <div style="flex:1 1 auto;min-width:0">
@@ -9474,6 +9688,11 @@ function renderFbList(){
             f.status==='resolved'?'✓ 已完成':f.status==='in_progress'?'🔧 修改中':'⏳ 未完成'}</span>
         </div>
         <div class="fb-msg" style="margin-top:4px;${f.status==='resolved'?'color:var(--ink-3);text-decoration:line-through':''}">${esc(f.message)}</div>
+        ${dup?(dup.ok
+          ? `<div class="fb-plan">合併後會變成 <b>${esc(dupPlanText(dup))}</b>${
+              dup.missing.length?`　<span class="dim">（${dup.missing.map(i=>'#'+i).join('、')} 已經不在站上了）</span>`:''}</div>`
+          : `<div class="fb-plan dim">認不出要併哪兩筆${dup.missing.length?`（${dup.missing.map(i=>'#'+i).join('、')} 已經不在站上了）`:''}，請用下面「合併重複的優惠」面板自己挑。</div>`)
+        :''}
         ${f.status==='resolved'&&f.admin_reply?`<div style="margin-top:4px;font-size:.8rem;color:var(--ink-2)">回覆：${esc(f.admin_reply)}</div>`:''}
         <div class="meta" style="margin-top:2px">
           <span>${esc(fmtDT(f.created_at))}</span>
@@ -9483,6 +9702,7 @@ function renderFbList(){
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;flex:none">
+        ${dup?.ok?`<button class="btn sm primary fb-merge" data-id="${f.id}">🔁 一鍵合併這 ${dup.found.length} 筆</button>`:''}
         ${f.status==='open'?`<button class="btn sm fb-toggle" data-id="${f.id}" data-status="in_progress">🔧 修改中</button>`:''}
         ${f.status!=='resolved'?`<button class="btn sm fb-toggle" data-id="${f.id}" data-status="resolved" data-hasuser="${f.account_email?'1':'0'}">標記已完成</button>`:''}
         ${f.status!=='open'?`<button class="btn sm fb-toggle" data-id="${f.id}" data-status="open">改回未完成</button>`:''}
@@ -9512,6 +9732,51 @@ function renderFbList(){
     }
     loadFeedbackList();
   });
+
+  /* ---- 一鍵合併：單則，以及整批 ---- */
+  const mergeOne=async(f,t)=>{
+    const r=await runDupMerge(t);
+    if(!r.ok) return {ok:false, text:`${mergeOfferLabel(t.keep)}：${mergeErrText(r.error)}`};
+    await resolveDupFeedback(f, t, r.moved);
+    return {ok:true, moved:r.moved, n:t.drops.length};
+  };
+  $$('.fb-merge').forEach(b=>b.onclick=async()=>{
+    const f=data.find(x=>String(x.id)===String(b.dataset.id)), t=dupMap.get(f?.id);
+    if(!f||!t?.ok) return;
+    if(!confirm(`確定合併嗎？\n\n保留：${mergeOfferLabel(t.keep)}\n併進去：${t.drops.map(mergeOfferLabel).join('\n　　　　')}\n\n`
+      +`併掉那幾張的回報、留言、評分、收藏會搬到保留的那張，然後下架。這則回報也會標成已完成。`)) return;
+    b.disabled=true; b.textContent='合併中…';
+    const r=await mergeOne(f,t);
+    if(!r.ok){ b.disabled=false; b.textContent='🔁 再試一次'; note($('#fbMsg2'),'alert',esc(r.text)); return; }
+    note($('#fbMsg2'),'good',`✓ 已合併 ${r.n} 筆到 ${esc(mergeOfferLabel(t.keep))}：搬了 ${r.moved.reports} 筆回報、${r.moved.comments} 則留言、${r.moved.ratings} 個評分、${r.moved.wishlist} 個收藏。`);
+    await loadOffers(true); render();
+    loadFeedbackList();
+  });
+
+  // 整批：兩則以上才出現，不然跟上面那顆按鈕重複
+  const bulk=[...dupMap.entries()].map(([id,t])=>({f:data.find(x=>x.id===id), t})).filter(x=>x.f&&x.t.ok);
+  const bar=$('#fbBulkBar');
+  bar.classList.toggle('hidden', bulk.length<2);
+  if(bulk.length>=2){
+    bar.innerHTML=`<button type="button" class="btn primary" id="btnFbMergeAll">🔁 一鍵合併全部（${bulk.length} 則）</button>
+      <div class="hint" style="margin-top:6px">${bulk.map(x=>esc(dupPlanText(x.t))).join('<br>')}</div>`;
+    $('#btnFbMergeAll').onclick=async()=>{
+      if(!confirm(`確定一次合併這 ${bulk.length} 則回報指到的優惠嗎？\n\n`
+        +bulk.map(x=>`保留 ${mergeOfferLabel(x.t.keep)}　←　${x.t.drops.map(mergeOfferLabel).join('、')}`).join('\n')
+        +`\n\n併掉的那幾張的回報、留言、評分、收藏都會搬到保留的那張，然後下架。這幾則回報也會標成已完成。`)) return;
+      const btn=$('#btnFbMergeAll'); btn.disabled=true;
+      let done=0; const fails=[];
+      for(const x of bulk){
+        btn.textContent=`合併中…（${done+1}/${bulk.length}）`;
+        const r=await mergeOne(x.f, x.t);
+        if(r.ok) done++; else fails.push(r.text);
+      }
+      note($('#fbMsg2'), fails.length?'alert':'good',
+        `${done?`✓ 合併了 ${done} 則。`:''}${fails.length?`有 ${fails.length} 則沒成功：<br>${fails.map(esc).join('<br>')}`:''}`);
+      await loadOffers(true); render();
+      loadFeedbackList();
+    };
+  }
 }
 /* 兩個篩選條件都記在這台裝置上（celine：「保留前一次關閉網頁的狀態」）。
    每次處理完一則就重畫清單，如果不記住，每次回來都要重選一次。 */
