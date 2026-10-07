@@ -105,5 +105,16 @@ function loadFrom(url) {
   t.ok('隱私權政策有寫到贊助是第三方服務', /Buy Me a Coffee/.test(privacy));
   t.ok('而且講明看不到信用卡號', /看不到你的信用卡號/.test(privacy));
 
+  /* ================= 6. 頁尾連回品牌頁 ================= */
+  const home = (index.match(/<a class="xsj-lockup xsj-home"[\s\S]*?>/) || [''])[0];
+  t.ok('頁尾的小數據所連得回品牌頁',
+    /afortunadofu-bot\.github\.io\/celinefubrandpage/.test(home), home);
+  t.ok('開新分頁而且擋住 opener', /target="_blank"/.test(home) && /rel="noopener"/.test(home));
+  // 不加 width:max-content 的話這個 <a> 會撐滿整行，右邊一大片空白也能點到
+  t.ok('點擊範圍只有標誌那一塊，不是整行',
+    /\.xsj-home\{[^}]*width:max-content/.test(index), '少了 width:max-content');
+  t.ok('外觀不變（不要底線、不要變成連結色）',
+    /\.xsj-home\{[^}]*text-decoration:none[^}]*color:inherit/.test(index));
+
   process.exit(t.done() ? 0 : 1);
 })().catch((e) => { console.error(e); process.exit(1); });

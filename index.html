@@ -1228,6 +1228,12 @@
   }
   .xsj-inner{max-width:720px;margin:0 auto;display:grid;gap:16px}
   .xsj-lockup{display:flex;align-items:center;gap:16px}
+  /* 連回品牌頁：維持原本的外觀（不要底線、不要變成連結色），只在互動時給回饋 */
+  /* width:max-content：不加的話這個 <a> 會撐滿整行，右邊一大片空白也會變成可點區域，
+     手機上很容易誤觸到一個會開新分頁的連結 */
+  .xsj-home{text-decoration:none;color:inherit;border-radius:8px;width:max-content;max-width:100%}
+  .xsj-home:hover .xsj-name{text-decoration:underline;text-underline-offset:4px}
+  .xsj-home:focus-visible{outline:2px solid var(--xsj-amber);outline-offset:6px}
   .xsj-mark{display:grid;grid-template-columns:repeat(4,9px);gap:6px;flex:0 0 auto}
   .xsj-mark i{width:9px;height:9px;border-radius:50%;background:var(--xsj-dim);display:block}
   .xsj-mark i.on{background:var(--xsj-ink)}
@@ -2159,7 +2165,11 @@
      點陣是品牌標誌，點位固定不要改。 -->
 <section class="xsj-footer" aria-label="小數據所">
   <div class="xsj-inner">
-    <div class="xsj-lockup">
+    <!-- 整組標誌＋名字連回品牌頁。品牌頁本來就連過來了（它的 PRODUCTS 列著壽星日），
+         這裡只是把另一個方向補上。用 .xsj-home 包起來而不是只把「小數據所」四個字
+         變成連結——手機上四個字的點擊範圍太小。 -->
+    <a class="xsj-lockup xsj-home" href="https://afortunadofu-bot.github.io/celinefubrandpage/"
+       target="_blank" rel="noopener">
       <span class="xsj-mark" aria-hidden="true">
         <i></i><i class="on"></i><i></i><i class="hi"></i>
         <i class="on"></i><i class="hi"></i><i></i><i></i>
@@ -2170,7 +2180,7 @@
         <div class="xsj-name">小數據所</div>
         <div class="xsj-tag">日子有數</div>
       </div>
-    </div>
+    </a>
     <p class="xsj-line">把沒人在記的生活，變成你看得懂的數據。</p>
     <nav class="xsj-apps" aria-label="小數據所的產品">
       <a href="./" aria-current="page">壽星日</a>
@@ -4010,6 +4020,7 @@ const SITE_UPDATES=[
   {date:'2026-10-07', title:'排行榜跟「我的」可以自己排版面；左下角多了一顆咖啡',items:[
     '左下角多了一顆「請我喝杯咖啡」——壽星日是一個人做的免費網站，覺得有幫到你再按就好，不按完全不影響任何功能',
     '開始用 Google Analytics 看「有多少人來、哪幾頁最多人看」，隱私權政策第 8 節寫清楚了，也寫了怎麼擋掉',
+    '頁尾的「小數據所」可以點了，連到品牌頁看其他兩個 app（Bandary 聽團曆、RelateStats）',
     '「排行榜」跟「我的」最上面有一顆「⇅ 調整區塊順序」，按下去就能用上下箭頭把常看的往前搬',
     '排好的順序會記在這台裝置上，下次打開還在；按「↺ 回復預設」就排回原本的樣子']},
   {date:'2026-10-06', title:'按愛心、公告標題、投稿要填地點',items:[

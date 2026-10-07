@@ -9,6 +9,34 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v94　頁尾的「小數據所」連得回品牌頁
+
+**沒有資料庫變更。** 只動 `template.html`。
+
+celine 貼了 <https://afortunadofu-bot.github.io/celinefubrandpage/>。
+
+品牌頁的 PRODUCTS 本來就連過來壽星日了，這裡只是把另一個方向補上：頁尾那組
+「小數據所 · 日子有數」標誌整組變成連結。
+
+- 整組（標誌＋名字）當連結，不是只把「小數據所」四個字變成連結——手機上四個字的
+  點擊範圍太小。
+- 但要加 `width:max-content`：不加的話這個 `<a>` 是 flex 子項目、會撐滿整行，
+  右邊一大片空白也變成可點區域，手機上很容易誤觸到一個會開新分頁的連結
+  （量過：720px → 147px）。
+- 外觀完全不變（不要底線、不要變成連結色），只有 hover 時名字出現底線、
+  鍵盤 focus 時有外框。
+
+### 順手查到、但不在這個 repo 的三件事
+
+1. **品牌頁的「壽星日」連到 `https://shouxingri.web.app/`，那個網址回 404。**
+   現在點品牌頁上的壽星日會進到一個找不到頁面的畫面。正確網址是
+   `https://birthdaydeals.celine-fu-work.workers.dev/`。
+2. 品牌頁 NUMBERS 區塊寫「305 筆優惠／1,034 次回報」，現在實際是
+   **427 筆／2,261 次**。
+3. COSTS 區塊有兩處 `TODO-金額` 直接顯示在公開頁面上。
+
+---
+
 ## v93　流量統計（GA4）與贊助按鈕（Buy Me a Coffee）
 
 **沒有資料庫變更。** 動 `template.html` 與 `privacy.html`。
