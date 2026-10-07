@@ -65,8 +65,18 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.eq('第一次來的人直接記成已讀最新一筆', ls.getItem('sxr_updates_seen'), updates[0].date);
   t.eq('第一次來的人看不到 NEW', doc.querySelectorAll('#siteUpdatesList .upd-new').length, 0);
 
-  // 之前來過、後來有新更新
+  /* celine：「以後更新一個月內不用跳通知跟 new」——這陣子幾乎每天在改，
+     紅點跟彈窗變成純雜訊。UPDATES_QUIET_UNTIL 之前一律安靜，更新紀錄本身照常可以翻。 */
   ls.setItem('sxr_updates_seen', updates[1].date);
+  win.eval("UPDATES_QUIET_UNTIL = '2099-01-01'");      // 安靜期間
+  win.renderSiteUpdates();
+  t.eq('安靜期間不標 NEW', doc.querySelectorAll('#siteUpdatesList .upd-new').length, 0);
+  t.eq('安靜期間分頁上也不點紅點', tabDot(), 0);
+  t.ok('但更新紀錄本身照常看得到', entries().length > 0);
+  t.eq('安靜期間也不跳通知', win.maybeShowUpdatesNudge(), false);
+
+  // 安靜期過了之後，原本的行為要完整回來
+  win.eval("UPDATES_QUIET_UNTIL = '2000-01-01'");
   win.renderSiteUpdates();
   t.ok('有新更新時「我的」分頁出現小紅點', tabDot() > 0);
   t.eq('只有比上次看過更新的那幾筆標 NEW', doc.querySelectorAll('#siteUpdatesList .upd-new').length, 1);
@@ -117,6 +127,7 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.eq('沒有新更新不跳', win.maybeShowUpdatesNudge(), false);
 
   resetUpd();
+  win.eval("UPDATES_QUIET_UNTIL = '2000-01-01'");
   t.eq('有新更新時打開網站跳通知', win.maybeShowUpdatesNudge(), true);
   t.ok('通知出現', !unudge.classList.contains('hidden'));
   t.ok('通知寫出最新更新的標題', doc.querySelector('#updNudgeText').textContent.includes(updates[0].title), doc.querySelector('#updNudgeText').textContent);

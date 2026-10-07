@@ -52,17 +52,28 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v95_site_settings
   win.eval('SITE_FLAGS.show_studio_footer = true; applySiteFlags();');
   t.ok('打開又回來', !$('#xsjFooter').classList.contains('hidden'));
 
-  // 個別：品牌頁連結、兩個報名連結
+  /* 個別連結：celine「字樣都保留，關掉只關超連結」——所以關掉時字要留在原地，
+     只是不能點。不是藏起來、更不是刪掉：「Bandary 聽團曆」這幾個字本身在介紹做了什麼。 */
+  const linkOf = (f) => doc.querySelector(`[data-flag="${f}"]`) || $('#xsjHome');
   win.eval('SITE_FLAGS.show_studio_brandpage = false; applySiteFlags();');
-  t.ok('只關品牌頁連結，頁尾其他東西留著',
-    $('#xsjHome').classList.contains('hidden') && !$('#xsjFooter').classList.contains('hidden'));
-  win.eval('SITE_FLAGS.show_studio_brandpage = true; SITE_FLAGS.show_studio_bandary = false; applySiteFlags();');
-  const bandary = $$('[data-flag="show_studio_bandary"]');
-  t.eq('Bandary 那組有連結也有分隔點', bandary.length, 2);
-  t.ok('關掉時連分隔點一起收（不然會留下一個孤單的「·」）',
-    bandary.every((el) => el.classList.contains('hidden')));
+  const home = $('#xsjHome');
+  t.eq('關掉品牌頁連結後不能點了', home.getAttribute('href'), null);
+  t.ok('但字還在', /小數據所/.test(home.textContent) && /日子有數/.test(home.textContent));
+  t.ok('看起來也不像連結', home.classList.contains('link-off'));
+  t.ok('讀螢幕軟體知道它被停用', home.getAttribute('aria-disabled') === 'true');
+  t.ok('頁尾其他東西留著', !$('#xsjFooter').classList.contains('hidden'));
+  win.eval('SITE_FLAGS.show_studio_brandpage = true; applySiteFlags();');
+  t.ok('打開時原本的網址放得回去',
+    /celinefubrandpage/.test(home.getAttribute('href') || ''), home.getAttribute('href'));
+
+  win.eval('SITE_FLAGS.show_studio_bandary = false; applySiteFlags();');
+  const bandary = linkOf('show_studio_bandary');
+  t.eq('Bandary 也是只拿掉連結', bandary.getAttribute('href'), null);
+  t.ok('報名那幾個字照樣看得到', /Bandary/.test(bandary.textContent) && /封閉測試報名/.test(bandary.textContent));
   t.ok('RelateStats 不受影響',
-    $$('[data-flag="show_studio_relatestats"]').every((el) => !el.classList.contains('hidden')));
+    /forms\.gle/.test(linkOf('show_studio_relatestats').getAttribute('href') || ''));
+  // 文字留著，所以中間那個「·」也要留著，不會變成孤單的分隔點
+  t.eq('分隔點不再跟著開關', doc.querySelectorAll('.xsj-sep[data-flag]').length, 0);
   win.eval('SITE_FLAGS.show_studio_bandary = true; applySiteFlags();');
 
   /* ================= 3. 咖啡按鈕：關掉＝根本不載入 ================= */
@@ -91,7 +102,7 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v95_site_settings
   await tick(win, 2);
   t.eq('資料庫說關就關', [flags().show_coffee, flags().show_studio_relatestats], [false, false]);
   t.eq('沒提到的維持打開', flags().show_studio_bandary, true);
-  t.ok('畫面跟著變', $$('[data-flag="show_studio_relatestats"]').every((el) => el.classList.contains('hidden')));
+  t.eq('畫面跟著變（只拿掉連結）', linkOf('show_studio_relatestats').getAttribute('href'), null);
   t.ok('存進這台裝置的快取（下次開場就不會閃一下）',
     JSON.parse(win.localStorage.getItem('sxr_site_flags')).show_coffee === false);
 
@@ -121,7 +132,10 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v95_site_settings
   const boxes = $$('#siteFlagsBody .flag-box');
   t.eq('五個開關都在', boxes.length, 5);
   t.ok('每一個都寫得出是什麼',
-    $$('#siteFlagsBody .flag-row').every((r) => r.textContent.trim().length > 2));
+    $$('#siteFlagsBody .flag-item').every((r) => r.textContent.trim().length > 2));
+  // celine：「網站顯示設定很醜」——原本五個平鋪的勾選框加「└」符號，看不出層級
+  t.eq('三個子項目縮排在第一項底下', $$('#siteFlagsBody .flag-kids .flag-box').length, 3);
+  t.ok('「└」那種字元不要再用了（字型不同會跑掉）', !/└/.test($('#siteFlagsBody').innerHTML));
   t.ok('咖啡那項講清楚關掉就不會載入第三方程式',
     /不會載入 buymeacoffee\.com/.test($('#siteFlagsBody').textContent));
 

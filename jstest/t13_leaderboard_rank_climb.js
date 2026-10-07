@@ -151,7 +151,10 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   t.ok('次數那張用次數的名次', /使用次數排行榜 第 \d+ 名/.test(card(0, 'count').title), card(0, 'count').title);
   t.ok('卡片上也有 PR', card(0, 'amount').lines.some((l) => /PR/.test(l.label)), card(0, 'amount').lines);
   // 嵐：「分享頁面都要標年份日期」
-  const today = new Date().toISOString().slice(0, 10);
+  // 用當地日期，不是 toISOString()（那是 UTC）。台灣是 UTC+8，凌晨 0~8 點跑這支測試時
+  // UTC 還停在前一天，圖卡上寫的卻是當地的今天，會假性失敗。
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   t.ok('標題下面標了期間跟製作日期',
     /總累積/.test(card(0, 'amount').sub) && card(0, 'amount').sub.includes(today), card(0, 'amount').sub);
 

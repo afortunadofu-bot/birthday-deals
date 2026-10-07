@@ -1104,15 +1104,30 @@
   /* 「我的」的五塊會員專屬區塊：原本靠外層 div 一起隱藏，拆開後各自掛這個 class。
      跟 hidden 分開，兩套各管各的（見 renderAuthUI 那段註解）。 */
   .authed-off{display:none !important}
-  /* 自訂區塊順序（嵐）。平常只有一顆小按鈕，進了排序模式才長出上下箭頭。 */
-  .order-bar{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}
-  .blk-move{display:flex;align-items:center;gap:8px;margin:-4px 0 10px;padding:6px 8px;
-    background:var(--accent-soft);border:1px dashed var(--accent-line);border-radius:var(--r-xs)}
-  .blk-move .blk-name{flex:1 1 auto;min-width:0;font-size:.8rem;font-weight:700;color:var(--accent-dark);
+  /* 自訂區塊順序（嵐）。平常只有一顆小按鈕，進了排序模式才長出上下箭頭。
+
+     celine：「調整區塊方法不夠好看簡潔」。第一版是在每一塊上面加一條粉紅虛線框，
+     內容照常顯示——結果同一個標題出現兩次（框裡一次、下面 h2 又一次），整頁還是
+     那麼長，要排序得一直捲。
+     改成：進排序模式時整頁收成一張清單，每一塊只留一列「編號 · 名稱 · ↑ ↓」。
+     排順序要看的是順序，不是內容。 */
+  .order-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
+  .order-hint{flex:1 1 100%;font-size:.78rem;color:var(--ink-3);margin:2px 0 0}
+  .blk-move{display:flex;align-items:center;gap:10px;padding:9px 10px 9px 12px;
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
+    box-shadow:var(--shadow-sm)}
+  .blk-move .blk-no{flex:none;min-width:18px;font-size:.76rem;color:var(--ink-3);
+    font-variant-numeric:tabular-nums}
+  .blk-move .blk-name{flex:1 1 auto;min-width:0;font-size:.88rem;font-weight:700;color:var(--ink);
     overflow-wrap:anywhere}
-  .blk-move button{flex:none;min-width:38px}
-  /* 排序模式下整塊的內容壓低存在感，一眼看到的是「現在在排順序」而不是內容 */
-  .ordering [data-block]{outline:1px dashed var(--accent-line);outline-offset:3px}
+  .blk-move button{flex:none;width:34px;height:34px;min-width:0;padding:0;border-radius:50%;
+    font-size:.95rem;line-height:1;display:flex;align-items:center;justify-content:center}
+  .blk-move button:disabled{opacity:.28}
+  /* 排序模式：每一塊只留那一列，外殼的留白、底色、框線全部收掉，整頁變成一張清單。
+     用 !important 是因為 .panel 的 padding/background 是直接寫在 class 上的。 */
+  .ordering [data-block]{padding:0 !important;margin:0 0 8px !important;background:none !important;
+    border:0 !important;box-shadow:none !important}
+  .ordering [data-block] > :not(.blk-move){display:none !important}
   /* 重複回報：按下合併之前先寫清楚會變成什麼樣子 */
   .fb-plan{margin-top:4px;font-size:.78rem;color:var(--ink-2);overflow-wrap:anywhere}
   .fb-plan .dim,.fb-plan.dim{color:var(--ink-3)}
@@ -1228,6 +1243,8 @@
   }
   .xsj-inner{max-width:720px;margin:0 auto;display:grid;gap:16px}
   .xsj-lockup{display:flex;align-items:center;gap:16px}
+  /* 被管理員關掉的連結：字留著，但看起來、用起來都是普通文字 */
+  .link-off{color:inherit !important;text-decoration:none !important;cursor:default;pointer-events:none}
   /* 連回品牌頁：維持原本的外觀（不要底線、不要變成連結色），只在互動時給回饋 */
   /* width:max-content：不加的話這個 <a> 會撐滿整行，右邊一大片空白也會變成可點區域，
      手機上很容易誤觸到一個會開新分頁的連結 */
@@ -1288,11 +1305,23 @@
     transition:opacity .18s var(--ease),transform .18s var(--ease);pointer-events:none}
   #btnToTop.show{opacity:1;transform:none;pointer-events:auto}
   #btnToTop:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
-  /* 管理員的顯示開關。
-     .toggle 本身是 inline-flex，照用的話五個開關會擠成兩三行、看不出哪一個是子項目；
-     這裡改成各自一行，說明文字也縮排到跟它說明的那一項對齊。 */
-  .flag-row{display:flex;margin-top:10px}
-  .flag-note{margin:2px 0 0 26px;font-size:.78rem}
+  /* 管理員的顯示開關（celine：「網站顯示設定很醜」）。
+     原本是五個平鋪的勾選框加「└」符號：看不出層級，說明文字還比選項本身搶眼。
+     改成一張清單——名稱靠左、開關靠右、說明用小一號的字接在名稱下面；子項目縮排，
+     左邊一條線代表「屬於上面那一項」，比用「└」這種字元穩定（字型不同會跑掉）。 */
+  .flag-group{border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;margin-top:12px}
+  .flag-item{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;
+    background:var(--surface)}
+  .flag-item + .flag-item,.flag-kids .flag-item:first-child{border-top:1px solid var(--line-soft)}
+  .flag-item:hover{background:var(--line-soft)}
+  .flag-txt{flex:1 1 auto;min-width:0;font-size:.88rem;font-weight:700;color:var(--ink);
+    overflow-wrap:anywhere}
+  .flag-txt small{display:block;margin-top:2px;font-size:.76rem;font-weight:400;color:var(--ink-3)}
+  .flag-item .flag-box{flex:none;width:18px;height:18px;accent-color:var(--accent);cursor:pointer}
+  .flag-kids{margin-left:14px;border-left:2px solid var(--line)}
+  .flag-kids .flag-item{padding-left:14px}
+  .flag-kids-note{margin:0;padding:8px 14px 10px;font-size:.76rem;color:var(--ink-3);
+    background:var(--surface);border-top:1px solid var(--line-soft)}
   /* Buy Me a Coffee 的浮動按鈕：腳本用行內樣式把自己釘在角落，所以只能用 !important 蓋掉。
      z-index 從 9999 降到 54（導覽列 50、回到頂端 55）——它是一顆加分的小按鈕，
      不該蓋在網站自己的東西上面。展開的視窗維持腳本自己的 9999：那是一張要蓋住畫面的
@@ -2196,10 +2225,10 @@
     <p class="xsj-line">把沒人在記的生活，變成你看得懂的數據。</p>
     <nav class="xsj-apps" aria-label="小數據所的產品">
       <a href="./" aria-current="page">壽星日</a>
-      <span class="xsj-sep" data-flag="show_studio_bandary">·</span>
+      <span class="xsj-sep">·</span>
       <a href="https://forms.gle/FhBJgWBWb72MCg5x5" target="_blank" rel="noopener"
          data-flag="show_studio_bandary">Bandary 聽團曆 · 封閉測試報名</a>
-      <span class="xsj-sep" data-flag="show_studio_relatestats">·</span>
+      <span class="xsj-sep">·</span>
       <a href="https://forms.gle/6HT4LzRSsPA76b6s7" target="_blank" rel="noopener"
          data-flag="show_studio_relatestats">RelateStats · 封閉測試報名</a>
     </nav>
@@ -4030,6 +4059,13 @@ $('#btnMineA2hsClose').onclick=()=>{
    給一般使用者看的版本：只寫「用起來有什麼不一樣」，不寫資料庫、管理員後台這些使用者看不到
    的東西；還在 feature/geo 分支、沒上線的功能（附近分店、地圖模式）不列。
    新的一筆加在最上面，日期用 YYYY-MM-DD。 ---- */
+/* celine：「以後更新一個月內不用跳通知跟 new」。
+   這陣子幾乎每天都在改，那顆紅點跟彈窗變成純雜訊——同一個人一天看三次「有新的更新」，
+   下次真的有大改版時就不會再點了。到這個日期之前一律安靜：更新紀錄本身照常可以翻，
+   只是不主動跳、不標 NEW、分頁上也不點紅點。要恢復就把日期往前改或刪掉這一行。 */
+let UPDATES_QUIET_UNTIL='2026-11-08';   // let 不是 const：之後要延期或提早恢復，改這一行就好
+const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
+
 const SITE_UPDATES=[
   {date:'2026-10-07', title:'排行榜跟「我的」可以自己排版面；左下角多了一顆咖啡',items:[
     '左下角多了一顆「請我喝杯咖啡」——壽星日是一個人做的免費網站，覺得有幫到你再按就好，不按完全不影響任何功能',
@@ -4142,7 +4178,7 @@ function renderSiteUpdates(){
   box.innerHTML=list.map(u=>`<div class="upd-entry">
       <div class="upd-head"><span class="upd-date">${esc(u.date)}</span>
         <b class="upd-title">${esc(u.title)}</b>
-        ${u.date>seen?'<span class="upd-new">NEW</span>':''}</div>
+        ${(!updatesQuiet() && u.date>seen)?'<span class="upd-new">NEW</span>':''}</div>
       <ul>${u.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>
     </div>`).join('');
   const rest=SITE_UPDATES.length-SITE_UPDATES_SHOW;
@@ -4150,7 +4186,7 @@ function renderSiteUpdates(){
   more.classList.toggle('hidden', rest<=0);
   more.textContent = SITE_UPDATES_EXPANDED ? '收起' : `看更早的更新（${rest}）`;
   // 「我的」分頁按鈕上的小紅點
-  const hasNew = SITE_UPDATES[0].date > seen;
+  const hasNew = !updatesQuiet() && SITE_UPDATES[0].date > seen;
   // 更新紀錄收合時看不到裡面的 NEW，標題旁也標一個
   $('#updHeadNew')?.classList.toggle('hidden', !hasNew);
   $$('.tab[data-tab="mine"]').forEach(t=>{
@@ -4250,16 +4286,33 @@ function renderBlockMovers(page){
   const main=$(BLK_PAGES[page].main);
   const on=main.classList.contains('ordering');
   main.querySelectorAll(':scope > [data-block] > .blk-move').forEach(el=>el.remove());
-  $$(`.blk-order-toggle[data-page="${page}"]`).forEach(b=>b.textContent=on?'✓ 完成':'⇅ 調整區塊順序');
+  $$(`.blk-order-toggle[data-page="${page}"]`).forEach(b=>{
+    b.textContent=on?'✓ 完成':'⇅ 調整區塊順序';
+    b.classList.toggle('primary', on);
+  });
   $$(`.blk-order-reset[data-page="${page}"]`).forEach(b=>b.classList.toggle('hidden',!on));
+  const bar=main.querySelector('.order-bar');
+  if(bar){
+    bar.querySelector('.order-hint')?.remove();
+    if(on){
+      const p=document.createElement('p');
+      p.className='order-hint';
+      p.textContent='用 ↑ ↓ 把常看的往前搬，排好按「完成」。順序只記在這台裝置上。';
+      bar.appendChild(p);
+    }
+  }
   if(!on) return;
   const blocks=blkList(page);
   blocks.forEach((el,i)=>{
     const bar=document.createElement('div');
     bar.className='blk-move';
-    bar.innerHTML=`<span class="blk-name">${esc(blkName(el))}</span>
-      <button type="button" class="btn sm blk-up" ${i===0?'disabled':''} aria-label="往上移">↑</button>
-      <button type="button" class="btn sm blk-down" ${i===blocks.length-1?'disabled':''} aria-label="往下移">↓</button>`;
+    // 編號讓「現在排到第幾個」一眼看得出來，不用自己數
+    bar.innerHTML=`<span class="blk-no">${i+1}</span>
+      <span class="blk-name">${esc(blkName(el))}</span>
+      <button type="button" class="btn sm blk-up" ${i===0?'disabled':''}
+        aria-label="把「${esc(blkName(el))}」往上移">↑</button>
+      <button type="button" class="btn sm blk-down" ${i===blocks.length-1?'disabled':''}
+        aria-label="把「${esc(blkName(el))}」往下移">↓</button>`;
     bar.querySelector('.blk-up').onclick=()=>moveBlock(page, el, -1);
     bar.querySelector('.blk-down').onclick=()=>moveBlock(page, el, 1);
     el.insertBefore(bar, el.firstChild);
@@ -4314,15 +4367,22 @@ const FLAG_KEYS=['show_studio_footer','show_studio_brandpage','show_studio_banda
                  'show_studio_relatestats','show_coffee'];
 const FLAG_LABEL={
   show_studio_footer:'頁尾「小數據所」整塊',
-  show_studio_brandpage:'　└ 連回品牌頁的連結',
-  show_studio_bandary:'　└ Bandary 封測報名',
-  show_studio_relatestats:'　└ RelateStats 封測報名',
+  show_studio_brandpage:'連回品牌頁',
+  show_studio_bandary:'Bandary 封測報名',
+  show_studio_relatestats:'RelateStats 封測報名',
   show_coffee:'「請我喝杯咖啡」按鈕',
 };
 const FLAG_NOTE={
-  show_studio_footer:'關掉的話，下面三項跟著看不到。',
-  show_coffee:'關掉就完全不會載入 buymeacoffee.com 的程式，也不會種它的 cookie。',
+  show_studio_footer:'關掉整塊不見。',
+  show_coffee:'關掉就完全不會載入 buymeacoffee.com，也不會種它的 cookie。',
 };
+/* 版面：第一項底下縮排三個子項（celine：「網站顯示設定很醜」——原本是五個平鋪的
+   勾選框加「└」符號，看不出層級，說明文字也比選項本身還搶眼）。 */
+const FLAG_GROUPS=[
+  {key:'show_studio_footer', kids:['show_studio_brandpage','show_studio_bandary','show_studio_relatestats'],
+   kidsNote:'這三項關掉時字會留著，只是不能點。'},
+  {key:'show_coffee', kids:[]},
+];
 const FLAGS_KEY='sxr_site_flags';
 let SITE_FLAGS=Object.fromEntries(FLAG_KEYS.map(k=>[k,true]));   // 預設全開＝現在的樣子
 
@@ -4332,12 +4392,29 @@ function readFlagCache(){
     if(v && typeof v==='object') FLAG_KEYS.forEach(k=>{ if(typeof v[k]==='boolean') SITE_FLAGS[k]=v[k]; });
   }catch{}
 }
+/* 關掉一個連結＝把 href 拿掉，字留在原地（celine：「字樣都保留，關掉只關超連結」）。
+   不是刪掉元素、也不是藏起來——「Bandary 聽團曆」這幾個字本身是在介紹做了什麼，
+   只是現在不想把人導出去。href 先收進 data-href，打開時再放回來。
+   沒有 href 的 <a> 瀏覽器就當普通文字，不能點、也不會被 Tab 選到。 */
+function setLinkOn(el, on){
+  if(!el) return;
+  if(on){
+    if(el.dataset.href){ el.setAttribute('href', el.dataset.href); delete el.dataset.href; }
+    el.classList.remove('link-off');
+    el.removeAttribute('aria-disabled');
+  }else{
+    const h=el.getAttribute('href');
+    if(h){ el.dataset.href=h; el.removeAttribute('href'); }
+    el.classList.add('link-off');
+    el.setAttribute('aria-disabled','true');
+  }
+}
 function applySiteFlags(){
+  // 整塊是「要不要出現」，所以還是整塊收起來；下面三項是「要不要連出去」，字一律留著
   const foot=$('#xsjFooter');
   if(foot) foot.classList.toggle('hidden', !SITE_FLAGS.show_studio_footer);
-  const home=$('#xsjHome');
-  if(home) home.classList.toggle('hidden', !SITE_FLAGS.show_studio_brandpage);
-  $$('[data-flag]').forEach(el=>el.classList.toggle('hidden', !SITE_FLAGS[el.dataset.flag]));
+  setLinkOn($('#xsjHome'), SITE_FLAGS.show_studio_brandpage);
+  $$('[data-flag]').forEach(el=>setLinkOn(el, !!SITE_FLAGS[el.dataset.flag]));
   SITE_FLAGS.show_coffee ? loadCoffeeWidget() : removeCoffeeWidget();
 }
 async function loadSiteFlags(){
@@ -4389,10 +4466,14 @@ function removeCoffeeWidget(){
 function renderSiteFlagsPanel(){
   const box=$('#siteFlagsBody');
   if(!box || !myProfile?.is_admin) return;
-  box.innerHTML=FLAG_KEYS.map(k=>`
-    <label class="toggle flag-row"><input type="checkbox" class="flag-box" data-k="${k}"
-      ${SITE_FLAGS[k]?'checked':''}> ${esc(FLAG_LABEL[k])}</label>
-    ${FLAG_NOTE[k]?`<p class="sub flag-note">${esc(FLAG_NOTE[k])}</p>`:''}`).join('');
+  const row=k=>`<label class="flag-item">
+      <span class="flag-txt">${esc(FLAG_LABEL[k])}${
+        FLAG_NOTE[k]?`<small>${esc(FLAG_NOTE[k])}</small>`:''}</span>
+      <input type="checkbox" class="flag-box" data-k="${k}" ${SITE_FLAGS[k]?'checked':''}>
+    </label>`;
+  box.innerHTML=FLAG_GROUPS.map(g=>`<div class="flag-group">${row(g.key)}${
+    g.kids.length?`<div class="flag-kids">${g.kids.map(row).join('')}${
+      g.kidsNote?`<p class="flag-kids-note">${esc(g.kidsNote)}</p>`:''}</div>`:''}</div>`).join('');
   $$('#siteFlagsBody .flag-box').forEach(cb=>cb.onchange=async()=>{
     const k=cb.dataset.k, on=cb.checked;
     cb.disabled=true;
@@ -4565,6 +4646,7 @@ $('#btnBdayCheerGo').onclick=()=>{
 };
 
 function maybeShowUpdatesNudge(){
+  if(updatesQuiet()) return false;        // celine：一個月內不用跳通知
   const latest=SITE_UPDATES[0];
   if(!(latest.date > updatesSeenDate())) return false;
   if(updatesNudgeDone() >= latest.date) return false;
