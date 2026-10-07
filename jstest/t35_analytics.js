@@ -77,27 +77,32 @@ function loadFrom(url) {
   t.ok('「不賣資料」這句留著', /不會把你的資料賣給任何人/.test(privacy));
   t.ok('最後更新日期有跟著改', /最後更新：2026 年 10 月 7 日/.test(privacy));
 
-  /* ================= 5. Buy Me a Coffee 浮動按鈕 ================= */
-  const bmc = (index.match(/<script data-name="BMC-Widget"[\s\S]*?><\/script>/) || [''])[0];
-  t.ok('贊助按鈕的 script 在', bmc.length > 0);
-  t.ok('指向 celine 的頁面', /data-id="celinefu"/.test(bmc), bmc);
+  /* ================= 5. Buy Me a Coffee 浮動按鈕 =================
+     v95 之後改成由 loadCoffeeWidget() 動態載入（管理員關掉時要「根本不載入」，
+     見 t36），所以這些設定現在寫在那支函式裡，不是 HTML 的 script 標籤上。 */
+  const coffee = index.slice(index.indexOf('function loadCoffeeWidget'),
+                            index.indexOf('function removeCoffeeWidget'));
+  t.ok('載入咖啡按鈕的函式在', coffee.length > 0);
+  t.ok('指向 celine 的頁面', /'data-id','celinefu'/.test(coffee), coffee.slice(0, 200));
+  t.ok('載的是官方的 widget 腳本', /cdnjs\.buymeacoffee\.com\/1\.0\.0\/widget\.prod\.min\.js/.test(coffee));
   /* 這一條是實測踩到的：腳本裡寫的是 `"left"==dataset.position`，官方產生的程式碼
      卻給大寫的 "Right"。寫 "Left" 會比不中、默默掉回右邊，壓在「回到頂端」上面。 */
   t.ok('位置是小寫的 left（大寫會比不中，掉回右邊壓到「回到頂端」）',
-    /data-position="left"/.test(bmc), bmc);
-  /* 腳本開頭就 querySelector 自己這個 <script>，其餘掛在 DOMContentLoaded。
-     async 有機會在那個事件之後才執行，按鈕就永遠不會出現。 */
-  t.ok('用 defer 不用 async', / defer/.test(bmc) && !/ async/.test(bmc), bmc);
+    /'data-position','left'/.test(coffee), coffee);
+  /* 腳本的其餘工作掛在 window 的 DOMContentLoaded 上。我們是在那個事件之後才插進去的，
+     不自己補發一個，按鈕永遠不會出現。 */
+  t.ok('載完要自己補發一次 DOMContentLoaded', /dispatchEvent\(new Event\('DOMContentLoaded'\)\)/.test(coffee));
   t.ok('對話泡泡關掉（它位置寫死在底部，會被手機導覽列切掉，又沒有 id 可以選）',
-    /data-message=""/.test(bmc), bmc);
-  t.ok('用網站自己的主色', /data-color="#e8483c"/.test(bmc));
-  t.ok('排在 </body> 前面，不卡頁面顯示', index.indexOf('BMC-Widget') > index.indexOf('connectLive()'));
+    /'data-message',''/.test(coffee), coffee);
+  t.ok('用網站自己的主色', /'data-color','#e8483c'/.test(coffee));
+  t.ok('載不到就算了，不影響網站其他地方', /onerror=/.test(coffee));
+  t.ok('HTML 裡不再留著靜態的 script 標籤（不然關不掉）',
+    !/<script data-name="BMC-Widget"/.test(index));
 
   const css = index.replace(/\s+/g, ' ');
   t.ok('z-index 壓回 54，不要蓋在網站自己的東西上面', css.includes('#bmc-wbtn{z-index:54 !important}'));
   t.ok('手機才墊高，跟「回到頂端」同一個算式',
-    /@media\(max-width:768px\)\{ \/\*[^*]*\*\/ #bmc-wbtn\{bottom:calc\(16px \+ var\(--tabbar-h\)/.test(css)
-    || css.includes('#bmc-wbtn{bottom:calc(16px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom)) !important}'),
+    css.includes('#bmc-wbtn{bottom:calc(16px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom)) !important}'),
     '找不到手機版的墊高規則');
   t.ok('沒有去動展開的視窗（手機上是滿版的，動它只會多一條縫）',
     !/#bmc-iframe\{[^}]*bottom/.test(css));

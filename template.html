@@ -1288,6 +1288,11 @@
     transition:opacity .18s var(--ease),transform .18s var(--ease);pointer-events:none}
   #btnToTop.show{opacity:1;transform:none;pointer-events:auto}
   #btnToTop:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+  /* 管理員的顯示開關。
+     .toggle 本身是 inline-flex，照用的話五個開關會擠成兩三行、看不出哪一個是子項目；
+     這裡改成各自一行，說明文字也縮排到跟它說明的那一項對齊。 */
+  .flag-row{display:flex;margin-top:10px}
+  .flag-note{margin:2px 0 0 26px;font-size:.78rem}
   /* Buy Me a Coffee 的浮動按鈕：腳本用行內樣式把自己釘在角落，所以只能用 !important 蓋掉。
      z-index 從 9999 降到 54（導覽列 50、回到頂端 55）——它是一顆加分的小按鈕，
      不該蓋在網站自己的東西上面。展開的視窗維持腳本自己的 9999：那是一張要蓋住畫面的
@@ -2138,6 +2143,13 @@
       <div class="hint" style="margin-top:2px">品牌名稱去掉空白、英文大小寫後一樣，或其中一個包含另一個。點一下帶進上面，再自己確認要不要合併。</div>
       <div class="merge-sugg" id="mergeSugg"></div></div>
   </div>
+  <!-- celine：「管理員可以加一個按鈕，是可以關掉品牌頁跟捐款頁的，跟個別可以選要加甚麼展示」 -->
+  <div class="panel" id="pnlSiteFlags">
+    <h2>網站顯示設定</h2>
+    <p class="sub">勾起來才會出現在網站上。改完<strong>對所有訪客生效</strong>（他們下次重新整理就會看到），不只是你這台裝置。</p>
+    <div id="siteFlagsMsg"></div>
+    <div id="siteFlagsBody"></div>
+  </div>
   <div class="panel" id="pnlAdminSettings">
     <h2>管理員設定</h2>
     <p class="sub">用 email 新增管理員——對方要先自己登入過網站一次，系統才查得到帳號。</p>
@@ -2163,12 +2175,12 @@
 
 <!-- 小數據所的共用頁尾（品牌資料夾的 footer.html，淺色底版本）。
      點陣是品牌標誌，點位固定不要改。 -->
-<section class="xsj-footer" aria-label="小數據所">
+<section class="xsj-footer" id="xsjFooter" aria-label="小數據所">
   <div class="xsj-inner">
     <!-- 整組標誌＋名字連回品牌頁。品牌頁本來就連過來了（它的 PRODUCTS 列著壽星日），
          這裡只是把另一個方向補上。用 .xsj-home 包起來而不是只把「小數據所」四個字
          變成連結——手機上四個字的點擊範圍太小。 -->
-    <a class="xsj-lockup xsj-home" href="https://afortunadofu-bot.github.io/celinefubrandpage/"
+    <a class="xsj-lockup xsj-home" id="xsjHome" href="https://afortunadofu-bot.github.io/celinefubrandpage/"
        target="_blank" rel="noopener">
       <span class="xsj-mark" aria-hidden="true">
         <i></i><i class="on"></i><i></i><i class="hi"></i>
@@ -2184,10 +2196,12 @@
     <p class="xsj-line">把沒人在記的生活，變成你看得懂的數據。</p>
     <nav class="xsj-apps" aria-label="小數據所的產品">
       <a href="./" aria-current="page">壽星日</a>
-      <span class="xsj-sep">·</span>
-      <a href="https://forms.gle/FhBJgWBWb72MCg5x5" target="_blank" rel="noopener">Bandary 聽團曆 · 封閉測試報名</a>
-      <span class="xsj-sep">·</span>
-      <a href="https://forms.gle/6HT4LzRSsPA76b6s7" target="_blank" rel="noopener">RelateStats · 封閉測試報名</a>
+      <span class="xsj-sep" data-flag="show_studio_bandary">·</span>
+      <a href="https://forms.gle/FhBJgWBWb72MCg5x5" target="_blank" rel="noopener"
+         data-flag="show_studio_bandary">Bandary 聽團曆 · 封閉測試報名</a>
+      <span class="xsj-sep" data-flag="show_studio_relatestats">·</span>
+      <a href="https://forms.gle/6HT4LzRSsPA76b6s7" target="_blank" rel="noopener"
+         data-flag="show_studio_relatestats">RelateStats · 封閉測試報名</a>
     </nav>
     <div class="xsj-meta">© <span id="xsjYear"></span> 小數據所 · Celine Fu</div>
   </div>
@@ -2898,7 +2912,7 @@ async function connectLive(retry=0){
        Restore project；流量尖峰被 Disk IO 拖垮的話要重啟專案。）</span>`);
   }
   paintOffers();   // 不管成功或失敗，都用目前最新的 OFFERS 重畫一次
-  loadSiteStats(); loadSiteAnnouncement(); registerSW();
+  loadSiteStats(); loadSiteAnnouncement(); loadSiteFlags(); registerSW();
   // 先降級成離線模式、後來重試才接上的話，上面已經記過一次瀏覽了，不要再記一次
   if(!PAGEVIEW_LOGGED){ PAGEVIEW_LOGGED=true; logEvent('pageview', {tab: location.hash||'offers'}); }
   startSurveyNudges();
@@ -2977,7 +2991,7 @@ async function onSession(s){
   if(me){ loadMyStuff(); loadWishlist(); loadMyUsedOffers(); flushPendingReport(); loadPendingPreview(); loadPendingEditsPreview(); loadNotifCount(); }
   else { $('#pendPreviewPanel').classList.add('hidden'); $('#pendEditsPreviewPanel').classList.add('hidden'); $('#btnNotif').classList.add('hidden'); }
   if(myProfile?.is_admin){ loadPending(); loadPendingEdits(); loadRejected(); loadApproved();
-    loadAdminSettings(); loadAdminDashboard(); loadFeedbackList(); loadUsageReportsAdmin(); loadSurveyAdmin(); renderMergePanel();
+    loadAdminSettings(); renderSiteFlagsPanel(); loadAdminDashboard(); loadFeedbackList(); loadUsageReportsAdmin(); loadSurveyAdmin(); renderMergePanel();
     loadAdminCommentList(); loadReviewInsights(); }
 }
 
@@ -4281,6 +4295,123 @@ $$('.blk-order-reset').forEach(b=>b.onclick=()=>{
 // 預設順序＝頁面剛載入、還沒套用使用者設定之前的樣子
 const BLK_DEFAULT={board:blkList('board').map(el=>el.id), mine:blkList('mine').map(el=>el.id)};
 Object.keys(BLK_PAGES).forEach(applyBlockOrder);
+
+/* ---- 全站顯示開關（schema_v95 的 site_settings）----
+   celine：「管理員可以加一個按鈕，可以關掉品牌頁跟捐款頁的，跟個別可以選要加甚麼展示」。
+
+   「關掉」要對所有訪客生效，所以設定存在資料庫，不是 localStorage——那只會影響
+   管理員自己那台裝置。
+
+   套用的時機分兩段，為的是不要閃一下：
+     1. 開場先用這台裝置上次存下來的那份（同步，0ms）
+     2. 連上 Supabase 之後再讀一次，不一樣就重套並更新快取
+   第一次來的訪客沒有快取，用預設值＝全部顯示，也就是現在的樣子。資料庫讀不到時
+   同樣維持預設，網站看起來是完整的，不會因為後端出事就少一塊。
+
+   咖啡按鈕是例外：它是第三方腳本、會種 cookie，所以**確定是開著才載入**，
+   而不是先載進來再用 CSS 藏。關掉就是真的完全不會去碰 buymeacoffee.com。 */
+const FLAG_KEYS=['show_studio_footer','show_studio_brandpage','show_studio_bandary',
+                 'show_studio_relatestats','show_coffee'];
+const FLAG_LABEL={
+  show_studio_footer:'頁尾「小數據所」整塊',
+  show_studio_brandpage:'　└ 連回品牌頁的連結',
+  show_studio_bandary:'　└ Bandary 封測報名',
+  show_studio_relatestats:'　└ RelateStats 封測報名',
+  show_coffee:'「請我喝杯咖啡」按鈕',
+};
+const FLAG_NOTE={
+  show_studio_footer:'關掉的話，下面三項跟著看不到。',
+  show_coffee:'關掉就完全不會載入 buymeacoffee.com 的程式，也不會種它的 cookie。',
+};
+const FLAGS_KEY='sxr_site_flags';
+let SITE_FLAGS=Object.fromEntries(FLAG_KEYS.map(k=>[k,true]));   // 預設全開＝現在的樣子
+
+function readFlagCache(){
+  try{
+    const v=JSON.parse(localStorage.getItem(FLAGS_KEY)||'null');
+    if(v && typeof v==='object') FLAG_KEYS.forEach(k=>{ if(typeof v[k]==='boolean') SITE_FLAGS[k]=v[k]; });
+  }catch{}
+}
+function applySiteFlags(){
+  const foot=$('#xsjFooter');
+  if(foot) foot.classList.toggle('hidden', !SITE_FLAGS.show_studio_footer);
+  const home=$('#xsjHome');
+  if(home) home.classList.toggle('hidden', !SITE_FLAGS.show_studio_brandpage);
+  $$('[data-flag]').forEach(el=>el.classList.toggle('hidden', !SITE_FLAGS[el.dataset.flag]));
+  SITE_FLAGS.show_coffee ? loadCoffeeWidget() : removeCoffeeWidget();
+}
+async function loadSiteFlags(){
+  if(!LIVE||!sb) return;
+  const {data,error}=await sb.from('site_settings').select('key,enabled');
+  if(error) return;                      // 還沒跑 v95，或讀不到：維持預設/快取，不要讓畫面少一塊
+  (data||[]).forEach(r=>{ if(FLAG_KEYS.includes(r.key)) SITE_FLAGS[r.key]=!!r.enabled; });
+  try{ localStorage.setItem(FLAGS_KEY, JSON.stringify(SITE_FLAGS)); }catch{}
+  applySiteFlags();
+}
+
+/* ---- 咖啡按鈕：確定開著才載入 ----
+   這支腳本的寫法有兩個地方要配合（都是讀它的原始碼確認的）：
+     1. 開頭就 `document.querySelector('script[data-name="BMC-Widget"]')` 找自己，
+        所以那些 data-* 要在 append 之前就設好
+     2. 其餘工作掛在 window 的 DOMContentLoaded 上。我們是在那個事件之後才插進去的，
+        事件不會再來一次，所以載完要自己補發一個，不然按鈕永遠不會出現
+   data-position 要小寫 "left"（腳本裡是 "left"==dataset.position，官方產生的
+   程式碼卻給大寫的 "Right"，寫 "Left" 會比不中、掉回右邊壓到「回到頂端」）。
+   data-message 留空：那顆對話泡泡是另一個沒有 id 的 div，位置寫死在底部，
+   手機上會被導覽列切掉一半，又沒有東西可以用 CSS 選到它。 */
+let COFFEE_LOADING=false;
+function loadCoffeeWidget(){
+  if(COFFEE_LOADING || document.getElementById('bmc-wbtn')
+     || document.querySelector('script[data-name="BMC-Widget"]')) return;
+  COFFEE_LOADING=true;
+  const s=document.createElement('script');
+  s.src='https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js';
+  s.setAttribute('data-name','BMC-Widget');
+  s.setAttribute('data-cfasync','false');
+  s.setAttribute('data-id','celinefu');
+  s.setAttribute('data-description','壽星日是一個人做的免費網站。覺得有幫到你的話，請我喝杯咖啡 ☕');
+  s.setAttribute('data-message','');
+  s.setAttribute('data-color','#e8483c');
+  s.setAttribute('data-position','left');
+  s.setAttribute('data-x_margin','16');
+  s.setAttribute('data-y_margin','16');
+  s.onload=()=>{ try{ window.dispatchEvent(new Event('DOMContentLoaded')); }catch{} };
+  s.onerror=()=>{ COFFEE_LOADING=false; };   // 被擋掉就算了，網站其他地方不受影響
+  document.body.appendChild(s);
+}
+function removeCoffeeWidget(){
+  ['bmc-wbtn','bmc-iframe'].forEach(id=>document.getElementById(id)?.remove());
+  document.querySelectorAll('script[data-name="BMC-Widget"]').forEach(el=>el.remove());
+  COFFEE_LOADING=false;
+}
+
+/* ---- 管理員的開關面板 ---- */
+function renderSiteFlagsPanel(){
+  const box=$('#siteFlagsBody');
+  if(!box || !myProfile?.is_admin) return;
+  box.innerHTML=FLAG_KEYS.map(k=>`
+    <label class="toggle flag-row"><input type="checkbox" class="flag-box" data-k="${k}"
+      ${SITE_FLAGS[k]?'checked':''}> ${esc(FLAG_LABEL[k])}</label>
+    ${FLAG_NOTE[k]?`<p class="sub flag-note">${esc(FLAG_NOTE[k])}</p>`:''}`).join('');
+  $$('#siteFlagsBody .flag-box').forEach(cb=>cb.onchange=async()=>{
+    const k=cb.dataset.k, on=cb.checked;
+    cb.disabled=true;
+    const {error}=await sb.from('site_settings')
+      .upsert({key:k, enabled:on, updated_by:me?.id||null}, {onConflict:'key'});
+    cb.disabled=false;
+    if(error){
+      cb.checked=!on;
+      note($('#siteFlagsMsg'),'alert', /relation|does not exist|constraint/i.test(error.message)
+        ? '要先在 Supabase 執行 schema_v95_site_settings.sql。'
+        : '存檔失敗：'+esc(error.message));
+      return;
+    }
+    SITE_FLAGS[k]=on;
+    try{ localStorage.setItem(FLAGS_KEY, JSON.stringify(SITE_FLAGS)); }catch{}
+    applySiteFlags();
+    note($('#siteFlagsMsg'),'good',`✓ 已${on?'打開':'關掉'}「${esc(FLAG_LABEL[k].trim().replace(/^└\s*/,''))}」，所有人重新整理後就會看到。`);
+  });
+}
 
 /* ---- 有新更新時跳通知 ----
    celine：新打開 App 時跳通知，引導大家去看近期的更新紀錄。
@@ -11055,30 +11186,15 @@ function makeCollapsiblePanel(id, defaultOpen){
  ['pnlPopular',true],['pnlWished',true],['pnlLb',true],['pnlContrib',true]]
   .forEach(([id,open])=>makeCollapsiblePanel(id,open));
 
+// 顯示開關：先用這台裝置上次存的那份套用（同步、不閃），連上線之後 loadSiteFlags() 再校正
+readFlagCache();
+applySiteFlags();
+
 paintSeedNow();   // 先畫（零延遲，不等網路）
 connectLive();    // 再背景接上 Supabase（有逾時保護）
 </script>
 
-<!-- Buy Me a Coffee 浮動按鈕（buymeacoffee.com/celinefu）
-     放在 </body> 前面、用 defer：
-       - async 不行。這支腳本是「開頭先 querySelector 自己這個 <script>，
-         其餘工作掛在 DOMContentLoaded 上」。async 有機會在 DOMContentLoaded
-         之後才執行，那個事件不會再來一次，按鈕就永遠不會出現。
-         defer 保證「解析完、DOMContentLoaded 之前」執行，兩個條件都成立。
-       - 載不到（擋廣告的外掛）就只是沒有按鈕，網站其他地方完全不受影響。
-     位置放左邊：右下角已經被「回到頂端」佔住了。注意 data-position 要寫小寫的
-     "left"——腳本裡是 `"left"==dataset.position`，官方產生的程式碼卻給大寫的
-     "Right"，所以寫 "Left" 會比不中、默默掉回右邊壓在「回到頂端」上面（實測踩到）。
-     高度用下面的 CSS 墊到手機底部導覽列上面——腳本是用行內樣式釘位置的，要 !important。
-
-     data-message 故意留空：那顆對話泡泡是另外一個沒有 id 的 div，位置寫死在
-     bottom:14px，手機上會被底部導覽列切掉一半，又沒有東西可以用 CSS 選到它。
-     邀請的話寫在 data-description，點開之後就看得到。 -->
-<script data-name="BMC-Widget" data-cfasync="false" defer
-  src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js"
-  data-id="celinefu"
-  data-description="壽星日是一個人做的免費網站。覺得有幫到你的話，請我喝杯咖啡 ☕"
-  data-message=""
-  data-color="#e8483c" data-position="left" data-x_margin="16" data-y_margin="16"></script>
+<!-- Buy Me a Coffee 的浮動按鈕改成由 loadCoffeeWidget() 動態載入（見上面那段），
+     這樣管理員關掉時「完全不會載入第三方腳本」，而不是載進來再用 CSS 藏起來。 -->
 </body>
 </html>
