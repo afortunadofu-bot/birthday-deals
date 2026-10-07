@@ -10404,7 +10404,7 @@ async function loadVisitStats(statsDays, rangeLabel){
   if(error){
     el.innerHTML = /function|does not exist/i.test(error.message)
       ? '<div class="note">「平均每位會員造訪幾次」要先在 Supabase 執行 <code>schema_v62_survey_and_visits.sql</code>。</div>'
-      : `<div class="note alert">造訪統計讀取失敗：${esc(error.message)}</div>`;
+      : `<div class="note alert">造訪統計讀取失敗：${esc(error.message)}${dbErrHint(error,'schema_v62_survey_and_visits.sql')}</div>`;
     return;
   }
   const d=v||{};
@@ -10445,14 +10445,14 @@ async function loadAdminDashboard(days){
     sb.rpc('admin_online_now')
   ]);
   if(error){
-    const hint=/function|does not exist/i.test(error.message)?'（Supabase 可能還沒跑 schema_v41_dashboard_range.sql）':'';
+    const hint=dbErrHint(error,'schema_v41_dashboard_range.sql');
     box.innerHTML=`<div class="note alert">讀取失敗：${esc(error.message)}${hint}</div>`; return;
   }
   const d=data||{};
   const cell=(v,k)=>`<div><div class="v">${v}</div><div class="k">${k}</div></div>`;
   let chartsHtml='';
   if(e2){
-    const hint=/function|does not exist/i.test(e2.message)?'（Supabase 可能還沒跑 schema_v15_dashboard.sql）':'';
+    const hint=dbErrHint(e2,'schema_v15_dashboard.sql');
     chartsHtml=`<div class="note alert" style="margin-top:10px">走勢圖讀取失敗：${esc(e2.message)}${hint}</div>`;
   } else {
     const rows=series||[];
@@ -10667,6 +10667,18 @@ function wireChartTooltips(root, registry=DASH_CHARTS){
 }
 
 /* ---- 管理員設定：用 email 直接在網站上新增／移除管理員，不用回去跑 SQL ---- */
+/* 資料庫錯誤的補充說明。
+   「canceling statement due to statement timeout」是 celine 跟嵐都看過的那一行——
+   原文完全看不出該做什麼。站台儀表板那幾支查詢沒有把日期範圍推進子查詢裡，
+   會把整張 site_events（十幾萬筆）掃好幾遍，v92 修好了，提示直接寫出要跑哪一支。 */
+function dbErrHint(error, missingFile){
+  const m=String(error&&error.message||'');
+  if(/statement timeout|57014/i.test(m))
+    return '（查詢跑太久被資料庫中止。站台儀表板這幾支已經在 schema_v92_site_events_io.sql 修好，貼進 Supabase SQL Editor 執行一次就會正常。）';
+  if(/function|does not exist/i.test(m) && missingFile) return `（Supabase 可能還沒跑 ${missingFile}）`;
+  return '';
+}
+
 /* ---- 管理員：合併重複優惠（schema_v70 的 admin_merge_offers）---- */
 function mergeOfferLabel(o){ return `#${o.id} ${o.brand}`; }
 // 「再睡5分鐘」跟「再睡五分鐘」是同一家（真的兩張都在站上），中文數字換成阿拉伯數字

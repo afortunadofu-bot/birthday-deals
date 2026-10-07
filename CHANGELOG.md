@@ -9,6 +9,85 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v92　站台儀表板讀不動：site_events 被整張掃過好幾遍
+
+**要跑 `schema_v92_site_events_io.sql`。**
+
+celine：「site_events 問題處理」。嵐的截圖：站台儀表板顯示
+`讀取失敗：canceling statement due to statement timeout`。
+
+### 不是「沒有索引」
+
+我上一則訊息說「16 萬筆沒有索引」是錯的——v14 就建了 `(event_type, created_at)` 跟
+`(created_at)`，v78 又補了一支 pageview 的 `session_id` 部分索引。
+
+真正的原因是**查詢沒有範圍**。`admin_dashboard_series(14)` 只要最近 14 天，
+但裡面每一個 CTE 都長這樣：
+
+```sql
+pv as (
+  select created_at::date as day, count(*) as cnt,
+         count(distinct nullif(session_id,'')) as visitors
+  from public.site_events where event_type = 'pageview'
+  group by 1                      -- ← 沒有 where created_at，整張表
+)
+```
+
+先把**全部 16 萬筆**按日期分組、每組再算一次不重複 session，算完之後才
+`left join` 回那 14 天，99% 的結果直接丟掉。而且因為沒有 `created_at` 條件，
+索引完全幫不上忙，只能 seq scan 整張表（連 `meta` jsonb 一起讀進來）。
+
+第二條：`admin_dashboard_stats` 跟 `admin_visit_stats` 選「全部時間」時，
+下限是 `to_timestamp(0)`——寫法上有條件，實際上等於沒有，planner 拿不到範圍。
+
+### 修法
+
+1. **把日期範圍推進每一個 CTE**（真正的修法）。行為完全不變，只是不再算了再丟。
+2. **「全部時間」改用 `min(created_at)` 當下限**，結果一模一樣，但 planner 拿得到
+   一個真的範圍，走得了索引。
+3. **三支涵蓋式索引**，`(created_at, session_id)` 的順序是刻意的：先用 `created_at`
+   做範圍掃描，掃到的那一段裡面直接就有 `session_id`，不用回原表。反過來排範圍條件
+   就用不到索引。最後 `analyze` 一次，planner 第一次就選對計畫。
+4. **堵住一個任何人都打得開的全表掃描**：`site_usage_hour_distribution` 開放給 anon，
+   而 `p_days => null` 時下限是 epoch。前端固定傳 30，但 RPC 是公開的，一行迴圈就能
+   逼資料庫一直全表掃描——10/04 把 Disk IO 燒光的就是這種查詢。改成 null 當 30 天。
+
+### 清理工具（**不會自動執行**）
+
+`site_events` 只進不出，一天多一萬多筆。現在 16 萬筆還不是問題，但一年後是四百萬筆，
+Supabase 免費方案的 500MB 會先滿。
+
+`admin_events_prune(p_keep_days)` 先把要刪掉那幾天的總數加進 `site_events_archive`，
+再刪原始列；`site_stats` 改成 `archive + 現存`，所以首頁公開顯示的「累計瀏覽」
+不會因為清理掉下來。另外有 `admin_events_prune_preview()` 只看不動。
+
+誠實說明一個精度問題：archive 的 `visitors` 是「每天不重複裝置數的總和」，跨午夜的
+同一個 session 會被算成兩次。只影響已經清掉的那幾天，而且這個數字本來就是量級參考。
+**沒有清理過的站台完全不受影響**，所以不急著跑。
+
+想清的時候（保留 180 天）：
+
+```sql
+select public.admin_events_prune_preview(180);   -- 先看會刪掉多少
+select public.admin_events_prune(180);           -- 確定了再跑
+```
+
+### 前端
+
+那句 `canceling statement due to statement timeout` 原文完全看不出該做什麼。
+加了 `dbErrHint()`：逾時就直接寫「站台儀表板這幾支已經在 schema_v92 修好，
+貼進 Supabase 執行一次就會正常」。
+
+### 測試
+
+新增 `t34`（37 個檢查）。SQL 沒辦法在 jsdom 裡跑，所以守的是「那幾條規則還在不在」：
+五個 CTE 都有日期範圍、沒有人再用 `to_timestamp(0)`、三支索引的欄位順序、公開端點
+夾得住 null、清理函式先結算再刪、以及 `site_stats` 的欄位名稱與順序跟 v17 逐字相同
+（`create or replace view` 不准改欄位，抄錯一個整支跑不起來——`free_no_min`、
+`user_count` 是回報人數這兩個我差點抄錯）。
+
+---
+
 ## v91　重複回報一鍵合併、排行榜與「我的」可以自訂區塊順序
 
 **沒有資料庫變更**（合併用的是 v70／v72 就有的 `admin_merge_offers`）。只動 `template.html`。
