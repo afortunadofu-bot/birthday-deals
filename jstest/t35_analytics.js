@@ -87,15 +87,18 @@ function loadFrom(url) {
   t.ok('而且夠短，不佔版面', label.replace(/[^一-鿿]/g, '').length <= 5, label);
   t.ok('有一張先把話講清楚的視窗', /<dialog id="dlgCoffee"/.test(index));
   t.ok('視窗裡說明了為什麼要請', /主機跟網域的錢也是自己付/.test(index));
-  /* celine：「這句話很刻意且不溫暖，我希望隨興溫暖點」——原本寫成
-     「完全自願，不請也不會少掉任何功能」，那是免責聲明的語氣，像在撇清。 */
-  // 只看視窗裡真的會被讀到的字——原本那句話還留在旁邊的註解裡當對照，不算數
+  /* celine 看過兩版都說「很刻意」：先是「完全自願，不請也不會少掉任何功能」，
+     再是「沒有也真的沒關係」。兩句的毛病一樣——都在幫讀者預演「我不給」，
+     等於先替對方覺得尷尬。不給是預設，不用安慰；講完想講的就停。 */
+  // 只看視窗裡真的會被讀到的字——那幾句話還留在旁邊的註解裡當對照，不算數
   const coffeeSay = (index.match(/<dialog id="dlgCoffee"[\s\S]*?<\/dialog>/) || [''])[0]
     .replace(/<!--[\s\S]*?-->/g, '');
   t.ok('不要再用免責聲明的語氣',
     !/完全自願/.test(coffeeSay) && !/不會少掉任何功能/.test(coffeeSay), coffeeSay.slice(0, 200));
-  t.ok('改成好好跟人說話', /沒有也真的沒關係/.test(index) && /你繼續用/.test(index));
-  t.ok('退出那顆也放鬆了', /下次吧/.test(index));
+  t.ok('也不要替對方預演「我不給」',
+    !/沒關係/.test(coffeeSay) && !/沒有也/.test(coffeeSay), coffeeSay.slice(0, 200));
+  t.ok('想講的講完就停', /請我喝杯咖啡我會很開心。<\/p>/.test(coffeeSay), coffeeSay.slice(-120));
+  t.ok('那份「沒關係」交給退出那顆去說', /下次吧/.test(index));
   t.ok('確定了才去 buymeacoffee', /id="btnCoffeeGo"[\s\S]{0,120}buymeacoffee\.com\/celinefu/.test(index));
   t.ok('開新分頁而且擋住 opener',
     /id="btnCoffeeGo"[\s\S]{0,200}rel="noopener"/.test(index));
