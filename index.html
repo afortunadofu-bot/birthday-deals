@@ -1330,16 +1330,17 @@
   .flag-kids .flag-item{padding-left:14px}
   .flag-kids-note{margin:0;padding:8px 14px 10px;font-size:.76rem;color:var(--ink-3);
     background:var(--surface);border-top:1px solid var(--line-soft)}
-  /* Buy Me a Coffee 的浮動按鈕：腳本用行內樣式把自己釘在角落，所以只能用 !important 蓋掉。
-     z-index 從 9999 降到 54（導覽列 50、回到頂端 55）——它是一顆加分的小按鈕，
-     不該蓋在網站自己的東西上面。展開的視窗維持腳本自己的 9999：那是一張要蓋住畫面的
-     彈出視窗，本來就該在最上面（網站自己的彈窗是原生 <dialog>，在 top layer，照樣蓋得過它）。 */
-  #bmc-wbtn{z-index:54 !important}
-  @media(max-width:768px){
-    /* 手機才有底部導覽列。墊上去，跟「回到頂端」同一個算式，不然整顆被導覽列蓋住。
-       只動按鈕不動展開的視窗——手機上那張是整頁滿版的，動它只會多出一條縫。 */
-    #bmc-wbtn{bottom:calc(16px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom)) !important}
-  }
+  /* 自己的咖啡按鈕：左下角，跟「回到頂端」同一條基線（它在右下）。
+     帶著字，不是一顆孤零零的杯子——按之前就知道按下去會是什麼。 */
+  #btnCoffee{position:fixed;left:16px;bottom:calc(16px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom));
+    z-index:54;max-width:calc(100vw - 92px);padding:9px 14px;border-radius:99px;
+    border:1px solid var(--accent);background:var(--accent);color:#fff;
+    font-size:.82rem;font-weight:700;line-height:1;white-space:nowrap;cursor:pointer;
+    box-shadow:0 6px 18px rgba(232,72,60,.28)}
+  #btnCoffee:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+  #btnCoffee.hidden{display:none}
+  #dlgCoffee .foot a.btn{text-decoration:none}
+  .coffee-say{font-size:.88rem;line-height:1.8;color:var(--ink-2);margin:10px 0 0}
 </style>
 </head>
 <body>
@@ -2265,6 +2266,23 @@
   </div>
 </section>
 
+<!-- celine：「現在直接點咖啡按鈕會覺得莫名其妙」。原本是 Buy Me a Coffee 的浮動元件——
+     一顆沒有說明的咖啡杯，點下去直接跳出付款表單，確實沒頭沒尾。
+     改成自己的按鈕（帶著字）＋先講清楚再去。順帶一個好處：整支第三方腳本都不用載了，
+     沒按就不會有任何 buymeacoffee 的連線或 cookie。 -->
+<button type="button" id="btnCoffee" class="hidden">☕ 請我喝杯咖啡</button>
+<dialog id="dlgCoffee"><form method="dialog" class="dlg">
+  <h2>☕ 請我喝杯咖啡</h2>
+  <p class="sub">壽星日是一個人做的免費網站。</p>
+  <p class="coffee-say">沒有廣告、沒有訂閱，資料也不賣。每個月固定要付主機、網域跟資料庫的錢，
+    一直是我自己出的。<br><br>
+    如果壽星日幫你省到了什麼，可以請我喝杯咖啡——<strong>完全自願，不請也不會少掉任何功能</strong>。</p>
+  <div class="foot">
+    <button class="btn" value="cancel">以後再說</button>
+    <a class="btn primary" id="btnCoffeeGo" href="https://buymeacoffee.com/celinefu"
+       target="_blank" rel="noopener">去 Buy Me a Coffee ↗</a>
+  </div>
+</form></dialog>
 <button type="button" id="btnToTop" aria-label="回到最上方">↑</button>
 
 <dialog id="dlgFeedback"><form method="dialog" class="dlg">
@@ -4408,7 +4426,7 @@ const FLAG_LABEL={
 const FLAG_NOTE={
   show_dev_intro:'介紹小數據所、連到品牌頁的那一塊。關掉整塊不見。',
   show_studio_footer:'關掉整塊不見。',
-  show_coffee:'關掉就完全不會載入 buymeacoffee.com，也不會種它的 cookie。',
+  show_coffee:'左下角那顆。按下去會先說明為什麼要請，確定了才去 buymeacoffee.com。',
 };
 /* 版面：第一項底下縮排三個子項（celine：「網站顯示設定很醜」——原本是五個平鋪的
    勾選框加「└」符號，看不出層級，說明文字也比選項本身還搶眼）。 */
@@ -4454,7 +4472,7 @@ function applySiteFlags(){
   setLinkOn($('#devIntroLink'), SITE_FLAGS.show_studio_brandpage);
   setLinkOn($('#devIntroCoffee'), SITE_FLAGS.show_coffee);
   $$('[data-flag]').forEach(el=>setLinkOn(el, !!SITE_FLAGS[el.dataset.flag]));
-  SITE_FLAGS.show_coffee ? loadCoffeeWidget() : removeCoffeeWidget();
+  showCoffeeBtn(SITE_FLAGS.show_coffee);
 }
 async function loadSiteFlags(){
   if(!LIVE||!sb) return;
@@ -4465,41 +4483,18 @@ async function loadSiteFlags(){
   applySiteFlags();
 }
 
-/* ---- 咖啡按鈕：確定開著才載入 ----
-   這支腳本的寫法有兩個地方要配合（都是讀它的原始碼確認的）：
-     1. 開頭就 `document.querySelector('script[data-name="BMC-Widget"]')` 找自己，
-        所以那些 data-* 要在 append 之前就設好
-     2. 其餘工作掛在 window 的 DOMContentLoaded 上。我們是在那個事件之後才插進去的，
-        事件不會再來一次，所以載完要自己補發一個，不然按鈕永遠不會出現
-   data-position 要小寫 "left"（腳本裡是 "left"==dataset.position，官方產生的
-   程式碼卻給大寫的 "Right"，寫 "Left" 會比不中、掉回右邊壓到「回到頂端」）。
-   data-message 留空：那顆對話泡泡是另一個沒有 id 的 div，位置寫死在底部，
-   手機上會被導覽列切掉一半，又沒有東西可以用 CSS 選到它。 */
-let COFFEE_LOADING=false;
-function loadCoffeeWidget(){
-  if(COFFEE_LOADING || document.getElementById('bmc-wbtn')
-     || document.querySelector('script[data-name="BMC-Widget"]')) return;
-  COFFEE_LOADING=true;
-  const s=document.createElement('script');
-  s.src='https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js';
-  s.setAttribute('data-name','BMC-Widget');
-  s.setAttribute('data-cfasync','false');
-  s.setAttribute('data-id','celinefu');
-  s.setAttribute('data-description','壽星日是一個人做的免費網站。覺得有幫到你的話，請我喝杯咖啡 ☕');
-  s.setAttribute('data-message','');
-  s.setAttribute('data-color','#e8483c');
-  s.setAttribute('data-position','left');
-  s.setAttribute('data-x_margin','16');
-  s.setAttribute('data-y_margin','16');
-  s.onload=()=>{ try{ window.dispatchEvent(new Event('DOMContentLoaded')); }catch{} };
-  s.onerror=()=>{ COFFEE_LOADING=false; };   // 被擋掉就算了，網站其他地方不受影響
-  document.body.appendChild(s);
+/* ---- 咖啡按鈕 ----
+   原本是插入 Buy Me a Coffee 的 widget 腳本。celine：「直接點咖啡按鈕會覺得莫名其妙」
+   ——一顆沒有說明的杯子、點下去就是付款表單。改成自己的按鈕＋一張先把話講清楚的小視窗，
+   真的要去才開 buymeacoffee.com。
+   這樣第三方腳本完全不用載：沒有人按，就不會有任何對 buymeacoffee 的連線或 cookie，
+   「管理員關掉」也變成單純的顯示/隱藏，不用再處理「載進來之後怎麼拔乾淨」。 */
+function showCoffeeBtn(on){
+  $('#btnCoffee')?.classList.toggle('hidden', !on);
+  if(!on) { try{ $('#dlgCoffee')?.close(); }catch{} }
 }
-function removeCoffeeWidget(){
-  ['bmc-wbtn','bmc-iframe'].forEach(id=>document.getElementById(id)?.remove());
-  document.querySelectorAll('script[data-name="BMC-Widget"]').forEach(el=>el.remove());
-  COFFEE_LOADING=false;
-}
+$('#btnCoffee').onclick=()=>{ $('#dlgCoffee').showModal(); pushDlgHistory(); logEvent('coffee_open'); };
+$('#btnCoffeeGo').onclick=()=>{ logEvent('coffee_go'); $('#dlgCoffee').close(); };
 
 /* ---- 管理員的開關面板 ---- */
 function renderSiteFlagsPanel(){
@@ -11315,7 +11310,6 @@ paintSeedNow();   // 先畫（零延遲，不等網路）
 connectLive();    // 再背景接上 Supabase（有逾時保護）
 </script>
 
-<!-- Buy Me a Coffee 的浮動按鈕改成由 loadCoffeeWidget() 動態載入（見上面那段），
-     這樣管理員關掉時「完全不會載入第三方腳本」，而不是載進來再用 CSS 藏起來。 -->
+
 </body>
 </html>

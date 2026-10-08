@@ -75,40 +75,32 @@ function loadFrom(url) {
   t.ok('說得出看到的是什麼（整體數字，不拿來辨認個人）', /不會拿它去辨認你是誰/.test(privacy));
   t.ok('給得出擋掉的方法', /gaoptout/.test(privacy));
   t.ok('「不賣資料」這句留著', /不會把你的資料賣給任何人/.test(privacy));
-  t.ok('最後更新日期有跟著改', /最後更新：2026 年 10 月 7 日/.test(privacy));
+  t.ok('最後更新日期有跟著改', /最後更新：2026 年 10 月 8 日/.test(privacy));
 
-  /* ================= 5. Buy Me a Coffee 浮動按鈕 =================
-     v95 之後改成由 loadCoffeeWidget() 動態載入（管理員關掉時要「根本不載入」，
-     見 t36），所以這些設定現在寫在那支函式裡，不是 HTML 的 script 標籤上。 */
-  const coffee = index.slice(index.indexOf('function loadCoffeeWidget'),
-                            index.indexOf('function removeCoffeeWidget'));
-  t.ok('載入咖啡按鈕的函式在', coffee.length > 0);
-  t.ok('指向 celine 的頁面', /'data-id','celinefu'/.test(coffee), coffee.slice(0, 200));
-  t.ok('載的是官方的 widget 腳本', /cdnjs\.buymeacoffee\.com\/1\.0\.0\/widget\.prod\.min\.js/.test(coffee));
-  /* 這一條是實測踩到的：腳本裡寫的是 `"left"==dataset.position`，官方產生的程式碼
-     卻給大寫的 "Right"。寫 "Left" 會比不中、默默掉回右邊，壓在「回到頂端」上面。 */
-  t.ok('位置是小寫的 left（大寫會比不中，掉回右邊壓到「回到頂端」）',
-    /'data-position','left'/.test(coffee), coffee);
-  /* 腳本的其餘工作掛在 window 的 DOMContentLoaded 上。我們是在那個事件之後才插進去的，
-     不自己補發一個，按鈕永遠不會出現。 */
-  t.ok('載完要自己補發一次 DOMContentLoaded', /dispatchEvent\(new Event\('DOMContentLoaded'\)\)/.test(coffee));
-  t.ok('對話泡泡關掉（它位置寫死在底部，會被手機導覽列切掉，又沒有 id 可以選）',
-    /'data-message',''/.test(coffee), coffee);
-  t.ok('用網站自己的主色', /'data-color','#e8483c'/.test(coffee));
-  t.ok('載不到就算了，不影響網站其他地方', /onerror=/.test(coffee));
-  t.ok('HTML 裡不再留著靜態的 script 標籤（不然關不掉）',
-    !/<script data-name="BMC-Widget"/.test(index));
+  /* ================= 5. 咖啡按鈕 =================
+     celine：「現在直接點咖啡按鈕會覺得莫名其妙」。原本是 Buy Me a Coffee 的浮動元件
+     ——一顆沒有說明的杯子，點下去直接跳付款表單。改成自己的按鈕＋先講清楚的小視窗，
+     第三方腳本因此完全不用載。 */
+  t.ok('按鈕帶著字，不是一顆孤零零的杯子', /id="btnCoffee"[^>]*>☕ 請我喝杯咖啡</.test(index));
+  t.ok('有一張先把話講清楚的視窗', /<dialog id="dlgCoffee"/.test(index));
+  t.ok('視窗裡說明了為什麼要請', /沒有廣告、沒有訂閱，資料也不賣/.test(index));
+  t.ok('而且講明不請也不會少功能', /不請也不會少掉任何功能/.test(index));
+  t.ok('確定了才去 buymeacoffee', /id="btnCoffeeGo"[\s\S]{0,120}buymeacoffee\.com\/celinefu/.test(index));
+  t.ok('開新分頁而且擋住 opener',
+    /id="btnCoffeeGo"[\s\S]{0,200}rel="noopener"/.test(index));
+  // 整支第三方腳本都不用載了：沒有人按，就不會有任何對 buymeacoffee 的連線或 cookie
+  t.ok('完全沒有第三方腳本', !/cdnjs\.buymeacoffee\.com/.test(index) && !/BMC-Widget/.test(index));
 
   const css = index.replace(/\s+/g, ' ');
-  t.ok('z-index 壓回 54，不要蓋在網站自己的東西上面', css.includes('#bmc-wbtn{z-index:54 !important}'));
-  t.ok('手機才墊高，跟「回到頂端」同一個算式',
-    css.includes('#bmc-wbtn{bottom:calc(16px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom)) !important}'),
-    '找不到手機版的墊高規則');
-  t.ok('沒有去動展開的視窗（手機上是滿版的，動它只會多一條縫）',
-    !/#bmc-iframe\{[^}]*bottom/.test(css));
+  t.ok('釘在左下角（右下是「回到頂端」）', /#btnCoffee\{position:fixed;left:16px;/.test(css));
+  t.ok('墊在底部導覽列上面，跟「回到頂端」同一個算式',
+    css.includes('bottom:calc(16px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom))'));
+  t.ok('z-index 54，不蓋在網站自己的東西上面', /#btnCoffee\{[^}]*z-index:54/.test(css));
 
   t.ok('隱私權政策有寫到贊助是第三方服務', /Buy Me a Coffee/.test(privacy));
   t.ok('而且講明看不到信用卡號', /看不到你的信用卡號/.test(privacy));
+  t.ok('政策也跟著改成「按之前不會載入他們的程式」',
+    /在你前往之前[\s\S]{0,40}不會載入他們的任何程式/.test(privacy));
 
   /* ================= 6. 頁尾連回品牌頁 ================= */
   const home = (index.match(/<a class="xsj-lockup xsj-home"[\s\S]*?>/) || [''])[0];

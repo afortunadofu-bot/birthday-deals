@@ -97,17 +97,26 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v97_dev_intro_fla
   t.ok('但字留著', /請我喝杯咖啡/.test($('#devIntroCoffee').textContent));
   win.eval('SITE_FLAGS.show_coffee = true; applySiteFlags();');
 
-  /* ================= 3. 咖啡按鈕：關掉＝根本不載入 ================= */
-  win.__added.length = 0;
+  /* ================= 3. 咖啡按鈕 =================
+     v98 之後不再插入第三方腳本（celine：「直接點會覺得莫名其妙」），
+     所以開關就是單純的顯示/隱藏自己那顆按鈕。 */
+  const coffeeBtn = $('#btnCoffee');
   win.eval('SITE_FLAGS.show_coffee = false; applySiteFlags();');
-  t.eq('關掉時完全不去碰 buymeacoffee.com', addedSrcs().filter((s) => /buymeacoffee/.test(s)).length, 0);
-  t.eq('也不會留下它的 script 標籤', doc.querySelectorAll('script[data-name="BMC-Widget"]').length, 0);
-
+  t.ok('關掉就看不到', coffeeBtn.classList.contains('hidden'));
+  t.eq('而且網站從頭到尾都沒載第三方腳本',
+    doc.querySelectorAll('script[src*="buymeacoffee"]').length, 0);
   win.eval('SITE_FLAGS.show_coffee = true; applySiteFlags();');
-  const bmc = addedSrcs().filter((s) => /buymeacoffee/.test(s));
-  t.eq('打開才載入，而且只載一次', bmc.length, 1, JSON.stringify(addedSrcs()));
-  win.eval('applySiteFlags(); applySiteFlags();');
-  t.eq('重複套用不會重複載入', addedSrcs().filter((s) => /buymeacoffee/.test(s)).length, 1);
+  t.ok('打開又回來', !coffeeBtn.classList.contains('hidden'));
+  t.ok('按下去是先看說明，不是直接跳付款', (() => {
+    coffeeBtn.click();
+    return $('#dlgCoffee').open === true;
+  })());
+  $('#dlgCoffee').close();
+  // 開著的時候被關掉，那張說明視窗也要跟著收起來
+  coffeeBtn.click();
+  win.eval('SITE_FLAGS.show_coffee = false; applySiteFlags();');
+  t.ok('關掉時連開著的說明視窗一起收', $('#dlgCoffee').open !== true);
+  win.eval('SITE_FLAGS.show_coffee = true; applySiteFlags();');
 
   /* ================= 4. 從資料庫讀，讀不到要維持現狀 ================= */
   const rows = [
@@ -122,6 +131,7 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v97_dev_intro_fla
   await win.loadSiteFlags();
   await tick(win, 2);
   t.eq('資料庫說關就關', [flags().show_coffee, flags().show_studio_relatestats], [false, false]);
+  t.ok('畫面上那顆也跟著收起來', $('#btnCoffee').classList.contains('hidden'));
   t.eq('沒提到的維持打開', flags().show_studio_bandary, true);
   t.eq('畫面跟著變（只拿掉連結）', linkOf('show_studio_relatestats').getAttribute('href'), null);
   t.ok('存進這台裝置的快取（下次開場就不會閃一下）',
@@ -157,8 +167,9 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v97_dev_intro_fla
   // celine：「網站顯示設定很醜」——原本五個平鋪的勾選框加「└」符號，看不出層級
   t.eq('三個子項目縮排在第一項底下', $$('#siteFlagsBody .flag-kids .flag-box').length, 3);
   t.ok('「└」那種字元不要再用了（字型不同會跑掉）', !/└/.test($('#siteFlagsBody').innerHTML));
-  t.ok('咖啡那項講清楚關掉就不會載入第三方程式',
-    /不會載入 buymeacoffee\.com/.test($('#siteFlagsBody').textContent));
+  t.ok('咖啡那項講得出按下去會發生什麼',
+    /先說明[\s\S]{0,20}buymeacoffee\.com/.test($('#siteFlagsBody').textContent),
+    $('#siteFlagsBody').textContent);
 
   const coffeeBox = boxes.find((b) => b.dataset.k === 'show_coffee');
   coffeeBox.checked = false;
