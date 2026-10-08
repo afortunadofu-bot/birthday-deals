@@ -81,10 +81,21 @@ function loadFrom(url) {
      celine：「現在直接點咖啡按鈕會覺得莫名其妙」。原本是 Buy Me a Coffee 的浮動元件
      ——一顆沒有說明的杯子，點下去直接跳付款表單。改成自己的按鈕＋先講清楚的小視窗，
      第三方腳本因此完全不用載。 */
-  t.ok('按鈕帶著字，不是一顆孤零零的杯子', /id="btnCoffee"[^>]*>☕ 請我喝杯咖啡</.test(index));
+  // celine：「字有點多且占版面」——要短，但不能短到又變成一顆看不懂的杯子
+  const label = (index.match(/id="btnCoffee"[^>]*>([^<]*)</) || ['', ''])[1];
+  t.ok('按鈕帶著字，不是一顆孤零零的杯子', /咖啡/.test(label), label);
+  t.ok('而且夠短，不佔版面', label.replace(/[^一-鿿]/g, '').length <= 5, label);
   t.ok('有一張先把話講清楚的視窗', /<dialog id="dlgCoffee"/.test(index));
-  t.ok('視窗裡說明了為什麼要請', /沒有廣告、沒有訂閱，資料也不賣/.test(index));
-  t.ok('而且講明不請也不會少功能', /不請也不會少掉任何功能/.test(index));
+  t.ok('視窗裡說明了為什麼要請', /主機跟網域的錢也是自己付/.test(index));
+  /* celine：「這句話很刻意且不溫暖，我希望隨興溫暖點」——原本寫成
+     「完全自願，不請也不會少掉任何功能」，那是免責聲明的語氣，像在撇清。 */
+  // 只看視窗裡真的會被讀到的字——原本那句話還留在旁邊的註解裡當對照，不算數
+  const coffeeSay = (index.match(/<dialog id="dlgCoffee"[\s\S]*?<\/dialog>/) || [''])[0]
+    .replace(/<!--[\s\S]*?-->/g, '');
+  t.ok('不要再用免責聲明的語氣',
+    !/完全自願/.test(coffeeSay) && !/不會少掉任何功能/.test(coffeeSay), coffeeSay.slice(0, 200));
+  t.ok('改成好好跟人說話', /沒有也真的沒關係/.test(index) && /你繼續用/.test(index));
+  t.ok('退出那顆也放鬆了', /下次吧/.test(index));
   t.ok('確定了才去 buymeacoffee', /id="btnCoffeeGo"[\s\S]{0,120}buymeacoffee\.com\/celinefu/.test(index));
   t.ok('開新分頁而且擋住 opener',
     /id="btnCoffeeGo"[\s\S]{0,200}rel="noopener"/.test(index));

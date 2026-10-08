@@ -1333,9 +1333,9 @@
   /* 自己的咖啡按鈕：左下角，跟「回到頂端」同一條基線（它在右下）。
      帶著字，不是一顆孤零零的杯子——按之前就知道按下去會是什麼。 */
   #btnCoffee{position:fixed;left:16px;bottom:calc(16px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom));
-    z-index:54;max-width:calc(100vw - 92px);padding:9px 14px;border-radius:99px;
+    z-index:54;max-width:calc(100vw - 92px);padding:7px 12px;border-radius:99px;
     border:1px solid var(--accent);background:var(--accent);color:#fff;
-    font-size:.82rem;font-weight:700;line-height:1;white-space:nowrap;cursor:pointer;
+    font-size:.76rem;font-weight:700;line-height:1;white-space:nowrap;cursor:pointer;
     box-shadow:0 6px 18px rgba(232,72,60,.28)}
   #btnCoffee:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
   #btnCoffee.hidden{display:none}
@@ -2023,8 +2023,8 @@
         <a class="btn primary dev-intro-go" id="devIntroLink"
            href="https://afortunadofu-bot.github.io/celinefubrandpage/"
            target="_blank" rel="noopener">看看小數據所 ↗</a>
-        <p class="dev-intro-coffee">壽星日沒有廣告、沒有訂閱，資料也不賣。
-          覺得它幫你算清楚了什麼，可以
+        <p class="dev-intro-coffee">沒有廣告、也不收訂閱，就是想把這幾格空白填起來。
+          覺得它幫上忙的話，可以
           <a id="devIntroCoffee" href="https://buymeacoffee.com/celinefu" target="_blank" rel="noopener">請我喝杯咖啡</a>。</p>
       </div>
     </div>
@@ -2270,15 +2270,19 @@
      一顆沒有說明的咖啡杯，點下去直接跳出付款表單，確實沒頭沒尾。
      改成自己的按鈕（帶著字）＋先講清楚再去。順帶一個好處：整支第三方腳本都不用載了，
      沒按就不會有任何 buymeacoffee 的連線或 cookie。 -->
-<button type="button" id="btnCoffee" class="hidden">☕ 請我喝杯咖啡</button>
+<button type="button" id="btnCoffee" class="hidden">☕ 請我喝咖啡</button>
 <dialog id="dlgCoffee"><form method="dialog" class="dlg">
   <h2>☕ 請我喝杯咖啡</h2>
-  <p class="sub">壽星日是一個人做的免費網站。</p>
-  <p class="coffee-say">沒有廣告、沒有訂閱，資料也不賣。每個月固定要付主機、網域跟資料庫的錢，
-    一直是我自己出的。<br><br>
-    如果壽星日幫你省到了什麼，可以請我喝杯咖啡——<strong>完全自願，不請也不會少掉任何功能</strong>。</p>
+  <p class="sub">壽星日是我一個人做的。</p>
+  <!-- celine：「這句話很刻意且不溫暖，我希望隨興溫暖點」。
+       原本寫成「完全自願，不請也不會少掉任何功能」——那是免責聲明的語氣，
+       讀起來像在撇清，不像在跟人說話。 -->
+  <p class="coffee-say">下班後慢慢寫的，主機跟網域的錢也是自己付。其實做得滿開心的，
+    所以沒打算放廣告，也不會跟你收訂閱。<br><br>
+    如果它幫你省到了什麼，請我喝杯咖啡我會很開心。沒有也真的沒關係——
+    你繼續用，就已經是很好的回饋了。</p>
   <div class="foot">
-    <button class="btn" value="cancel">以後再說</button>
+    <button class="btn" value="cancel">下次吧</button>
     <a class="btn primary" id="btnCoffeeGo" href="https://buymeacoffee.com/celinefu"
        target="_blank" rel="noopener">去 Buy Me a Coffee ↗</a>
   </div>
