@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<!-- celine：「關於做這個網頁的人也是，點進去再看到細節」。
+     「我的」頁面底部只留一句話＋一個入口，細節全部在這一頁。 -->
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>關於 — 壽星日 Birthday Deals</title>
+<meta name="description" content="壽星日是「小數據所」做的生日優惠整理工具。這一頁寫為什麼會做它、它怎麼養著，以及另外兩個 app。">
+<link rel="canonical" href="https://birthdaydeals.celine-fu-work.workers.dev/about.html">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+  :root{
+    --bg:#f6f6f8; --surface:#fff; --line:#ececf1; --line-soft:#f4f4f7;
+    --ink:#18181f; --ink-2:#6b6b76; --ink-3:#a1a1ab;
+    --accent:#e8483c; --accent-dark:#c8352b; --accent-soft:#fdecea; --accent-line:#f8c9c4;
+    --r:12px;
+    --shadow-sm:0 1px 3px rgba(20,20,35,.06);
+    --f: ui-sans-serif,"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);
+    font-size:15px;line-height:1.75;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-underline-offset:3px}
+  .wrap{max-width:680px;margin:0 auto;padding:0 16px}
+  header{background:var(--surface);border-bottom:1px solid var(--line);padding:14px 0}
+  header .wrap{display:flex;align-items:center;gap:10px}
+  .logo{font-weight:800;font-size:1.05rem;color:var(--ink);text-decoration:none}
+  .back{margin-left:auto;font-size:.85rem}
+  main{padding:28px 0 56px}
+  h1{font-size:1.5rem;margin:0 0 6px;line-height:1.35}
+  .lead{color:var(--ink-2);font-size:.92rem;margin:0 0 24px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:18px 20px;margin:0 0 14px;box-shadow:var(--shadow-sm)}
+  h2{font-size:1.02rem;margin:0 0 8px}
+  p{margin:9px 0}
+  p:first-of-type{margin-top:0}
+  strong{color:var(--ink)}
+  .btn{display:inline-flex;align-items:center;gap:6px;margin-top:6px;
+    padding:9px 15px;border-radius:999px;font-size:.88rem;font-weight:700;
+    background:var(--accent);color:#fff;border:1px solid var(--accent);text-decoration:none}
+  .btn:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+  .btn.ghost{background:transparent;color:var(--accent-dark);border-color:var(--accent-line)}
+  .btn.ghost:hover{background:var(--accent-soft)}
+  /* 另外兩個 app：一行一個，名字粗體、後面一句話，不用卡片疊卡片 */
+  .apps{margin:10px 0 0;padding:0;list-style:none;font-size:.9rem}
+  .apps li{padding:9px 0;border-top:1px solid var(--line-soft);color:var(--ink-2)}
+  .apps li:first-child{border-top:0}
+  .apps b{color:var(--ink);font-size:.95rem}
+  .apps .here{color:var(--ink-3);font-size:.8rem;font-weight:400}
+  footer{border-top:1px solid var(--line);padding:22px 0 44px;font-size:.8rem;color:var(--ink-3)}
+  footer p{margin:5px 0}
+  @media (max-width:520px){
+    h1{font-size:1.3rem}
+    .card{padding:16px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="logo" href="./">壽星日 Birthday Deals</a>
+    <a class="back" href="./">← 回首頁</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1>關於做這個網站的人</h1>
+  <p class="lead">壽星日是「小數據所」的其中一個 app。</p>
+
+  <section class="card">
+    <h2>為什麼會做這幾個東西</h2>
+    <p>從一個滿生活的念頭開始的：<strong>有些你很在意的事，從來沒有人幫你算過。</strong></p>
+    <p>銀行幫你算錢，公司幫你算工時。剩下的那些——你今年走進幾次 live house、
+      一年一次的那天你究竟省下多少——算出來其實很有意思，可惜對別人沒什麼用處，
+      就一直空在那裡。小數據所做的就是把這幾格空白填起來。</p>
+  </section>
+
+  <section class="card">
+    <h2>小數據所的三個 app</h2>
+    <ul class="apps">
+      <li><b>壽星日</b> <span class="here">· 你正在看的這個</span><br>台灣各品牌生日優惠，可以篩選、收藏、記錄自己省下多少。</li>
+      <li><b>Bandary 聽團曆</b><br>記你今年看了哪些團、進了幾次場。</li>
+      <li><b>RelateStats</b><br>把關係裡那些說不清楚的事情算成數字。</li>
+    </ul>
+    <a class="btn ghost" href="https://afortunadofu-bot.github.io/celinefubrandpage/"
+       target="_blank" rel="noopener">看看小數據所 ↗</a>
+  </section>
+
+  <!-- celine：「不用提一個人做的，然後這跟免費伺服器的論述衝突，改一下」。
+       「我自己付主機跟網域」跟「網站跑在免費方案所以會慢」是互相打架的兩套說法。
+       真的情況是後者：全部跑在免費額度上。這一節就照實寫，咖啡的用途也才講得通。 -->
+  <section class="card">
+    <h2>它是怎麼養著的</h2>
+    <p>壽星日目前整個跑在免費方案上（主機、資料庫都是），所以人多的時候會慢個幾秒，
+      偶爾要重新整理一次才打得開。那不是你的網路有問題。</p>
+    <p><strong>沒有廣告、不收訂閱、不賣資料。</strong>優惠內容也不是跟品牌合作來的，
+      是自己整理、加上大家的回報慢慢補起來的。</p>
+    <p>想做的下一步是把它換成付費的方案，讓它快一點、穩一點。
+      如果壽星日幫你省到了什麼，請我喝杯咖啡會很有幫助。</p>
+    <a class="btn" href="https://buymeacoffee.com/celinefu"
+       target="_blank" rel="noopener">☕ 請我喝杯咖啡 ↗</a>
+  </section>
+
+  <section class="card">
+    <h2>有話想說</h2>
+    <p>網站怪怪的、哪裡不好用、想要什麼功能，都可以在「我的」頁面用
+      <a href="./">「回報網站問題」</a>告訴我，或直接寄到
+      <a href="mailto:celine.fu@gmail.com">celine.fu@gmail.com</a>。</p>
+    <p>優惠內容有誤的話，請直接在那張優惠卡片上用「建議修改」，處理起來比較快。</p>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p><a href="./">← 回壽星日首頁</a>　·　<a href="updates.html">更新紀錄</a>　·　<a href="privacy.html">隱私權政策</a>　·　<a href="terms.html">服務條款</a></p>
+  <p>© <span id="y">2026</span> 壽星日 Birthday Deals. All rights reserved.</p>
+</footer>
+<script>document.getElementById('y').textContent=new Date().getFullYear();</script>
+
+</body>
+</html>

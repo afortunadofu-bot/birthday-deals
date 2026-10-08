@@ -50,6 +50,39 @@ html = (HERE / "template.html").read_text(encoding="utf-8")
 html = html.replace("/*__OFFERS_DATA__*/",
                     json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
 
+# ---- 更新紀錄：一份來源，兩個去處 ----------------------------------------
+# celine：「更新紀錄不要是收合，是點進去看到新網頁」。所以內容搬到 updates.json，
+# 這裡注入 index.html（「我的」頁面只用到日期＋標題，拿來做 NEW 標記跟最新幾筆的
+# 清單），同時產生整頁的 updates.html。寫在兩個地方很快就會對不起來，所以兩邊都
+# 從同一個檔案長出來。
+updates = json.loads((HERE / "updates.json").read_text(encoding="utf-8"))["updates"]
+updates.sort(key=lambda u: u["date"], reverse=True)
+html = html.replace("/*__UPDATES_DATA__*/",
+                    json.dumps(updates, ensure_ascii=False, separators=(",", ":")))
+
+
+def esc(t: str) -> str:
+    return (t.replace("&", "&amp;").replace("<", "&lt;")
+             .replace(">", "&gt;").replace('"', "&quot;"))
+
+
+def updates_page() -> str:
+    def one(u: dict) -> str:
+        lis = "".join(f"<li>{esc(i)}</li>" for i in u["items"])
+        return (
+            '  <article class="u">\n'
+            f'    <div class="u-date">{esc(u["date"])}</div>\n'
+            f'    <h2>{esc(u["title"])}</h2>\n'
+            f"    <ul>{lis}</ul>\n"
+            "  </article>"
+        )
+
+    body = "\n".join(one(u) for u in updates)
+    tpl = (HERE / "updates_template.html").read_text(encoding="utf-8")
+    if "<!--__UPDATES_BODY__-->" not in tpl:
+        raise SystemExit("updates_template.html 少了 <!--__UPDATES_BODY__--> 這個記號。")
+    return tpl.replace("<!--__UPDATES_BODY__-->", body)
+
 
 def check_js(page: str) -> None:
     """產生出來的 index.html 裡那包 JS 必須語法正確才算數。
@@ -85,5 +118,7 @@ def check_js(page: str) -> None:
 
 check_js(html)
 (HERE / "index.html").write_text(html, encoding="utf-8")
+(HERE / "updates.html").write_text(updates_page(), encoding="utf-8")
 
 print(f"index.html 已產生，共 {len(payload['offers'])} 筆優惠。")
+print(f"updates.html 已產生，共 {len(updates)} 筆更新。")

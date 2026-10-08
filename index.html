@@ -740,14 +740,22 @@
     bottom:calc(72px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom));
     background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
     box-shadow:0 8px 24px rgba(0,0,0,.14);padding:12px 14px;font-size:.86rem}
-  /* 「我的」分頁：更新紀錄＋新更新小紅點 */
-  .upd-entry{padding:10px 0;border-top:1px solid var(--line-soft)}
-  .upd-entry:first-child{border-top:0;padding-top:2px}
-  .upd-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-  .upd-date{font-size:.74rem;color:var(--ink-3);font-variant-numeric:tabular-nums}
-  .upd-title{font-size:.9rem}
-  .upd-new{font-size:.66rem;font-weight:700;color:#fff;background:var(--accent);border-radius:999px;padding:1px 7px}
-  .upd-entry ul{margin:6px 0 0;padding-left:1.2em;font-size:.84rem;color:var(--ink-2);line-height:1.75}
+  /* 「我的」分頁：更新紀錄＋新更新小紅點。
+     celine：「不要是收合，是點進去看到新網頁」——這裡只剩最新三筆的日期＋標題，
+     一筆一列、整列可以點，細項在 updates.html。 */
+  .upd-row{display:flex;align-items:baseline;gap:9px;padding:9px 0;
+    border-top:1px solid var(--line-soft);color:inherit;text-decoration:none}
+  .upd-row:first-child{border-top:0;padding-top:2px}
+  .upd-row:hover .upd-title{text-decoration:underline;text-underline-offset:3px}
+  .upd-date{font-size:.74rem;color:var(--ink-3);font-variant-numeric:tabular-nums;flex:none}
+  .upd-title{font-size:.88rem;line-height:1.5}
+  .upd-new{font-size:.66rem;font-weight:700;color:#fff;background:var(--accent);border-radius:999px;
+    padding:1px 7px;flex:none;align-self:center}
+  /* 面板底部「點進去看完整的那一頁」的入口，更新紀錄跟「關於」共用 */
+  .panel-go{display:inline-block;margin-top:12px;font-size:.84rem;font-weight:700;
+    color:var(--accent-dark);text-decoration:none}
+  .panel-go:hover{text-decoration:underline;text-underline-offset:3px}
+  .panel-go.link-off{color:var(--ink-3);font-weight:400}
   .tab-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);
     margin-left:3px;vertical-align:top}
   .ok{color:var(--free);font-weight:700}
@@ -1305,14 +1313,18 @@
     transition:opacity .18s var(--ease),transform .18s var(--ease);pointer-events:none}
   #btnToTop.show{opacity:1;transform:none;pointer-events:auto}
   #btnToTop:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
-  /* 「我的」底部的開發者介紹 */
-  .dev-intro{margin-top:10px}
-  .dev-intro p{margin:0 0 10px;font-size:.86rem;line-height:1.75;color:var(--ink-2);overflow-wrap:anywhere}
-  .dev-intro-go{display:inline-flex;margin:2px 0 12px}
-  .dev-intro-coffee{font-size:.82rem !important;color:var(--ink-3) !important;margin-bottom:0 !important}
-  /* 這條連結本來跟旁邊的灰字一樣色，完全看不出可以點 */
-  .dev-intro-coffee a{color:var(--accent-dark);font-weight:700;text-decoration:underline;text-underline-offset:3px}
-  .dev-intro-coffee a.link-off{font-weight:400}
+  /* 「我的」底部進「關於」那一頁的入口（celine：「點進去再看到細節」） */
+  .dev-intro-teaser{margin:8px 0 0;font-size:.86rem;line-height:1.75;color:var(--ink-2)}
+  /* 「有時候會慢一點」：一條安靜的小告示，不要擺成跟功能區塊一樣大的排場。
+     烏龜放在 CSS 的裝飾位，不寫進 h2——區塊排序的清單是讀 h2 當名字的。 */
+  .note-slow{background:var(--line-soft);border-color:var(--line)}
+  .note-slow h2{font-size:.92rem;margin-bottom:4px;display:flex;align-items:center;gap:7px}
+  .note-slow h2::before{content:"🐢";font-size:1.05rem;line-height:1}
+  .note-slow p{margin:0;font-size:.84rem;line-height:1.8;color:var(--ink-2)}
+  .note-slow p b{color:var(--ink)}
+  .note-slow-go{display:inline-block;margin-top:9px;font-size:.8rem;font-weight:700;
+    color:var(--accent-dark);text-decoration:none}
+  .note-slow-go:hover{text-decoration:underline;text-underline-offset:3px}
   /* 管理員的顯示開關（celine：「網站顯示設定很醜」）。
      原本是五個平鋪的勾選框加「└」符號：看不出層級，說明文字還比選項本身搶眼。
      改成一張清單——名稱靠左、開關靠右、說明用小一號的字接在名稱下面；子項目縮排，
@@ -1330,12 +1342,12 @@
   .flag-kids .flag-item{padding-left:14px}
   .flag-kids-note{margin:0;padding:8px 14px 10px;font-size:.76rem;color:var(--ink-3);
     background:var(--surface);border-top:1px solid var(--line-soft)}
-  /* 自己的咖啡按鈕：左下角，跟「回到頂端」同一條基線（它在右下）。
-     帶著字，不是一顆孤零零的杯子——按之前就知道按下去會是什麼。 */
+  /* 自己的咖啡按鈕：左下角，跟右下的「回到頂端」同一條基線、同一個尺寸，
+     兩顆看起來是一對（celine：「改回去 ICON」）。 */
   #btnCoffee{position:fixed;left:16px;bottom:calc(16px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom));
-    z-index:54;max-width:calc(100vw - 92px);padding:7px 12px;border-radius:99px;
+    z-index:54;width:42px;height:42px;border-radius:50%;
     border:1px solid var(--accent);background:var(--accent);color:#fff;
-    font-size:.76rem;font-weight:700;line-height:1;white-space:nowrap;cursor:pointer;
+    font-size:1.15rem;line-height:1;cursor:pointer;
     box-shadow:0 6px 18px rgba(232,72,60,.28)}
   #btnCoffee:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
   #btnCoffee.hidden{display:none}
@@ -1984,12 +1996,17 @@
     </div>
     <!-- 嵐：「在我的頁面加一個 block，上面寫說因為目前網頁是用免費方案架設的，
          所以有時候稍有延遲，請見諒」。與其讓人以為是自己的網路有問題（或以為
-         網站壞了），不如講清楚。訪客也看得到，所以放在會員專屬區塊外面。 -->
-    <div class="panel" id="freeTierNote" data-block>
-      <h2>🐢 有時候會慢一點</h2>
-      <p class="sub">壽星日目前是用免費方案架設的，人多的時候偶爾會慢個幾秒，或是要重新整理一次才打得開。
-        不是你的網路有問題，先跟你說聲抱歉 🙏</p>
-      <p class="sub" style="margin-top:6px">正在一點一點調快，請多包涵。</p>
+         網站壞了），不如講清楚。訪客也看得到，所以放在會員專屬區塊外面。
+         celine：「有時候會慢一點那個區塊很醜，文字也怪」——原本是一整個標準面板，
+         標題還掛著 🐢，下面兩句各道歉一次（「先跟你說聲抱歉 🙏」＋「請多包涵」）。
+         為一句免責的話擺這麼大的排場，反而顯得網站很沒把握。改成一條安靜的
+         小告示：烏龜退到 CSS 的裝飾位（也才不會被區塊排序的清單讀成名字的一部分），
+         道歉只留該有的份量，把「為什麼會這樣」交給 about.html 講。 -->
+    <div class="panel note-slow" id="freeTierNote" data-block>
+      <h2>有時候會慢一點</h2>
+      <p>人多的時候壽星日會慢個幾秒，偶爾要重新整理一次才打得開——<b>不是你的網路有問題。</b>
+        它整個跑在免費方案上，正在想辦法讓它快一點、穩一點。</p>
+      <a class="note-slow-go" href="about.html">它是怎麼養著的 <span aria-hidden="true">→</span></a>
     </div>
     <!-- 嵐：「回報網站問題移到『我的』」。原本只掛在頁尾的一行小字裡，幾乎沒人看得到；
          放在「我的」這裡，跟上面那塊速度說明、下面自己回報過的紀錄排在一起。 -->
@@ -2000,33 +2017,26 @@
       <button type="button" class="btn primary" id="btnFeedback">回報問題或建議</button>
     </div>
     <!-- 更新紀錄：celine 要「我的」頁面有個小地方記每次更新的日期、簡單說改了哪裡。
-         訪客也看得到，所以放在會員專屬區塊外面。內容在 SITE_UPDATES。 -->
+         訪客也看得到，所以放在會員專屬區塊外面。
+         內容的唯一來源是 updates.json（build.py 注入這裡，也產生整頁的 updates.html）；
+         celine：「更新紀錄不要寫那麼仔細」「不要是收合，是點進去看到新網頁」——
+         這裡只留最新三筆的日期＋標題，細項在那一頁。 -->
     <div class="panel" id="siteUpdatesPanel" data-block>
       <h2>🆕 更新紀錄 <span class="upd-new hidden" id="updHeadNew">NEW</span></h2>
-      <p class="sub">壽星日最近改了什麼，都記在這裡。</p>
+      <p class="sub">最近改了什麼。</p>
       <div id="siteUpdatesList"></div>
-      <button type="button" class="btn sm hidden" id="btnSiteUpdatesMore" style="margin-top:6px"></button>
+      <a class="panel-go" href="updates.html">看完整更新紀錄 <span aria-hidden="true">→</span></a>
     </div>
-    <!-- celine：「在我的頁面最下面加一個 BLOCK 當作開發者的介紹，引導到這個網站
-         （小數據所品牌頁），然後管理員可以把這個 BLOCK 關掉」。
+    <!-- celine：「在我的頁面最下面加一個 BLOCK 當作開發者的介紹」，後來又說
+         「關於做這個網頁的人也是，點進去再看到細節」。所以這裡只剩一個入口，
+         內容全部在 about.html。
          放在最下面：會捲到這裡的人已經把自己的東西看完了，這時候才適合講「誰做的」。
          管理員的開關是 show_dev_intro（schema_v97）。 -->
     <div class="panel" id="devIntroPanel" data-block>
       <h2>關於做這個網站的人</h2>
       <p class="sub">壽星日是「小數據所」的其中一個 app。</p>
-      <div class="dev-intro">
-        <p>小數據所是一人工作室——設計、開發、文案、回信，都是同一個人。</p>
-        <p>會做這幾個 app，是從一個滿生活的念頭開始的：<strong>有些你很在意的事，從來沒有人幫你算過。</strong>
-          銀行幫你算錢，公司幫你算工時。剩下的那些——你今年走進幾次 live house、
-          一年一次的那天你究竟省下多少——算出來其實很有意思，可惜對別人沒什麼用處，就一直空在那裡。
-          我做的就是把這幾格空白填起來。</p>
-        <a class="btn primary dev-intro-go" id="devIntroLink"
-           href="https://afortunadofu-bot.github.io/celinefubrandpage/"
-           target="_blank" rel="noopener">看看小數據所 ↗</a>
-        <p class="dev-intro-coffee">沒有廣告、也不收訂閱，就是想把這幾格空白填起來。
-          覺得它幫上忙的話，可以
-          <a id="devIntroCoffee" href="https://buymeacoffee.com/celinefu" target="_blank" rel="noopener">請我喝杯咖啡</a>。</p>
-      </div>
+      <p class="dev-intro-teaser">為什麼會做這幾個東西、它是怎麼養著的，都寫在裡面。</p>
+      <a class="panel-go" id="devIntroLink" href="about.html">看完整介紹 <span aria-hidden="true">→</span></a>
     </div>
     <div class="panel hidden" id="myDebug">
       <h2>帳號與權限</h2>
@@ -2266,21 +2276,27 @@
   </div>
 </section>
 
-<!-- celine：「現在直接點咖啡按鈕會覺得莫名其妙」。原本是 Buy Me a Coffee 的浮動元件——
-     一顆沒有說明的咖啡杯，點下去直接跳出付款表單，確實沒頭沒尾。
-     改成自己的按鈕（帶著字）＋先講清楚再去。順帶一個好處：整支第三方腳本都不用載了，
-     沒按就不會有任何 buymeacoffee 的連線或 cookie。 -->
-<button type="button" id="btnCoffee" class="hidden">☕ 請我喝咖啡</button>
+<!-- 咖啡按鈕的來回：原本是 Buy Me a Coffee 的浮動元件（一顆沒說明的杯子，點下去
+     直接跳付款表單）→ celine：「莫名其妙」→ 改成帶字的按鈕 →「字有點多且占版面」
+     → 縮短 → 「改回去 ICON」。
+     會回到圖示是因為中間那一步已經把真正的問題解掉了：現在點下去不是付款表單，
+     是一張先把話講清楚的小視窗。圖示只要負責「不要擋路」就好，解釋的工作在視窗裡。
+     留 aria-label 跟 title，螢幕閱讀器跟滑鼠停留都說得出它是什麼。 -->
+<button type="button" id="btnCoffee" class="hidden"
+        aria-label="請我喝杯咖啡" title="請我喝杯咖啡">☕</button>
 <dialog id="dlgCoffee"><form method="dialog" class="dlg">
   <h2>☕ 請我喝杯咖啡</h2>
-  <p class="sub">壽星日是我一個人做的。</p>
-  <!-- celine：「這句話很刻意」。先是「完全自願，不請也不會少掉任何功能」，
-       改寫後又變成「沒有也真的沒關係」——兩句都在幫讀者預演「我不給」這件事，
-       等於先替對方覺得尷尬。不給本來就是預設，不用安慰；想講的講完就停。
-       那份「沒關係」交給旁邊那顆「下次吧」去說就夠了。 -->
-  <p class="coffee-say">下班後慢慢寫的，主機跟網域的錢也是自己付。其實做得滿開心的，
-    所以沒打算放廣告，也不會跟你收訂閱。<br><br>
-    如果它幫你省到了什麼，請我喝杯咖啡我會很開心。</p>
+  <p class="sub">壽星日是免費的，以後也會是。</p>
+  <!-- celine：「不用提一個人做的，然後這跟免費伺服器的論述衝突，改一下」。
+       原本寫「主機跟網域的錢也是自己付」，可是「我的」頁面同時掛著一塊
+       「它整個跑在免費方案上，所以有時候會慢」——兩套說法互相打架，而且
+       自己掏錢那套還是不成立的那一套。照實寫就好：跑在免費額度上，
+       所以會慢；想換成付費的，這就是咖啡的用途。
+       順帶把「我一個人做的」拿掉——要講身世，about.html 有一整頁可以講。 -->
+  <p class="coffee-say">沒有廣告，也不會跟你收訂閱。它現在整個跑在免費方案上，
+    所以人多的時候會慢。<br><br>
+    想做的下一步是換成付費的方案，讓它快一點、穩一點。
+    如果它幫你省到了什麼，請我喝杯咖啡會很有幫助。</p>
   <div class="foot">
     <button class="btn" value="cancel">下次吧</button>
     <a class="btn primary" id="btnCoffeeGo" href="https://buymeacoffee.com/celinefu"
@@ -4117,105 +4133,11 @@ $('#btnMineA2hsClose').onclick=()=>{
 let UPDATES_QUIET_UNTIL='2026-11-08';   // let 不是 const：之後要延期或提早恢復，改這一行就好
 const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
 
-const SITE_UPDATES=[
-  {date:'2026-10-08', title:'「我的」最下面多了一塊「關於做這個網站的人」',items:[
-    '壽星日是「小數據所」的其中一個 app，最下面那塊寫了為什麼會做這幾個東西，也連得到另外兩個 app',
-    '調整區塊順序的畫面整個重做：進去之後整頁收成一張清單，一個畫面就看得完']},
-  {date:'2026-10-07', title:'排行榜跟「我的」可以自己排版面；左下角多了一顆咖啡',items:[
-    '左下角多了一顆「請我喝咖啡」——壽星日是一個人做的免費網站，覺得有幫到你再按就好',
-    '開始用 Google Analytics 看「有多少人來、哪幾頁最多人看」，隱私權政策第 8 節寫清楚了，也寫了怎麼擋掉',
-    '頁尾的「小數據所」可以點了，連到品牌頁看其他兩個 app（Bandary 聽團曆、RelateStats）',
-    '「排行榜」跟「我的」最上面有一顆「⇅ 調整區塊順序」，按下去就能用上下箭頭把常看的往前搬',
-    '排好的順序會記在這台裝置上，下次打開還在；按「↺ 回復預設」就排回原本的樣子']},
-  {date:'2026-10-06', title:'按愛心、公告標題、投稿要填地點',items:[
-    '覺得哪則回報、留言有幫助，改成按愛心 ♥（原本是 👍），按過的愛心會變實心',
-    '通知裡的公告看得到完整標題了，以前長標題會被切成「📢 202610…」',
-    '分享排行榜的圖卡不會再把第 5 名切掉、文字疊在一起',
-    '新增優惠時「適用縣市」跟「要不要本人出示證件」改成必填，證件預設是「要」']},
-  {date:'2026-10-05', title:'「附近」不會再自己打開',items:[
-    '允許過定位也不會每次打開就跳進「附近」，想用的時候再按「📍 附近」就好',
-    '開啟速度整個調過一輪，載入快很多']},
-  {date:'2026-10-01', title:'火鍋跟燒肉分開篩',items:[
-    '「火鍋燒肉」拆成「火鍋」跟「燒肉」兩個類別，今天想吃哪一種就篩哪一種',
-    '類別篩選的每一格都會寫出有幾筆']},
-  {date:'2026-09-30', title:'投稿前先幫你比對、附近直接開地圖',items:[
-    '投稿打店名時，站上已經有同一家就會列出來，可以一鍵改成對那筆提修改建議',
-    '第一次進來會問要不要用定位；按「📍 附近」就直接把地圖打開，不用再按一次',
-    '小螢幕（含摺疊機）到平板、桌機都重新檢查過版面',
-    '排行榜的站台數據多一個「收藏後真的去用」的比例',
-    '加強了防灌水與資料保護']},
-  {date:'2026-09-29', title:'地圖可以自己指定地點',items:[
-    '「附近」可以直接打地名（台北車站、信義區市府路…）查那附近的優惠',
-    '「我的」看得到自己回報過的問題，處理到哪了、有沒有回覆都寫在上面']},
-  {date:'2026-09-23', title:'月底提醒、排行榜看最近',items:[
-    '月底前會提醒你：待辦清單裡有哪幾個優惠這個月底就結束',
-    '「大家都在用什麼」可以看最近 7／30／90／180 天誰被用最多',
-    '待辦清單加了搜尋欄']},
-  {date:'2026-09-21', title:'列表更順、數字對齊',items:[
-    '幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬',
-    '排行榜各頁的金額改成同一份資料，數字不再對不起來',
-    '新增隱私權政策與服務條款（頁尾有連結）']},
-  {date:'2026-09-18', title:'圖表全面改版',items:[
-    '站台數據、洞察分析每一份數據都換成最適合的圖表，手指按住就看得到數字',
-    '排行榜會告訴你自己第幾名，也可以切「進步最多」',
-    '「買一送一」跟「折扣」分成兩類；優惠會寫清楚要不要本人出示證件',
-    '大頭貼可以自己上傳照片了']},
-  {date:'2026-09-17', title:'待辦清單改版',items:[
-    '待辦清單每一筆變成一張小卡：點店名就看詳情，「移到明年」「移除」收進「⋯」選單',
-    '備註要寫的時候再按「📝 備註」，清單看起來清爽很多']},
-  {date:'2026-09-16', title:'附近有優惠的店、家人的生日、清單標籤',items:[
-    '新增「📍 附近」：允許定位之後可以只看你附近有優惠的店，列表由近到遠排序，卡片上直接顯示最近的一家分店跟導航連結',
-    '不想給定位也可以：打開地圖點一下任何地方，就會找那附近的優惠',
-    '可以調整距離範圍（1 公里到 30 公里），想走路去還是開車去都找得到',
-    '「我的」可以幫家人／另一半也記一個生日（預設收著）：他的生日快到會提醒你，清單貼上他的標籤，入會死線就照他的生日算',
-    '待辦清單可以貼標籤分組（這次生日／明年再說／離家遠…也可以自訂），上面用標籤篩選',
-    '待辦清單每一筆也有「📍 地圖」，直接用 Google 地圖找附近分店（之前只有優惠卡片跟詳情有）',
-    '優惠列表最上面多一句話介紹地圖按鈕，看過或按過就不再出現',
-    '「附近」多找到薄多義、微兜、波記的分店',
-    '回饋問卷的題目分得更細：「多久來一次」分得出生日月跟平常，「用過幾個」分得出 3 個以上',
-    '排行榜的站台數據：「上榜人數」換成「已上架店家」，「平均每人省下」改成完整數字（之前只算到前 50 名）']},
-  {date:'2026-09-15', title:'回饋問卷、按讚、Google 地圖',items:[
-    '新增回饋問卷：在「我的」分頁「推薦給朋友」下面，全部用點的，大約 2 分鐘，歡迎隨時來填',
-    '使用回報、留言可以按讚 👍，覺得有幫助就按一下',
-    '每張優惠卡片多一顆「📍 地圖」，直接用 Google 地圖找附近分店',
-    '手機版：回報的補充說明不再擠成一條、編輯回報不會一打開就跳日曆、收藏備註可以完整顯示',
-    '「我的」分頁新增更新紀錄，有新的更新時打開網站會通知你；還有加到主畫面的提醒',
-    '回饋問卷多了幾題，一樣全部用點的；「還想說的話」直接就能寫',
-    '更新善菓屋生日禮資訊：需要消費才能兌換']},
-  {date:'2026-09-14', title:'回報與待辦清單更好用',items:[
-    '在優惠詳情看到自己的回報，旁邊就能直接編輯',
-    '同一家店今年回報第二次時會先提醒，避免省下的金額算兩次',
-    '待辦清單點「詳情」，直接看得到大家的使用回報和留言',
-    '第一次收藏時，會告訴你收藏的優惠放在「我的」分頁']},
-  {date:'2026-09-09', title:'看得到大家正在提的修改建議',items:[
-    '優惠詳情頁可以看到這筆優惠目前有哪些修改建議在審核中，不用重複提']},
-  {date:'2026-09-07', title:'排行榜新數據、手機版修正',items:[
-    '排行榜多了即時在線人數、平台總瀏覽人次、大家都在什麼時段用',
-    '排行榜「全部時間」也看得到名次升降',
-    '手機版填新增表單時，鍵盤不會再蓋住底部導覽列',
-    '修改建議裡很長的網址不會再把畫面撐爆',
-    '回報使用狀況後，會邀請你順便幫店家評分']},
-  {date:'2026-09-04', title:'待辦清單分年度、入會死線提醒',items:[
-    '待辦清單可以分年度整理，還會提醒入會死線',
-    '成就徽章點開就看得到怎麼解鎖',
-    '排行榜分頁的區塊可以收合',
-    '往下滑時搜尋列會一直固定在上方',
-    '類別「連鎖餐廳」改名「餐廳」，並新增「其他」',
-    '提修改建議時，改任何欄位都偵測得到']},
-  {date:'2026-09-03', title:'排行榜手機版排版',items:[
-    '名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團']},
-  {date:'2026-08-06', title:'一大包使用體驗改善',items:[
-    '投稿可以取消、評分可以取消、暱稱可以自己改',
-    '排行榜上的店家可以點進去看詳情',
-    '資料來源連結最多可以放 5 個',
-    '優惠詳情加了好按的關閉鈕，手機返回鍵也能關',
-    '待辦清單勾選完成時，會順便邀請你回報省下多少',
-    '網頁打開速度變快，畫面不再跳來跳去']},
-  {date:'2026-08-05', title:'壽星日上線 🎂',items:[
-    '整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況']},
-];
+/* 更新紀錄的內容在 updates.json，build.py 注入這裡，同一份資料也產生整頁的
+   updates.html。「我的」頁面只用到日期跟標題（最新幾筆＋NEW 標記），
+   細項（items）留著是給 updates.html 用的。 */
+const SITE_UPDATES = [{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
 const SITE_UPDATES_SHOW=3;
-let SITE_UPDATES_EXPANDED=false;
 
 function updatesSeenDate(){
   try{
@@ -4225,23 +4147,18 @@ function updatesSeenDate(){
     return v;
   }catch{ return SITE_UPDATES[0].date; }
 }
+/* celine：「更新紀錄不要寫那麼仔細」「不要是收合，是點進去看到新網頁」。
+   這裡只列最新幾筆的日期＋標題（看一眼就知道有沒有自己在意的事），
+   每一筆的細項全部在 updates.html。 */
 function renderSiteUpdates(){
   const box=$('#siteUpdatesList'); if(!box) return;
   const seen=updatesSeenDate();
-  const list=SITE_UPDATES_EXPANDED ? SITE_UPDATES : SITE_UPDATES.slice(0, SITE_UPDATES_SHOW);
-  box.innerHTML=list.map(u=>`<div class="upd-entry">
-      <div class="upd-head"><span class="upd-date">${esc(u.date)}</span>
-        <b class="upd-title">${esc(u.title)}</b>
-        ${(!updatesQuiet() && u.date>seen)?'<span class="upd-new">NEW</span>':''}</div>
-      <ul>${u.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>
-    </div>`).join('');
-  const rest=SITE_UPDATES.length-SITE_UPDATES_SHOW;
-  const more=$('#btnSiteUpdatesMore');
-  more.classList.toggle('hidden', rest<=0);
-  more.textContent = SITE_UPDATES_EXPANDED ? '收起' : `看更早的更新（${rest}）`;
+  box.innerHTML=SITE_UPDATES.slice(0, SITE_UPDATES_SHOW).map(u=>`<a class="upd-row" href="updates.html">
+      <span class="upd-date">${esc(u.date)}</span>
+      <span class="upd-title">${esc(u.title)}</span>
+      ${(!updatesQuiet() && u.date>seen)?'<span class="upd-new">NEW</span>':''}</a>`).join('');
   // 「我的」分頁按鈕上的小紅點
   const hasNew = !updatesQuiet() && SITE_UPDATES[0].date > seen;
-  // 更新紀錄收合時看不到裡面的 NEW，標題旁也標一個
   $('#updHeadNew')?.classList.toggle('hidden', !hasNew);
   $$('.tab[data-tab="mine"]').forEach(t=>{
     let dot=t.querySelector('.tab-dot');
@@ -4254,19 +4171,46 @@ function markUpdatesSeen(){
   $('#updatesNudge')?.classList.add('hidden');
   renderSiteUpdates();
 }
-$('#btnSiteUpdatesMore').onclick=()=>{ SITE_UPDATES_EXPANDED=!SITE_UPDATES_EXPANDED; renderSiteUpdates(); };
 renderSiteUpdates();
-// 更新紀錄可以摺疊之後，「打開我的分頁」不等於「看過更新」——收合著根本沒看到內容。
-// 改成：更新紀錄是展開的狀態下停留幾秒，才把新更新標成已讀。
+/* ---- 什麼叫「看過更新」 ----
+   「打開我的分頁」不等於看過：這塊可能收合著，也可能在畫面外。所以條件是
+   「這塊是展開的、而且人還留在這裡兩秒半」，三個時機各自去啟動那個計時器：
+     1. 點標題展開的時候
+     2. 切到「我的」分頁的時候（本來就展開著的情況）
+     3. 它真的捲進視線裡的時候（IntersectionObserver，jsdom 沒有這個 API，
+        所以測試吃的是前兩條路；真的瀏覽器上三條都在）
+   另外，點進 updates.html 的人當然算看過，那條直接標。 */
 function updatesPanelOpen(){
   const p=$('#siteUpdatesPanel');
-  return !!p && !p.classList.contains('collapsed');
+  return !!p && !p.classList.contains('collapsed') && !p.classList.contains('hidden');
 }
-$('#siteUpdatesPanel h2').addEventListener('click',()=>{
+let updSeenTimer=null;
+function armUpdatesSeen(){
+  if(updSeenTimer || !updatesPanelOpen()) return;
+  updSeenTimer=setTimeout(()=>{
+    updSeenTimer=null;
+    if(updatesPanelOpen()) markUpdatesSeen();
+  }, 2500);
+}
+function disarmUpdatesSeen(){ if(updSeenTimer){ clearTimeout(updSeenTimer); updSeenTimer=null; } }
+$('#siteUpdatesPanel h2')?.addEventListener('click',()=>{
   // 摺疊的切換是另一個 click 監聽器做的，等它跑完再判斷現在是展開還收合
-  setTimeout(()=>{
-    if(updatesPanelOpen()) setTimeout(()=>{ if(updatesPanelOpen()) markUpdatesSeen(); }, 2500);
-  }, 0);
+  setTimeout(()=>{ updatesPanelOpen() ? armUpdatesSeen() : disarmUpdatesSeen(); }, 0);
+});
+$$('.tab[data-tab]').forEach(t=>t.addEventListener('click',()=>{
+  // 切去別的分頁就把計時器收掉，不然人早就走了還會被標成看過
+  t.dataset.tab==='mine' ? setTimeout(armUpdatesSeen, 0) : disarmUpdatesSeen();
+}));
+if(typeof IntersectionObserver==='function' && $('#siteUpdatesPanel')){
+  new IntersectionObserver(es=>{
+    es.some(e=>e.isIntersecting) ? armUpdatesSeen() : disarmUpdatesSeen();
+  }, {threshold:.5}).observe($('#siteUpdatesPanel'));
+}
+// 點進完整的更新紀錄，當然算看過。清單會整塊重繪，所以委派給面板，
+// 不要掛在 <a> 上（重繪一次就被洗掉了）。
+$('#siteUpdatesPanel')?.addEventListener('click', e=>{
+  if(!e.target.closest('a[href="updates.html"]')) return;
+  markUpdatesSeen(); logEvent('updates_page_open');
 });
 
 /* ---- 自訂區塊順序（嵐：「要可以自訂移動排行榜那頁各個 block 的順序，固定」「我的頁也是」）----
@@ -4420,17 +4364,17 @@ Object.keys(BLK_PAGES).forEach(applyBlockOrder);
 const FLAG_KEYS=['show_dev_intro','show_studio_footer','show_studio_brandpage','show_studio_bandary',
                  'show_studio_relatestats','show_coffee'];
 const FLAG_LABEL={
-  show_dev_intro:'「我的」底部的開發者介紹',
+  show_dev_intro:'「我的」底部的「關於」入口',
   show_studio_footer:'頁尾「小數據所」整塊',
   show_studio_brandpage:'連回品牌頁',
   show_studio_bandary:'Bandary 封測報名',
   show_studio_relatestats:'RelateStats 封測報名',
-  show_coffee:'「請我喝杯咖啡」按鈕',
+  show_coffee:'左下角的咖啡按鈕',
 };
 const FLAG_NOTE={
-  show_dev_intro:'介紹小數據所、連到品牌頁的那一塊。關掉整塊不見。',
+  show_dev_intro:'「我的」最底部進「關於」那一頁的入口。關掉整塊不見（about.html 本身還在）。',
   show_studio_footer:'關掉整塊不見。',
-  show_coffee:'左下角那顆。按下去會先說明為什麼要請，確定了才去 buymeacoffee.com。',
+  show_coffee:'左下角那顆咖啡圖示。按下去會先說明，確定了才去 buymeacoffee.com。',
 };
 /* 版面：第一項底下縮排三個子項（celine：「網站顯示設定很醜」——原本是五個平鋪的
    勾選框加「└」符號，看不出層級，說明文字也比選項本身還搶眼）。 */
@@ -4472,9 +4416,9 @@ function applySiteFlags(){
   if(foot) foot.classList.toggle('hidden', !SITE_FLAGS.show_studio_footer);
   $('#devIntroPanel')?.classList.toggle('hidden', !SITE_FLAGS.show_dev_intro);
   setLinkOn($('#xsjHome'), SITE_FLAGS.show_studio_brandpage);
-  // 介紹區塊裡那兩條連結跟著各自的開關走——關掉捐款時，這裡也不該再把人導過去
-  setLinkOn($('#devIntroLink'), SITE_FLAGS.show_studio_brandpage);
-  setLinkOn($('#devIntroCoffee'), SITE_FLAGS.show_coffee);
+  /* 介紹區塊現在是進 about.html 的入口（站內的一頁），不再直接連品牌頁，
+     所以不跟 show_studio_brandpage 綁——關掉品牌頁連結卻把站內入口也斷掉，
+     等於整塊變成死的。要整塊不見的話，開關是 show_dev_intro。 */
   $$('[data-flag]').forEach(el=>setLinkOn(el, !!SITE_FLAGS[el.dataset.flag]));
   showCoffeeBtn(SITE_FLAGS.show_coffee);
 }
@@ -4794,8 +4738,9 @@ $('#btnShareSite').onclick = async()=>{
 /* ---- 分頁 ---- */
 let ACTIVE_TAB='browse';
 $$('.tab').forEach(t=>t.onclick=()=>{
-  // 打開「我的」分頁幾秒後、而且更新紀錄是展開的，才把新更新標成已讀（收合著等於沒看到）
-  if(t.dataset.tab==='mine') setTimeout(()=>{ if(updatesPanelOpen()) markUpdatesSeen(); }, 4000);
+  // 「打開我的分頁幾秒就算看過更新」原本在這裡各自起一個 4 秒的計時器，起了就收不回來
+  // ——人早就切到別的分頁了還是會被標成看過。現在統一由 armUpdatesSeen()／
+  // disarmUpdatesSeen() 管（上面「什麼叫看過更新」那一段），切走就收掉。
   const already = t.dataset.tab===ACTIVE_TAB;
   $$('.tab').forEach(x=>x.setAttribute('aria-selected', x===t));
   ['browse','board','submit','mine','admin'].forEach(n=>
@@ -6307,6 +6252,19 @@ $$('dialog').forEach(d=>{
   };
   d.close=(...a)=>{ close(...a); release(); };
   d.addEventListener('close', release);
+  /* celine：「下次吧好像關不掉 POPUP」。
+     視窗裡的「下次吧」是 <form method="dialog"> 的送出鈕——瀏覽器會把視窗關掉，
+     但在真機上量到它**沒有派送 close 事件**（規格說要派送）。於是所有掛在 close
+     上的收尾都不會跑：body 還停在 lockBodyScroll() 設的 position:fixed，整頁卡住
+     不能捲，多推的那筆歷史紀錄也沒吐掉。畫面看起來就是「按了也關不掉」。
+     自己補派一次，掛在 close 上的東西就照原樣生效；瀏覽器自己有派送的話，
+     release() 已經把 scrollLocked 清掉，這裡就不會重複派。 */
+  d.addEventListener('submit', e=>{
+    const f=e.target;
+    if(!f || f.tagName!=='FORM') return;
+    if((f.getAttribute('method')||'').toLowerCase()!=='dialog') return;
+    setTimeout(()=>{ if(!d.open && d.dataset.scrollLocked) d.dispatchEvent(new Event('close')); }, 0);
+  });
 });
 
 /* ---- 沒有彈出視窗要關的時候，按返回鍵不要直接把整個 App／頁面關掉，
@@ -6333,7 +6291,8 @@ function showToast(msg, ms=2600){
 window.addEventListener('popstate', ()=>{
   if(DLG_HISTORY_PUSHED){
     DLG_HISTORY_PUSHED=false;
-    [$('#dlgDetail'),$('#dlgReport'),$('#dlgFeedback'),$('#dlgNotif'),$('#dlgSharePreview')].forEach(d=>{ if(d.open) d.close(); });
+    [$('#dlgDetail'),$('#dlgReport'),$('#dlgFeedback'),$('#dlgNotif'),$('#dlgSharePreview'),
+     $('#dlgCoffee')].forEach(d=>{ if(d.open) d.close(); });
     // 手機篩選／排序底部彈出視窗不是 <dialog>，沒有原生 close 事件，
     // 這裡直接呼叫對應的關閉函式（DLG_HISTORY_PUSHED 已經是 false，
     // 函式裡再呼叫一次 consumeDlgHistory() 會被自己的保護擋掉，不會重複觸發）。
@@ -6356,6 +6315,8 @@ $('#dlgFeedback').addEventListener('close', consumeDlgHistory);
 // 畫面沒反應，要按第二次才會看到預期行為，跟其他三個視窗補齊。
 $('#dlgNotif').addEventListener('close', consumeDlgHistory);
 $('#dlgSharePreview').addEventListener('close', consumeDlgHistory);
+// 咖啡視窗當初也漏掛（它開場有 pushDlgHistory），症狀跟通知視窗一樣
+$('#dlgCoffee').addEventListener('close', consumeDlgHistory);
 
 /* ---- 問題回報／建議：訪客也能填，不用登入。不收信箱了——處理完成後改用
    站內通知（notifications 表）回覆登入的送出者，見 admin_resolve_feedback()

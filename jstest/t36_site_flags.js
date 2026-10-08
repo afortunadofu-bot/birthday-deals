@@ -78,24 +78,25 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v97_dev_intro_fla
   t.eq('分隔點不再跟著開關', doc.querySelectorAll('.xsj-sep[data-flag]').length, 0);
   win.eval('SITE_FLAGS.show_studio_bandary = true; applySiteFlags();');
 
-  /* 開發者介紹區塊（celine：「在我的頁面最下面加一個 BLOCK 當作開發者的介紹，
-     引導到品牌頁，然後管理員可以把這個 BLOCK 關掉」） */
+  /* 開發者介紹區塊。celine 後來又說「關於做這個網頁的人也是，點進去再看到細節」，
+     所以這塊只剩一個入口，內容在 about.html。 */
   const dev = $('#devIntroPanel');
   t.ok('介紹區塊在「我的」最下面（除錯那塊不算，它平常是藏著的）',
     [...doc.querySelectorAll('#tab-mine .wrap > [data-block]')].pop() === dev);
   t.ok('也能跟著一起排順序', dev.hasAttribute('data-block'));
-  t.ok('有連到品牌頁', /celinefubrandpage/.test($('#devIntroLink').getAttribute('href') || ''));
+  t.eq('是進「關於」那一頁的入口', $('#devIntroLink').getAttribute('href'), 'about.html');
+  t.ok('區塊裡不再塞一整篇身世（細節在那一頁）',
+    dev.textContent.replace(/\s+/g, '').length < 110, dev.textContent.replace(/\s+/g, ' ').trim());
   win.eval('SITE_FLAGS.show_dev_intro = false; applySiteFlags();');
   t.ok('管理員關掉就整塊不見', dev.classList.contains('hidden'));
   win.eval('SITE_FLAGS.show_dev_intro = true; applySiteFlags();');
   t.ok('打開又回來', !dev.classList.contains('hidden'));
-  // 區塊裡的兩條連結跟著各自的開關走
-  win.eval('SITE_FLAGS.show_studio_brandpage = false; applySiteFlags();');
-  t.eq('關掉品牌頁連結時，介紹裡那顆按鈕也不能點', $('#devIntroLink').getAttribute('href'), null);
-  win.eval('SITE_FLAGS.show_studio_brandpage = true; SITE_FLAGS.show_coffee = false; applySiteFlags();');
-  t.eq('關掉捐款時，介紹裡那條咖啡連結也不把人導出去', $('#devIntroCoffee').getAttribute('href'), null);
-  t.ok('但字留著', /請我喝杯咖啡/.test($('#devIntroCoffee').textContent));
-  win.eval('SITE_FLAGS.show_coffee = true; applySiteFlags();');
+  /* 這個入口是站內的，不跟「連回品牌頁」那個開關綁——關掉品牌頁連結卻把站內入口
+     也斷掉，整塊就變成死的。要整塊不見的話，開關是 show_dev_intro。 */
+  win.eval('SITE_FLAGS.show_studio_brandpage = false; SITE_FLAGS.show_coffee = false; applySiteFlags();');
+  t.eq('關掉品牌頁連結，站內入口照樣能點', $('#devIntroLink').getAttribute('href'), 'about.html');
+  t.eq('頁尾那條連品牌頁的才會被關掉', $('#xsjHome').getAttribute('href'), null);
+  win.eval('SITE_FLAGS.show_studio_brandpage = true; SITE_FLAGS.show_coffee = true; applySiteFlags();');
 
   /* ================= 3. 咖啡按鈕 =================
      v98 之後不再插入第三方腳本（celine：「直接點會覺得莫名其妙」），

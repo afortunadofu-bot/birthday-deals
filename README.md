@@ -19,12 +19,16 @@
 | 檔案 | 用途 |
 |---|---|
 | `index.html` | **成品**（build.py 產生，勿直接編輯） |
+| `updates.html` | **成品**（build.py 從 `updates.json` 產生，勿直接編輯） |
 | `template.html` | 網站原始碼，要改版型改這裡 |
+| `updates.json` | 更新紀錄的唯一來源，同時餵給 `index.html` 跟 `updates.html` |
+| `updates_template.html` | `updates.html` 的外殼 |
+| `about.html` | 「關於做這個網站的人」，靜態頁、直接改 |
 | `config.example.js` | 複製成 `config.js` 並填入 Supabase 金鑰 |
 | `schema.sql` | 資料庫結構 + 權限規則，貼進 Supabase SQL Editor 執行 |
 | `seed.py` | 把 `offers.json` 匯入資料庫 |
 | `offers.json` | 種子資料（58 筆），也是離線模式的資料來源 |
-| `build.py` | `offers.json` + `template.html` → `index.html` |
+| `build.py` | `offers.json` + `template.html` → `index.html`；`updates.json` + `updates_template.html` → `updates.html` |
 | `scraper.py` | 部落格／新聞爬蟲 → `diff_report.md` |
 | `threads_client.py` | Threads 官方 API 爬蟲 → `threads_report.md` |
 | `migrate_v2.py` / `migrate_v3.py` | 欄位遷移（已執行過，保留備查） |

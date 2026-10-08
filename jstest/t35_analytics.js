@@ -81,12 +81,15 @@ function loadFrom(url) {
      celine：「現在直接點咖啡按鈕會覺得莫名其妙」。原本是 Buy Me a Coffee 的浮動元件
      ——一顆沒有說明的杯子，點下去直接跳付款表單。改成自己的按鈕＋先講清楚的小視窗，
      第三方腳本因此完全不用載。 */
-  // celine：「字有點多且占版面」——要短，但不能短到又變成一顆看不懂的杯子
-  const label = (index.match(/id="btnCoffee"[^>]*>([^<]*)</) || ['', ''])[1];
-  t.ok('按鈕帶著字，不是一顆孤零零的杯子', /咖啡/.test(label), label);
-  t.ok('而且夠短，不佔版面', label.replace(/[^一-鿿]/g, '').length <= 5, label);
+  /* 按鈕的來回：圖示 →「莫名其妙」→ 帶字 →「字有點多且占版面」→ 縮短 →
+     celine：「改回去 ICON」。回得去是因為中間那一步已經把問題解掉了——
+     現在點下去不是付款表單，是一張先把話講清楚的視窗，圖示只要不擋路就好。 */
+  const btn = (index.match(/<button[^>]*id="btnCoffee"[^>]*>([^<]*)</) || ['', ''])[1];
+  const btnTag = (index.match(/<button[^>]*id="btnCoffee"[^>]*>/) || [''])[0];
+  t.eq('按鈕上只有一顆杯子', btn.trim(), '☕');
+  t.ok('但說得出自己是什麼（螢幕閱讀器）', /aria-label="[^"]*咖啡[^"]*"/.test(btnTag), btnTag);
+  t.ok('滑鼠停著也看得到', /title="[^"]*咖啡[^"]*"/.test(btnTag), btnTag);
   t.ok('有一張先把話講清楚的視窗', /<dialog id="dlgCoffee"/.test(index));
-  t.ok('視窗裡說明了為什麼要請', /主機跟網域的錢也是自己付/.test(index));
   /* celine 看過兩版都說「很刻意」：先是「完全自願，不請也不會少掉任何功能」，
      再是「沒有也真的沒關係」。兩句的毛病一樣——都在幫讀者預演「我不給」，
      等於先替對方覺得尷尬。不給是預設，不用安慰；講完想講的就停。 */
@@ -97,7 +100,16 @@ function loadFrom(url) {
     !/完全自願/.test(coffeeSay) && !/不會少掉任何功能/.test(coffeeSay), coffeeSay.slice(0, 200));
   t.ok('也不要替對方預演「我不給」',
     !/沒關係/.test(coffeeSay) && !/沒有也/.test(coffeeSay), coffeeSay.slice(0, 200));
-  t.ok('想講的講完就停', /請我喝杯咖啡我會很開心。<\/p>/.test(coffeeSay), coffeeSay.slice(-120));
+  t.ok('想講的講完就停', /請我喝杯咖啡會很有幫助。<\/p>/.test(coffeeSay), coffeeSay.slice(-160));
+  /* celine：「不用提一個人做的，然後這跟免費伺服器的論述衝突，改一下」。
+     「我自己付主機跟網域」跟「我的」頁面那塊「跑在免費方案上所以會慢」互相打架。 */
+  t.ok('不要再說是一個人做的', !/一個人做的/.test(coffeeSay), coffeeSay.slice(0, 220));
+  t.ok('也不要說主機跟網域是自己付的', !/主機跟網域/.test(coffeeSay), coffeeSay.slice(0, 220));
+  t.ok('改成照實寫：跑在免費方案上', /免費方案/.test(coffeeSay), coffeeSay.slice(0, 220));
+  t.ok('而且講得出咖啡的用途（換成付費的）', /付費/.test(coffeeSay), coffeeSay.slice(0, 220));
+  // 同一套說法，兩個地方不能再打架
+  const slow = (index.match(/id="freeTierNote"[\s\S]*?<\/div>/) || [''])[0];
+  t.ok('「有時候會慢一點」跟咖啡視窗講的是同一件事', /免費方案/.test(slow), slow.slice(0, 220));
   t.ok('那份「沒關係」交給退出那顆去說', /下次吧/.test(index));
   t.ok('確定了才去 buymeacoffee', /id="btnCoffeeGo"[\s\S]{0,120}buymeacoffee\.com\/celinefu/.test(index));
   t.ok('開新分頁而且擋住 opener',

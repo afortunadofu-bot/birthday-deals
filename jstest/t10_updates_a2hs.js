@@ -40,16 +40,19 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.eq('日期由新到舊', dates, [...dates].sort().reverse());
   t.eq('沒有重複日期', new Set(dates).size, dates.length);
 
-  const entries = () => [...doc.querySelectorAll('#siteUpdatesList .upd-entry')];
-  t.eq('預設只顯示最新 3 筆', entries().length, 3);
+  /* celine：「更新紀錄不要寫那麼仔細」「不要是收合，是點進去看到新網頁」。
+     「我的」頁面只留最新三筆的日期＋標題，細項全部在 updates.html。 */
+  const entries = () => [...doc.querySelectorAll('#siteUpdatesList .upd-row')];
+  t.eq('只顯示最新 3 筆', entries().length, 3);
   t.ok('第一筆是最新的', entries()[0].querySelector('.upd-date').textContent === updates[0].date);
-  const more = doc.querySelector('#btnSiteUpdatesMore');
-  t.ok('有「看更早的更新」按鈕並寫出幾筆', !more.classList.contains('hidden') && more.textContent.includes(String(updates.length - 3)), more.textContent);
-  more.click();
-  t.eq('展開後全部顯示', entries().length, updates.length);
-  t.eq('展開後按鈕變「收起」', more.textContent, '收起');
-  more.click();
-  t.eq('收起後回到 3 筆', entries().length, 3);
+  t.ok('沒有「看更早的更新」那顆展開鈕了', !doc.querySelector('#btnSiteUpdatesMore'));
+  const panelText = doc.querySelector('#siteUpdatesList').textContent;
+  t.ok('細項不列在「我的」頁面（那是另一頁的事）',
+    !updates[0].items.some((i) => panelText.includes(i)), panelText.replace(/\s+/g, ' ').trim());
+  t.ok('每一列都點得進完整的那一頁',
+    entries().every((a) => a.tagName === 'A' && a.getAttribute('href') === 'updates.html'));
+  const go = [...panel.querySelectorAll('a')].find((a) => a.getAttribute('href') === 'updates.html' && /完整/.test(a.textContent));
+  t.ok('面板底部有「看完整更新紀錄」的入口', !!go, go && go.textContent.trim());
 
   const allText = updates.map((u) => u.title + u.items.join('')).join('');
   t.ok('內容是給一般使用者看的（沒有技術／後台用語）',
@@ -86,7 +89,7 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.eq('看過之後 NEW 消失', doc.querySelectorAll('#siteUpdatesList .upd-new').length, 0);
   t.eq('記下看過最新一筆', ls.getItem('sxr_updates_seen'), updates[0].date);
 
-  // 可以摺疊之後：收合時標題旁要看得到 NEW；只打開「我的」分頁不算看過，展開更新紀錄才算
+  // 可以摺疊之後：收合時標題旁要看得到 NEW；收合著不算看過，展開並停留才算
   const headNew = doc.querySelector('#updHeadNew');
   const h2 = panel.querySelector('h2');
   ls.setItem('sxr_updates_seen', updates[1].date);
@@ -102,8 +105,33 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.eq('展開幾秒後才標成已讀', ls.getItem('sxr_updates_seen'), updates[0].date);
   t.ok('看過之後標題旁的 NEW 消失', headNew.classList.contains('hidden'));
   t.eq('看過之後「我的」分頁小紅點消失', tabDot(), 0);
+
+  // 展開著切到「我的」分頁，停留一下也算看過（原本只有「點標題展開」那一條路）
+  ls.setItem('sxr_updates_seen', updates[1].date);
+  win.renderSiteUpdates();
+  t.ok('展開著', !panel.classList.contains('collapsed'));
+  doc.querySelector('.tab[data-tab="mine"]').click();
+  await new Promise((r) => win.setTimeout(r, 2800));
+  t.eq('展開著停留幾秒就算看過', ls.getItem('sxr_updates_seen'), updates[0].date);
+
+  // 中途切走就不算——人早就離開了，不該幫他標成看過
+  ls.setItem('sxr_updates_seen', updates[1].date);
+  win.renderSiteUpdates();
+  doc.querySelector('.tab[data-tab="mine"]').click();
+  await new Promise((r) => win.setTimeout(r, 600));
+  doc.querySelector('.tab[data-tab="board"]').click();
+  await new Promise((r) => win.setTimeout(r, 2800));
+  t.eq('看到一半切走就不算看過', ls.getItem('sxr_updates_seen'), updates[1].date);
+
+  // 直接點進完整那一頁，當然算看過
+  doc.querySelector('.tab[data-tab="mine"]').click();
+  ls.setItem('sxr_updates_seen', updates[1].date);
+  win.renderSiteUpdates();
+  entries()[0].click();
+  t.eq('點進完整更新紀錄就算看過', ls.getItem('sxr_updates_seen'), updates[0].date);
   h2.click();
   t.ok('再點標題收合', panel.classList.contains('collapsed'));
+  h2.click();
 
   // 更新紀錄文字有跳脫
   win.eval(`SITE_UPDATES.unshift({date:'2099-01-01', title:'<img src=x onerror=alert(1)>', items:['<script>bad()</script>']});`);

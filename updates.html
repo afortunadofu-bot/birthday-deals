@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<!-- 這一頁是 build.py 從 updates.json 產生的，不要直接改 updates.html。
+     celine：「更新紀錄不要是收合，是點進去看到新網頁」。 -->
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>更新紀錄 — 壽星日 Birthday Deals</title>
+<meta name="description" content="壽星日 Birthday Deals 的更新紀錄：每次改了什麼，都按日期記在這裡。">
+<link rel="canonical" href="https://birthdaydeals.celine-fu-work.workers.dev/updates.html">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+  :root{
+    --bg:#f6f6f8; --surface:#fff; --line:#ececf1; --line-soft:#f4f4f7;
+    --ink:#18181f; --ink-2:#6b6b76; --ink-3:#a1a1ab;
+    --accent:#e8483c; --accent-dark:#c8352b; --accent-soft:#fdecea; --accent-line:#f8c9c4;
+    --r:12px;
+    --shadow-sm:0 1px 3px rgba(20,20,35,.06);
+    --f: ui-sans-serif,"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);
+    font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-underline-offset:3px}
+  .wrap{max-width:680px;margin:0 auto;padding:0 16px}
+  header{background:var(--surface);border-bottom:1px solid var(--line);padding:14px 0}
+  header .wrap{display:flex;align-items:center;gap:10px}
+  .logo{font-weight:800;font-size:1.05rem;color:var(--ink);text-decoration:none}
+  .back{margin-left:auto;font-size:.85rem}
+  main{padding:28px 0 56px}
+  h1{font-size:1.5rem;margin:0 0 6px;line-height:1.35}
+  .lead{color:var(--ink-2);font-size:.92rem;margin:0 0 24px}
+  /* 一筆一張卡：日期在上面當小標，標題粗體，下面是這次改了什麼。
+     不用時間軸的線條跟圓點——在手機上那條線永遠跟文字搶左邊的空間。 */
+  .u{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:14px 18px;margin:0 0 10px;box-shadow:var(--shadow-sm)}
+  .u-date{font-size:.74rem;color:var(--ink-3);font-variant-numeric:tabular-nums;
+    letter-spacing:.02em}
+  .u h2{font-size:1rem;margin:2px 0 0;line-height:1.45}
+  .u ul{margin:8px 0 0;padding-left:1.15em;font-size:.88rem;color:var(--ink-2)}
+  .u li{margin:4px 0}
+  .u:first-of-type{border-color:var(--accent-line);background:var(--accent-soft)}
+  .u:first-of-type ul{color:var(--ink-2)}
+  footer{border-top:1px solid var(--line);padding:22px 0 44px;font-size:.8rem;color:var(--ink-3)}
+  footer p{margin:5px 0}
+  @media (max-width:520px){
+    h1{font-size:1.3rem}
+    .u{padding:13px 15px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="logo" href="./">壽星日 Birthday Deals</a>
+    <a class="back" href="./">← 回首頁</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1>更新紀錄</h1>
+  <p class="lead">壽星日每次改了什麼，都記在這裡。由新到舊。</p>
+  <article class="u">
+    <div class="u-date">2026-10-08</div>
+    <h2>更新紀錄跟「關於」改成獨立頁面</h2>
+    <ul><li>更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁</li><li>左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定</li><li>修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題</li></ul>
+  </article>
+  <article class="u">
+    <div class="u-date">2026-10-07</div>
+    <h2>排行榜跟「我的」可以自己排版面</h2>
+    <ul><li>「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上</li><li>頁尾的「小數據所」連得到品牌頁，看另外兩個 app</li></ul>
+  </article>
+  <article class="u">
+    <div class="u-date">2026-10-06</div>
+    <h2>按愛心、公告標題、投稿要填地點</h2>
+    <ul><li>覺得哪則回報或留言有幫助，改成按愛心 ♥</li><li>通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名</li><li>新增優惠時「適用縣市」和「要不要出示證件」改成必填</li></ul>
+  </article>
+  <article class="u">
+    <div class="u-date">2026-10-05</div>
+    <h2>「附近」不會再自己打開</h2>
+    <ul><li>允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」</li><li>開啟速度調過一輪，載入快很多</li></ul>
+  </article>
+  <article class="u">
+    <div class="u-date">2026-10-01</div>
+    <h2>火鍋跟燒肉分開篩</h2>
+    <ul><li>「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆</li></ul>
+  </article>
+  <article class="u">
+    <div class="u-date">2026-09-30</div>
+    <h2>投稿前先幫你比對、附近直接開地圖</h2>
+    <ul><li>投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議</li><li>按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過</li></ul>
+  </article>
+  <article class="u">
+    <div class="u-date">2026-09-29</div>
+    <h2>地圖可以自己指定地點</h2>
+    <ul><li>「附近」可以直接打地名查那附近的優惠</li><li>「我的」看得到自己回報過的問題處理到哪了</li></ul>
+  </article>
+  <article class="u">
+    <div class="u-date">2026-09-23</div>
+    <h2>月底提醒、排行榜看最近</h2>
+    <ul><li>月底前會提醒你待辦清單裡哪幾個優惠這個月就結束</li><li>「大家都在用什麼」可以看最近 7／30／90／180 天</li></ul>
+  </article>
+  <article class="u">
+    <div class="u-date">2026-09-21</div>
+    <h2>列表更順、數字對齊</h2>
+    <ul><li>幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬</li><li>排行榜各頁的金額改成同一份資料，數字不再對不起來</li><li>新增隱私權政策與服務條款</li></ul>
+  </article>
+  <article class="u">
+    <div class="u-date">2026-09-18</div>
+    <h2>圖表全面改版</h2>
+    <ul><li>站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字</li><li>排行榜會告訴你自己第幾名，也可以切「進步最多」</li><li>「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片</li></ul>
+  </article>
+  <article class="u">
+    <div class="u-date">2026-09-17</div>
+    <h2>待辦清單改版</h2>
+    <ul><li>每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按</li></ul>
+  </article>
+  <article class="u">
+    <div class="u-date">2026-09-16</div>
+    <h2>附近有優惠的店、家人的生日、清單標籤</h2>
+    <ul><li>新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結</li><li>可以幫家人或另一半也記一個生日，他的生日快到會提醒你</li><li>待辦清單可以貼標籤分組，上面用標籤篩選</li></ul>
+  </article>
+  <article class="u">
+    <div class="u-date">2026-09-15</div>
+    <h2>回饋問卷、按讚、Google 地圖</h2>
+    <ul><li>新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填</li><li>每張優惠卡片多一顆「📍 地圖」，直接找附近分店</li><li>「我的」新增更新紀錄跟「加到主畫面」的說明</li></ul>
+  </article>
+  <article class="u">
+    <div class="u-date">2026-09-14</div>
+    <h2>回報與待辦清單更好用</h2>
+    <ul><li>在優惠詳情看到自己的回報，旁邊就能直接編輯</li><li>同一家店今年回報第二次時會先提醒，避免省下的金額算兩次</li><li>待辦清單點「詳情」就看得到大家的回報和留言</li></ul>
+  </article>
+  <article class="u">
+    <div class="u-date">2026-09-09</div>
+    <h2>看得到大家正在提的修改建議</h2>
+    <ul><li>優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提</li></ul>
+  </article>
+  <article class="u">
+    <div class="u-date">2026-09-07</div>
+    <h2>排行榜新數據、手機版修正</h2>
+    <ul><li>排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用</li><li>手機版填新增表單時，鍵盤不會再蓋住底部導覽列</li></ul>
+  </article>
+  <article class="u">
+    <div class="u-date">2026-09-04</div>
+    <h2>待辦清單分年度、入會死線提醒</h2>
+    <ul><li>待辦清單可以分年度整理，還會提醒入會死線</li><li>成就徽章點開就看得到怎麼解鎖</li><li>類別「連鎖餐廳」改名「餐廳」，並新增「其他」</li></ul>
+  </article>
+  <article class="u">
+    <div class="u-date">2026-09-03</div>
+    <h2>排行榜手機版排版</h2>
+    <ul><li>名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團</li></ul>
+  </article>
+  <article class="u">
+    <div class="u-date">2026-08-06</div>
+    <h2>一大包使用體驗改善</h2>
+    <ul><li>投稿可以取消、評分可以取消、暱稱可以自己改</li><li>排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕</li><li>網頁打開速度變快，畫面不再跳來跳去</li></ul>
+  </article>
+  <article class="u">
+    <div class="u-date">2026-08-05</div>
+    <h2>壽星日上線 🎂</h2>
+    <ul><li>整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況</li></ul>
+  </article>
+</main>
+
+<footer class="wrap">
+  <p><a href="./">← 回壽星日首頁</a>　·　<a href="about.html">關於做這個網站的人</a>　·　<a href="privacy.html">隱私權政策</a></p>
+  <p>© <span id="y">2026</span> 壽星日 Birthday Deals. All rights reserved.</p>
+</footer>
+<script>document.getElementById('y').textContent=new Date().getFullYear();</script>
+
+</body>
+</html>
