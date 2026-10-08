@@ -10,7 +10,9 @@ const fs = require('fs');
 const path = require('path');
 const { boot, tick, makeSb, makeAsserts } = require('./harness');
 
-const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v95_site_settings.sql'), 'utf8');
+/* v97 是 v95 的超集（整張表、policy、白名單、預設值都重寫一次），所以只驗這一支：
+   v95 跑過的站台跑 v97 只會多一個 key，沒跑過的直接跑 v97 就夠了。 */
+const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v97_dev_intro_flag.sql'), 'utf8');
 
 (async () => {
   const t = makeAsserts('t36 全站顯示開關');
@@ -21,11 +23,11 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v95_site_settings
   // 公開可讀的表不限制 key 的話，等於開了一個誰都看得到的留言板
   t.ok('key 用白名單鎖住', /site_settings_key_known[\s\S]{0,400}check \(key in \(/.test(sql));
   ['show_studio_footer', 'show_studio_brandpage', 'show_studio_bandary',
-    'show_studio_relatestats', 'show_coffee'].forEach((k) =>
+    'show_studio_relatestats', 'show_coffee', 'show_dev_intro'].forEach((k) =>
     t.ok(`白名單含 ${k}`, new RegExp(`'${k}'`).test(sql)));
   // 五個 key 都要用 true 塞進去——有一個漏寫 true，跑完 SQL 那塊就當場消失
-  t.eq('預設五個全開＝跑這支不會讓任何東西消失',
-    (sql.match(/\('show_\w+', true\)/g) || []).length, 5,
+  t.eq('預設六個全開＝跑這支不會讓任何東西消失',
+    (sql.match(/\('show_\w+', true\)/g) || []).length, 6,
     (sql.match(/\('show_\w+', \w+\)/g) || []).join(' '));
   t.ok('重跑不會蓋掉已經改過的設定', /on conflict \(key\) do nothing/.test(sql));
 
@@ -75,6 +77,25 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v95_site_settings
   // 文字留著，所以中間那個「·」也要留著，不會變成孤單的分隔點
   t.eq('分隔點不再跟著開關', doc.querySelectorAll('.xsj-sep[data-flag]').length, 0);
   win.eval('SITE_FLAGS.show_studio_bandary = true; applySiteFlags();');
+
+  /* 開發者介紹區塊（celine：「在我的頁面最下面加一個 BLOCK 當作開發者的介紹，
+     引導到品牌頁，然後管理員可以把這個 BLOCK 關掉」） */
+  const dev = $('#devIntroPanel');
+  t.ok('介紹區塊在「我的」最下面（除錯那塊不算，它平常是藏著的）',
+    [...doc.querySelectorAll('#tab-mine .wrap > [data-block]')].pop() === dev);
+  t.ok('也能跟著一起排順序', dev.hasAttribute('data-block'));
+  t.ok('有連到品牌頁', /celinefubrandpage/.test($('#devIntroLink').getAttribute('href') || ''));
+  win.eval('SITE_FLAGS.show_dev_intro = false; applySiteFlags();');
+  t.ok('管理員關掉就整塊不見', dev.classList.contains('hidden'));
+  win.eval('SITE_FLAGS.show_dev_intro = true; applySiteFlags();');
+  t.ok('打開又回來', !dev.classList.contains('hidden'));
+  // 區塊裡的兩條連結跟著各自的開關走
+  win.eval('SITE_FLAGS.show_studio_brandpage = false; applySiteFlags();');
+  t.eq('關掉品牌頁連結時，介紹裡那顆按鈕也不能點', $('#devIntroLink').getAttribute('href'), null);
+  win.eval('SITE_FLAGS.show_studio_brandpage = true; SITE_FLAGS.show_coffee = false; applySiteFlags();');
+  t.eq('關掉捐款時，介紹裡那條咖啡連結也不把人導出去', $('#devIntroCoffee').getAttribute('href'), null);
+  t.ok('但字留著', /請我喝杯咖啡/.test($('#devIntroCoffee').textContent));
+  win.eval('SITE_FLAGS.show_coffee = true; applySiteFlags();');
 
   /* ================= 3. 咖啡按鈕：關掉＝根本不載入 ================= */
   win.__added.length = 0;
@@ -130,7 +151,7 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v95_site_settings
   /* ================= 5. 管理員面板 ================= */
   win.renderSiteFlagsPanel();
   const boxes = $$('#siteFlagsBody .flag-box');
-  t.eq('五個開關都在', boxes.length, 5);
+  t.eq('六個開關都在', boxes.length, 6);
   t.ok('每一個都寫得出是什麼',
     $$('#siteFlagsBody .flag-item').every((r) => r.textContent.trim().length > 2));
   // celine：「網站顯示設定很醜」——原本五個平鋪的勾選框加「└」符號，看不出層級
@@ -159,7 +180,7 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v95_site_settings
   footBox.dispatchEvent(new win.Event('change'));
   await tick(win, 3);
   t.ok('存檔失敗時勾勾彈回原狀', footBox.checked === true);
-  t.ok('而且說得出要跑哪一支 SQL', /schema_v95/.test($('#siteFlagsMsg').textContent), $('#siteFlagsMsg').textContent);
+  t.ok('而且說得出要跑哪一支 SQL', /schema_v97/.test($('#siteFlagsMsg').textContent), $('#siteFlagsMsg').textContent);
   t.eq('失敗時不要改畫面', flags().show_studio_footer, true);
 
   process.exit(t.done() ? 0 : 1);

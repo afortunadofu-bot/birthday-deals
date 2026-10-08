@@ -1305,6 +1305,14 @@
     transition:opacity .18s var(--ease),transform .18s var(--ease);pointer-events:none}
   #btnToTop.show{opacity:1;transform:none;pointer-events:auto}
   #btnToTop:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+  /* 「我的」底部的開發者介紹 */
+  .dev-intro{margin-top:10px}
+  .dev-intro p{margin:0 0 10px;font-size:.86rem;line-height:1.75;color:var(--ink-2);overflow-wrap:anywhere}
+  .dev-intro-go{display:inline-flex;margin:2px 0 12px}
+  .dev-intro-coffee{font-size:.82rem !important;color:var(--ink-3) !important;margin-bottom:0 !important}
+  /* 這條連結本來跟旁邊的灰字一樣色，完全看不出可以點 */
+  .dev-intro-coffee a{color:var(--accent-dark);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+  .dev-intro-coffee a.link-off{font-weight:400}
   /* 管理員的顯示開關（celine：「網站顯示設定很醜」）。
      原本是五個平鋪的勾選框加「└」符號：看不出層級，說明文字還比選項本身搶眼。
      改成一張清單——名稱靠左、開關靠右、說明用小一號的字接在名稱下面；子項目縮排，
@@ -1997,6 +2005,27 @@
       <p class="sub">壽星日最近改了什麼，都記在這裡。</p>
       <div id="siteUpdatesList"></div>
       <button type="button" class="btn sm hidden" id="btnSiteUpdatesMore" style="margin-top:6px"></button>
+    </div>
+    <!-- celine：「在我的頁面最下面加一個 BLOCK 當作開發者的介紹，引導到這個網站
+         （小數據所品牌頁），然後管理員可以把這個 BLOCK 關掉」。
+         放在最下面：會捲到這裡的人已經把自己的東西看完了，這時候才適合講「誰做的」。
+         管理員的開關是 show_dev_intro（schema_v97）。 -->
+    <div class="panel" id="devIntroPanel" data-block>
+      <h2>關於做這個網站的人</h2>
+      <p class="sub">壽星日是「小數據所」的其中一個 app。</p>
+      <div class="dev-intro">
+        <p>小數據所是一人工作室——設計、開發、文案、回信，都是同一個人。</p>
+        <p>會做這幾個 app，是從一個滿生活的念頭開始的：<strong>有些你很在意的事，從來沒有人幫你算過。</strong>
+          銀行幫你算錢，公司幫你算工時。剩下的那些——你今年走進幾次 live house、
+          一年一次的那天你究竟省下多少——算出來其實很有意思，可惜對別人沒什麼用處，就一直空在那裡。
+          我做的就是把這幾格空白填起來。</p>
+        <a class="btn primary dev-intro-go" id="devIntroLink"
+           href="https://afortunadofu-bot.github.io/celinefubrandpage/"
+           target="_blank" rel="noopener">看看小數據所 ↗</a>
+        <p class="dev-intro-coffee">壽星日沒有廣告、沒有訂閱，資料也不賣。
+          覺得它幫你算清楚了什麼，可以
+          <a id="devIntroCoffee" href="https://buymeacoffee.com/celinefu" target="_blank" rel="noopener">請我喝杯咖啡</a>。</p>
+      </div>
     </div>
     <div class="panel hidden" id="myDebug">
       <h2>帳號與權限</h2>
@@ -4067,6 +4096,9 @@ let UPDATES_QUIET_UNTIL='2026-11-08';   // let 不是 const：之後要延期或
 const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
 
 const SITE_UPDATES=[
+  {date:'2026-10-08', title:'「我的」最下面多了一塊「關於做這個網站的人」',items:[
+    '壽星日是「小數據所」的其中一個 app，最下面那塊寫了為什麼會做這幾個東西，也連得到另外兩個 app',
+    '調整區塊順序的畫面整個重做：進去之後整頁收成一張清單，一個畫面就看得完']},
   {date:'2026-10-07', title:'排行榜跟「我的」可以自己排版面；左下角多了一顆咖啡',items:[
     '左下角多了一顆「請我喝杯咖啡」——壽星日是一個人做的免費網站，覺得有幫到你再按就好，不按完全不影響任何功能',
     '開始用 Google Analytics 看「有多少人來、哪幾頁最多人看」，隱私權政策第 8 節寫清楚了，也寫了怎麼擋掉',
@@ -4363,9 +4395,10 @@ Object.keys(BLK_PAGES).forEach(applyBlockOrder);
 
    咖啡按鈕是例外：它是第三方腳本、會種 cookie，所以**確定是開著才載入**，
    而不是先載進來再用 CSS 藏。關掉就是真的完全不會去碰 buymeacoffee.com。 */
-const FLAG_KEYS=['show_studio_footer','show_studio_brandpage','show_studio_bandary',
+const FLAG_KEYS=['show_dev_intro','show_studio_footer','show_studio_brandpage','show_studio_bandary',
                  'show_studio_relatestats','show_coffee'];
 const FLAG_LABEL={
+  show_dev_intro:'「我的」底部的開發者介紹',
   show_studio_footer:'頁尾「小數據所」整塊',
   show_studio_brandpage:'連回品牌頁',
   show_studio_bandary:'Bandary 封測報名',
@@ -4373,12 +4406,14 @@ const FLAG_LABEL={
   show_coffee:'「請我喝杯咖啡」按鈕',
 };
 const FLAG_NOTE={
+  show_dev_intro:'介紹小數據所、連到品牌頁的那一塊。關掉整塊不見。',
   show_studio_footer:'關掉整塊不見。',
   show_coffee:'關掉就完全不會載入 buymeacoffee.com，也不會種它的 cookie。',
 };
 /* 版面：第一項底下縮排三個子項（celine：「網站顯示設定很醜」——原本是五個平鋪的
    勾選框加「└」符號，看不出層級，說明文字也比選項本身還搶眼）。 */
 const FLAG_GROUPS=[
+  {key:'show_dev_intro', kids:[]},
   {key:'show_studio_footer', kids:['show_studio_brandpage','show_studio_bandary','show_studio_relatestats'],
    kidsNote:'這三項關掉時字會留著，只是不能點。'},
   {key:'show_coffee', kids:[]},
@@ -4413,7 +4448,11 @@ function applySiteFlags(){
   // 整塊是「要不要出現」，所以還是整塊收起來；下面三項是「要不要連出去」，字一律留著
   const foot=$('#xsjFooter');
   if(foot) foot.classList.toggle('hidden', !SITE_FLAGS.show_studio_footer);
+  $('#devIntroPanel')?.classList.toggle('hidden', !SITE_FLAGS.show_dev_intro);
   setLinkOn($('#xsjHome'), SITE_FLAGS.show_studio_brandpage);
+  // 介紹區塊裡那兩條連結跟著各自的開關走——關掉捐款時，這裡也不該再把人導過去
+  setLinkOn($('#devIntroLink'), SITE_FLAGS.show_studio_brandpage);
+  setLinkOn($('#devIntroCoffee'), SITE_FLAGS.show_coffee);
   $$('[data-flag]').forEach(el=>setLinkOn(el, !!SITE_FLAGS[el.dataset.flag]));
   SITE_FLAGS.show_coffee ? loadCoffeeWidget() : removeCoffeeWidget();
 }
@@ -4483,7 +4522,7 @@ function renderSiteFlagsPanel(){
     if(error){
       cb.checked=!on;
       note($('#siteFlagsMsg'),'alert', /relation|does not exist|constraint/i.test(error.message)
-        ? '要先在 Supabase 執行 schema_v95_site_settings.sql。'
+        ? '要先在 Supabase 執行 schema_v97_dev_intro_flag.sql。'
         : '存檔失敗：'+esc(error.message));
       return;
     }
