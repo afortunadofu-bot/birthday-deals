@@ -545,6 +545,12 @@
   .rate-avg{color:#a97a17;font-weight:700;font-size:.83rem}
   /* 排行榜「用過的人最推薦」用的星星：純展示，不可點，字距收一點不要散開 */
   .rate-stars{color:var(--accent);letter-spacing:-.04em;font-size:.82rem}
+  /* 榜單底下那條「你用過 N 家還沒給星等」 */
+  .rated-cta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;
+    padding:10px 12px;border-radius:var(--r-sm);background:var(--accent-soft);
+    border:1px solid var(--accent-line);font-size:.84rem}
+  .rated-cta.hidden{display:none}
+  .rated-cta .btn{margin-left:auto}
   .stars{display:flex;align-items:center;gap:2px;margin-top:6px}
   .star-btn{background:none;border:none;cursor:pointer;font-size:1.35rem;line-height:1;
     color:var(--line);padding:2px 1px;transition:color .12s var(--ease),transform .1s var(--ease)}
@@ -738,7 +744,7 @@
   .sv-aspect>span{width:80px;font-size:.82rem;flex:none}
   .sv-aspect .sv-group{flex:1;flex-wrap:nowrap;gap:4px}
   .sv-aspect .sv-opt{flex:1;padding:6px 0;border-radius:8px;min-width:0;text-align:center}
-  #surveyNudge,#updatesNudge,#geoNudge{position:fixed;left:12px;right:12px;max-width:360px;margin-left:auto;z-index:60;
+  #surveyNudge,#updatesNudge,#geoNudge,#rateNudge{position:fixed;left:12px;right:12px;max-width:360px;margin-left:auto;z-index:60;
     bottom:calc(72px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom));
     background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
     box-shadow:0 8px 24px rgba(0,0,0,.14);padding:12px 14px;font-size:.86rem}
@@ -1385,6 +1391,7 @@
   #btnCoffee.hidden{display:none}
   #dlgCoffee .foot a.btn{text-decoration:none}
   .coffee-say{font-size:.88rem;line-height:1.8;color:var(--ink-2);margin:10px 0 0}
+  .coffee-foot{font-size:.76rem;line-height:1.7;color:var(--ink-3);margin:10px 0 0;text-align:right}
 </style>
 </head>
 <body>
@@ -1702,6 +1709,8 @@
       <h2>用過的人最推薦</h2>
       <p class="sub">用過之後給幾顆星。評分高、而且評的人多的排前面；至少要兩個人評過才會上榜。</p>
       <div id="ratedBody"></div>
+      <!-- celine：「這塊排行榜也要有」鼓勵評分的入口。只有「用過但還沒評」的人看得到。 -->
+      <div class="rated-cta hidden" id="ratedCta"></div>
     </div>
     <div class="panel" id="pnlLb" data-block>
       <h2>省錢排行榜</h2>
@@ -2350,15 +2359,20 @@
         aria-label="請我喝杯咖啡" title="請我喝杯咖啡">☕</button>
 <dialog id="dlgCoffee"><form method="dialog" class="dlg">
   <h2>☕ 請我喝杯咖啡</h2>
-  <p class="sub">壽星日是免費的，以後也會是。</p>
+  <!-- 嵐提議在這裡寫「站外贊助、不會解鎖任何功能」；celine：「不會解鎖任何功能
+       感覺很派」。派在哪裡：那句話把「本來就沒有付費功能」講成一件施捨出去的事，
+       好像隨時可以收回來。嵐要讀者知道的那兩件事本身是對的，所以留下來，
+       只是改成陳述事實——
+         「不會解鎖任何功能」→「功能全部免費，沒有付費版」（講產品，不講讓步）
+         「站外贊助」→ 挪到按鈕底下，講清楚錢是在哪裡付的 -->
+  <p class="sub">壽星日的功能全部免費，沒有付費版。</p>
   <!-- celine：「不用提一個人做的，然後這跟免費伺服器的論述衝突，改一下」。
        原本寫「主機跟網域的錢也是自己付」，可是「我的」頁面同時掛著一塊
        「它整個跑在免費方案上，所以有時候會慢」——兩套說法互相打架，而且
        自己掏錢那套還是不成立的那一套。照實寫就好：跑在免費額度上，
        所以會慢；想換成付費的，這就是咖啡的用途。
        順帶把「我一個人做的」拿掉——要講身世，about.html 有一整頁可以講。 -->
-  <p class="coffee-say">沒有廣告，也不會跟你收訂閱。它現在整個跑在免費方案上，
-    所以人多的時候會慢。<br><br>
+  <p class="coffee-say">也沒有廣告。它現在整個跑在免費方案上，所以人多的時候會慢。<br><br>
     想做的下一步是換成付費的方案，讓它快一點、穩一點。
     如果它幫你省到了什麼，請我喝杯咖啡會很有幫助。</p>
   <div class="foot">
@@ -2366,6 +2380,7 @@
     <a class="btn primary" id="btnCoffeeGo" href="https://buymeacoffee.com/celinefu"
        target="_blank" rel="noopener">去 Buy Me a Coffee ↗</a>
   </div>
+  <p class="coffee-foot">付款在 Buy Me a Coffee 上完成（站外網站），我看不到你的卡號。</p>
 </form></dialog>
 <button type="button" id="btnToTop" aria-label="回到最上方">↑</button>
 
@@ -2550,6 +2565,24 @@
   </div>
 </div>
 
+<!-- celine：「用過的人最推薦，多一個鼓勵給評分的通知」。
+     站上一直有評分，但只有「回報完當下」那一次會被問到；錯過那一次就再也沒人提，
+     所以 66 筆有評分的優惠裡最多也只有 8 個人評過。
+     這張卡片是補那個缺口：用過、但還沒給星等的，隔一陣子提醒一次。
+     跟其他小卡片共用同一個位置，所以互相讓位（見 maybeShowRateNudge）。 -->
+<div class="hidden" id="rateNudge" role="dialog" aria-label="邀請你幫用過的店評分">
+  <div style="display:flex;gap:8px;align-items:flex-start">
+    <span aria-hidden="true" style="font-size:1.3rem;line-height:1">⭐</span>
+    <div style="flex:1"><b id="rateNudgeTitle">用過的店，給個星等？</b>
+      <div class="hint" style="margin-top:2px" id="rateNudgeText"></div></div>
+    <button type="button" class="btn plain" id="btnRateNudgeClose" aria-label="之後再說">✕</button>
+  </div>
+  <div class="row" style="margin-top:10px;gap:8px;justify-content:flex-end">
+    <button type="button" class="btn sm" id="btnRateNudgeLater">之後再說</button>
+    <button type="button" class="btn sm primary" id="btnRateNudgeGo">去評分</button>
+  </div>
+</div>
+
 <!-- 留言／使用回報獨立視窗——不在列表上直接顯示，點「留言」才打開 -->
 <dialog id="dlgDetail"><div class="dlg">
   <div class="dtl-topbar">
@@ -2721,6 +2754,7 @@ let MY_USED_OFFER_IDS=new Set();   // 我自己回報過「用過了」的優惠
                                     // 跟卡片上「已用 N 次」的全站彙總數字是兩件事，
                                     // 這個是給本人看「我自己」有沒有回報過，卡片列表上要看得到。
 let MY_REPORTS=[];           // 「我的使用回報」目前這批資料，點列表時查回原始物件用
+let MY_RATED=new Set();      // 我已經給過星等的 offer_id（字串），登入後才有
 // 開站時 render() 會連續被叫好幾次（種子資料→收藏清單回來→Supabase 真資料回來），
 // 每次都整片重畫並重播卡片進場動畫的話，畫面會一直閃。進場動畫只在整個頁面
 // 生命週期的第一次 render() 播放，之後不管是開站流程還是使用者切篩選/排序，
@@ -4200,7 +4234,7 @@ const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
 /* 更新紀錄的內容在 updates.json，build.py 注入這裡，同一份資料也產生整頁的
    updates.html。「我的」頁面只用到日期跟標題（最新幾筆＋NEW 標記），
    細項（items）留著是給 updates.html 用的。 */
-const SITE_UPDATES = [{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","洞察分析的「月份」可以自己選，不再只看這個月","頁尾、下方空白、「調整區塊順序」那顆按鈕的版面都整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
+const SITE_UPDATES = [{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
 const SITE_UPDATES_SHOW=3;
 
 function updatesSeenDate(){
@@ -4703,6 +4737,7 @@ function maybeShowUpdatesNudge(){
   }catch{}
   if(!$('#surveyNudge').classList.contains('hidden')) return false;
   if(!$('#geoNudge').classList.contains('hidden')) return false;
+  if(!$('#rateNudge').classList.contains('hidden')) return false;
   // 生日祝賀正在跳的話先讓給它，更新紀錄下次再說
   if(!$('#bdayCheer').classList.contains('hidden')) return false;
   const newer=SITE_UPDATES.filter(u=>u.date>updatesSeenDate()).length;
@@ -5989,7 +6024,18 @@ async function toggleHelpfulLike(b){
   if(error){ setLikeBtn(b, n, wasOn); alert('按愛心失敗：'+error.message); }
 }
 
-async function openDetail(id, fallback=null){
+/* 評分元件（rateHtml/dtlStars）本來就一直顯示在詳情視窗裡，不用另外生一套
+   新的回饋表單——這裡只是捲過去、短暫發光提醒使用者「就是這裡」。
+   詳情視窗的「評分」按鈕跟「用過的店給個星等」那張小卡片共用。 */
+function flashRateBox(root){
+  const box=root?.querySelector('.rate-box');
+  if(!box) return;
+  box.scrollIntoView({behavior:'smooth',block:'center'});
+  box.classList.remove('rate-highlight'); void box.offsetWidth;
+  box.classList.add('rate-highlight');
+  setTimeout(()=>box.classList.remove('rate-highlight'),1600);
+}
+async function openDetail(id, fallback=null, focusRate=false){
   if(!LIVE){ alert('離線模式無法讀取留言，請先用 python serve.py 啟動並設定 config.js。'); return; }
   dtlId=id;
   // 一般卡片點進來的都在 OFFERS（已上架）裡找得到；「我的投稿」「已通過清單」
@@ -6153,16 +6199,10 @@ async function openDetail(id, fallback=null){
   const inlineRateBtn=body.querySelector('#btnInlineRate');
   if(inlineRateBtn) inlineRateBtn.onclick=()=>{
     body.querySelector('#postReportFollowupPrompt')?.remove();
-    // 評分元件（rateHtml/dtlStars）本來就一直顯示在詳情視窗裡，不用另外
-    // 生一套新的回饋表單——這裡只是捲過去、短暫發光提醒使用者「就是這裡」。
-    const box=body.querySelector('.rate-box');
-    if(box){
-      box.scrollIntoView({behavior:'smooth',block:'center'});
-      box.classList.remove('rate-highlight'); void box.offsetWidth;
-      box.classList.add('rate-highlight');
-      setTimeout(()=>box.classList.remove('rate-highlight'),1600);
-    }
+    flashRateBox(body);
   };
+  // 從「用過的店給個星等」那張小卡片進來的，直接把人帶到評分那一格
+  if(focusRate) setTimeout(()=>flashRateBox(body), 120);
   const inlineCommentBtn=body.querySelector('#btnInlineComment');
   if(inlineCommentBtn) inlineCommentBtn.onclick=()=>{
     body.querySelector('#postReportFollowupPrompt')?.remove();
@@ -6192,7 +6232,9 @@ async function openDetail(id, fallback=null){
       m.style.marginLeft='6px'; m.textContent='取消評分'; m.onclick=unrateHandler;
       $('#dtlStarMsg').insertAdjacentElement('afterend', m);
     }
-    await loadOffers(true); render();
+    MY_RATED.add(String(id));
+    renderRatedCta();
+    await loadOffers(true); render(); renderTopRated();
   });
   async function unrateHandler(){
     const btn=body.querySelector('#dtlUnrate'); if(btn) btn.disabled=true;
@@ -6201,7 +6243,9 @@ async function openDetail(id, fallback=null){
     [...body.querySelectorAll('.star-btn')].forEach(x=>x.classList.remove('on'));
     $('#dtlStarMsg').textContent='點星星評分';
     if(btn) btn.remove();
-    await loadOffers(true); render();
+    MY_RATED.delete(String(id));
+    renderRatedCta();
+    await loadOffers(true); render(); renderTopRated();
   }
   const unrateBtn=body.querySelector('#dtlUnrate');
   if(unrateBtn) unrateBtn.onclick=unrateHandler;
@@ -7160,6 +7204,11 @@ async function loadMyStuff(){
     .select('id,used_on,result,saved_twd,store,note,created_at,offer_id,offers(id,brand,offer,timing,value_twd)')
     .eq('user_id',me.id).order('used_on',{ascending:false});
   MY_REPORTS=reps||[];
+  // 我已經評過哪幾筆——拿來算「用過但還沒給星等」的那幾家（見 unratedUsed()）
+  const {data:myRates}=await sb.from('offer_ratings').select('offer_id').eq('user_id',me.id);
+  MY_RATED=new Set((myRates||[]).map(r=>String(r.offer_id)));
+  renderRatedCta();
+  maybeShowRateNudge();
   $('#myReports').innerHTML=MY_REPORTS.map(r=>`<div class="rep rep-click" data-id="${r.id}">
     <span>${esc(r.used_on)}</span><b style="flex:1 1 auto;min-width:0">${esc(r.offers?.brand||'（已下架）')}</b>
     <span class="${R[r.result][1]}">${R[r.result][0]}</span>
@@ -8337,6 +8386,81 @@ function renderMostWished(rows, hasPrev){
 }
 $('#wishSortBy').onchange=()=>renderMostWished();
 
+/* ---- 鼓勵評分 ----
+   celine：「用過的人最推薦，多一個鼓勵給評分的通知，然後這塊排行榜也要有」。
+
+   為什麼需要：站上一直有評分，但只有「回報完當下」那一次會被問到。錯過那一次
+   就再也沒有人提，所以整站 66 筆有評分的優惠，最多的一筆也只有 8 個人評過——
+   「最推薦」這塊榜單撐不起來。兩個入口補這個缺口：
+     1. 榜單自己底下一條邀請（這一塊排行榜也要有）
+     2. 隔一陣子跳一次的小卡片（通知）
+   只找「成功用過、而且還沒給過星等」的，不會去煩已經評過的人。 */
+function unratedUsed(){
+  const seen=new Set(), out=[];
+  MY_REPORTS.forEach(r=>{
+    const id=String(r.offer_id||'');
+    if(!id || r.result!=='success') return;
+    if(MY_RATED.has(id) || seen.has(id)) return;
+    seen.add(id);
+    out.push({id, brand:r.offers?.brand||'', used_on:r.used_on||''});
+  });
+  return out;
+}
+/* 榜單底下那條邀請。沒登入、或已經全部評完，就不要硬放一條用不到的提示。 */
+function renderRatedCta(){
+  const box=$('#ratedCta');
+  if(!box) return;
+  const list=me ? unratedUsed() : [];
+  box.classList.toggle('hidden', !list.length);
+  if(!list.length) return;
+  const first=list[0];
+  box.innerHTML=`<span>你用過 <b>${list.length}</b> 家還沒給星等${
+    list.length===1&&first.brand?`（${esc(first.brand)}）`:''}。</span>
+    <button type="button" class="btn sm primary" id="btnRatedCtaGo">去評分</button>`;
+  box.querySelector('#btnRatedCtaGo').onclick=()=>{
+    logEvent('rate_cta', {from:'board', pending:list.length});
+    openDetail(first.id, null, true);
+  };
+}
+/* 小卡片。規矩跟問卷那張一樣：一次只跳一張、按「之後再說」就安靜一陣子、
+   同一次造訪不重複跳。 */
+const RATE_SNOOZE_DAYS=14;
+let RATE_NUDGE_SHOWN=false;
+function rateNudgeAllowed(){
+  if(!LIVE || RATE_NUDGE_SHOWN || !me) return false;
+  try{
+    if(Number(localStorage.getItem('sxr_rate_snooze_until')||0) > Date.now()) return false;
+  }catch{ return false; }
+  return !!unratedUsed().length;
+}
+function maybeShowRateNudge(){
+  if(!rateNudgeAllowed()) return false;
+  // 同一個位置不疊兩張卡片，別人先跳的話這次讓位
+  if(['#updatesNudge','#surveyNudge','#geoNudge'].some(k=>!$(k)?.classList.contains('hidden'))) return false;
+  if(!$('#bdayCheer')?.classList.contains('hidden')) return false;
+  const list=unratedUsed();
+  RATE_NUDGE_SHOWN=true;
+  $('#rateNudgeText').textContent = list.length>1
+    ? `你用過 ${list.length} 家還沒給星等，一家只要點一下。`
+    : `${list[0].brand||'你用過的那家'}好不好用？點一下星星就好。`;
+  $('#rateNudge').classList.remove('hidden');
+  logEvent('rate_nudge', {action:'show', pending:list.length});
+  return true;
+}
+function snoozeRateNudge(action){
+  try{ localStorage.setItem('sxr_rate_snooze_until', String(Date.now()+RATE_SNOOZE_DAYS*864e5)); }catch{}
+  $('#rateNudge').classList.add('hidden');
+  logEvent('rate_nudge', {action});
+}
+$('#btnRateNudgeLater').onclick=()=>snoozeRateNudge('later');
+$('#btnRateNudgeClose').onclick=()=>snoozeRateNudge('close');
+$('#btnRateNudgeGo').onclick=()=>{
+  const list=unratedUsed();
+  $('#rateNudge').classList.add('hidden');
+  logEvent('rate_nudge', {action:'go', pending:list.length});
+  if(list.length) openDetail(list[0].id, null, true);
+};
+
 /* ---- 用過的人最推薦 ----
    直接比平均會讓「一個人給 5 星」跟「八個人給 5 星」並列，前者還常常排前面
    （同分時誰先被讀到誰就在上面）。所以用貝氏平均：先假設每筆優惠身上都有
@@ -8380,6 +8504,7 @@ function renderTopRated(){
     '<div style="color:var(--ink-3);font-size:.86rem">還沒有兩個人以上評過的優惠。用完回報之後，就可以順手給幾顆星。</div>');
   wireShowMore(box);
   $$('#ratedBody .lb-click').forEach(row=>row.onclick=()=>openDetail(row.dataset.oid));
+  renderRatedCta();   // 排行榜可能比 loadMyStuff() 先畫完，兩邊都算一次才不會漏
 }
 
 /* ---- 排行榜上方的整站數據：全部從已載入的兩張表算，不用再多打 API ---- */
@@ -10400,6 +10525,7 @@ function maybeShowSurveyNudge(reason){
   if(!surveyNudgeAllowed()) return false;
   // 更新通知還在畫面上：同一個位置不疊兩張卡片，這次先不跳
   if(!$('#updatesNudge').classList.contains('hidden')) return false;
+  if(!$('#rateNudge').classList.contains('hidden')) return false;
   SURVEY_NUDGE_SHOWN=true;
   $('#surveyNudge').classList.remove('hidden');
   logEvent('survey_nudge', {reason});
