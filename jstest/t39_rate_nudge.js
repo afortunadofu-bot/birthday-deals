@@ -70,6 +70,9 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   t.ok('卡片真的顯示出來', !nudge.classList.contains('hidden'));
   t.ok('說得出還有幾家', /2/.test($('#rateNudgeText').textContent),
     $('#rateNudgeText').textContent);
+  // celine：「一家只要點一下」很尷尬，拿掉
+  t.ok('不要多那句「一家只要點一下」', !/一家只要點一下/.test($('#rateNudgeText').textContent),
+    $('#rateNudgeText').textContent);
 
   // 同一次造訪不重複跳
   t.ok('同一次造訪不會再跳一次', show() === false);
@@ -110,16 +113,21 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   t.ok('小卡片的「去評分」有用到它', /openDetail\(list\[0\]\.id, null, true\)/.test(index));
   t.ok('榜單底下那條也是', /openDetail\(first\.id, null, true\)/.test(index));
 
-  /* ================= 5. 咖啡視窗：嵐那兩句話改成什麼 ================= */
-  // 只看視窗裡真的讀得到的字——舊說法還留在註解裡當對照
+  /* ================= 5. 咖啡視窗 =================
+     嵐提議寫「站外贊助、不會解鎖任何功能」→ celine：「很派」→ 我改寫成
+     「功能全部免費，沒有付費版」＋按鈕底下「付款在 Buy Me a Coffee 上完成
+     （站外網站），我看不到你的卡號」→ celine：「這幾句都很尷尬，拿掉」。
+     所以只留一句「壽星日的功能全部免費。」，「要去站外」交給按鈕自己講。 */
+  // 只看視窗裡真的讀得到的字——拿掉的句子還留在註解裡當對照
   const say = (index.match(/<dialog id="dlgCoffee"[\s\S]*?<\/dialog>/) || [''])[0]
     .replace(/<!--[\s\S]*?-->/g, '');
-  t.ok('不要寫「不會解鎖任何功能」（celine：感覺很派）', !/解鎖/.test(say), say.slice(0, 200));
-  t.ok('改成講產品本身：功能全部免費、沒有付費版',
-    /功能全部免費/.test(say) && /沒有付費版/.test(say), say.slice(0, 200));
-  t.ok('「站外」改成講清楚錢在哪裡付', /站外/.test(say) && /Buy Me a Coffee 上完成/.test(say),
-    say.slice(-200));
-  t.ok('順便講明看不到卡號', /看不到你的卡號/.test(say), say.slice(-200));
+  t.ok('不要寫「不會解鎖任何功能」', !/解鎖/.test(say), say.slice(0, 200));
+  t.ok('「沒有付費版」也拿掉了', !/沒有付費版/.test(say), say.slice(0, 200));
+  t.ok('「付款在…站外網站…卡號」整行拿掉',
+    !/站外/.test(say) && !/卡號/.test(say) && !/上完成/.test(say), say.slice(-220));
+  t.ok('但「全部免費」這件事還是講得出來', /功能全部免費/.test(say), say.slice(0, 200));
+  t.ok('要去哪裡交給按鈕講',
+    /去 Buy Me a Coffee ↗<\/a>/.test(say) && /target="_blank"/.test(say), say.slice(-220));
   t.ok('沒有把「免費」講兩次',
     (say.match(/收訂閱/g) || []).length === 0, say.slice(0, 220));
 

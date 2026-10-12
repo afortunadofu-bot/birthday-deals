@@ -1391,7 +1391,6 @@
   #btnCoffee.hidden{display:none}
   #dlgCoffee .foot a.btn{text-decoration:none}
   .coffee-say{font-size:.88rem;line-height:1.8;color:var(--ink-2);margin:10px 0 0}
-  .coffee-foot{font-size:.76rem;line-height:1.7;color:var(--ink-3);margin:10px 0 0;text-align:right}
 </style>
 </head>
 <body>
@@ -2359,13 +2358,13 @@
         aria-label="請我喝杯咖啡" title="請我喝杯咖啡">☕</button>
 <dialog id="dlgCoffee"><form method="dialog" class="dlg">
   <h2>☕ 請我喝杯咖啡</h2>
-  <!-- 嵐提議在這裡寫「站外贊助、不會解鎖任何功能」；celine：「不會解鎖任何功能
-       感覺很派」。派在哪裡：那句話把「本來就沒有付費功能」講成一件施捨出去的事，
-       好像隨時可以收回來。嵐要讀者知道的那兩件事本身是對的，所以留下來，
-       只是改成陳述事實——
-         「不會解鎖任何功能」→「功能全部免費，沒有付費版」（講產品，不講讓步）
-         「站外贊助」→ 挪到按鈕底下，講清楚錢是在哪裡付的 -->
-  <p class="sub">壽星日的功能全部免費，沒有付費版。</p>
+  <!-- 嵐提議在這裡寫「站外贊助、不會解鎖任何功能」；celine 說那句「感覺很派」，
+       我改寫成「功能全部免費，沒有付費版」＋按鈕底下一行「付款在 Buy Me a Coffee
+       上完成（站外網站），我看不到你的卡號」——她看了說這兩句一樣尷尬，拿掉。
+       所以只留「壽星日的功能全部免費。」一句。
+       「要去站外」這件事交給按鈕自己講：上面寫著「去 Buy Me a Coffee ↗」，
+       箭頭也說明了會開新分頁——已經夠清楚，不用再補一行散文。 -->
+  <p class="sub">壽星日的功能全部免費。</p>
   <!-- celine：「不用提一個人做的，然後這跟免費伺服器的論述衝突，改一下」。
        原本寫「主機跟網域的錢也是自己付」，可是「我的」頁面同時掛著一塊
        「它整個跑在免費方案上，所以有時候會慢」——兩套說法互相打架，而且
@@ -2380,7 +2379,6 @@
     <a class="btn primary" id="btnCoffeeGo" href="https://buymeacoffee.com/celinefu"
        target="_blank" rel="noopener">去 Buy Me a Coffee ↗</a>
   </div>
-  <p class="coffee-foot">付款在 Buy Me a Coffee 上完成（站外網站），我看不到你的卡號。</p>
 </form></dialog>
 <button type="button" id="btnToTop" aria-label="回到最上方">↑</button>
 
@@ -8480,7 +8478,7 @@ function maybeShowRateNudge(){
   const list=unratedUsed();
   RATE_NUDGE_SHOWN=true;
   $('#rateNudgeText').textContent = list.length>1
-    ? `你用過 ${list.length} 家還沒給星等，一家只要點一下。`
+    ? `你用過 ${list.length} 家還沒給星等。`
     : `${list[0].brand||'你用過的那家'}好不好用？點一下星星就好。`;
   $('#rateNudge').classList.remove('hidden');
   logEvent('rate_nudge', {action:'show', pending:list.length});
