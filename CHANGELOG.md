@@ -13,6 +13,88 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v104　排行榜改走邊緣快取（Supabase egress 超額的那一塊）
+
+**沒有資料庫變更。** 動 `worker/offers-cache.js`、`template.html`、`worker/README.md`。
+**要重新部署 Worker**（前端已經寫好「還沒上線就退回原本的路」，所以兩邊的先後順序不重要）。
+
+### 起因
+
+celine 貼了 Supabase 的用量：**Egress 5.04 / 5 GB，已經超了**（Log Ingestion
+2.55 / 1 GB 也超）。Database size 169/500 MB、MAU 968/50,000 都還很寬。
+
+### 先更正我自己上一輪講錯的數字
+
+我第一次量是用 `response.clone().text().length`——那是**解開之後**的字數，
+不是線上真的傳了幾個 byte。Supabase 的回應是 gzip 過的。重量一次：
+
+| | 我上次說的（解壓後） | 實際線上流量（gzip） |
+| --- | --- | --- |
+| 排行榜一次 | 129 KB | **32 KB** |
+| `leaderboard?select=*` | 49.5 KB | 16.1 KB |
+| `contribution_leaderboard` | 19.5 KB | 5.3 KB |
+
+結論沒變（排行榜就是最大那一塊，優惠頁跟「我的」幾乎是 0，因為優惠早就走
+Worker 了），但量級差了 4 倍，不能放著不更正。
+
+### 做法
+
+Worker 加一個 `/board`，把排行榜那一頁要的 **14 份公開統計**打包成一份，
+快取 10 分鐘，跟 `/offers`、`/stats` 共用同一套「過期才抓、上游掛了用舊的頂」
+的邏輯。
+
+**為什麼這 14 份可以共用一份：** 它們全部是公開統計。排行榜雖然是
+`security_invoker` 的 view，但底下 `usage_reports` 的讀取政策是 `using(true)`、
+`profiles_public` 也是公開的，所以登入與否拿到的是同一份；「哪一列是我」
+是前端自己用 `display_name`／`user_id` 比對出來的，不在資料裡。
+
+**刻意沒收進來的三種：**
+
+- `site_online_now`（即時在線人數）——快取了就不即時了，而且它只有幾十個 byte
+- 本月／本週的排行榜——跟著使用者選的期間變，而且預設不會打到
+- 任何跟登入者有關的查詢
+
+**單一份失敗不讓整包陣亡**：那一份回 `null`，前端自己退回直接查。
+只有核心兩份（`lbAll`、`pop`）掛了才整包 502，讓外層改用上一份好資料頂著。
+
+### 前端
+
+`boardBundle()` 拿那一包，`bundled(bundle, key, fallback)` 決定每一項是用快取
+還是退回原本的查詢。**判斷用 `!= null`**——空陣列是合法的答案（今天沒有人收藏
+也是一種結果），不能當成「沒拿到」。
+
+三個呼叫點接上去：`loadBoard()`、`loadContribBoard()`（全部時間那一支）、
+`loadRecentActivity()`。`fetchUsageDaily`／`fetchOfferUsage` 多一個 `preloaded`
+參數，有現成資料就不打 RPC。
+
+加了**失敗的負向記憶**（60 秒）：排行榜那一頁有三個地方會問這一包，Worker 還沒
+更新到有 `/board` 的版本時，不擋的話等於每次進排行榜白打三次。
+
+### 實測
+
+在瀏覽器裡把 `/board` 用真資料擋下來，開排行榜：
+
+| | 之前 | 之後 |
+| --- | --- | --- |
+| 打 Supabase 的請求 | 14 | **1**（只剩在線人數，2 bytes）|
+| Supabase egress | 32 KB | **≈0** |
+| 畫面 | — | 完全一樣（排行榜 200 列、貢獻度 100 列、熱門 50、收藏 15、7 張圖、最近動態都在）|
+
+切到「本月」也照樣正常：只有 `leaderboard_monthly` 兩筆直接查，其餘仍用快取
+（14 → 3）。Worker 還沒更新的狀態下也驗過一次：`/board` 404，每一項各自退回
+原本的查詢，畫面一模一樣。
+
+Worker 自己去抓那一包是 **10 分鐘一次**，所以 Supabase 這邊變成
+32KB × 144 次／天 ≈ **4.6 MB／天、140 MB／月**，不管一天來多少人。
+
+### 測試
+
+新增 `t40`：Worker 端（抓得齊、會快取、單一份失敗不陣亡、核心掛了才認輸、
+狀態頁列得出 `/board`）、前端（`bundled()` 的 `!= null` 語意、負向記憶、
+`preloaded` 參數）、以及「刻意不快取的東西還是直接查」。
+
+---
+
 ## v103　鼓勵評分；咖啡視窗把嵐那兩句話改寫
 
 **沒有資料庫變更。** 動 `template.html`、`updates.json`。

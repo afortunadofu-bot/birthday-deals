@@ -19,6 +19,11 @@
 **不會動到現在的網站。** 這是一支**獨立的新 Worker**，現有的
 `birthdaydeals.celine-fu-work.workers.dev` 完全不用碰。
 
+> **已經部署過、只是要更新的話**：Cloudflare 儀表板 → Workers & Pages →
+> `birthdaydeals-api` → **Edit code** → 把 `offers-cache.js` 整個貼上去蓋掉 →
+> **Deploy**。前端不用改——`/board` 還沒上線時網站會自己退回原本的查詢，
+> 上線後就自動開始用。
+
 1. Cloudflare 儀表板 → **Workers & Pages** → **Create** → **Start with Hello World!** → Deploy
 2. 名字取 `birthdaydeals-api`（網址會是 `https://birthdaydeals-api.<你的帳號>.workers.dev`）
 3. 進去按 **Edit code**，把 `offers-cache.js` 的內容整個貼上去，蓋掉原本的 → **Deploy**
@@ -69,7 +74,23 @@ npx wrangler deploy
 | `/` | 用瀏覽器打開是一張狀態頁（現在正不正常、快取熱不熱）；用程式打是 `{ok:true,…}` | 不快取 |
 | `/offers` | `{at, data:[…已上架的優惠]}` | 10 分鐘 |
 | `/stats` | `{at, data:{…站台數據}}` | 10 分鐘 |
+| `/board` | `{at, data:{…排行榜那頁要的 14 份公開統計}}` | 10 分鐘 |
 | `/health` | `{ok:true, now}` | 不快取 |
+
+### `/board` 是後來加的，為什麼
+
+2026-10-12 看到 Supabase 免費方案的 **Egress 5.04 / 5 GB（已超）**。量出來：
+每開一次排行榜就是 **14 個請求、32KB**（gzip 後的真實線上流量）直接打 Supabase；
+優惠頁跟「我的」幾乎是 0——因為優惠早就走這支 Worker 了。所以那 5GB 就是排行榜。
+
+這 14 份全部是公開統計，每個人看到的都一樣（排行榜雖然是 `security_invoker` 的
+view，但底下 `usage_reports` 的讀取政策是 `using(true)`、`profiles_public` 也公開，
+登入與否拿到同一份；「哪一列是我」是前端自己比對出來的，不在資料裡）。
+
+**刻意沒收進來的**：即時在線人數（快取了就不即時，而且只有幾十個 byte）、
+本月／本週排行榜（跟著使用者選的期間變）、任何跟登入者有關的查詢。
+
+接上去之後實測：排行榜那一頁對 Supabase 的請求從 **14 → 1**（只剩在線人數）。
 
 直接點開 Worker 的網址（根目錄）會看到那張狀態頁——不是錯誤訊息。
 併進主站 worker（有 `ASSETS` 繫結）時根目錄照常是網站首頁，狀態頁不會蓋掉它。

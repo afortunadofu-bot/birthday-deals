@@ -3315,6 +3315,34 @@ async function edgeFetch(path){
     return (j && j.data!=null) ? j.data : null;
   }catch{ return null; }
 }
+/* 排行榜那一頁的公開統計，走同一層邊緣快取（Worker 的 /board）。
+
+   為什麼：量出來每開一次排行榜就是 14 個請求、32KB（gzip 後的真實流量）直接打
+   Supabase。免費方案一個月 5GB egress，2026-10-12 已經 5.04/5GB——排行榜就是
+   最大那一塊。這 14 份全部是公開統計，每個人看到的都一樣，本來就該共用一份。
+
+   拿不到就回 null，呼叫端各自退回原本的直接查詢——Worker 掛掉、或 config.js
+   沒設 OFFERS_API 的站台，行為跟以前完全一樣。 */
+let BOARD_BUNDLE=null, BOARD_BUNDLE_AT=0, BOARD_BUNDLE_FAIL_AT=0;
+const BOARD_BUNDLE_TTL_MS=10*60*1000, BOARD_BUNDLE_RETRY_MS=60*1000;
+async function boardBundle(force){
+  if(!edgeApi()) return null;
+  const now=Date.now();
+  if(!force && BOARD_BUNDLE && now-BOARD_BUNDLE_AT<BOARD_BUNDLE_TTL_MS) return BOARD_BUNDLE;
+  /* 剛剛才失敗過就先不要再試。排行榜那一頁有三個地方會問這一包
+     （排行榜本體、最近動態、貢獻度榜），Worker 還沒更新到有 /board 的版本時，
+     不擋的話等於每次進排行榜就白打三次。 */
+  if(!force && BOARD_BUNDLE_FAIL_AT && now-BOARD_BUNDLE_FAIL_AT<BOARD_BUNDLE_RETRY_MS) return BOARD_BUNDLE;
+  const d=await edgeFetch('/board');
+  if(d && typeof d==='object'){ BOARD_BUNDLE=d; BOARD_BUNDLE_AT=now; BOARD_BUNDLE_FAIL_AT=0; }
+  else BOARD_BUNDLE_FAIL_AT=now;
+  return BOARD_BUNDLE;
+}
+/* 這一包裡有這個欄位就用它，沒有（上游那一份失敗了）就退回原本的查詢。
+   注意判斷用 !=null：空陣列是合法的值（今天還沒有人收藏也是一種答案）。 */
+function bundled(bundle, key, fallback){
+  return (bundle && bundle[key]!=null) ? Promise.resolve({data:bundle[key]}) : fallback();
+}
 async function loadOffers(force){
   if(!force){
     const cached=readOffersCache();
@@ -4234,7 +4262,7 @@ const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
 /* 更新紀錄的內容在 updates.json，build.py 注入這裡，同一份資料也產生整頁的
    updates.html。「我的」頁面只用到日期跟標題（最新幾筆＋NEW 標記），
    細項（items）留著是給 updates.html 用的。 */
-const SITE_UPDATES = [{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
+const SITE_UPDATES = [{"date":"2026-10-13","title":"排行榜打開變快了","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","用過但還沒給星等的店，榜單底下跟小卡片都會提醒你一次"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
 const SITE_UPDATES_SHOW=3;
 
 function updatesSeenDate(){
@@ -7573,14 +7601,19 @@ async function loadBoard(){
   const trendSince = ISO(new Date(Date.now()-179*864e5));
   const yearSince = ISO(new Date(Date.now()-365*864e5));
   BOARD_CHARTS=[];
+  /* 先拿邊緣快取那一包（大家共用、10 分鐘一份）。拿得到的欄位就不打 Supabase；
+     拿不到（Worker 掛了、或 config.js 沒設 OFFERS_API）每一項各自退回原本的查詢。
+     「本月／本週」是跟著使用者選的期間變的，不在那一包裡，照樣直接查。 */
+  const bundle=await boardBundle();
+  const allTime=!monthly && !weekly;
   const [{data:lb,error:lbErr},{data:pop},{data:wish},{data:trendRows},{data:allTimeLb},{data:usedRows},{data:prevPeriodRows},{data:popPrev},{data:wishPrev},{data:allTimeLbPrev},{data:boardSiteStats},{data:onlineNow,error:onlineErr},{data:hourRows,error:hourErr},{data:wishConv}]=await Promise.all([
-    lbQuery,
+    allTime ? bundled(bundle,'lbAll',()=>lbQuery) : lbQuery,
     // 之前這裡砍到只留前 20 名，但 popular_offers 這張 view 本身就已經排好
     // 「熱門前 50 家」了——多這層 20 的限制沒有任何好處，只會讓「站台數據」
     // 那邊拿它加總出來的金額/次數比實際少，看起來跟「洞察分析」對不起來。
     // 拉到跟 view 本身的上限一致，資料才完整。
-    sb.from('popular_offers').select('*').limit(50),
-    sb.from('most_wished').select('*').limit(15),
+    bundled(bundle,'pop',()=>sb.from('popular_offers').select('*').limit(50)),
+    bundled(bundle,'wish',()=>sb.from('most_wished').select('*').limit(15)),
     // offer_id 是給「最近使用最多次」用的（renderPopBody）——這份資料本來就抓了
     // 近 180 天的所有回報，多帶一欄就不用為了那個排序再打一次 API。
     // celine：「省下金額感覺都不對，沒更新到」。原本這裡是把近半年的原始回報全部
@@ -7589,7 +7622,7 @@ async function loadBoard(){
     // 回來的是資料表的實體順序（實測第一筆是 id 1239、第二筆是 id 3），
     // 等於隨機拿一半去畫圖，最近幾天剛好沒被抓到，走勢圖就貼著 0。
     // 改成在資料庫算好每天的彙總再回傳（最多 180 列），順便少傳一大包資料。
-    fetchUsageDaily(180, trendSince).then(rows=>({data:rows})),
+    fetchUsageDaily(180, trendSince, bundle?.usageDaily).then(rows=>({data:rows})),
     // 「大家累積省下」要固定代表全部人、近一年的總量，不能跟著排行榜的
     // 「本月／全部」切換一起變動——不然選「本月」時這個數字會突然縮水，
     // 看起來又像另一個對不起來的 bug。!monthly 時 lbQuery 本來就是抓
@@ -7597,25 +7630,25 @@ async function loadBoard(){
     // 本來只有「本月」分頁才查這張全站 view。但「上榜人數」「平均每人省下」原本是拿畫面上的
     // 排行榜列表（只抓前 50 名）算的，人一多就永遠卡在 50——嵐：上限就是那個數字的話，
     // 寫成站台數據會誤導。改成兩種分頁都查完整的 leaderboard view 來算。
-    sb.from('leaderboard').select('saved_total').limit(5000),
+    bundled(bundle,'savedAll',()=>sb.from('leaderboard').select('saved_total').limit(5000)),
     // 「被使用過的店家數」之前是拿 popular_offers（熱門前 50 家）反查，優惠一多
     // 家數超過 50 就會被低估、看起來卡在某個數字不動。這裡直接查 usage_reports
     // 本身（對所有人開放讀取，不受 50 家上限），近一年、成功回報過的，才是真數字。
     // 同一個 max-rows 的坑：`.limit(5000)` 也只會回 1000 筆。改用 v82 的彙總
     // （一筆優惠一列），家數才是真的。
-    fetchOfferUsage(365).then(rows=>({data:rows})),
+    fetchOfferUsage(365, bundle?.offerUsage).then(rows=>({data:rows})),
     prevPeriodQuery,
     // 「大家都在用什麼」／「最多人收藏」的名次升降：這兩張榜沒有本月/本週
     // 分期的概念，改跟「7 天前」比（schema_v49，view 內部用 created_at
     // 當切點）。舊站台（還沒跑過 v49）這裡會 error，data 是 null，
     // 下面用 Array.isArray 判斷是否有拿到資料，拿不到就跳過箭頭，不會壞。
-    sb.from('popular_offers_prev').select('*'),
-    sb.from('most_wished_prev').select('*'),
+    bundled(bundle,'popPrev',()=>sb.from('popular_offers_prev').select('*')),
+    bundled(bundle,'wishPrev',()=>sb.from('most_wished_prev').select('*')),
     // 省錢排行榜「全部時間」分頁的名次升降（schema_v53），同一套「跟 7
     // 天前比」邏輯，只是全部時間榜不回傳 user_id（隱私設計），改用
     // display_name 比對，見下面 allTimeHasPrev 那段。月/週分頁不需要這筆，
     // 但一起打影響不大，故不特別跳過。
-    (!monthly&&!weekly) ? sb.from('leaderboard_prev').select('display_name,saved_total').order('saved_total',{ascending:false}).limit(100) : Promise.resolve({data:null}),
+    allTime ? bundled(bundle,'lbAllPrev',()=>sb.from('leaderboard_prev').select('display_name,saved_total').order('saved_total',{ascending:false}).limit(100)) : Promise.resolve({data:null}),
     // 嵐回饋：排行榜也想看到即時在線人數／平台總瀏覽人次／使用時段分布，
     // 這三個原本只有管理員儀表板看得到（schema_v55 開了公開版 RPC，見
     // renderBoardStats() 跟 renderBoardHoursChart()）。site_stats 本來就
@@ -7624,11 +7657,11 @@ async function loadBoard(){
     // 等於每次切到排行榜就再掃一次 site_events。
     siteStats().then(data=>({data})),
     sb.rpc('site_online_now'),
-    sb.rpc('site_usage_hour_distribution',{p_days:30}),
+    bundled(bundle,'hourDist',()=>sb.rpc('site_usage_hour_distribution',{p_days:30})),
     // 嵐：「能顯示收藏到使用的轉換率嗎」。wishlist 的 RLS 是「只看得到自己的」，
     // 前端配不出「誰收藏了什麼、後來有沒有去用」，所以交給 v74 的函式在資料庫算，
     // 只回三個彙總數字。還沒跑 v74 的站台會 error，下面用 ?. 接住就好。
-    sb.rpc('site_wish_conversion')
+    bundled(bundle,'wishConv',()=>sb.rpc('site_wish_conversion'))
   ]);
   if(lbErr && monthly){
     $('#lbBody').innerHTML=`<div class="note alert">讀取本月排行失敗：${esc(lbErr.message)}
@@ -7973,7 +8006,12 @@ async function loadContribBoard(){
     // 跳過箭頭，不會壞。
     prevQ=sb.from('contribution_leaderboard_prev').select('display_name,total_count').order('total_count',{ascending:false}).limit(100);
   }
-  const [{data:rows,error},{data:prevRows}]=await Promise.all([q, prevQ]);
+  // 全部時間那兩份也在邊緣快取那一包裡（本月／本週跟著選的期間變，照樣直接查）
+  const cb=(!monthly && !weekly) ? await boardBundle() : null;
+  const [{data:rows,error},{data:prevRows}]=await Promise.all([
+    bundled(cb,'contribAll',()=>q),
+    bundled(cb,'contribAllPrev',()=>prevQ),
+  ]);
   if(error){
     box.innerHTML=`<div class="note alert">讀取貢獻度排行榜失敗：${esc(error.message)}
       ${/relation|does not exist/i.test(error.message)?'（Supabase 可能還沒跑 schema_v46_contribution_leaderboard.sql）':''}</div>`;
@@ -8093,7 +8131,8 @@ $('#contribMonth').onchange=loadContribBoard;
 async function loadRecentActivity(){
   const box=$('#recentActivity');
   if(!LIVE){ box.innerHTML=''; return; }
-  const {data,error}=await sb.from('recent_activity').select('*').limit(20);
+  const {data,error}=await bundled(await boardBundle(), 'recent',
+    ()=>sb.from('recent_activity').select('*').limit(20));
   if(error){
     const hint=/relation|does not exist/i.test(error.message)?'（Supabase 可能還沒跑 schema_v20_notifications.sql）':'';
     box.innerHTML=`<div class="note alert">讀取失敗：${esc(error.message)}${hint}</div>`; return;
@@ -8864,10 +8903,14 @@ function renderCategoryBreakdown(pop){
      {used_on, uses, success_uses, saved}
    以前是把近半年的原始回報整包撈下來自己加總，但 PostgREST 有 1000 筆上限、
    又沒有 order by，等於隨機拿一半去畫——走勢圖最近幾天貼著 0 就是這樣來的。 */
-async function fetchUsageDaily(days, sinceIso){
+function mapUsageDaily(data){
+  return data.map(r=>({used_on:r.d, uses:r.uses||0, success_uses:r.success_uses||0, saved:r.saved||0}));
+}
+async function fetchUsageDaily(days, sinceIso, preloaded){
+  // 邊緣快取那一包裡已經有了就不用再打一次（形狀跟 RPC 回來的一樣，共用同一個轉換）
+  if(Array.isArray(preloaded)) return mapUsageDaily(preloaded);
   const {data,error}=await sb.rpc('site_usage_daily',{p_days:days});
-  if(!error && Array.isArray(data))
-    return data.map(r=>({used_on:r.d, uses:r.uses||0, success_uses:r.success_uses||0, saved:r.saved||0}));
+  if(!error && Array.isArray(data)) return mapUsageDaily(data);
   // v82 還沒跑：退回原本的做法，但至少照日期由新到舊排，最近的才不會被 1000 筆
   // 上限切掉（這是使用者最在意的那一段）。更早的資料可能不完整。
   const {data:raw}=await sb.from('usage_reports').select('used_on,saved_twd,result')
@@ -8883,7 +8926,8 @@ async function fetchUsageDaily(days, sinceIso){
 }
 /* 每一筆優惠在近 N 天的使用狀況（v82 的 site_offer_usage）：
    「最近使用最多次」跟「被使用過的店家數」用。 */
-async function fetchOfferUsage(days){
+async function fetchOfferUsage(days, preloaded){
+  if(Array.isArray(preloaded)) return preloaded;
   const {data,error}=await sb.rpc('site_offer_usage',{p_days:days});
   if(!error && Array.isArray(data)) return data;
   const since=ISO(new Date(Date.now()-(days-1)*864e5));

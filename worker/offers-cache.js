@@ -11,9 +11,15 @@
  *   每個人各查一次。這支 Worker 是「大家共用的那一層」：不管一小時來 10 個人
  *   還是 10000 個人，Supabase 都只被打 6 次（每 10 分鐘一次）。
  *
- * 兩個端點（都只接 GET）：
+ * 三個端點（都只接 GET）：
  *   /offers  已上架的優惠（offers_public，自動翻頁，不受 PostgREST 1000 筆上限影響）
  *   /stats   站台數據（site_stats_cached，沒跑 v78 就退回 site_stats）
+ *   /board   排行榜那一頁要的 14 份公開統計，打包成一包
+ *
+ * 為什麼加 /board：量出來每開一次排行榜就是 14 個請求、**32KB**（gzip 後的真實
+ * 線上流量）直接打 Supabase。Supabase 免費方案一個月只有 5GB egress，2026-10-12
+ * 看到 5.04/5GB 已經超了，排行榜就是最大那一塊。這 14 份全部是公開統計
+ * （排行榜、熱門、收藏、走勢…），每個人看到的都一樣，本來就該共用一份。
  *
  * 快取策略：
  *   - 命中就直接回，完全不碰 Supabase
@@ -80,6 +86,8 @@ async function fromSupabase(env, kind) {
     return Array.isArray(rows) ? rows[0] || null : rows;
   }
 
+  if (kind === 'board') return await boardBundle(base, headers);
+
   const out = [];
   for (let page = 0; page < MAX_PAGES; page++) {
     const from = page * PAGE;
@@ -92,6 +100,62 @@ async function fromSupabase(env, kind) {
     if (rows.length < PAGE) break;
   }
   return out;
+}
+
+/**
+ * 排行榜那一頁的公開統計，一次抓齊。
+ *
+ * 只收「每個人看到的都一樣」的那些：排行榜本身雖然是 security_invoker 的 view，
+ * 但它底下的 usage_reports 讀取政策是 using(true)、profiles_public 也是公開的，
+ * 所以登入與否拿到的是同一份；「哪一列是我」是前端自己用 display_name／user_id
+ * 比對出來的，不在資料裡。
+ *
+ * 刻意沒有收進來的：
+ *   - site_online_now（即時在線人數，快取了就不即時了；而且它只有幾十個 byte）
+ *   - 本月／本週的排行榜（跟著使用者選的期間變，而且預設不會打到）
+ *   - 任何跟登入者有關的查詢
+ *
+ * 單一一份失敗不讓整包失敗——回 null，前端那一塊自己退回直接查。
+ * 但核心兩份（lbAll、pop）拿不到就 throw，讓外層改用上一份好資料頂著。
+ */
+async function boardBundle(base, headers) {
+  const jsonHeaders = { ...headers, 'content-type': 'application/json' };
+  const get = async (path) => {
+    const r = await fetch(`${base}/rest/v1/${path}`, { headers });
+    if (!r.ok) throw new Error(`${path} ${r.status}`);
+    return await r.json();
+  };
+  const rpc = async (fn, body) => {
+    const r = await fetch(`${base}/rest/v1/rpc/${fn}`, {
+      method: 'POST', headers: jsonHeaders, body: JSON.stringify(body || {}),
+    });
+    if (!r.ok) throw new Error(`rpc ${fn} ${r.status}`);
+    return await r.json();
+  };
+  const soft = (p) => p.catch(() => null);
+
+  const [lbAll, pop, lbAllPrev, savedAll, popPrev, wish, wishPrev,
+         usageDaily, offerUsage, hourDist, wishConv, recent,
+         contribAll, contribAllPrev] = await Promise.all([
+    get('leaderboard?select=*'),
+    get('popular_offers?select=*&limit=50'),
+    soft(get('leaderboard_prev?select=display_name,saved_total&order=saved_total.desc&limit=100')),
+    soft(get('leaderboard?select=saved_total&limit=5000')),
+    soft(get('popular_offers_prev?select=*')),
+    soft(get('most_wished?select=*&limit=15')),
+    soft(get('most_wished_prev?select=*')),
+    soft(rpc('site_usage_daily', { p_days: 180 })),
+    soft(rpc('site_offer_usage', { p_days: 365 })),
+    soft(rpc('site_usage_hour_distribution', { p_days: 30 })),
+    soft(rpc('site_wish_conversion')),
+    soft(get('recent_activity?select=*&limit=20')),
+    soft(get('contribution_leaderboard?select=*')),
+    soft(get('contribution_leaderboard_prev?select=display_name,total_count&order=total_count.desc&limit=100')),
+  ]);
+
+  return { lbAll, pop, lbAllPrev, savedAll, popPrev, wish, wishPrev,
+           usageDaily, offerUsage, hourDist, wishConv, recent,
+           contribAll, contribAllPrev };
 }
 
 /**
@@ -148,13 +212,13 @@ async function statusPage(request) {
   const origin = new URL(request.url).origin;
   const cache = caches.default;
   const warm = {};
-  for (const kind of ['offers', 'stats']) {
+  for (const kind of ['offers', 'stats', 'board']) {
     warm[kind] = !!(await cache.match(new Request(`${origin}/__cache/${kind}/fresh`, { method: 'GET' })));
   }
   const now = new Date().toISOString();
 
   if (!(request.headers.get('accept') || '').includes('text/html')) {
-    return json({ ok: true, service: '壽星日 edge cache', paths: ['/offers', '/stats', '/health'], cache: warm, now },
+    return json({ ok: true, service: '壽星日 edge cache', paths: ['/offers', '/stats', '/board', '/health'], cache: warm, now },
       { ttl: 0 });
   }
 
@@ -185,6 +249,7 @@ p.note{font-size:.84rem;color:#8f8482;margin-top:22px}
 <div class="ok">● 運作中</div>
 <div class="row"><code><a href="/offers">/offers</a></code>　優惠清單　${mark(warm.offers)}</div>
 <div class="row"><code><a href="/stats">/stats</a></code>　站台數據　${mark(warm.stats)}</div>
+<div class="row"><code><a href="/board">/board</a></code>　排行榜統計　${mark(warm.board)}</div>
 <div class="row"><code><a href="/health">/health</a></code>　健康檢查<span class="dim">不快取，拿來確認這支還活著</span></div>
 <p class="note">這個網址是給網站呼叫的，不是給人看的——看到這頁就代表一切正常。
 壽星日本體在 <a href="https://birthdaydeals.celine-fu-work.workers.dev">birthdaydeals.celine-fu-work.workers.dev</a>。</p>
@@ -207,6 +272,7 @@ const handler = {
     if (request.method === 'GET' || request.method === 'HEAD') {
       if (path === '/offers') return serve(request, env, ctx, 'offers');
       if (path === '/stats') return serve(request, env, ctx, 'stats');
+      if (path === '/board') return serve(request, env, ctx, 'board');
       if (path === '/health') return json({ ok: true, now: new Date().toISOString() }, { ttl: 0 });
     }
 
@@ -216,7 +282,7 @@ const handler = {
 
     if (path === '/' && (request.method === 'GET' || request.method === 'HEAD')) return statusPage(request);
 
-    return json({ error: 'not found', paths: ['/offers', '/stats', '/health'] }, { status: 404, ttl: 0 });
+    return json({ error: 'not found', paths: ['/offers', '/stats', '/board', '/health'] }, { status: 404, ttl: 0 });
   },
 };
 
