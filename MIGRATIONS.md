@@ -18,21 +18,17 @@ celine：「為啥你現在 SQL 編號都是亂碼亂跳」。
 
 ## 現在要跑的
 
-> 最後確認時間：2026-10-08（直接打資料庫驗過，不是憑印象）
+> 最後確認時間：2026-10-12（直接打資料庫驗過，不是憑印象）
 
-| 檔案 | 狀態 | 做什麼 |
-| --- | --- | --- |
-| `schema_v97_dev_intro_flag.sql` | **還沒跑** | 多一個 `show_dev_intro` 開關（「我的」底部的開發者介紹）|
-
-就這一支。`v97` 是 `v95` 的超集（整張表、policy、白名單、預設值都重寫一次），
-所以不管 `v95` 有沒有跑過，跑 `v97` 都會對。
+**沒有。** 目前所有 SQL 都已經在線上跑過了。
 
 ## 已經跑過的（確認過，不用再跑）
 
 | 檔案 | 怎麼確認的 |
 | --- | --- |
-| `schema_v92_site_events_io.sql` | `admin_events_prune_preview` 這支函式存在（anon 呼叫被權限擋下，不是「找不到函式」）|
-| `schema_v95_site_settings.sql` | `site_settings` 讀得到，裡面已有五個 key |
+| `schema_v97_dev_intro_flag.sql` | `site_settings` 讀回來已經是六個 key，含 `show_dev_intro` |
+| `schema_v92_site_events_io.sql` | `admin_events_prune_preview`、`admin_dashboard_stats` 這兩支函式都在（anon 呼叫回 42501「權限不足」，不是「找不到函式」）|
+| `schema_v95_site_settings.sql` | 被 `v97` 覆蓋（它是超集）|
 | `v73`–`v83` | 2026-10-06 一支一支打過 RPC／view 驗過（見 CHANGELOG v92 那段）|
 
 ## 跑法

@@ -543,6 +543,8 @@
   }
   .rate-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:.85rem}
   .rate-avg{color:#a97a17;font-weight:700;font-size:.83rem}
+  /* 排行榜「用過的人最推薦」用的星星：純展示，不可點，字距收一點不要散開 */
+  .rate-stars{color:var(--accent);letter-spacing:-.04em;font-size:.82rem}
   .stars{display:flex;align-items:center;gap:2px;margin-top:6px}
   .star-btn{background:none;border:none;cursor:pointer;font-size:1.35rem;line-height:1;
     color:var(--line);padding:2px 1px;transition:color .12s var(--ease),transform .1s var(--ease)}
@@ -1119,8 +1121,26 @@
      那麼長，要排序得一直捲。
      改成：進排序模式時整頁收成一張清單，每一塊只留一列「編號 · 名稱 · ↑ ↓」。
      排順序要看的是順序，不是內容。 */
-  .order-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
-  .order-hint{flex:1 1 100%;font-size:.78rem;color:var(--ink-3);margin:2px 0 0}
+  /* celine：「調整區塊順序的按鈕出現在那邊還是很醜，改一下」。
+     原本是一顆白底圓角按鈕，孤零零站在整頁最上面——每次進排行榜／「我的」，
+     第一眼看到的不是內容，是一顆設定鈕。
+     這功能很少用、而且是刻意要找才會用的，所以搬到整頁最後面，收成一條
+     靠右的安靜文字列（跟頁尾的連結同一個重量）。進排序模式時它才變回
+     真正的按鈕，並且釘在畫面底部——那時候整頁收成一張清單，「完成」
+     要永遠按得到。 */
+  .order-bar{display:flex;gap:4px 14px;flex-wrap:wrap;align-items:center;justify-content:flex-end;
+    margin:2px 0 18px;padding-top:12px;border-top:1px solid var(--line-soft)}
+  main:not(.ordering) .order-bar .btn{border:0;background:none;box-shadow:none;min-height:0;
+    padding:4px 2px;font-size:.8rem;font-weight:600;color:var(--ink-3)}
+  main:not(.ordering) .order-bar .btn:hover{color:var(--accent-dark);
+    text-decoration:underline;text-underline-offset:3px}
+  /* 排序模式只留「可以搬的東西」：公告橫幅、登入提示這些搬不了的先收起來，
+     不然第一屏全被它們佔住，正在排的清單被推到看不見的地方。 */
+  .ordering > :not([data-block]):not(.order-bar){display:none !important}
+  .ordering .order-bar{position:sticky;z-index:3;justify-content:flex-start;
+    bottom:calc(10px + var(--tabbar-h) + env(safe-area-inset-bottom));
+    background:var(--bg);border-top:1px solid var(--line);margin:14px 0 0;padding:10px 0 12px}
+  .order-hint{flex:1 1 100%;font-size:.78rem;color:var(--ink-3);margin:2px 0 0;order:-1}
   .blk-move{display:flex;align-items:center;gap:10px;padding:9px 10px 9px 12px;
     background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
     box-shadow:var(--shadow-sm)}
@@ -1278,10 +1298,22 @@
 
   footer{border-top:1px solid var(--line);padding:24px 0 24px;font-size:.79rem;color:var(--ink-3)}
   footer p{margin:5px 0}
+  /* 頁面導覽：跟上面的說明文字用一條線分開，不要再是散落的紅色底線連結 */
+  .foot-links{display:flex;flex-wrap:wrap;gap:7px 18px;margin:14px 0 10px;padding-top:12px;
+    border-top:1px solid var(--line-soft)}
+  .foot-links a{color:var(--ink-2);text-decoration:none;font-weight:600}
+  .foot-links a:hover,.foot-links a:focus-visible{color:var(--accent-dark);text-decoration:underline;
+    text-underline-offset:3px}
+  .foot-copy{color:var(--ink-3)}
   @media(max-width:768px){
-    /* 底部分頁列本來就是固定在畫面上的，這裡只要讓最後一行不被它蓋住就好，
-       多留的空白會變成一大片灰（嵐：下方空白太多了）。 */
-    .xsj-footer{padding-bottom:calc(14px + var(--tabbar-h) + env(safe-area-inset-bottom))}
+    /* 「下方空白很大」查到的原因：同一段清空間被算了兩次。
+       body 有 padding-bottom:tabbar（給所有分頁用的保險），這裡又加一次，
+       所以頁面最後多出整整一個分頁列高度的頁底色——量到 77px＋63px＝140px。
+       body 那段不能拿掉（頁尾被管理員關掉時就靠它墊著），所以反過來把這塊
+       往下拉一個分頁列的高度：奶油色一路鋪到分頁列底下，字還是被自己的
+       padding-bottom 墊著不會被蓋到，中間不留一條灰的。 */
+    .xsj-footer{padding-bottom:calc(14px + var(--tabbar-h) + env(safe-area-inset-bottom));
+      margin-bottom:calc(0px - var(--tabbar-h) - env(safe-area-inset-bottom))}
   }
   @media(max-width:600px){
     body{font-size:14px}
@@ -1554,10 +1586,6 @@
 <!-- ==================== 排行榜 ==================== -->
 <section id="tab-board" class="hidden">
   <main class="wrap">
-    <!-- 嵐：「要可以自訂移動各個 block 的順序，固定」。按下去才進入排序模式，
-         平常不佔版面，也不會有人不小心拖到。順序記在這台裝置上。 -->
-    <div class="order-bar"><button type="button" class="btn sm blk-order-toggle" data-page="board">⇅ 調整區塊順序</button>
-      <button type="button" class="btn sm hidden blk-order-reset" data-page="board">↺ 回復預設</button></div>
     <div class="panel" id="pnlBoardStats" data-block>
       <h2>站台數據</h2>
       <p class="sub">整站累積的使用狀況。</p>
@@ -1595,12 +1623,20 @@
       <h2>洞察分析</h2>
       <p class="sub">大家用優惠的一些趨勢跟結構，不只是名次表。</p>
       <div class="subtabs" role="tablist" data-group="boardInsights">
-        <button type="button" class="subtab" role="tab" data-pane="biMonth">本月</button>
+        <button type="button" class="subtab" role="tab" data-pane="biMonth">月份</button>
         <button type="button" class="subtab" role="tab" data-pane="biTrend">走勢</button>
         <button type="button" class="subtab" role="tab" data-pane="biType">類型</button>
         <button type="button" class="subtab" role="tab" data-pane="biWeek">星期</button>
       </div>
-      <div class="subpane" id="biMonth" role="tabpanel"><div id="boardMoM"></div></div>
+      <!-- celine：「洞察趨勢本月，可以選月份」。原本寫死只看當月跟上個月比，
+           月初的時候這張卡幾乎是空的，也沒辦法回頭看上個月到底收在哪裡。
+           月份清單直接從已經抓回來的那半年資料長出來，不用再多打一次 API。 -->
+      <div class="subpane" id="biMonth" role="tabpanel">
+        <div class="row" style="margin:0 0 10px">
+          <label class="lbl">月份<select id="momMonth"></select></label>
+        </div>
+        <div id="boardMoM"></div>
+      </div>
       <div class="subpane" id="biTrend" role="tabpanel">
         <div class="row" style="margin:0 0 10px">
           <label class="lbl">走勢依<select id="trendMetric">
@@ -1655,6 +1691,17 @@
         <label class="lbl" id="wishMonthWrap">月份<select id="wishMonth"></select></label>
       </div>
       <div id="wishBody"></div>
+    </div>
+    <!-- 嵐：「壽星日，用完最推薦的清單」「給推薦星等排行」。
+         站上本來就有評分（回報完會邀請你順便評分），只是分數一直只出現在
+         各別卡片上，沒有人看得到整體。這塊就是把它攤開來。
+         排序不是直接比平均：只有一兩個人評的 5 星，跟八個人評的 5 星，
+         不該站在同一個位置。用貝氏平均往整站平均拉一把（見 renderTopRated），
+         評的人越多，自己的分數才越站得住。資料直接從 OFFERS 算，不用多打 API。 -->
+    <div class="panel" id="pnlTopRated" data-block>
+      <h2>用過的人最推薦</h2>
+      <p class="sub">用過之後給幾顆星。評分高、而且評的人多的排前面；至少要兩個人評過才會上榜。</p>
+      <div id="ratedBody"></div>
     </div>
     <div class="panel" id="pnlLb" data-block>
       <h2>省錢排行榜</h2>
@@ -1713,7 +1760,12 @@
       </div>
       <div id="contribBody"></div>
     </div>
-  </main>
+      <!-- 嵐：「要可以自訂移動各個 block 的順序，固定」。按下去才進入排序模式。
+         celine：「出現在那邊還是很醜」——所以收在整頁最後面，平常是一條安靜的
+         文字列，按下去才變成操作列並釘在畫面底部。順序記在這台裝置上。 -->
+    <div class="order-bar"><button type="button" class="btn sm blk-order-toggle" data-page="board">⇅ 調整區塊順序</button>
+      <button type="button" class="btn sm hidden blk-order-reset" data-page="board">↺ 回復預設</button></div>
+</main>
 </section>
 
 <!-- ==================== 新增 ==================== -->
@@ -1841,10 +1893,6 @@
     </div>
     <!-- 回饋問卷入口：訪客、會員都看得到，所以不能放在 #mineAuthedPanels 裡。
          這裡先寫在最上面，開機時 JS 會把它搬到「推薦給朋友」正下方（見 surveyPanel 搬移那段）。 -->
-    <!-- 嵐：「要可以自訂移動各個 block 的順序，固定」。按下去才進入排序模式，
-         平常不佔版面，也不會有人不小心拖到。順序記在這台裝置上。 -->
-    <div class="order-bar"><button type="button" class="btn sm blk-order-toggle" data-page="mine">⇅ 調整區塊順序</button>
-      <button type="button" class="btn sm hidden blk-order-reset" data-page="mine">↺ 回復預設</button></div>
     <div class="panel" id="surveyPanel" data-block>
       <h2>💬 給壽星日一點回饋</h2>
       <p class="sub">全部用點的，大約 2 分鐘。可以重複填——不同時候的感受都想知道。</p>
@@ -2043,7 +2091,12 @@
       <p class="sub">管理員權限沒生效時，把這裡的資訊貼給我們排查。</p>
       <dl class="kv" id="myDebugBody"></dl>
     </div>
-  </main>
+      <!-- 嵐：「要可以自訂移動各個 block 的順序，固定」。按下去才進入排序模式。
+         celine：「出現在那邊還是很醜」——所以收在整頁最後面，平常是一條安靜的
+         文字列，按下去才變成操作列並釘在畫面底部。順序記在這台裝置上。 -->
+    <div class="order-bar"><button type="button" class="btn sm blk-order-toggle" data-page="mine">⇅ 調整區塊順序</button>
+      <button type="button" class="btn sm hidden blk-order-reset" data-page="mine">↺ 回復預設</button></div>
+</main>
 </section>
 
 <!-- ==================== 審核 ==================== -->
@@ -2238,8 +2291,19 @@
        這裡只留聯絡信箱。頁尾那一顆沒人看得到，而「我的」本來就是出問題時會去翻的地方。 -->
   <p>問題回報／合作聯絡：<a href="mailto:celine.fu@gmail.com">celine.fu@gmail.com</a>
     　（也可以到「我的」分頁用「回報網站問題」）</p>
-  <p><a href="privacy.html">隱私權政策</a>　·　<a href="terms.html">服務條款</a></p>
-  <p>© <span id="copyYear"></span> 壽星日 Birthday Deals. All rights reserved.</p>
+  <!-- celine：「隱私權跟服務的呈現方式有點醜」。原本是夾在一堆灰字中間的兩條
+       紅色底線連結，再用全形空白加「·」隔開——看起來像兩條沒收好的超連結，
+       全形空白的間距在不同字型下還會忽大忽小。
+       改成一排站在分隔線下面的頁面導覽：跟上面的說明文字分開，字色收成跟頁尾
+       同一階，滑過去才有底線。順便把 updates.html／about.html 也收進來，
+       那兩頁現在只能從「我的」進去。 -->
+  <nav class="foot-links" aria-label="網站資訊">
+    <a href="privacy.html">隱私權政策</a>
+    <a href="terms.html">服務條款</a>
+    <a href="updates.html">更新紀錄</a>
+    <a href="about.html">關於</a>
+  </nav>
+  <p class="foot-copy">© <span id="copyYear"></span> 壽星日 Birthday Deals. All rights reserved.</p>
 </footer>
 
 <!-- 小數據所的共用頁尾（品牌資料夾的 footer.html，淺色底版本）。
@@ -4136,7 +4200,7 @@ const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
 /* 更新紀錄的內容在 updates.json，build.py 注入這裡，同一份資料也產生整頁的
    updates.html。「我的」頁面只用到日期跟標題（最新幾筆＋NEW 標記），
    細項（items）留著是給 updates.html 用的。 */
-const SITE_UPDATES = [{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
+const SITE_UPDATES = [{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","洞察分析的「月份」可以自己選，不再只看這個月","頁尾、下方空白、「調整區塊順序」那顆按鈕的版面都整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
 const SITE_UPDATES_SHOW=3;
 
 function updatesSeenDate(){
@@ -7542,10 +7606,11 @@ async function loadBoard(){
   renderCategoryBreakdown(pop||[]);
   renderSavingsTrend(trendRows||[], trendSince);
   renderMonthlyBreakdown(trendRows||[]);
-  renderMoMCompare(trendRows||[], nowYm, prevYm);
+  setMomRows(trendRows||[], trendSince);
   renderTypeBreakdown(pop||[]);
   renderMemberBreakdown(pop||[]);
   renderWeekdayBreakdown(trendRows||[]);
+  renderTopRated();
   // 月／週排行沒有 rank 欄位，這裡自己補上名次
   if((monthly||weekly) && lb) lb.forEach((r,i)=>r.rank=i+1);
   // 附上「上一期名次」，畫面上才能顯示升降——本月/本週跟「上個月/上週」比。
@@ -8272,6 +8337,51 @@ function renderMostWished(rows, hasPrev){
 }
 $('#wishSortBy').onchange=()=>renderMostWished();
 
+/* ---- 用過的人最推薦 ----
+   直接比平均會讓「一個人給 5 星」跟「八個人給 5 星」並列，前者還常常排前面
+   （同分時誰先被讀到誰就在上面）。所以用貝氏平均：先假設每筆優惠身上都有
+   PRIOR 筆「整站平均分」的隱形評分，再把真實評分加進去平均。
+     score = (PRIOR * 整站平均 + 分數總和) / (PRIOR + 評分人數)
+   評的人少的時候分數會被拉回整站平均，評的人越多才越能離開它——
+   畫面上仍然顯示真正的平均跟人數，排序用的分數不露出來（那是實作細節）。 */
+/* RATED_MIN=2：只有一個人評過的不上榜。貝氏平均已經會把低票數往整站平均拉，
+   但整站平均本身很高（4.9 上下），所以「一個人給 5 星」收斂完還是停在平均之上，
+   會蓋過真的被很多人用過、分數稍低一點的店。把單票直接擋在門外最乾淨，
+   也比較符合「推薦清單」該有的樣子——一個人說好不叫推薦。 */
+const RATED_PRIOR=3, RATED_MIN=2;
+function topRatedRows(offers){
+  const rated=(offers||[]).filter(o=>o.ratingCount>=RATED_MIN && o.ratingAvg!=null);
+  if(!rated.length) return [];
+  const n=rated.reduce((a,o)=>a+o.ratingCount,0);
+  const mean=rated.reduce((a,o)=>a+o.ratingAvg*o.ratingCount,0)/n;
+  return rated.map(o=>({
+      ...o,
+      score:(RATED_PRIOR*mean + o.ratingAvg*o.ratingCount)/(RATED_PRIOR + o.ratingCount),
+    }))
+    .sort((a,b)=>b.score-a.score || b.ratingCount-a.ratingCount
+      || a.brand.localeCompare(b.brand,'zh-Hant'));
+}
+function starBar(avg){
+  const full=Math.round(avg);
+  return `<span class="rate-stars" aria-hidden="true">${'★'.repeat(full)}${'☆'.repeat(5-full)}</span>`;
+}
+function renderTopRated(){
+  const box=$('#ratedBody');
+  if(!box) return;
+  const rows=topRatedRows(OFFERS);
+  const entries=rows.map((o,i)=>
+    `<tr class="lb-click" data-oid="${esc(String(o.id))}">
+      <td class="rk ${i<3?'top':''}">${i+1}</td>
+      <td>${esc(o.brand)}<span style="color:var(--ink-3);font-size:.78rem">　${esc(o.timing||'')}</span></td>
+      <td class="lb-primary">${starBar(o.ratingAvg)} ${o.ratingAvg}</td>
+      <td class="amt">${o.ratingCount} 人</td></tr>`);
+  renderCollapsibleTable(box, '<th class="rk">#</th><th>品牌</th><th>評分</th><th class="amt">評分人數</th>',
+    entries, 5, 'rated-more-rows',
+    '<div style="color:var(--ink-3);font-size:.86rem">還沒有兩個人以上評過的優惠。用完回報之後，就可以順手給幾顆星。</div>');
+  wireShowMore(box);
+  $$('#ratedBody .lb-click').forEach(row=>row.onclick=()=>openDetail(row.dataset.oid));
+}
+
 /* ---- 排行榜上方的整站數據：全部從已載入的兩張表算，不用再多打 API ---- */
 function renderBoardStats(lb, pop, allTimeSavedRows, usedRows, siteStatsRow, onlineNow, resultRows, wishConv){
   // 嵐：「大家累積省下」優惠頁跟站台數據兩邊數字不一樣——優惠頁用 site_stats（全部時間、所有回報），
@@ -8743,6 +8853,7 @@ function renderMonthlyBreakdown(rows){
      table:{head:['月份',label], rows:months.map((ym,i)=>[ym, fmt(vals[i])])}});
 }
 $('#trendMetric').onchange=()=>{ renderTrendChart(); renderMonthlyBreakdown(TREND_ROWS); };
+$('#momMonth').onchange=renderMomSelected;
 
 // 本月 vs 上月比較：兩次查 leaderboard_monthly（本來就對所有人開放），
 // 加總後算成長率，比單看「本月累積」多一層「跟上個月比是變好還變差」的脈絡。
@@ -8757,13 +8868,51 @@ function monthTotals(rows, ym){
   });
   return {saved, uses};
 }
-function renderMoMCompare(trendRows, curYm, prevYm){
+/* 月份下拉：選項就是手上這半年資料裡真的出現過的月份（再補上當月——
+   月初還沒有人回報的時候也要選得到自己）。重畫時盡量留住使用者選的那個月。 */
+let MOM_ROWS=[], MOM_SINCE='';
+function momMonths(rows){
+  const nowYm=ISO(new Date()).slice(0,7);
+  const set=new Set((rows||[]).map(r=>String(r.used_on||'').slice(0,7))
+    .filter(x=>/^\d{4}-\d{2}$/.test(x)));
+  set.add(nowYm);
+  /* 資料視窗是「近 180 天」，所以最早那個月通常只抓到半個月。把半個月的數字
+     拿去跟完整的月份比會得出一個看起來很嚴重、其實是切口造成的跌幅，所以
+     只留整個月都在範圍內的月份（當月例外——它本來就還沒過完，大家知道）。 */
+  return [...set].filter(ym => ym===nowYm || !MOM_SINCE || (ym+'-01')>=MOM_SINCE)
+    .sort().reverse();
+}
+function setMomRows(rows, sinceIso){
+  MOM_ROWS=rows||[];
+  if(sinceIso) MOM_SINCE=sinceIso;
+  const sel=$('#momMonth');
+  if(sel){
+    const months=momMonths(MOM_ROWS), keep=sel.value, nowYm=ISO(new Date()).slice(0,7);
+    sel.innerHTML=months.map(ym=>
+      `<option value="${ym}">${ym.replace('-',' 年 ')} 月${ym===nowYm?'（本月）':''}</option>`).join('');
+    sel.value=months.includes(keep)?keep:months[0];
+  }
+  renderMomSelected();
+}
+function renderMomSelected(){
+  const ym=$('#momMonth')?.value || ISO(new Date()).slice(0,7);
+  const prev=prevYmStr(ym);
+  // 上個月落在資料視窗外時不能假裝它是 0——那會變成一個憑空的「▲ 100%」
+  renderMoMCompare(MOM_ROWS, ym, prev, !MOM_SINCE || (prev+'-01')>=MOM_SINCE);
+}
+function renderMoMCompare(trendRows, curYm, prevYm, prevKnown=true){
   const box=$('#boardMoM');
   if(!box) return;
   const cur=monthTotals(trendRows, curYm), prev=monthTotals(trendRows, prevYm);
   const curSaved=cur.saved, prevSaved=prev.saved;
   const curUses=cur.uses, prevUses=prev.uses;
-  if(!curSaved && !prevSaved){ box.innerHTML=''; return; }
+  const head=prevKnown ? `${esc(curYm)} 跟上個月比` : `${esc(curYm)}`;
+  // 選到一個兩邊都沒有資料的月份時要講出來，不是把整張卡變不見
+  if(!curSaved && !prevSaved && prevKnown){
+    box.innerHTML=`<div class="dash-chart viz"><b>${head}</b>
+      <div class="viz-sub">這個月跟上個月都還沒有成功使用的回報。</div></div>`;
+    return;
+  }
   // 形式：兩個數字＋變化 → 數字卡加漲跌標籤（不畫成兩根柱子）
   const delta=(cur,prev)=>{
     const pct = prev>0 ? Math.round((cur-prev)/prev*100) : (cur>0?100:0);
@@ -8774,14 +8923,16 @@ function renderMoMCompare(trendRows, curYm, prevYm){
   const tile=(v,k,d,prevTxt)=>`<div style="flex:1 1 180px">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <span style="font-size:1.8rem;font-weight:800;letter-spacing:-.02em;line-height:1.1">${v}</span>${d}</div>
-      <div style="font-size:.78rem;color:var(--ink-3);margin-top:3px">${esc(k)}　<span>上個月 ${prevTxt}</span></div>
+      <div style="font-size:.78rem;color:var(--ink-3);margin-top:3px">${esc(k)}${
+        prevTxt==null?'':`　<span>上個月 ${prevTxt}</span>`}</div>
     </div>`;
   box.innerHTML=`<div class="dash-chart viz">
-    <b>${esc(curYm)} 跟上個月比</b>
-    <div class="viz-sub">跟「走勢」分頁的每月金額是同一份資料</div>
+    <b>${head}</b>
+    <div class="viz-sub">${prevKnown ? '跟「走勢」分頁的每月金額是同一份資料'
+      : '這是手上最早的一個月，上個月不在資料範圍內，所以沒有比較'}</div>
     <div class="viz-body" style="display:flex;gap:18px 28px;flex-wrap:wrap">
-      ${tile(nt(curSaved), '累積省下', delta(curSaved,prevSaved), nt(prevSaved))}
-      ${tile(`${curUses} 次`, '成功使用', delta(curUses,prevUses), `${prevUses} 次`)}
+      ${tile(nt(curSaved), '累積省下', prevKnown?delta(curSaved,prevSaved):'', prevKnown?nt(prevSaved):null)}
+      ${tile(`${curUses} 次`, '成功使用', prevKnown?delta(curUses,prevUses):'', prevKnown?`${prevUses} 次`:null)}
     </div>
   </div>`;
 }
