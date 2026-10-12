@@ -126,37 +126,15 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   t.ok('那一排跟上面的說明文字用一條線分開',
     /\.foot-links\{[^}]*border-top/.test(css));
 
-  /* ================= 5. 調整區塊順序的按鈕 ================= */
-  for (const page of ['board', 'mine']) {
-    const main = $(`#tab-${page} .wrap`);
-    const bar = main.querySelector('.order-bar');
-    t.ok(`${page}：排序列收在整頁最後面`, main.lastElementChild === bar,
-      main.lastElementChild && main.lastElementChild.className);
-    t.ok(`${page}：按鈕還在`, !!bar.querySelector(`.blk-order-toggle[data-page="${page}"]`));
-  }
-  t.ok('平常是一條安靜的文字列，不是一顆按鈕',
-    /main:not\(\.ordering\) \.order-bar \.btn\{[^}]*border:0/.test(css));
-  t.ok('進排序模式才釘在畫面底部（「完成」要永遠按得到）',
-    /\.ordering \.order-bar\{[^}]*position:sticky/.test(css));
-  t.ok('排序模式只留搬得動的東西',
-    /\.ordering > :not\(\[data-block\]\):not\(\.order-bar\)\{display:none/.test(css));
-
-  // 排序模式本身還是要能用（搬完順序存得起來）
-  win.toggleBlockOrdering('board', true);
-  await tick(win, 2);
-  t.ok('進得去排序模式', $('#tab-board .wrap').classList.contains('ordering'));
-  t.ok('每一塊都長出搬移列', $$('#tab-board .wrap > [data-block] > .blk-move').length > 1);
-  t.eq('完成鈕的字會換', $('#tab-board .blk-order-toggle').textContent, '✓ 完成');
-  const before = $$('#tab-board .wrap > [data-block]').map((e) => e.id);
-  $$('#tab-board .blk-move')[1].querySelector('.blk-up').click();
-  await tick(win, 2);
-  const after = $$('#tab-board .wrap > [data-block]').map((e) => e.id);
-  t.eq('↑ 真的把它往前搬了', after[0], before[1]);
-  t.ok('而且存起來了',
-    (JSON.parse(win.localStorage.getItem('sxr_order_board') || '[]'))[0] === before[1]);
-  win.toggleBlockOrdering('board', false);
-  await tick(win, 2);
-  t.ok('出得來', !$('#tab-board .wrap').classList.contains('ordering'));
+  /* ================= 5. 調整區塊順序的入口 =================
+     這一版先把它從整頁最上面搬到最後面（celine：「出現在那邊還是很醜」），
+     嵐看了之後說「太底下了」，所以又整組收進「我的」的「版面設定」——
+     詳細的行為在 t33，這裡只守住「那兩頁上面不該再有任何排序列」。 */
+  t.ok('排行榜那頁沒有排序列了', !$('#tab-board .order-bar'));
+  t.ok('「我的」那頁也沒有', !$('#tab-mine .order-bar'));
+  t.ok('入口收在「我的」的版面設定裡',
+    !!$('#layoutPanel') && !!$('#layoutPanel').closest('#tab-mine'));
+  t.ok('「進入排序模式」那套整個不見了', !/\.ordering/.test(css), (css.match(/\.ordering[^{]*/g) || []).join(','));
 
   process.exit(t.done() ? 0 : 1);
 })().catch((e) => { console.error(e); process.exit(1); });

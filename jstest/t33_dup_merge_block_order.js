@@ -133,33 +133,38 @@ const fb = (id, message, extra = {}) => ({
   t.ok('失敗後按鈕放回去讓人再試', !$('#fbList .fb-merge').disabled);
   sb.rpc = realRpc;
 
-  /* ================= 3. 自訂區塊順序 ================= */
+  /* ================= 3. 自訂區塊順序 =================
+     嵐：「調整區塊順序的按鈕太底下了，我希望變成左上角的懸浮按鈕，或是統一
+     移到我的那邊可以當成設定」。選了後者：兩頁的順序都在「我的」的「版面設定」
+     裡調，排行榜那頁不再掛任何排序列，也沒有「進入排序模式」這回事。 */
+  t.ok('排序的入口收在「我的」的版面設定裡', !!$('#layoutPanel') && !!$('#layoutPanel').closest('#tab-mine'));
+  t.ok('排行榜那頁不再掛排序列', !$('#tab-board .order-bar'));
+  t.ok('「我的」那頁也沒有', !$('#tab-mine .order-bar'));
+  t.ok('兩頁都排得到', [...$('#layoutPage').options].map((o) => o.value).sort().join(',') === 'board,mine');
+
   for (const page of ['board', 'mine']) {
     const ids = () => win.eval(`blkList(${JSON.stringify(page)}).map(el=>el.id)`);
+    $('#layoutPage').value = page;
+    $('#layoutPage').dispatchEvent(new win.Event('change'));
+    await tick(win, 2);
     const before = ids();
     t.ok(`${page}：有好幾塊可以排`, before.length >= 5, String(before.length));
 
-    // 進排序模式才長出箭頭
-    const toggle = $(`.blk-order-toggle[data-page="${page}"]`);
-    t.eq(`${page}：平常沒有箭頭`, $$(`#tab-${page === 'board' ? 'board' : 'mine'} .blk-move`).length, 0);
-    toggle.click();
-    const movers = $$(`#tab-${page === 'board' ? 'board' : 'mine'} .blk-move`);
-    t.eq(`${page}：每一塊都有一條`, movers.length, before.length);
-    t.eq(`${page}：按鈕變成「完成」`, toggle.textContent.trim(), '✓ 完成');
+    const movers = $$('#layoutList .blk-move');
+    t.eq(`${page}：清單列的就是這一頁的區塊`, movers.map((m) => m.dataset.id), before);
     t.ok(`${page}：第一塊不能再往上`, movers[0].querySelector('.blk-up').disabled);
     t.ok(`${page}：最後一塊不能再往下`, movers[movers.length - 1].querySelector('.blk-down').disabled);
     t.ok(`${page}：每條都寫著是哪一塊`, movers.every((m) => m.querySelector('.blk-name').textContent.trim().length > 0));
 
-    // 把第一塊往下移
+    // 把第一塊往下移——不用先切到那一頁
     movers[0].querySelector('.blk-down').click();
+    await tick(win, 2);
     const after = ids();
     t.eq(`${page}：真的換了位置`, [after[0], after[1]], [before[1], before[0]]);
     t.eq(`${page}：其他塊沒被動到`, after.slice(2), before.slice(2));
     const saved = JSON.parse(win.localStorage.getItem(page === 'board' ? 'sxr_order_board' : 'sxr_order_mine'));
     t.eq(`${page}：順序存起來了`, saved, after);
-
-    toggle.click();
-    t.eq(`${page}：離開排序模式箭頭收起來`, $$(`#tab-${page === 'board' ? 'board' : 'mine'} .blk-move`).length, 0);
+    t.eq(`${page}：清單也跟著更新`, $$('#layoutList .blk-move').map((m) => m.dataset.id), after);
   }
 
   // 下次打開網頁要照存的順序排
@@ -179,7 +184,8 @@ const fb = (id, message, extra = {}) => ({
   // 回復預設
   win2.confirm = () => true;
   const def = win2.eval('BLK_DEFAULT.board.slice()');
-  win2.document.querySelector('.blk-order-reset[data-page="board"]').click();
+  win2.document.querySelector('#layoutPage').value = 'board';
+  win2.document.querySelector('#btnLayoutReset').click();
   t.eq('回復預設真的排回原本的順序', win2.eval('blkList("board").map(el=>el.id)'), def);
   t.eq('存檔也清掉了', win2.localStorage.getItem('sxr_order_board'), null);
 
@@ -188,7 +194,6 @@ const fb = (id, message, extra = {}) => ({
   const kidsOf = (w) => w.eval('[...document.querySelector("#tab-mine .wrap").children].map(el=>el.id||"-")');
   const { win: win3 } = await boot();
   const pristine = kidsOf(win3).indexOf('mineLoginCta');
-  win3.eval('toggleBlockOrdering("mine", true)');
   const blocks3 = () => win3.eval('blkList("mine").map(el=>el.id)');
   const first = blocks3()[0];
   for (let i = 0; i < 6; i += 1) win3.eval(`moveBlock("mine", blkList("mine")[${5 - i}], -1)`);

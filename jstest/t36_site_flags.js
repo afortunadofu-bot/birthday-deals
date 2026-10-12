@@ -81,8 +81,12 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v97_dev_intro_fla
   /* 開發者介紹區塊。celine 後來又說「關於做這個網頁的人也是，點進去再看到細節」，
      所以這塊只剩一個入口，內容在 about.html。 */
   const dev = $('#devIntroPanel');
-  t.ok('介紹區塊在「我的」最下面（除錯那塊不算，它平常是藏著的）',
-    [...doc.querySelectorAll('#tab-mine .wrap > [data-block]')].pop() === dev);
+  /* 「版面設定」（嵐要的，排在介紹後面）跟除錯那塊不算——後者平常是藏著的。
+     重點是介紹區塊在內容的最後面，不是夾在功能區塊中間。 */
+  const tailBlocks=[...doc.querySelectorAll('#tab-mine .wrap > [data-block]')]
+    .filter(el=>el.id!=='myDebug' && el.id!=='layoutPanel');
+  t.ok('介紹區塊在「我的」最下面', tailBlocks.pop() === dev,
+    [...doc.querySelectorAll('#tab-mine .wrap > [data-block]')].map(e=>e.id).slice(-3).join(','));
   t.ok('也能跟著一起排順序', dev.hasAttribute('data-block'));
   t.eq('是進「關於」那一頁的入口', $('#devIntroLink').getAttribute('href'), 'about.html');
   t.ok('區塊裡不再塞一整篇身世（細節在那一頁）',
