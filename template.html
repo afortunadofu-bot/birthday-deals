@@ -3407,7 +3407,7 @@ async function edgeFetch(path){
 
    拿不到就回 null，呼叫端各自退回原本的直接查詢——Worker 掛掉、或 config.js
    沒設 OFFERS_API 的站台，行為跟以前完全一樣。 */
-let BOARD_BUNDLE=null, BOARD_BUNDLE_AT=0, BOARD_BUNDLE_FAIL_AT=0;
+let BOARD_BUNDLE=null, BOARD_BUNDLE_AT=0, BOARD_BUNDLE_FAIL_AT=0, BOARD_INFLIGHT=null;
 const BOARD_BUNDLE_TTL_MS=10*60*1000, BOARD_BUNDLE_RETRY_MS=60*1000;
 async function boardBundle(force){
   if(!edgeApi()) return null;
@@ -3417,15 +3417,50 @@ async function boardBundle(force){
      （排行榜本體、最近動態、貢獻度榜），Worker 還沒更新到有 /board 的版本時，
      不擋的話等於每次進排行榜就白打三次。 */
   if(!force && BOARD_BUNDLE_FAIL_AT && now-BOARD_BUNDLE_FAIL_AT<BOARD_BUNDLE_RETRY_MS) return BOARD_BUNDLE;
-  const d=await edgeFetch('/board');
-  if(d && typeof d==='object'){ BOARD_BUNDLE=d; BOARD_BUNDLE_AT=now; BOARD_BUNDLE_FAIL_AT=0; }
-  else BOARD_BUNDLE_FAIL_AT=now;
-  return BOARD_BUNDLE;
+  // 同一時間只打一次：排行榜那頁有三個地方會問這一包，而且是同時問的
+  if(!force && BOARD_INFLIGHT) return BOARD_INFLIGHT;
+  BOARD_INFLIGHT=(async()=>{
+    const d=await edgeFetch('/board');
+    if(d && typeof d==='object'){ BOARD_BUNDLE=d; BOARD_BUNDLE_AT=Date.now(); BOARD_BUNDLE_FAIL_AT=0; }
+    else BOARD_BUNDLE_FAIL_AT=Date.now();
+    BOARD_INFLIGHT=null;
+    return BOARD_BUNDLE;
+  })();
+  return BOARD_INFLIGHT;
 }
 /* 這一包裡有這個欄位就用它，沒有（上游那一份失敗了）就退回原本的查詢。
    注意判斷用 !=null：空陣列是合法的值（今天還沒有人收藏也是一種答案）。 */
 function bundled(bundle, key, fallback){
   return (bundle && bundle[key]!=null) ? Promise.resolve({data:bundle[key]}) : fallback();
+}
+/* 開場那兩筆（公告、顯示開關）也走同一層邊緣快取。
+
+   為什麼：Supabase 的 Log Ingestion 也超額了，而那個計費看的是**請求次數**
+   不是大小——每位新訪客開場至少三個請求，前兩個每個人拿到的都一模一樣。
+   公告那筆原本就在這台裝置上留 10 分鐘，但對「第一次來的人」沒有用，
+   而新訪客正好是大宗。
+
+   只快取 60 秒（Worker 那邊設的）：顯示開關是管理員即時在調的，關掉某個
+   東西不該等十分鐘才在訪客那邊生效。
+   拿不到就回 null，兩個呼叫端各自退回原本的查詢。 */
+let BOOT_BUNDLE=null, BOOT_AT=0, BOOT_FAIL_AT=0, BOOT_INFLIGHT=null;
+async function bootBundle(){
+  if(!edgeApi()) return null;
+  const now=Date.now();
+  if(BOOT_BUNDLE && now-BOOT_AT<60*1000) return BOOT_BUNDLE;
+  if(BOOT_FAIL_AT && now-BOOT_FAIL_AT<60*1000) return BOOT_BUNDLE;
+  /* 公告跟顯示開關是同一個 tick 裡一起發動的，兩邊都會問這一包——沒有這個
+     「同一時間只打一次」的鎖，兩個都會在對方回來之前各自發一個請求，
+     等於白做了一半。（實測就是這樣：/boot 被打了兩次。） */
+  if(BOOT_INFLIGHT) return BOOT_INFLIGHT;
+  BOOT_INFLIGHT=(async()=>{
+    const d=await edgeFetch('/boot');
+    if(d && typeof d==='object'){ BOOT_BUNDLE=d; BOOT_AT=Date.now(); BOOT_FAIL_AT=0; }
+    else BOOT_FAIL_AT=Date.now();
+    BOOT_INFLIGHT=null;
+    return BOOT_BUNDLE;
+  })();
+  return BOOT_INFLIGHT;
 }
 async function loadOffers(force){
   if(!force){
@@ -4116,7 +4151,12 @@ async function loadSiteAnnouncement(){
   if(fresh && Date.now()-fresh.at<10*60*1000){
     data=fresh.data;
   } else {
-    ({data,error}=await sb.from('current_announcement').select('*').maybeSingle());
+    const boot=await bootBundle();
+    if(boot && boot.announcement!==undefined){
+      data=boot.announcement;
+    } else {
+      ({data,error}=await sb.from('current_announcement').select('*').maybeSingle());
+    }
     if(!error) try{ localStorage.setItem('sxr_ann_cache', JSON.stringify({at:Date.now(), data})); }catch{}
   }
   if(error||!data){ box.classList.add('hidden'); return; }
@@ -4620,9 +4660,15 @@ function applySiteFlags(){
   $$('[data-flag]').forEach(el=>setLinkOn(el, !!SITE_FLAGS[el.dataset.flag]));
   showCoffeeBtn(SITE_FLAGS.show_coffee);
 }
-async function loadSiteFlags(){
+async function loadSiteFlags(force){
   if(!LIVE||!sb) return;
-  const {data,error}=await sb.from('site_settings').select('key,enabled');
+  let data=null, error=null;
+  // 管理員自己改完開關時要看到馬上生效，所以 force 刻意跳過共用快取
+  if(!force){
+    const boot=await bootBundle();
+    if(boot && Array.isArray(boot.flags)) data=boot.flags;
+  }
+  if(!data) ({data,error}=await sb.from('site_settings').select('key,enabled'));
   if(error) return;                      // 還沒跑 v95，或讀不到：維持預設/快取，不要讓畫面少一塊
   (data||[]).forEach(r=>{ if(FLAG_KEYS.includes(r.key)) SITE_FLAGS[r.key]=!!r.enabled; });
   try{ localStorage.setItem(FLAGS_KEY, JSON.stringify(SITE_FLAGS)); }catch{}
@@ -4717,7 +4763,9 @@ function renderSiteFlagsPanel(){
     SITE_FLAGS[k]=on;
     try{ localStorage.setItem(FLAGS_KEY, JSON.stringify(SITE_FLAGS)); }catch{}
     applySiteFlags();
-    note($('#siteFlagsMsg'),'good',`✓ 已${on?'打開':'關掉'}「${esc(FLAG_LABEL[k].trim().replace(/^└\s*/,''))}」，所有人重新整理後就會看到。`);
+    // 自己改的要馬上在自己這邊是對的，所以跳過共用快取重讀一次
+    BOOT_BUNDLE=null; BOOT_AT=0;
+    note($('#siteFlagsMsg'),'good',`✓ 已${on?'打開':'關掉'}「${esc(FLAG_LABEL[k].trim().replace(/^└\s*/,''))}」，訪客最慢一分鐘內會看到。`);
   });
 }
 

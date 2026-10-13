@@ -15,6 +15,12 @@
  *   /offers  已上架的優惠（offers_public，自動翻頁，不受 PostgREST 1000 筆上限影響）
  *   /stats   站台數據（site_stats_cached，沒跑 v78 就退回 site_stats）
  *   /board   排行榜那一頁要的 14 份公開統計，打包成一包
+ *   /boot    每開一次網頁都要問的兩筆（公告、顯示開關），快取 60 秒
+ *
+ * 為什麼加 /boot：Log Ingestion 也超額了（1.5/1 GB）。那個計費看的是**請求次數**
+ * 不是大小——每位新訪客開場至少三個請求（公告、顯示開關、記一筆 pageview），
+ * 前兩個每個人拿到的都一模一樣。只快取 60 秒是因為顯示開關是管理員即時在調的，
+ * 關掉某個東西不該等十分鐘才生效。
  *
  * 為什麼加 /board：量出來每開一次排行榜就是 14 個請求、**32KB**（gzip 後的真實
  * 線上流量）直接打 Supabase。Supabase 免費方案一個月只有 5GB egress，2026-10-12
@@ -40,6 +46,9 @@ const DEFAULTS = {
 };
 
 const FRESH_TTL = 600;        // 10 分鐘內算新鮮，直接回快取
+// 開場那兩筆只快取 60 秒：顯示開關是管理員即時在調的，關掉某個東西
+// 不該等十分鐘才在訪客那邊生效。
+const TTL = { offers: FRESH_TTL, stats: FRESH_TTL, board: FRESH_TTL, boot: 60 };
 const STALE_TTL = 86400;      // 上游掛掉時，24 小時內的舊資料還可以頂著用
 const PAGE = 1000;            // PostgREST 的 max-rows，一頁最多就是這麼多
 const MAX_PAGES = 10;
@@ -87,6 +96,20 @@ async function fromSupabase(env, kind) {
   }
 
   if (kind === 'board') return await boardBundle(base, headers);
+
+  if (kind === 'boot') {
+    const one = async (path) => {
+      const r = await fetch(`${base}/rest/v1/${path}`, { headers });
+      if (!r.ok) throw new Error(`${path} ${r.status}`);
+      return await r.json();
+    };
+    // 公告可能一則都沒有（空陣列），那也是答案，不是失敗
+    const [ann, flags] = await Promise.all([
+      one('current_announcement?select=*&limit=1').catch(() => null),
+      one('site_settings?select=key,enabled'),
+    ]);
+    return { announcement: Array.isArray(ann) ? (ann[0] || null) : (ann || null), flags };
+  }
 
   const out = [];
   for (let page = 0; page < MAX_PAGES; page++) {
@@ -180,7 +203,7 @@ async function serve(request, env, ctx, kind) {
   try {
     const data = await fromSupabase(env, kind);
     const body = JSON.stringify({ at: new Date().toISOString(), data });
-    const fresh = json(body, { ttl: FRESH_TTL, extra: { 'x-cache': 'MISS' } });
+    const fresh = json(body, { ttl: TTL[kind] || FRESH_TTL, extra: { 'x-cache': 'MISS' } });
     const stale = json(body, { ttl: STALE_TTL });
     ctx.waitUntil(Promise.all([
       cache.put(freshKey, fresh.clone()),
@@ -212,13 +235,13 @@ async function statusPage(request) {
   const origin = new URL(request.url).origin;
   const cache = caches.default;
   const warm = {};
-  for (const kind of ['offers', 'stats', 'board']) {
+  for (const kind of ['offers', 'stats', 'board', 'boot']) {
     warm[kind] = !!(await cache.match(new Request(`${origin}/__cache/${kind}/fresh`, { method: 'GET' })));
   }
   const now = new Date().toISOString();
 
   if (!(request.headers.get('accept') || '').includes('text/html')) {
-    return json({ ok: true, service: '壽星日 edge cache', paths: ['/offers', '/stats', '/board', '/health'], cache: warm, now },
+    return json({ ok: true, service: '壽星日 edge cache', paths: ['/offers', '/stats', '/board', '/boot', '/health'], cache: warm, now },
       { ttl: 0 });
   }
 
@@ -250,6 +273,7 @@ p.note{font-size:.84rem;color:#8f8482;margin-top:22px}
 <div class="row"><code><a href="/offers">/offers</a></code>　優惠清單　${mark(warm.offers)}</div>
 <div class="row"><code><a href="/stats">/stats</a></code>　站台數據　${mark(warm.stats)}</div>
 <div class="row"><code><a href="/board">/board</a></code>　排行榜統計　${mark(warm.board)}</div>
+<div class="row"><code><a href="/boot">/boot</a></code>　公告＋顯示開關　${mark(warm.boot)}</div>
 <div class="row"><code><a href="/health">/health</a></code>　健康檢查<span class="dim">不快取，拿來確認這支還活著</span></div>
 <p class="note">這個網址是給網站呼叫的，不是給人看的——看到這頁就代表一切正常。
 壽星日本體在 <a href="https://birthdaydeals.celine-fu-work.workers.dev">birthdaydeals.celine-fu-work.workers.dev</a>。</p>
@@ -273,6 +297,7 @@ const handler = {
       if (path === '/offers') return serve(request, env, ctx, 'offers');
       if (path === '/stats') return serve(request, env, ctx, 'stats');
       if (path === '/board') return serve(request, env, ctx, 'board');
+      if (path === '/boot') return serve(request, env, ctx, 'boot');
       if (path === '/health') return json({ ok: true, now: new Date().toISOString() }, { ttl: 0 });
     }
 
@@ -282,7 +307,7 @@ const handler = {
 
     if (path === '/' && (request.method === 'GET' || request.method === 'HEAD')) return statusPage(request);
 
-    return json({ error: 'not found', paths: ['/offers', '/stats', '/board', '/health'] }, { status: 404, ttl: 0 });
+    return json({ error: 'not found', paths: ['/offers', '/stats', '/board', '/boot', '/health'] }, { status: 404, ttl: 0 });
   },
 };
 

@@ -100,6 +100,36 @@ const KEYS = ['lbAll', 'pop', 'lbAllPrev', 'savedAll', 'popPrev', 'wish', 'wishP
   t.ok('狀態頁列得出 /board', (status.paths || []).includes('/board'), JSON.stringify(status.paths));
   t.ok('也看得出快取熱了沒', status.cache && status.cache.board === true, JSON.stringify(status.cache));
 
+  /* ---- /boot：每開一次網頁都要問的那兩筆 ----
+     Log Ingestion 也超額了（1.5/1 GB），而那個計費看的是請求次數不是大小：
+     每位新訪客開場至少三個請求，前兩個每個人拿到的都一模一樣。 */
+  globalThis.caches = fakeCaches();
+  upstream = [];
+  globalThis.fetch = async (url) => {
+    const u = String(url);
+    upstream.push(u);
+    if (u.includes('current_announcement')) return Response.json([{ id: 9, title: '公告' }]);
+    if (u.includes('site_settings')) return Response.json([{ key: 'show_coffee', enabled: true }]);
+    return Response.json([]);
+  };
+  res = await get('/boot');
+  body = await res.json();
+  t.eq('公告拿得到', body.data.announcement && body.data.announcement.id, 9);
+  t.ok('開關也拿得到', Array.isArray(body.data.flags) && body.data.flags.length === 1);
+  t.eq('只打兩筆', upstream.length, 2);
+  t.eq('只快取 60 秒（開關是管理員即時在調的）',
+    res.headers.get('cache-control'), 'public, max-age=60');
+  upstream = [];
+  res = await get('/boot');
+  t.eq('第二次命中快取', res.headers.get('x-cache'), 'HIT');
+  t.eq('沒再碰 Supabase', upstream.length, 0);
+  // 一則公告都沒有也是答案，不是失敗
+  globalThis.caches = fakeCaches();
+  globalThis.fetch = async (url) => String(url).includes('current_announcement')
+    ? Response.json([]) : Response.json([{ key: 'show_coffee', enabled: true }]);
+  body = await (await get('/boot')).json();
+  t.eq('沒有公告就是 null，不是整包壞掉', body.data.announcement, null);
+
   globalThis.fetch = realFetch;
   delete globalThis.caches;
 
@@ -156,12 +186,37 @@ const KEYS = ['lbAll', 'pop', 'lbAllPrev', 'savedAll', 'popPrev', 'wish', 'wishP
   await win.eval('boardBundle()');
   t.eq('十分鐘內不再打第二次', hits, 1);
 
+  /* 同一個 tick 裡兩個人同時問，只能打一次。
+     公告跟顯示開關就是同時發動的——沒有這個鎖，兩邊會在對方回來之前各自
+     發一個請求，等於白做了一半（實測過：/boot 被打了兩次）。 */
+  let bootHits = 0;
+  win.eval(`
+    window.OFFERS_API='https://api.test'; OFFERS_API='https://api.test';
+    BOOT_BUNDLE=null; BOOT_AT=0; BOOT_FAIL_AT=0; BOOT_INFLIGHT=null;
+  `);
+  win.fetch = async () => {
+    bootHits++;
+    await new Promise((r) => win.setTimeout(r, 30));      // 慢一點，製造「同時問」
+    return { ok: true, json: async () => ({ at: 'now', data: { announcement: null, flags: [] } }) };
+  };
+  await Promise.all([win.eval('bootBundle()'), win.eval('bootBundle()'), win.eval('bootBundle()')]);
+  t.eq('三個同時問只打一次', bootHits, 1);
+  await win.eval('bootBundle()');
+  t.eq('60 秒內再問也不打', bootHits, 1);
+  t.ok('排行榜那包也有同一個鎖', /if\(!force && BOARD_INFLIGHT\) return BOARD_INFLIGHT;/.test(index));
+
+  // 管理員自己改完開關，要跳過共用快取重讀
+  t.ok('loadSiteFlags 有 force 可以跳過共用快取',
+    /async function loadSiteFlags\(force\)/.test(index) && /if\(!force\)\{[\s\S]{0,120}bootBundle\(\)/.test(index));
+
   /* ================= C. 整頁：拿得到就不碰 Supabase ================= */
   t.ok('config.js 沒設 OFFERS_API 的站台完全不受影響（直接退回原本的路）',
     /if\(!edgeApi\(\)\) return null;/.test(index));
   t.ok('排行榜本體用那一包', /bundled\(bundle,'lbAll'/.test(index));
   t.ok('最近動態用那一包', /bundled\(await boardBundle\(\), 'recent'/.test(index));
   t.ok('貢獻度榜（全部時間）用那一包', /bundled\(cb,'contribAll'/.test(index));
+  t.ok('公告用那一包', /boot\.announcement!==undefined/.test(index));
+  t.ok('顯示開關用那一包', /Array\.isArray\(boot\.flags\)/.test(index));
   t.ok('即時在線人數還是直接查（要即時）',
     /sb\.rpc\('site_online_now'\),/.test(index));
   t.ok('本月／本週還是直接查', /allTime \? bundled\(bundle,'lbAll',\(\)=>lbQuery\) : lbQuery/.test(index));

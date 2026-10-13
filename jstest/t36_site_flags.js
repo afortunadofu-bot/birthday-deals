@@ -13,6 +13,7 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
 /* v97 是 v95 的超集（整張表、policy、白名單、預設值都重寫一次），所以只驗這一支：
    v95 跑過的站台跑 v97 只會多一個 key，沒跑過的直接跑 v97 就夠了。 */
 const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v97_dev_intro_flag.sql'), 'utf8');
+const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
 (async () => {
   const t = makeAsserts('t36 全站顯示開關');
@@ -185,7 +186,11 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v97_dev_intro_fla
   t.eq('存的是 upsert（第一次還沒有那一列）', writes[0].op, 'upsert');
   t.eq('存對 key 跟值', [writes[0].args[0].key, writes[0].args[0].enabled], ['show_coffee', false]);
   t.eq('畫面馬上跟著變', flags().show_coffee, false);
-  t.ok('而且講清楚是對所有人生效', /所有人/.test($('#siteFlagsMsg').textContent), $('#siteFlagsMsg').textContent);
+  /* 開關現在走邊緣快取（60 秒），所以訊息也要照實說「最慢一分鐘」，
+     不能再講成「重新整理就會看到」——那會變成一句不準的話。 */
+  t.ok('而且講清楚是對所有訪客生效', /訪客/.test($('#siteFlagsMsg').textContent), $('#siteFlagsMsg').textContent);
+  t.ok('而且說得出大概多久', /一分鐘/.test($('#siteFlagsMsg').textContent), $('#siteFlagsMsg').textContent);
+  t.ok('自己改完要跳過共用快取重讀', /BOOT_BUNDLE=null; BOOT_AT=0;/.test(index));
 
   // 存檔失敗：勾勾要彈回去，不能讓畫面說成功、資料庫其實沒存
   sb.from = (tb) => (tb === 'site_settings'
