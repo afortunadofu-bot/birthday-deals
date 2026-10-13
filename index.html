@@ -2308,6 +2308,25 @@
       <div class="hint" style="margin-top:2px">品牌名稱去掉空白、英文大小寫後一樣，或其中一個包含另一個。點一下帶進上面，再自己確認要不要合併。</div>
       <div class="merge-sugg" id="mergeSugg"></div></div>
   </div>
+  <!-- celine：「可以偵測咖啡的點閱率，讓管理員看到」。
+       按鈕本來就有在記事件（coffee_open／coffee_go），只是沒有人看得到。
+       不用新的 SQL：site_events 的 select 政策本來就是「管理員才讀得到」，
+       而且 v14 就建了 (event_type, created_at) 的索引，用 head+count 查
+       只回數字、不回資料列。 -->
+  <div class="panel" id="pnlCoffeeStats">
+    <h2>咖啡按鈕</h2>
+    <p class="sub">左下角那顆的點閱狀況。「點開說明」是按了按鈕、「去 Buy Me a Coffee」是看完說明還願意出去的人。</p>
+    <div class="row" style="margin:0 0 10px;align-items:center">
+      <label class="lbl">區間<select id="coffeeRange">
+        <option value="7">近 7 天</option>
+        <option value="30" selected>近 30 天</option>
+        <option value="90">近 90 天</option>
+        <option value="0">全部時間</option>
+      </select></label>
+      <button type="button" class="btn sm" id="btnCoffeeStatsReload">重新整理</button>
+    </div>
+    <div id="coffeeStatsBody"></div>
+  </div>
   <!-- celine：「管理員可以加一個按鈕，是可以關掉品牌頁跟捐款頁的，跟個別可以選要加甚麼展示」 -->
   <div class="panel" id="pnlSiteFlags">
     <h2>網站顯示設定</h2>
@@ -2502,6 +2521,23 @@
   <div class="field"><label>這次總共花了多少（元）</label>
     <input type="number" id="repSpent" min="0" max="100000" placeholder="選填">
     <div class="hint">含低消、加點、其他人的餐點都算。填了之後大家就知道去這家店大概要準備多少錢</div></div>
+  <!-- celine：「使用回報可以輸入星等，是推薦指數」。
+       剛用完當下是最知道好不好的時候，以前卻要等送出之後才被問一次——
+       錯過那一次就再也沒人提（整站最多評分的一筆也只有 8 個人評過）。
+       直接做成表單的一欄，順手就給完了。
+       回報「失敗」時這一欄會收起來：沒用到的東西沒什麼好推薦。 -->
+  <div class="field" id="repRateField">
+    <label>推薦指數</label>
+    <div class="stars" id="repStars">
+      <button type="button" class="star-btn" data-s="1" aria-label="1 星">★</button>
+      <button type="button" class="star-btn" data-s="2" aria-label="2 星">★</button>
+      <button type="button" class="star-btn" data-s="3" aria-label="3 星">★</button>
+      <button type="button" class="star-btn" data-s="4" aria-label="4 星">★</button>
+      <button type="button" class="star-btn" data-s="5" aria-label="5 星">★</button>
+      <span class="lbl" id="repStarMsg">會不會推薦別人去</span>
+      <button type="button" class="btn sm hidden" id="btnRepStarClear" style="margin-left:6px">清除</button>
+    </div>
+  </div>
   <div class="field"><label>補充說明</label><textarea id="repNote" maxlength="300"
     placeholder="例如：店員說要提前三天，我當天去被拒絕"></textarea></div>
   <div class="foot">
@@ -2802,6 +2838,7 @@ let MY_USED_OFFER_IDS=new Set();   // 我自己回報過「用過了」的優惠
                                     // 這個是給本人看「我自己」有沒有回報過，卡片列表上要看得到。
 let MY_REPORTS=[];           // 「我的使用回報」目前這批資料，點列表時查回原始物件用
 let MY_RATED=new Set();      // 我已經給過星等的 offer_id（字串），登入後才有
+let MY_SCORES=new Map();     // 同一份資料，但連分數一起記——回報表單要帶回原本給的星等
 // 開站時 render() 會連續被叫好幾次（種子資料→收藏清單回來→Supabase 真資料回來），
 // 每次都整片重畫並重播卡片進場動畫的話，畫面會一直閃。進場動畫只在整個頁面
 // 生命週期的第一次 render() 播放，之後不管是開站流程還是使用者切篩選/排序，
@@ -3232,7 +3269,7 @@ async function onSession(s){
   if(me){ loadMyStuff(); loadWishlist(); loadMyUsedOffers(); flushPendingReport(); loadPendingPreview(); loadPendingEditsPreview(); loadNotifCount(); }
   else { $('#pendPreviewPanel').classList.add('hidden'); $('#pendEditsPreviewPanel').classList.add('hidden'); $('#btnNotif').classList.add('hidden'); }
   if(myProfile?.is_admin){ loadPending(); loadPendingEdits(); loadRejected(); loadApproved();
-    loadAdminSettings(); renderSiteFlagsPanel(); loadAdminDashboard(); loadFeedbackList(); loadUsageReportsAdmin(); loadSurveyAdmin(); renderMergePanel();
+    loadAdminSettings(); renderSiteFlagsPanel(); loadCoffeeStats(); loadAdminDashboard(); loadFeedbackList(); loadUsageReportsAdmin(); loadSurveyAdmin(); renderMergePanel();
     loadAdminCommentList(); loadReviewInsights(); }
 }
 
@@ -4309,7 +4346,7 @@ const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
 /* 更新紀錄的內容在 updates.json，build.py 注入這裡，同一份資料也產生整頁的
    updates.html。「我的」頁面只用到日期跟標題（最新幾筆＋NEW 標記），
    細項（items）留著是給 updates.html 用的。 */
-const SITE_UPDATES = [{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
+const SITE_UPDATES = [{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
 const SITE_UPDATES_SHOW=3;
 
 function updatesSeenDate(){
@@ -4606,6 +4643,53 @@ $('#btnCoffee').onclick=()=>{ $('#dlgCoffee').showModal(); pushDlgHistory(); log
 $('#btnCoffeeGo').onclick=()=>{ logEvent('coffee_go'); $('#dlgCoffee').close(); };
 
 /* ---- 管理員的開關面板 ---- */
+/* ---- 咖啡按鈕的點閱率（celine：「可以偵測咖啡的點閱率，讓管理員看到」）----
+
+   按鈕本來就一直在記事件，只是沒有人看得到：
+     coffee_open  按了左下角那顆，說明視窗跳出來
+     coffee_go    看完說明，按了「去 Buy Me a Coffee」
+
+   不用新的 SQL：site_events 的 select 政策本來就是 is_admin() 才讀得到，
+   v14 也早就建了 (event_type, created_at) 的索引。查法用 head + count：
+   只回一個數字，不會把幾萬列資料拉下來（這個站的 egress 很緊）。 */
+async function countEvents(type, days){
+  let q=sb.from('site_events').select('id',{count:'exact', head:true}).eq('event_type',type);
+  if(days>0) q=q.gte('created_at', new Date(Date.now()-days*864e5).toISOString());
+  const {count,error}=await q;
+  if(error) throw error;
+  return count||0;
+}
+async function loadCoffeeStats(){
+  const box=$('#coffeeStatsBody');
+  if(!box || !myProfile?.is_admin || !LIVE) return;
+  const days=Number($('#coffeeRange')?.value||30);
+  box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">載入中…</div>';
+  let open, go;
+  try{
+    [open, go]=await Promise.all([countEvents('coffee_open',days), countEvents('coffee_go',days)]);
+  }catch(err){
+    box.innerHTML=`<div class="note alert">讀取失敗：${esc(err.message||String(err))}</div>`;
+    return;
+  }
+  const rate = open ? Math.round(100*go/open) : null;
+  const label = days>0 ? `近 ${days} 天` : '全部時間';
+  // 按鈕現在是關著的話要講一聲——不然看到 0 會以為是統計壞了
+  const off = SITE_FLAGS.show_coffee===false
+    ? '<div class="note alert" style="margin-top:10px">按鈕目前是關掉的（上面「網站顯示設定」的「左下角的咖啡按鈕」），所以不會再有新的數字。</div>'
+    : '';
+  box.innerHTML=`<div class="stats">
+      <div><div class="v">${nt2(open)}</div><div class="k">${esc(label)}點開說明</div></div>
+      <div><div class="v">${nt2(go)}</div><div class="k">按了「去 Buy Me a Coffee」</div></div>
+      <div><div class="v ${rate!=null&&rate>=20?'free':''}">${rate==null?'—':rate+'%'}</div>
+        <div class="k">點開之後真的出去的比例</div>
+        ${rate==null?'':`<div class="vm-track"><span class="vm-fill" style="width:${Math.min(100,rate)}%"></span></div>`}</div>
+    </div>${off}
+    <p class="hint" style="margin-top:8px">只看得到「按了幾次」。有沒有真的請到咖啡要去
+      Buy Me a Coffee 自己的後台看——我們這邊不會知道，也收不到任何金流資訊。</p>`;
+}
+$('#coffeeRange').onchange=loadCoffeeStats;
+$('#btnCoffeeStatsReload').onclick=loadCoffeeStats;
+
 function renderSiteFlagsPanel(){
   const box=$('#siteFlagsBody');
   if(!box || !myProfile?.is_admin) return;
@@ -6224,8 +6308,10 @@ async function openDetail(id, fallback=null, focusRate=false){
     </div>`:''}
     ${showReportFollowupPrompt?`<div class="new-banner" id="postReportFollowupPrompt" style="margin-bottom:10px">
       <span class="nb-icon" aria-hidden="true">✅</span>
-      <div style="flex:1">回報送出了！要不要順便幫這家店評分、留言說說好不好用，或這筆優惠有什麼需要修正的地方？</div>
-      ${me?`<button type="button" class="btn sm primary" id="btnInlineRate">評分</button>`:''}
+      <div style="flex:1">回報送出了！${(me && MY_RATED.has(String(id)))
+        ? '要不要再留個言說說好不好用，或這筆優惠有什麼需要修正的地方？'
+        : '要不要順便幫這家店評分、留言說說好不好用，或這筆優惠有什麼需要修正的地方？'}</div>
+      ${(me && !MY_RATED.has(String(id)))?`<button type="button" class="btn sm primary" id="btnInlineRate">評分</button>`:''}
       <button type="button" class="btn sm${me?'':' primary'}" id="btnInlineComment">留言</button>
       ${me?`<button type="button" class="btn sm" id="btnInlineSuggestEdit">建議修改</button>`:''}
       <button type="button" class="btn plain" id="btnDismissReportPrompt" aria-label="關閉提示">✕</button>
@@ -6589,10 +6675,34 @@ async function openReport(id, existing=null){
     ? `預設帶入估算值 ${nt(o.valueTwd)}，可依實際情況修改` : '不確定就留空';
   $('#repStore').value=existing?.store||''; $('#repNote').value=existing?.note||'';
   $('#repSpent').value = existing?.spent_twd ?? '';
+  setRepScore(MY_SCORES.get(String(id)) || 0);   // 評過的要帶回原本給的星等，不然看起來像沒評過
+  syncRepRateField();
   $('#btnDeleteReport').classList.toggle('hidden',!editingReportId);
   $('#btnSaveReport').textContent=editingReportId?'更新':'送出';
   $('#dlgReport').showModal(); pushDlgHistory();
 }
+/* ---- 回報表單裡的推薦指數（celine：「使用回報可以輸入星等，是推薦指數」）----
+   剛用完當下最知道好不好，以前卻要等送出之後才被問一次，錯過就沒人再提。
+   這裡只負責收分數，真正寫進資料庫跟詳情視窗那顆星星走同一條路（upsert
+   offer_ratings），所以兩邊混著用不會打架。 */
+let repScore=0;
+function setRepScore(n){
+  repScore=Number(n)||0;
+  $$('#repStars .star-btn').forEach(b=>b.classList.toggle('on', Number(b.dataset.s)<=repScore));
+  $('#repStarMsg').textContent = repScore ? `${repScore} 星` : '會不會推薦別人去';
+  $('#btnRepStarClear').classList.toggle('hidden', !repScore);
+}
+/* 回報「失敗」時把這一欄收起來——沒用到的東西沒什麼好推薦，
+   留著只會逼人填一個沒意義的分數。 */
+function syncRepRateField(){
+  const failed=$('#repResult').value==='failed';
+  $('#repRateField').classList.toggle('hidden', failed);
+  if(failed) setRepScore(0);
+}
+$$('#repStars .star-btn').forEach(b=>b.onclick=()=>setRepScore(b.dataset.s));
+$('#btnRepStarClear').onclick=()=>setRepScore(0);
+$('#repResult').addEventListener('change', syncRepRateField);
+
 $('#btnSaveReport').onclick=async e=>{
   e.preventDefault();
   const sv=$('#repSaved').value, sp=$('#repSpent').value;
@@ -6623,6 +6733,17 @@ $('#btnSaveReport').onclick=async e=>{
       ({error}=await sb.from('usage_reports').insert({...noSpend(p), offer_id:Number(repId), user_id:me.id}));
   }
   if(error){ alert(error.code==='23505'?'你今天已經回報過這筆優惠了。':'回報失敗：'+error.message); return; }
+  /* 推薦指數跟回報分開存（offer_ratings 是獨立的表，同一家店只會有一列）。
+     寫失敗不要連累回報——回報本身已經存好了，為了一顆星把整張表退回來
+     只會讓人重填一次。分數沒變就不用白打一次 API。 */
+  if(repScore && MY_SCORES.get(String(repId))!==repScore){
+    const {error:rErr}=await sb.from('offer_ratings')
+      .upsert({offer_id:Number(repId), user_id:me.id, score:repScore},{onConflict:'offer_id,user_id'});
+    if(!rErr){
+      MY_RATED.add(String(repId)); MY_SCORES.set(String(repId), repScore);
+      logEvent('rate_submit', {from:'report_form', score:repScore});
+    }
+  }
   if(isNewReport) surveyAfterFirst('report');
   const justReportedId=repId;
   $('#dlgReport').close();
@@ -7271,8 +7392,9 @@ async function loadMyStuff(){
     .eq('user_id',me.id).order('used_on',{ascending:false});
   MY_REPORTS=reps||[];
   // 我已經評過哪幾筆——拿來算「用過但還沒給星等」的那幾家（見 unratedUsed()）
-  const {data:myRates}=await sb.from('offer_ratings').select('offer_id').eq('user_id',me.id);
+  const {data:myRates}=await sb.from('offer_ratings').select('offer_id,score').eq('user_id',me.id);
   MY_RATED=new Set((myRates||[]).map(r=>String(r.offer_id)));
+  MY_SCORES=new Map((myRates||[]).map(r=>[String(r.offer_id), r.score]));
   renderRatedCta();
   renderMyReports(R);
   maybeShowRateNudge();

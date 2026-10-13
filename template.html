@@ -2308,6 +2308,25 @@
       <div class="hint" style="margin-top:2px">品牌名稱去掉空白、英文大小寫後一樣，或其中一個包含另一個。點一下帶進上面，再自己確認要不要合併。</div>
       <div class="merge-sugg" id="mergeSugg"></div></div>
   </div>
+  <!-- celine：「可以偵測咖啡的點閱率，讓管理員看到」。
+       按鈕本來就有在記事件（coffee_open／coffee_go），只是沒有人看得到。
+       不用新的 SQL：site_events 的 select 政策本來就是「管理員才讀得到」，
+       而且 v14 就建了 (event_type, created_at) 的索引，用 head+count 查
+       只回數字、不回資料列。 -->
+  <div class="panel" id="pnlCoffeeStats">
+    <h2>咖啡按鈕</h2>
+    <p class="sub">左下角那顆的點閱狀況。「點開說明」是按了按鈕、「去 Buy Me a Coffee」是看完說明還願意出去的人。</p>
+    <div class="row" style="margin:0 0 10px;align-items:center">
+      <label class="lbl">區間<select id="coffeeRange">
+        <option value="7">近 7 天</option>
+        <option value="30" selected>近 30 天</option>
+        <option value="90">近 90 天</option>
+        <option value="0">全部時間</option>
+      </select></label>
+      <button type="button" class="btn sm" id="btnCoffeeStatsReload">重新整理</button>
+    </div>
+    <div id="coffeeStatsBody"></div>
+  </div>
   <!-- celine：「管理員可以加一個按鈕，是可以關掉品牌頁跟捐款頁的，跟個別可以選要加甚麼展示」 -->
   <div class="panel" id="pnlSiteFlags">
     <h2>網站顯示設定</h2>
@@ -2502,6 +2521,23 @@
   <div class="field"><label>這次總共花了多少（元）</label>
     <input type="number" id="repSpent" min="0" max="100000" placeholder="選填">
     <div class="hint">含低消、加點、其他人的餐點都算。填了之後大家就知道去這家店大概要準備多少錢</div></div>
+  <!-- celine：「使用回報可以輸入星等，是推薦指數」。
+       剛用完當下是最知道好不好的時候，以前卻要等送出之後才被問一次——
+       錯過那一次就再也沒人提（整站最多評分的一筆也只有 8 個人評過）。
+       直接做成表單的一欄，順手就給完了。
+       回報「失敗」時這一欄會收起來：沒用到的東西沒什麼好推薦。 -->
+  <div class="field" id="repRateField">
+    <label>推薦指數</label>
+    <div class="stars" id="repStars">
+      <button type="button" class="star-btn" data-s="1" aria-label="1 星">★</button>
+      <button type="button" class="star-btn" data-s="2" aria-label="2 星">★</button>
+      <button type="button" class="star-btn" data-s="3" aria-label="3 星">★</button>
+      <button type="button" class="star-btn" data-s="4" aria-label="4 星">★</button>
+      <button type="button" class="star-btn" data-s="5" aria-label="5 星">★</button>
+      <span class="lbl" id="repStarMsg">會不會推薦別人去</span>
+      <button type="button" class="btn sm hidden" id="btnRepStarClear" style="margin-left:6px">清除</button>
+    </div>
+  </div>
   <div class="field"><label>補充說明</label><textarea id="repNote" maxlength="300"
     placeholder="例如：店員說要提前三天，我當天去被拒絕"></textarea></div>
   <div class="foot">
@@ -2802,6 +2838,7 @@ let MY_USED_OFFER_IDS=new Set();   // 我自己回報過「用過了」的優惠
                                     // 這個是給本人看「我自己」有沒有回報過，卡片列表上要看得到。
 let MY_REPORTS=[];           // 「我的使用回報」目前這批資料，點列表時查回原始物件用
 let MY_RATED=new Set();      // 我已經給過星等的 offer_id（字串），登入後才有
+let MY_SCORES=new Map();     // 同一份資料，但連分數一起記——回報表單要帶回原本給的星等
 // 開站時 render() 會連續被叫好幾次（種子資料→收藏清單回來→Supabase 真資料回來），
 // 每次都整片重畫並重播卡片進場動畫的話，畫面會一直閃。進場動畫只在整個頁面
 // 生命週期的第一次 render() 播放，之後不管是開站流程還是使用者切篩選/排序，
@@ -3232,7 +3269,7 @@ async function onSession(s){
   if(me){ loadMyStuff(); loadWishlist(); loadMyUsedOffers(); flushPendingReport(); loadPendingPreview(); loadPendingEditsPreview(); loadNotifCount(); }
   else { $('#pendPreviewPanel').classList.add('hidden'); $('#pendEditsPreviewPanel').classList.add('hidden'); $('#btnNotif').classList.add('hidden'); }
   if(myProfile?.is_admin){ loadPending(); loadPendingEdits(); loadRejected(); loadApproved();
-    loadAdminSettings(); renderSiteFlagsPanel(); loadAdminDashboard(); loadFeedbackList(); loadUsageReportsAdmin(); loadSurveyAdmin(); renderMergePanel();
+    loadAdminSettings(); renderSiteFlagsPanel(); loadCoffeeStats(); loadAdminDashboard(); loadFeedbackList(); loadUsageReportsAdmin(); loadSurveyAdmin(); renderMergePanel();
     loadAdminCommentList(); loadReviewInsights(); }
 }
 
@@ -4606,6 +4643,53 @@ $('#btnCoffee').onclick=()=>{ $('#dlgCoffee').showModal(); pushDlgHistory(); log
 $('#btnCoffeeGo').onclick=()=>{ logEvent('coffee_go'); $('#dlgCoffee').close(); };
 
 /* ---- 管理員的開關面板 ---- */
+/* ---- 咖啡按鈕的點閱率（celine：「可以偵測咖啡的點閱率，讓管理員看到」）----
+
+   按鈕本來就一直在記事件，只是沒有人看得到：
+     coffee_open  按了左下角那顆，說明視窗跳出來
+     coffee_go    看完說明，按了「去 Buy Me a Coffee」
+
+   不用新的 SQL：site_events 的 select 政策本來就是 is_admin() 才讀得到，
+   v14 也早就建了 (event_type, created_at) 的索引。查法用 head + count：
+   只回一個數字，不會把幾萬列資料拉下來（這個站的 egress 很緊）。 */
+async function countEvents(type, days){
+  let q=sb.from('site_events').select('id',{count:'exact', head:true}).eq('event_type',type);
+  if(days>0) q=q.gte('created_at', new Date(Date.now()-days*864e5).toISOString());
+  const {count,error}=await q;
+  if(error) throw error;
+  return count||0;
+}
+async function loadCoffeeStats(){
+  const box=$('#coffeeStatsBody');
+  if(!box || !myProfile?.is_admin || !LIVE) return;
+  const days=Number($('#coffeeRange')?.value||30);
+  box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">載入中…</div>';
+  let open, go;
+  try{
+    [open, go]=await Promise.all([countEvents('coffee_open',days), countEvents('coffee_go',days)]);
+  }catch(err){
+    box.innerHTML=`<div class="note alert">讀取失敗：${esc(err.message||String(err))}</div>`;
+    return;
+  }
+  const rate = open ? Math.round(100*go/open) : null;
+  const label = days>0 ? `近 ${days} 天` : '全部時間';
+  // 按鈕現在是關著的話要講一聲——不然看到 0 會以為是統計壞了
+  const off = SITE_FLAGS.show_coffee===false
+    ? '<div class="note alert" style="margin-top:10px">按鈕目前是關掉的（上面「網站顯示設定」的「左下角的咖啡按鈕」），所以不會再有新的數字。</div>'
+    : '';
+  box.innerHTML=`<div class="stats">
+      <div><div class="v">${nt2(open)}</div><div class="k">${esc(label)}點開說明</div></div>
+      <div><div class="v">${nt2(go)}</div><div class="k">按了「去 Buy Me a Coffee」</div></div>
+      <div><div class="v ${rate!=null&&rate>=20?'free':''}">${rate==null?'—':rate+'%'}</div>
+        <div class="k">點開之後真的出去的比例</div>
+        ${rate==null?'':`<div class="vm-track"><span class="vm-fill" style="width:${Math.min(100,rate)}%"></span></div>`}</div>
+    </div>${off}
+    <p class="hint" style="margin-top:8px">只看得到「按了幾次」。有沒有真的請到咖啡要去
+      Buy Me a Coffee 自己的後台看——我們這邊不會知道，也收不到任何金流資訊。</p>`;
+}
+$('#coffeeRange').onchange=loadCoffeeStats;
+$('#btnCoffeeStatsReload').onclick=loadCoffeeStats;
+
 function renderSiteFlagsPanel(){
   const box=$('#siteFlagsBody');
   if(!box || !myProfile?.is_admin) return;
@@ -6224,8 +6308,10 @@ async function openDetail(id, fallback=null, focusRate=false){
     </div>`:''}
     ${showReportFollowupPrompt?`<div class="new-banner" id="postReportFollowupPrompt" style="margin-bottom:10px">
       <span class="nb-icon" aria-hidden="true">✅</span>
-      <div style="flex:1">回報送出了！要不要順便幫這家店評分、留言說說好不好用，或這筆優惠有什麼需要修正的地方？</div>
-      ${me?`<button type="button" class="btn sm primary" id="btnInlineRate">評分</button>`:''}
+      <div style="flex:1">回報送出了！${(me && MY_RATED.has(String(id)))
+        ? '要不要再留個言說說好不好用，或這筆優惠有什麼需要修正的地方？'
+        : '要不要順便幫這家店評分、留言說說好不好用，或這筆優惠有什麼需要修正的地方？'}</div>
+      ${(me && !MY_RATED.has(String(id)))?`<button type="button" class="btn sm primary" id="btnInlineRate">評分</button>`:''}
       <button type="button" class="btn sm${me?'':' primary'}" id="btnInlineComment">留言</button>
       ${me?`<button type="button" class="btn sm" id="btnInlineSuggestEdit">建議修改</button>`:''}
       <button type="button" class="btn plain" id="btnDismissReportPrompt" aria-label="關閉提示">✕</button>
@@ -6589,10 +6675,34 @@ async function openReport(id, existing=null){
     ? `預設帶入估算值 ${nt(o.valueTwd)}，可依實際情況修改` : '不確定就留空';
   $('#repStore').value=existing?.store||''; $('#repNote').value=existing?.note||'';
   $('#repSpent').value = existing?.spent_twd ?? '';
+  setRepScore(MY_SCORES.get(String(id)) || 0);   // 評過的要帶回原本給的星等，不然看起來像沒評過
+  syncRepRateField();
   $('#btnDeleteReport').classList.toggle('hidden',!editingReportId);
   $('#btnSaveReport').textContent=editingReportId?'更新':'送出';
   $('#dlgReport').showModal(); pushDlgHistory();
 }
+/* ---- 回報表單裡的推薦指數（celine：「使用回報可以輸入星等，是推薦指數」）----
+   剛用完當下最知道好不好，以前卻要等送出之後才被問一次，錯過就沒人再提。
+   這裡只負責收分數，真正寫進資料庫跟詳情視窗那顆星星走同一條路（upsert
+   offer_ratings），所以兩邊混著用不會打架。 */
+let repScore=0;
+function setRepScore(n){
+  repScore=Number(n)||0;
+  $$('#repStars .star-btn').forEach(b=>b.classList.toggle('on', Number(b.dataset.s)<=repScore));
+  $('#repStarMsg').textContent = repScore ? `${repScore} 星` : '會不會推薦別人去';
+  $('#btnRepStarClear').classList.toggle('hidden', !repScore);
+}
+/* 回報「失敗」時把這一欄收起來——沒用到的東西沒什麼好推薦，
+   留著只會逼人填一個沒意義的分數。 */
+function syncRepRateField(){
+  const failed=$('#repResult').value==='failed';
+  $('#repRateField').classList.toggle('hidden', failed);
+  if(failed) setRepScore(0);
+}
+$$('#repStars .star-btn').forEach(b=>b.onclick=()=>setRepScore(b.dataset.s));
+$('#btnRepStarClear').onclick=()=>setRepScore(0);
+$('#repResult').addEventListener('change', syncRepRateField);
+
 $('#btnSaveReport').onclick=async e=>{
   e.preventDefault();
   const sv=$('#repSaved').value, sp=$('#repSpent').value;
@@ -6623,6 +6733,17 @@ $('#btnSaveReport').onclick=async e=>{
       ({error}=await sb.from('usage_reports').insert({...noSpend(p), offer_id:Number(repId), user_id:me.id}));
   }
   if(error){ alert(error.code==='23505'?'你今天已經回報過這筆優惠了。':'回報失敗：'+error.message); return; }
+  /* 推薦指數跟回報分開存（offer_ratings 是獨立的表，同一家店只會有一列）。
+     寫失敗不要連累回報——回報本身已經存好了，為了一顆星把整張表退回來
+     只會讓人重填一次。分數沒變就不用白打一次 API。 */
+  if(repScore && MY_SCORES.get(String(repId))!==repScore){
+    const {error:rErr}=await sb.from('offer_ratings')
+      .upsert({offer_id:Number(repId), user_id:me.id, score:repScore},{onConflict:'offer_id,user_id'});
+    if(!rErr){
+      MY_RATED.add(String(repId)); MY_SCORES.set(String(repId), repScore);
+      logEvent('rate_submit', {from:'report_form', score:repScore});
+    }
+  }
   if(isNewReport) surveyAfterFirst('report');
   const justReportedId=repId;
   $('#dlgReport').close();
@@ -7271,8 +7392,9 @@ async function loadMyStuff(){
     .eq('user_id',me.id).order('used_on',{ascending:false});
   MY_REPORTS=reps||[];
   // 我已經評過哪幾筆——拿來算「用過但還沒給星等」的那幾家（見 unratedUsed()）
-  const {data:myRates}=await sb.from('offer_ratings').select('offer_id').eq('user_id',me.id);
+  const {data:myRates}=await sb.from('offer_ratings').select('offer_id,score').eq('user_id',me.id);
   MY_RATED=new Set((myRates||[]).map(r=>String(r.offer_id)));
+  MY_SCORES=new Map((myRates||[]).map(r=>[String(r.offer_id), r.score]));
   renderRatedCta();
   renderMyReports(R);
   maybeShowRateNudge();
