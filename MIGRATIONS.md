@@ -23,6 +23,7 @@ celine：「為啥你現在 SQL 編號都是亂碼亂跳」。
 | 檔案 | 做什麼 | 什麼時候跑 |
 | --- | --- | --- |
 | `schema_v110_regions_from_stores.sql` | 照 `offer_stores` 裡實際找到的分店，補上「適用縣市」空白的優惠 | 隨時可以貼，之後每次重抓分店都可以再跑 |
+| `schema_v112_coffee_stats.sql` | 咖啡按鈕「被幾個人點過」（現在只數得出「幾次」） | 隨時可以貼，貼完審核頁那一塊就會多出人數 |
 
 線上有 67 筆優惠的「適用縣市」是空的（任何縣市篩選都找不到它們）。v110 先把
 **已經有分店資料、縣市卻空白**的那幾筆補上；剩下的要先抓分店：
@@ -40,7 +41,7 @@ $env:GOOGLE_MAPS_API_KEY="你的金鑰"; python fetch_stores.py --fill-regions
 | --- | --- |
 | `schema_v97_dev_intro_flag.sql` | `site_settings` 讀回來已經是六個 key，含 `show_dev_intro` |
 | `schema_v92_site_events_io.sql` | `admin_events_prune_preview`、`admin_dashboard_stats` 這兩支函式都在（anon 呼叫回 42501「權限不足」，不是「找不到函式」）|
-| `schema_v95_site_settings.sql` | 被 `v97` 覆蓋（它是超集）|
+| `schema_v95_site_settings.sql` | 被 `v97` 覆蓋（它是超集）。**不要再跑它**：它的 key 白名單沒有 `show_dev_intro`，重跑會報 `site_settings_key_known is violated by some row`（2026-10-14 踩過）|
 | `v73`–`v83` | 2026-10-06 一支一支打過 RPC／view 驗過（見 CHANGELOG v92 那段）|
 
 ## 跑法

@@ -4739,32 +4739,53 @@ async function countEvents(type, days){
   if(error) throw error;
   return count||0;
 }
+/* celine：「我可以偵測多少人點過捐款咖啡嗎」。上面那個 head+count 答的是
+   「被按了幾次」——同一個人反覆點開五次說明，在那個數字裡就是 5。「幾個人」要
+   count(distinct session_id)，PostgREST 做不到，交給 v112 的 admin_coffee_stats
+   在資料庫算（只回彙總數字，不回任何一列事件）。還沒跑 v112 的話退回只有次數的版本。 */
 async function loadCoffeeStats(){
   const box=$('#coffeeStatsBody');
   if(!box || !myProfile?.is_admin || !LIVE) return;
   const days=Number($('#coffeeRange')?.value||30);
   box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">載入中…</div>';
-  let open, go;
-  try{
-    [open, go]=await Promise.all([countEvents('coffee_open',days), countEvents('coffee_go',days)]);
-  }catch(err){
-    box.innerHTML=`<div class="note alert">讀取失敗：${esc(err.message||String(err))}</div>`;
-    return;
+  let open, go, openPeople=null, goPeople=null, needV112=false;
+  const {data:stat, error:statErr}=await sb.rpc('admin_coffee_stats',{p_days:days});
+  if(!statErr && stat){
+    open=Number(stat.open_events)||0; go=Number(stat.go_events)||0;
+    openPeople=Number(stat.open_people)||0; goPeople=Number(stat.go_people)||0;
+  }else{
+    needV112=/function|does not exist|schema cache/i.test(statErr?.message||'');
+    try{
+      [open, go]=await Promise.all([countEvents('coffee_open',days), countEvents('coffee_go',days)]);
+    }catch(err){
+      box.innerHTML=`<div class="note alert">讀取失敗：${esc(err.message||String(err))}</div>`;
+      return;
+    }
   }
-  const rate = open ? Math.round(100*go/open) : null;
+  // 轉換率用「人」算才是「點開的人裡有幾個真的出去」；只有次數時退回用次數算
+  const rate = openPeople!=null ? (openPeople ? Math.round(100*goPeople/openPeople) : null)
+             : (open ? Math.round(100*go/open) : null);
   const label = days>0 ? `近 ${days} 天` : '全部時間';
   // 按鈕現在是關著的話要講一聲——不然看到 0 會以為是統計壞了
   const off = SITE_FLAGS.show_coffee===false
     ? '<div class="note alert" style="margin-top:10px">按鈕目前是關掉的（上面「網站顯示設定」的「左下角的咖啡按鈕」），所以不會再有新的數字。</div>'
     : '';
+  const people = openPeople!=null;
+  const tile=(v, unit, k)=>`<div><div class="v">${nt2(v)}${unit}</div><div class="k">${k}</div></div>`;
   box.innerHTML=`<div class="stats">
-      <div><div class="v">${nt2(open)}</div><div class="k">${esc(label)}點開說明</div></div>
-      <div><div class="v">${nt2(go)}</div><div class="k">按了「去 Buy Me a Coffee」</div></div>
+      ${people ? tile(openPeople,' 人', `${esc(label)}點開說明的人（共 ${nt2(open)} 次）`)
+               : tile(open,'', `${esc(label)}點開說明`)}
+      ${people ? tile(goPeople,' 人', `按了「去 Buy Me a Coffee」的人（共 ${nt2(go)} 次）`)
+               : tile(go,'', '按了「去 Buy Me a Coffee」')}
       <div><div class="v ${rate!=null&&rate>=20?'free':''}">${rate==null?'—':rate+'%'}</div>
-        <div class="k">點開之後真的出去的比例</div>
+        <div class="k">點開${people?'的人裡':'之後'}真的出去的比例</div>
         ${rate==null?'':`<div class="vm-track"><span class="vm-fill" style="width:${Math.min(100,rate)}%"></span></div>`}</div>
-    </div>${off}
-    <p class="hint" style="margin-top:8px">只看得到「按了幾次」。有沒有真的請到咖啡要去
+    </div>${off}${needV112
+      ? '<div class="note" style="margin-top:10px">想看「幾個人」（不只是幾次）要先在 Supabase 執行 schema_v112_coffee_stats.sql。</div>'
+      : ''}
+    <p class="hint" style="margin-top:8px">${people
+      ? '「人」算的是瀏覽器：同一個人用手機跟電腦各點一次算兩個，清掉瀏覽器資料也會變成新的一個——站上不會為了算人頭去綁任何身分。'
+      : '只看得到「按了幾次」。'}有沒有真的請到咖啡要去
       Buy Me a Coffee 自己的後台看——我們這邊不會知道，也收不到任何金流資訊。</p>`;
 }
 $('#coffeeRange').onchange=loadCoffeeStats;

@@ -105,8 +105,11 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
   // 查法：只回數字，不要把幾萬列拉下來
   const q = [];
+  const rpcs = [];
+  let rpcAnswer = () => ({ data: null, error: { message: 'function public.admin_coffee_stats does not exist' } });
   win.eval(`myProfile={is_admin:true};`);
   win.__sb2 = {
+    rpc: (name, params) => { rpcs.push({ name, params }); return Promise.resolve(rpcAnswer()); },
     from: () => ({
       select: (cols, opts) => {
         const st = { cols, opts };
@@ -122,6 +125,9 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   win.eval('sb=window.__sb2;');
   await win.eval('loadCoffeeStats()');
   await tick(win, 3);
+  /* 還沒跑 v112（資料庫裡沒有那支函式）→ 退回只有「幾次」的版本，照樣看得到數字，
+     而且要講出「想看幾個人要先跑 v112」，不是默默少一半資訊 */
+  t.eq('先問 v112 那支函式', rpcs.map((r) => r.name), ['admin_coffee_stats']);
   t.eq('查兩種事件', q.map((x) => x.type).sort(), ['coffee_go', 'coffee_open']);
   t.ok('用 head + count（不回資料列，egress 很緊）',
     q.every((x) => x.opts && x.opts.head === true && x.opts.count === 'exact'), JSON.stringify(q[0].opts));
@@ -131,6 +137,25 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   t.ok('看得到真的出去幾次', /36/.test(body), body.slice(0, 120));
   t.ok('算得出比例', /15%/.test(body), body.slice(0, 160));
   t.ok('講明我們看不到金流', /看不到|不會知道/.test(body) && /Buy Me a Coffee/.test(body), body.slice(-120));
+  t.ok('沒跑 v112 時講一聲要跑哪一支', /schema_v112_coffee_stats\.sql/.test(body), body.slice(-200));
+
+  /* 跑過 v112：改用 count(distinct session_id)，看得到「幾個人」，
+     而且比例要用人算——240 次可能只是 5 個人反覆點開的 */
+  q.length = 0; rpcs.length = 0;
+  rpcAnswer = () => ({ data: { days: 30, open_events: 240, open_people: 60,
+    go_events: 36, go_people: 12, first_at: '2026-08-05T00:00:00Z' }, error: null });
+  await win.eval('loadCoffeeStats()');
+  await tick(win, 3);
+  const body2 = $('#coffeeStatsBody').textContent.replace(/\s+/g, ' ');
+  t.eq('有了函式就不用再自己數 site_events', q.length, 0);
+  t.eq('帶了區間', rpcs[0].params, { p_days: 30 });
+  t.ok('看得到幾個人點開', /60 人/.test(body2), body2.slice(0, 160));
+  t.ok('也還是看得到幾次', /240 次/.test(body2), body2.slice(0, 160));
+  t.ok('看得到幾個人真的出去', /12 人/.test(body2), body2.slice(0, 200));
+  t.ok('比例用人算（12/60＝20%），不是用次數算（36/240＝15%）',
+    /20%/.test(body2) && !/15%/.test(body2), body2.slice(0, 220));
+  t.ok('講明「人」其實是瀏覽器', /瀏覽器/.test(body2), body2.slice(-200));
+  t.ok('沒有函式才提醒要跑 v112', !/schema_v112/.test(body2));
 
   // 按鈕被關掉時要講一聲，不然看到 0 會以為統計壞了
   win.eval('SITE_FLAGS.show_coffee=false;');
@@ -140,11 +165,12 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   win.eval('SITE_FLAGS.show_coffee=true;');
 
   // 不是管理員就什麼都不查
-  q.length = 0;
+  q.length = 0; rpcs.length = 0;
   win.eval('myProfile={is_admin:false};');
   await win.eval('loadCoffeeStats()');
   await tick(win, 2);
   t.eq('非管理員不會去查 site_events', q.length, 0);
+  t.eq('也不會去呼叫那支函式', rpcs.length, 0);
 
   // 原本寫成「v107 以後都不准有 SQL 檔」，但那是在賭「之後沒有別的改動要動資料庫」——
   // v110（照分店補適用縣市）一加進來就假失敗了。要驗的其實只有「這一版自己沒帶 SQL」。
