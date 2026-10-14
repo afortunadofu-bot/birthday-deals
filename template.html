@@ -1463,6 +1463,12 @@
         <label class="toggle"><input type="checkbox" id="fHasComments"> 有留言</label>
         <label class="toggle"><input type="checkbox" id="fNoCompanion"> 一人也能用（不含需同行）</label>
         <label class="toggle"><input type="checkbox" id="fTransferable"> 不用本人出示證件</label>
+        <!-- 金信宇回報：「我點擊篩選『花蓮縣』時，底下篩選出的建議店家有很多都不是
+             花蓮店家」。選了縣市之後，標成「全台」的連鎖店本來就會一起列出來
+             （標題那行有寫「含全台」），但「全台」常常是個寬鬆的標記——很多連鎖
+             其實沒有開到花蓮、台東。這顆勾起來就只看「真的有標到這個縣市」的，
+             不含全台。 -->
+        <label class="toggle hidden" id="fExactRegionWrap"><input type="checkbox" id="fExactRegion"> 只看有標這個縣市的（不含全台）</label>
         <button class="btn sm hidden" id="btnClearFilters" type="button">清除篩選</button>
       </div>
     </div>
@@ -2854,6 +2860,7 @@ function saveFilters(){
     fVerified:$('#fVerified').checked, fLive:$('#fLive').checked,
     fReported:$('#fReported').checked, fHasComments:$('#fHasComments').checked,
     fNoCompanion:$('#fNoCompanion').checked, fTransferable:$('#fTransferable').checked,
+    fExactRegion:$('#fExactRegion').checked,
     sort:$('#sort').value
   })); }catch{}
 }
@@ -2866,6 +2873,7 @@ function loadFilters(){
   (s.timing||[]).forEach(v=>activeTiming.add(v));
   $('#fNoCompanion').checked=!!s.fNoCompanion;
   $('#fTransferable').checked=!!s.fTransferable;
+  $('#fExactRegion').checked=!!s.fExactRegion;
   $('#fVerified').checked=!!s.fVerified; $('#fLive').checked=s.fLive!==false;
   $('#fReported').checked=!!s.fReported; $('#fHasComments').checked=!!s.fHasComments;
   if(s.sort) $('#sort').value=s.sort;
@@ -4096,29 +4104,43 @@ function renderWishlistBody(){
     renderMyWishlist();
   });
 }
-// 自訂順序：上／下移動按鈕交換相鄰兩筆（在「未使用」這個子群組內）的
-// sort_order，直接寫回 wishlist 表——第一次使用手動排序、還沒有任何
-// sort_order 值時，先用目前顯示順序（索引）補上初始值，才有東西可以交換。
+/* 自訂順序：上／下移動按鈕把相鄰兩筆（在「未使用」這個子群組內）對調。
+
+   陳回報：「待辦清單的自訂排序會卡住無法上下調整（部分時候上下按鈕無反應）」。
+
+   原因是舊的做法會產生**重複的 sort_order**：沒有值的那幾筆是用「在 WL_ROWS
+   裡的索引」補的，而 WL_ROWS 不是照 sort_order 排的，補出來的號碼很容易撞到
+   已經存在的號碼。兩筆同號的時候，「交換它們的 sort_order」等於什麼都沒做
+   ——畫面不動、資料庫寫回去也是一樣的值。按鈕看起來就是沒反應。
+   「部分時候」正是因為要剛好撞號才會發生。
+
+   改法：先照「畫面上真正的順序」排好（跟 renderWishlistBody 用同一個比較式），
+   對調位置之後**整串重新發號 0..n-1**，再把有變動的那幾筆寫回去。
+   重新發號保證每一筆都不一樣，之後每次移動就只會動到兩筆。 */
 async function moveWishlistItem(offerId, dir){
   if(!LIVE||!me) return;
   const isDone=w=>MY_USED_OFFER_IDS.has(String(w.offer_id))||w.done;
   const undone=WL_ROWS.filter(w=>!isDone(w));
-  undone.forEach((w,i)=>{ if(w.sort_order==null) w.sort_order=i; });
-  undone.sort((a,b)=>a.sort_order-b.sort_order);
+  // 跟 renderWishlistBody 的 manual 排序完全一致：sort_order 小的在前，
+  // 沒有值的排後面，同號的用加入時間新的在前
+  undone.sort((a,b)=>(a.sort_order??999999)-(b.sort_order??999999)
+    || (new Date(b.created_at)-new Date(a.created_at)));
   const idx=undone.findIndex(w=>String(w.offer_id)===String(offerId));
   const swapIdx=idx+dir;
   if(idx<0||swapIdx<0||swapIdx>=undone.length) return;
-  const a=undone[idx], b=undone[swapIdx];
-  const tmp=a.sort_order; a.sort_order=b.sort_order; b.sort_order=tmp;
-  renderWishlistBody(); // 先照交換後的順序重畫，操作起來才即時
-  const [{error:e1},{error:e2}]=await Promise.all([
-    sb.from('wishlist').update({sort_order:a.sort_order}).eq('user_id',me.id).eq('offer_id',a.offer_id),
-    sb.from('wishlist').update({sort_order:b.sort_order}).eq('user_id',me.id).eq('offer_id',b.offer_id)
-  ]);
-  if(e1||e2){
-    const hint=/relation|does not exist|column/i.test((e1||e2).message)?'（Supabase 可能還沒跑 schema_v47_wishlist_sort_order.sql）':'';
-    alert('排序更新失敗，請稍後再試：'+(e1||e2).message+hint);
-    renderMyWishlist(); // 重新拉一次乾淨的資料，避免畫面停在沒存到的交換結果
+  [undone[idx], undone[swapIdx]]=[undone[swapIdx], undone[idx]];
+  // 整串重新發號，順便把「沒有值」跟「撞號」一次解決掉
+  const changed=[];
+  undone.forEach((w,i)=>{ if(w.sort_order!==i){ w.sort_order=i; changed.push(w); } });
+  renderWishlistBody(); // 先照新的順序重畫，操作起來才即時
+  if(!changed.length) return;
+  const results=await Promise.all(changed.map(w=>
+    sb.from('wishlist').update({sort_order:w.sort_order}).eq('user_id',me.id).eq('offer_id',w.offer_id)));
+  const bad=results.find(r=>r.error);
+  if(bad){
+    const hint=/relation|does not exist|column/i.test(bad.error.message)?'（Supabase 可能還沒跑 schema_v47_wishlist_sort_order.sql）':'';
+    alert('排序更新失敗，請稍後再試：'+bad.error.message+hint);
+    renderMyWishlist(); // 重新拉一次乾淨的資料，避免畫面停在沒存到的結果
   }
 }
 // 同上：選字中不要重畫（不然打「麥當勞」打到一半就說找不到）
@@ -5138,7 +5160,19 @@ const daysOf=o=>o.advanceDays==null?999:o.advanceDays;
 const trustOf=o=>o.bestSource?o.bestSource.tier:9;
 const dUntil=i=>i?Math.round((new Date(i+'T00:00:00')-TODAY)/864e5):null;
 const dSince=i=>i?Math.round((TODAY-new Date(i+'T00:00:00'))/864e5):null;
-const matchRegion=(o,r)=>!r?true:(!o.regions.length?false:o.regions.includes('全台')||o.regions.includes(r));
+/* exact=true 時不把「全台」算進來——見 #fExactRegion 那顆勾選框的註解 */
+/* 沒有選任何縣市的時候「不含全台」沒有意義，所以那顆勾選框跟著縣市一起出現／收起。
+   收起來的時候順便取消勾選，不然下次再選縣市會莫名其妙少一堆東西。 */
+function syncExactRegionToggle(){
+  const wrap=$('#fExactRegionWrap');
+  if(!wrap) return;
+  const on=[...activeRegion].some(r=>r!=='__none__');
+  wrap.classList.toggle('hidden', !on);
+  if(!on && $('#fExactRegion').checked) $('#fExactRegion').checked=false;
+}
+const matchRegion=(o,r,exact)=>!r?true
+  :(!o.regions.length?false
+    :(o.regions.includes(r) || (!exact && o.regions.includes('全台'))));
 
 function advText(o){
   if(o.advanceDays==null) return '提前期限未明訂，建議提早一個月準備';
@@ -5453,6 +5487,8 @@ function render(){
   const onlyV=$('#fVerified').checked, hideX=$('#fLive').checked, onlyR=$('#fReported').checked;
   const onlyC=$('#fHasComments').checked, noCompanion=$('#fNoCompanion').checked;
   const onlyTransferable=$('#fTransferable').checked;
+  // 沒有選縣市的時候這顆沒有意義，所以只在選了縣市時才出現（見 syncExactRegionToggle）
+  const exactRegion=$('#fExactRegion').checked && activeRegion.size>0;
   let sortBy=$('#sort').value;
   // 「離我最近」只有附近模式拿到距離資料時才有意義。重新整理後 saveFilters 會把排序
   // 還原成 distance，但座標刻意不存、附近模式是關的，這時退回預設排序，不然列表會亂序。
@@ -5477,7 +5513,7 @@ function render(){
     if(activeRegion.size){
       const ok=[...activeRegion].some(r=>r==='__none__'
         ? !o.regions.length
-        : matchRegion(o,r));
+        : matchRegion(o,r,exactRegion));
       if(!ok) return false;
     }
     if(onlyV&&!o.verified) return false;
@@ -5523,9 +5559,11 @@ function render(){
     return daysOf(b)-daysOf(a)||bn(a,b);
   });
 
+  syncExactRegionToggle();
   const sum=list.filter(o=>o.valueTwd).reduce((a,o)=>a+o.valueTwd,0);
   $('#count').textContent=`${list.length} / ${OFFERS.length} 筆`
-    +(activeRegion.size?`　${[...activeRegion].filter(r=>r!=='__none__').join('、')}含全台`:'')+(sum?`　合計約 ${nt(sum)}`:'')+(NEAR.active&&NEAR.byOffer?`　📍 ${NEAR.km} 公里內`:'');
+    +(activeRegion.size?`　${[...activeRegion].filter(r=>r!=='__none__').join('、')}${
+        $('#fExactRegion')?.checked?'（不含全台）':'含全台'}`:'')+(sum?`　合計約 ${nt(sum)}`:'')+(NEAR.active&&NEAR.byOffer?`　📍 ${NEAR.km} 公里內`:'');
   $('#empty').classList.toggle('hidden',list.length>0);
   // 搜尋沒結果時，使用者常常不知道是「真的沒有」還是「被篩選 chips 擋住了」。
   // 這裡只用關鍵字（忽略地區/類別/會員等篩選條件）再撈一次，如果其實有東西、
@@ -5859,7 +5897,7 @@ function renderReminders(){
   });
 }
 
-['#fVerified','#fLive','#fReported','#fHasComments','#fNoCompanion','#fTransferable','#sort']
+['#fVerified','#fLive','#fReported','#fHasComments','#fNoCompanion','#fTransferable','#fExactRegion','#sort']
   .forEach(s=>$(s).addEventListener('input',render));
 // 搜尋框單獨處理：勾選框一次只觸發一次沒差，但打字是每個按鍵都觸發一次
 // render()（整個卡片格線重建 + 存一次篩選狀態到 localStorage），品牌名稱
@@ -5886,6 +5924,7 @@ $('#btnClearFilters').onclick=()=>{
   $('#q').value='';
   $('#fVerified').checked=false; $('#fLive').checked=true; $('#fReported').checked=false;
   $('#fHasComments').checked=false; $('#fNoCompanion').checked=false; $('#fTransferable').checked=false;
+  $('#fExactRegion').checked=false;
   activeCat.clear(); activeFree.clear(); activeTiming.clear(); activeRegion.clear(); activeMemType.clear();
   $$('#timingChips .chip, #freeChips .chip, #cats .chip, #regionChips .chip, #memChips .chip')
     .forEach(c=>c.setAttribute('aria-pressed',c.dataset.v===''));
@@ -5897,6 +5936,7 @@ $('#btnClearFilters').onclick=()=>{
 $('#btnEmptyClearFilters').onclick=()=>{
   $('#fVerified').checked=false; $('#fLive').checked=true; $('#fReported').checked=false;
   $('#fHasComments').checked=false; $('#fNoCompanion').checked=false; $('#fTransferable').checked=false;
+  $('#fExactRegion').checked=false;
   activeCat.clear(); activeFree.clear(); activeTiming.clear(); activeRegion.clear(); activeMemType.clear();
   $$('#timingChips .chip, #freeChips .chip, #cats .chip, #regionChips .chip, #memChips .chip')
     .forEach(c=>c.setAttribute('aria-pressed',c.dataset.v===''));
@@ -6722,6 +6762,11 @@ async function openReport(id, existing=null){
   $('#repSavedHint').textContent = (!existing&&o?.valueTwd)
     ? `預設帶入估算值 ${nt(o.valueTwd)}，可依實際情況修改` : '不確定就留空';
   $('#repStore').value=existing?.store||''; $('#repNote').value=existing?.note||'';
+  /* LiChiee 回報：「在我的使用回報介面裡編輯使用過的品牌，這次總共花了多少（元）
+     記錄的金額無法顯示」。原因是撈「我的使用回報」那兩支查詢的欄位清單裡
+     **漏掉 spent_twd**，所以 existing.spent_twd 永遠是 undefined，欄位開起來是空的。
+     更糟的是空的送出去會變成 null——等於每編輯一次回報，就把原本填的金額清掉一次。
+     欄位補上去就好。 */
   $('#repSpent').value = existing?.spent_twd ?? '';
   setRepScore(MY_SCORES.get(String(id)) || 0);   // 評過的要帶回原本給的星等，不然看起來像沒評過
   syncRepRateField();
@@ -6828,7 +6873,7 @@ function sameBrandOfferIds(id){
 async function askEditPreviousReport(id){
   const ids=sameBrandOfferIds(id);
   const {data,error}=await sb.from('usage_reports')
-    .select('id,used_on,result,saved_twd,store,note,created_at,offer_id')
+    .select('id,used_on,result,saved_twd,spent_twd,store,note,created_at,offer_id')
     .eq('user_id',me.id).in('offer_id',ids).gte('used_on',`${new Date().getFullYear()}-01-01`)
     .order('used_on',{ascending:false}).limit(1);
   const prev=(!error&&data||[])[0];
@@ -7436,7 +7481,7 @@ async function loadMyStuff(){
 
   const R={success:['成功','ok'],partial:['部分','partial'],failed:['失敗','fail']};
   const {data:reps}=await sb.from('usage_reports')
-    .select('id,used_on,result,saved_twd,store,note,created_at,offer_id,offers(id,brand,offer,timing,value_twd)')
+    .select('id,used_on,result,saved_twd,spent_twd,store,note,created_at,offer_id,offers(id,brand,offer,timing,value_twd)')
     .eq('user_id',me.id).order('used_on',{ascending:false});
   MY_REPORTS=reps||[];
   // 我已經評過哪幾筆——拿來算「用過但還沒給星等」的那幾家（見 unratedUsed()）

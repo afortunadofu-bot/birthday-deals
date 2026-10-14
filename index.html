@@ -1463,6 +1463,12 @@
         <label class="toggle"><input type="checkbox" id="fHasComments"> 有留言</label>
         <label class="toggle"><input type="checkbox" id="fNoCompanion"> 一人也能用（不含需同行）</label>
         <label class="toggle"><input type="checkbox" id="fTransferable"> 不用本人出示證件</label>
+        <!-- 金信宇回報：「我點擊篩選『花蓮縣』時，底下篩選出的建議店家有很多都不是
+             花蓮店家」。選了縣市之後，標成「全台」的連鎖店本來就會一起列出來
+             （標題那行有寫「含全台」），但「全台」常常是個寬鬆的標記——很多連鎖
+             其實沒有開到花蓮、台東。這顆勾起來就只看「真的有標到這個縣市」的，
+             不含全台。 -->
+        <label class="toggle hidden" id="fExactRegionWrap"><input type="checkbox" id="fExactRegion"> 只看有標這個縣市的（不含全台）</label>
         <button class="btn sm hidden" id="btnClearFilters" type="button">清除篩選</button>
       </div>
     </div>
@@ -2854,6 +2860,7 @@ function saveFilters(){
     fVerified:$('#fVerified').checked, fLive:$('#fLive').checked,
     fReported:$('#fReported').checked, fHasComments:$('#fHasComments').checked,
     fNoCompanion:$('#fNoCompanion').checked, fTransferable:$('#fTransferable').checked,
+    fExactRegion:$('#fExactRegion').checked,
     sort:$('#sort').value
   })); }catch{}
 }
@@ -2866,6 +2873,7 @@ function loadFilters(){
   (s.timing||[]).forEach(v=>activeTiming.add(v));
   $('#fNoCompanion').checked=!!s.fNoCompanion;
   $('#fTransferable').checked=!!s.fTransferable;
+  $('#fExactRegion').checked=!!s.fExactRegion;
   $('#fVerified').checked=!!s.fVerified; $('#fLive').checked=s.fLive!==false;
   $('#fReported').checked=!!s.fReported; $('#fHasComments').checked=!!s.fHasComments;
   if(s.sort) $('#sort').value=s.sort;
@@ -4096,29 +4104,43 @@ function renderWishlistBody(){
     renderMyWishlist();
   });
 }
-// 自訂順序：上／下移動按鈕交換相鄰兩筆（在「未使用」這個子群組內）的
-// sort_order，直接寫回 wishlist 表——第一次使用手動排序、還沒有任何
-// sort_order 值時，先用目前顯示順序（索引）補上初始值，才有東西可以交換。
+/* 自訂順序：上／下移動按鈕把相鄰兩筆（在「未使用」這個子群組內）對調。
+
+   陳回報：「待辦清單的自訂排序會卡住無法上下調整（部分時候上下按鈕無反應）」。
+
+   原因是舊的做法會產生**重複的 sort_order**：沒有值的那幾筆是用「在 WL_ROWS
+   裡的索引」補的，而 WL_ROWS 不是照 sort_order 排的，補出來的號碼很容易撞到
+   已經存在的號碼。兩筆同號的時候，「交換它們的 sort_order」等於什麼都沒做
+   ——畫面不動、資料庫寫回去也是一樣的值。按鈕看起來就是沒反應。
+   「部分時候」正是因為要剛好撞號才會發生。
+
+   改法：先照「畫面上真正的順序」排好（跟 renderWishlistBody 用同一個比較式），
+   對調位置之後**整串重新發號 0..n-1**，再把有變動的那幾筆寫回去。
+   重新發號保證每一筆都不一樣，之後每次移動就只會動到兩筆。 */
 async function moveWishlistItem(offerId, dir){
   if(!LIVE||!me) return;
   const isDone=w=>MY_USED_OFFER_IDS.has(String(w.offer_id))||w.done;
   const undone=WL_ROWS.filter(w=>!isDone(w));
-  undone.forEach((w,i)=>{ if(w.sort_order==null) w.sort_order=i; });
-  undone.sort((a,b)=>a.sort_order-b.sort_order);
+  // 跟 renderWishlistBody 的 manual 排序完全一致：sort_order 小的在前，
+  // 沒有值的排後面，同號的用加入時間新的在前
+  undone.sort((a,b)=>(a.sort_order??999999)-(b.sort_order??999999)
+    || (new Date(b.created_at)-new Date(a.created_at)));
   const idx=undone.findIndex(w=>String(w.offer_id)===String(offerId));
   const swapIdx=idx+dir;
   if(idx<0||swapIdx<0||swapIdx>=undone.length) return;
-  const a=undone[idx], b=undone[swapIdx];
-  const tmp=a.sort_order; a.sort_order=b.sort_order; b.sort_order=tmp;
-  renderWishlistBody(); // 先照交換後的順序重畫，操作起來才即時
-  const [{error:e1},{error:e2}]=await Promise.all([
-    sb.from('wishlist').update({sort_order:a.sort_order}).eq('user_id',me.id).eq('offer_id',a.offer_id),
-    sb.from('wishlist').update({sort_order:b.sort_order}).eq('user_id',me.id).eq('offer_id',b.offer_id)
-  ]);
-  if(e1||e2){
-    const hint=/relation|does not exist|column/i.test((e1||e2).message)?'（Supabase 可能還沒跑 schema_v47_wishlist_sort_order.sql）':'';
-    alert('排序更新失敗，請稍後再試：'+(e1||e2).message+hint);
-    renderMyWishlist(); // 重新拉一次乾淨的資料，避免畫面停在沒存到的交換結果
+  [undone[idx], undone[swapIdx]]=[undone[swapIdx], undone[idx]];
+  // 整串重新發號，順便把「沒有值」跟「撞號」一次解決掉
+  const changed=[];
+  undone.forEach((w,i)=>{ if(w.sort_order!==i){ w.sort_order=i; changed.push(w); } });
+  renderWishlistBody(); // 先照新的順序重畫，操作起來才即時
+  if(!changed.length) return;
+  const results=await Promise.all(changed.map(w=>
+    sb.from('wishlist').update({sort_order:w.sort_order}).eq('user_id',me.id).eq('offer_id',w.offer_id)));
+  const bad=results.find(r=>r.error);
+  if(bad){
+    const hint=/relation|does not exist|column/i.test(bad.error.message)?'（Supabase 可能還沒跑 schema_v47_wishlist_sort_order.sql）':'';
+    alert('排序更新失敗，請稍後再試：'+bad.error.message+hint);
+    renderMyWishlist(); // 重新拉一次乾淨的資料，避免畫面停在沒存到的結果
   }
 }
 // 同上：選字中不要重畫（不然打「麥當勞」打到一半就說找不到）
@@ -4386,7 +4408,7 @@ const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
 /* 更新紀錄的內容在 updates.json，build.py 注入這裡，同一份資料也產生整頁的
    updates.html。「我的」頁面只用到日期跟標題（最新幾筆＋NEW 標記），
    細項（items）留著是給 updates.html 用的。 */
-const SITE_UPDATES = [{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
+const SITE_UPDATES = [{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
 const SITE_UPDATES_SHOW=3;
 
 function updatesSeenDate(){
@@ -5138,7 +5160,19 @@ const daysOf=o=>o.advanceDays==null?999:o.advanceDays;
 const trustOf=o=>o.bestSource?o.bestSource.tier:9;
 const dUntil=i=>i?Math.round((new Date(i+'T00:00:00')-TODAY)/864e5):null;
 const dSince=i=>i?Math.round((TODAY-new Date(i+'T00:00:00'))/864e5):null;
-const matchRegion=(o,r)=>!r?true:(!o.regions.length?false:o.regions.includes('全台')||o.regions.includes(r));
+/* exact=true 時不把「全台」算進來——見 #fExactRegion 那顆勾選框的註解 */
+/* 沒有選任何縣市的時候「不含全台」沒有意義，所以那顆勾選框跟著縣市一起出現／收起。
+   收起來的時候順便取消勾選，不然下次再選縣市會莫名其妙少一堆東西。 */
+function syncExactRegionToggle(){
+  const wrap=$('#fExactRegionWrap');
+  if(!wrap) return;
+  const on=[...activeRegion].some(r=>r!=='__none__');
+  wrap.classList.toggle('hidden', !on);
+  if(!on && $('#fExactRegion').checked) $('#fExactRegion').checked=false;
+}
+const matchRegion=(o,r,exact)=>!r?true
+  :(!o.regions.length?false
+    :(o.regions.includes(r) || (!exact && o.regions.includes('全台'))));
 
 function advText(o){
   if(o.advanceDays==null) return '提前期限未明訂，建議提早一個月準備';
@@ -5453,6 +5487,8 @@ function render(){
   const onlyV=$('#fVerified').checked, hideX=$('#fLive').checked, onlyR=$('#fReported').checked;
   const onlyC=$('#fHasComments').checked, noCompanion=$('#fNoCompanion').checked;
   const onlyTransferable=$('#fTransferable').checked;
+  // 沒有選縣市的時候這顆沒有意義，所以只在選了縣市時才出現（見 syncExactRegionToggle）
+  const exactRegion=$('#fExactRegion').checked && activeRegion.size>0;
   let sortBy=$('#sort').value;
   // 「離我最近」只有附近模式拿到距離資料時才有意義。重新整理後 saveFilters 會把排序
   // 還原成 distance，但座標刻意不存、附近模式是關的，這時退回預設排序，不然列表會亂序。
@@ -5477,7 +5513,7 @@ function render(){
     if(activeRegion.size){
       const ok=[...activeRegion].some(r=>r==='__none__'
         ? !o.regions.length
-        : matchRegion(o,r));
+        : matchRegion(o,r,exactRegion));
       if(!ok) return false;
     }
     if(onlyV&&!o.verified) return false;
@@ -5523,9 +5559,11 @@ function render(){
     return daysOf(b)-daysOf(a)||bn(a,b);
   });
 
+  syncExactRegionToggle();
   const sum=list.filter(o=>o.valueTwd).reduce((a,o)=>a+o.valueTwd,0);
   $('#count').textContent=`${list.length} / ${OFFERS.length} 筆`
-    +(activeRegion.size?`　${[...activeRegion].filter(r=>r!=='__none__').join('、')}含全台`:'')+(sum?`　合計約 ${nt(sum)}`:'')+(NEAR.active&&NEAR.byOffer?`　📍 ${NEAR.km} 公里內`:'');
+    +(activeRegion.size?`　${[...activeRegion].filter(r=>r!=='__none__').join('、')}${
+        $('#fExactRegion')?.checked?'（不含全台）':'含全台'}`:'')+(sum?`　合計約 ${nt(sum)}`:'')+(NEAR.active&&NEAR.byOffer?`　📍 ${NEAR.km} 公里內`:'');
   $('#empty').classList.toggle('hidden',list.length>0);
   // 搜尋沒結果時，使用者常常不知道是「真的沒有」還是「被篩選 chips 擋住了」。
   // 這裡只用關鍵字（忽略地區/類別/會員等篩選條件）再撈一次，如果其實有東西、
@@ -5859,7 +5897,7 @@ function renderReminders(){
   });
 }
 
-['#fVerified','#fLive','#fReported','#fHasComments','#fNoCompanion','#fTransferable','#sort']
+['#fVerified','#fLive','#fReported','#fHasComments','#fNoCompanion','#fTransferable','#fExactRegion','#sort']
   .forEach(s=>$(s).addEventListener('input',render));
 // 搜尋框單獨處理：勾選框一次只觸發一次沒差，但打字是每個按鍵都觸發一次
 // render()（整個卡片格線重建 + 存一次篩選狀態到 localStorage），品牌名稱
@@ -5886,6 +5924,7 @@ $('#btnClearFilters').onclick=()=>{
   $('#q').value='';
   $('#fVerified').checked=false; $('#fLive').checked=true; $('#fReported').checked=false;
   $('#fHasComments').checked=false; $('#fNoCompanion').checked=false; $('#fTransferable').checked=false;
+  $('#fExactRegion').checked=false;
   activeCat.clear(); activeFree.clear(); activeTiming.clear(); activeRegion.clear(); activeMemType.clear();
   $$('#timingChips .chip, #freeChips .chip, #cats .chip, #regionChips .chip, #memChips .chip')
     .forEach(c=>c.setAttribute('aria-pressed',c.dataset.v===''));
@@ -5897,6 +5936,7 @@ $('#btnClearFilters').onclick=()=>{
 $('#btnEmptyClearFilters').onclick=()=>{
   $('#fVerified').checked=false; $('#fLive').checked=true; $('#fReported').checked=false;
   $('#fHasComments').checked=false; $('#fNoCompanion').checked=false; $('#fTransferable').checked=false;
+  $('#fExactRegion').checked=false;
   activeCat.clear(); activeFree.clear(); activeTiming.clear(); activeRegion.clear(); activeMemType.clear();
   $$('#timingChips .chip, #freeChips .chip, #cats .chip, #regionChips .chip, #memChips .chip')
     .forEach(c=>c.setAttribute('aria-pressed',c.dataset.v===''));
@@ -6722,6 +6762,11 @@ async function openReport(id, existing=null){
   $('#repSavedHint').textContent = (!existing&&o?.valueTwd)
     ? `預設帶入估算值 ${nt(o.valueTwd)}，可依實際情況修改` : '不確定就留空';
   $('#repStore').value=existing?.store||''; $('#repNote').value=existing?.note||'';
+  /* LiChiee 回報：「在我的使用回報介面裡編輯使用過的品牌，這次總共花了多少（元）
+     記錄的金額無法顯示」。原因是撈「我的使用回報」那兩支查詢的欄位清單裡
+     **漏掉 spent_twd**，所以 existing.spent_twd 永遠是 undefined，欄位開起來是空的。
+     更糟的是空的送出去會變成 null——等於每編輯一次回報，就把原本填的金額清掉一次。
+     欄位補上去就好。 */
   $('#repSpent').value = existing?.spent_twd ?? '';
   setRepScore(MY_SCORES.get(String(id)) || 0);   // 評過的要帶回原本給的星等，不然看起來像沒評過
   syncRepRateField();
@@ -6828,7 +6873,7 @@ function sameBrandOfferIds(id){
 async function askEditPreviousReport(id){
   const ids=sameBrandOfferIds(id);
   const {data,error}=await sb.from('usage_reports')
-    .select('id,used_on,result,saved_twd,store,note,created_at,offer_id')
+    .select('id,used_on,result,saved_twd,spent_twd,store,note,created_at,offer_id')
     .eq('user_id',me.id).in('offer_id',ids).gte('used_on',`${new Date().getFullYear()}-01-01`)
     .order('used_on',{ascending:false}).limit(1);
   const prev=(!error&&data||[])[0];
@@ -7436,7 +7481,7 @@ async function loadMyStuff(){
 
   const R={success:['成功','ok'],partial:['部分','partial'],failed:['失敗','fail']};
   const {data:reps}=await sb.from('usage_reports')
-    .select('id,used_on,result,saved_twd,store,note,created_at,offer_id,offers(id,brand,offer,timing,value_twd)')
+    .select('id,used_on,result,saved_twd,spent_twd,store,note,created_at,offer_id,offers(id,brand,offer,timing,value_twd)')
     .eq('user_id',me.id).order('used_on',{ascending:false});
   MY_REPORTS=reps||[];
   // 我已經評過哪幾筆——拿來算「用過但還沒給星等」的那幾家（見 unratedUsed()）
