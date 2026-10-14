@@ -146,8 +146,10 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   await tick(win, 2);
   t.eq('非管理員不會去查 site_events', q.length, 0);
 
+  // 原本寫成「v107 以後都不准有 SQL 檔」，但那是在賭「之後沒有別的改動要動資料庫」——
+  // v110（照分店補適用縣市）一加進來就假失敗了。要驗的其實只有「這一版自己沒帶 SQL」。
   t.ok('不需要新的 SQL（site_events 本來就只有管理員讀得到）',
-    !fs.readdirSync(path.join(__dirname, '..')).some((f) => /^schema_v(10[7-9]|1[1-9]\d)_/.test(f)));
+    !fs.readdirSync(path.join(__dirname, '..')).some((f) => /^schema_v107_/.test(f)));
 
   process.exit(t.done() ? 0 : 1);
 })().catch((e) => { console.error(e); process.exit(1); });

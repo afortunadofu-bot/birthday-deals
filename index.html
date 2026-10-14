@@ -1658,9 +1658,19 @@
       <!-- celine：「洞察趨勢本月，可以選月份」。原本寫死只看當月跟上個月比，
            月初的時候這張卡幾乎是空的，也沒辦法回頭看上個月到底收在哪裡。
            月份清單直接從已經抓回來的那半年資料長出來，不用再多打一次 API。 -->
+      <!-- celine：「洞察分析月份可以切成年分」。月份看得到「這個月是怎麼長出來的」，
+           年份回答另一個問題——今年到目前為止總共多少、每個月之間怎麼起伏。
+           手上那份資料只有近 180 天（走勢圖用的），年份要看完整的一年，所以第一次
+           切到「年份」才會去多抓一次（400 天，site_usage_daily 的上限），抓回來就
+           留在記憶體裡，之後切來切去都不再打 API。 -->
       <div class="subpane" id="biMonth" role="tabpanel">
-        <div class="row" style="margin:0 0 10px">
-          <label class="lbl">月份<select id="momMonth"></select></label>
+        <div class="row" style="margin:0 0 10px;flex-wrap:wrap">
+          <label class="lbl">看<select id="momUnit">
+            <option value="month">月份</option>
+            <option value="year">年份</option>
+          </select></label>
+          <label class="lbl" id="momMonthWrap">月份<select id="momMonth"></select></label>
+          <label class="lbl hidden" id="momYearWrap">年份<select id="momYear"></select></label>
         </div>
         <div id="boardMoM"></div>
         <!-- celine：「洞察分析月份的那種也都要走勢圖」。兩張數字卡只講得出
@@ -1740,7 +1750,9 @@
          評的人越多，自己的分數才越站得住。資料直接從 OFFERS 算，不用多打 API。 -->
     <div class="panel" id="pnlTopRated" data-block>
       <h2>用過的人最推薦</h2>
-      <p class="sub">用過之後給幾顆星。評分高、而且評的人多的排前面；至少要兩個人評過才會上榜。</p>
+      <p class="sub">用過之後給幾顆星。評分高、而且評的人多的排前面；至少要兩個人評過才會上榜。
+        右邊兩欄是「幾個人給過星等」跟「總共被回報用過幾次」——分數高但只有兩三個人評過的，
+        跟被用過幾十次的，心裡要有不一樣的底。</p>
       <div id="ratedBody"></div>
       <!-- celine：「這塊排行榜也要有」鼓勵評分的入口。只有「用過但還沒評」的人看得到。 -->
       <div class="rated-cta hidden" id="ratedCta"></div>
@@ -4408,7 +4420,7 @@ const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
 /* 更新紀錄的內容在 updates.json，build.py 注入這裡，同一份資料也產生整頁的
    updates.html。「我的」頁面只用到日期跟標題（最新幾筆＋NEW 標記），
    細項（items）留著是給 updates.html 用的。 */
-const SITE_UPDATES = [{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
+const SITE_UPDATES = [{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
 const SITE_UPDATES_SHOW=3;
 
 function updatesSeenDate(){
@@ -8923,8 +8935,13 @@ function renderTopRated(){
       <td class="rk ${i<3?'top':''}">${i+1}</td>
       <td>${esc(o.brand)}<span style="color:var(--ink-3);font-size:.78rem">　${esc(o.timing||'')}</span></td>
       <td class="lb-primary">${starBar(o.ratingAvg)} ${o.ratingAvg}</td>
-      <td class="amt">${o.ratingCount} 人</td></tr>`);
-  renderCollapsibleTable(box, '<th class="rk">#</th><th>品牌</th><th>評分</th><th class="amt">評分人數</th>',
+      <td class="amt">${o.ratingCount} 人<br>
+        <span style="font-weight:600;color:var(--ink-3);font-size:.78rem">${o.reportCount} 次</span></td></tr>`);
+  /* 兩個數字擠在同一欄，不是各佔一欄：手機上 375px 排得下五欄，但品牌那欄會被壓到
+     61px，「31冰淇淋 Baskin-Robbins」就斷成三行（嵐之前抱怨過排行榜在手機上擠成
+     一團）。併成兩行之後品牌欄拿回 100px 以上。 */
+  renderCollapsibleTable(box,
+    '<th class="rk">#</th><th>品牌</th><th>評分</th><th class="amt">評分人數<br>用過次數</th>',
     entries, 5, 'rated-more-rows',
     '<div style="color:var(--ink-3);font-size:.86rem">還沒有兩個人以上評過的優惠。用完回報之後，就可以順手給幾顆星。</div>');
   wireShowMore(box);
@@ -9435,6 +9452,17 @@ function renderMonthlyBreakdown(rows){
 }
 $('#trendMetric').onchange=()=>{ renderTrendChart(); renderMonthlyBreakdown(TREND_ROWS); renderMomSelected(); };
 $('#momMonth').onchange=renderMomSelected;
+$('#momYear').onchange=renderMomSelected;
+$('#momUnit').onchange=async()=>{
+  syncMomUnit();
+  if(momUnit()==='year' && !YEAR_ROWS && LIVE){
+    $('#boardMoM').innerHTML='<div class="note">載入整年的資料…</div>';
+    $('#boardMonthChart').innerHTML='';
+    await ensureYearRows();
+    syncMomUnit();              // 抓回來才知道有哪幾年可以選
+  }
+  renderMomSelected();
+};
 $('#trendDays').onchange=()=>renderTrendChart();
 
 // 本月 vs 上月比較：兩次查 leaderboard_monthly（本來就對所有人開放），
@@ -9442,10 +9470,12 @@ $('#trendDays').onchange=()=>renderTrendChart();
 // 嵐：「本月」分頁寫的這個月省下金額，跟「走勢」分頁的近 6 個月對不起來。
 // 原因是兩邊資料來源不同：本月用 leaderboard_monthly（只算會員、只算還在架上的優惠、排除停權），
 // 近 6 個月直接用 usage_reports（全部）。改成兩邊都用同一份 usage_reports 算。
-function monthTotals(rows, ym){
+/* key 是 'YYYY-MM'（月）或 'YYYY'（年）——比日期字串的前幾個字就好，
+   月跟年不用寫成兩套加總。 */
+function periodTotals(rows, key){
   let saved=0, uses=0;
   (rows||[]).forEach(r=>{
-    if(String(r.used_on||'').slice(0,7)!==ym) return;
+    if(String(r.used_on||'').slice(0, key.length)!==key) return;
     saved += r.saved||0; uses += r.success_uses||0;
   });
   return {saved, uses};
@@ -9453,6 +9483,51 @@ function monthTotals(rows, ym){
 /* 月份下拉：選項就是手上這半年資料裡真的出現過的月份（再補上當月——
    月初還沒有人回報的時候也要選得到自己）。重畫時盡量留住使用者選的那個月。 */
 let MOM_ROWS=[], MOM_SINCE='';
+/* 年份用的那一份：走勢圖那包只抓近 180 天，拿它加總「今年」會漏掉視窗之前的
+   月份（而且使用者可以回填過去的日期，不是只有最近才有資料）。切到「年份」時
+   才多抓一次 400 天（site_usage_daily 的上限），之後整個 session 都用這一份。
+   刻意不放進邊緣快取那包共用——那會讓每個只是進來看排行榜的人都多扛 400 列，
+   而這一頁大部分人不會點開。 */
+const YEAR_DAYS=400;
+let YEAR_ROWS=null, YEAR_SINCE='', YEAR_INFLIGHT=null;
+function momUnit(){ return $('#momUnit')?.value==='year' ? 'year' : 'month'; }
+function momRows(){ return momUnit()==='year' ? (YEAR_ROWS||MOM_ROWS) : MOM_ROWS; }
+function momSince(){ return momUnit()==='year' ? (YEAR_ROWS?YEAR_SINCE:MOM_SINCE) : MOM_SINCE; }
+async function ensureYearRows(){
+  if(YEAR_ROWS) return YEAR_ROWS;
+  if(!LIVE) return null;
+  if(YEAR_INFLIGHT) return YEAR_INFLIGHT;       // 連點兩次不要打兩次
+  const since=ISO(new Date(Date.now()-(YEAR_DAYS-1)*864e5));
+  YEAR_INFLIGHT=fetchUsageDaily(YEAR_DAYS, since).then(rows=>{
+    YEAR_ROWS=rows||[]; YEAR_SINCE=since; YEAR_INFLIGHT=null;
+    return YEAR_ROWS;
+  }).catch(()=>{ YEAR_INFLIGHT=null; return null; });
+  return YEAR_INFLIGHT;
+}
+/* 年份清單跟月份同一個道理：資料視窗切一半的年份不要列出來，不然「去年」會
+   只算到視窗開始那天之後，看起來像那一年突然沒人用（今年例外——它本來就
+   還沒過完，大家知道）。 */
+function momYears(rows, since){
+  const nowY=String(new Date().getFullYear());
+  const set=new Set((rows||[]).map(r=>String(r.used_on||'').slice(0,4))
+    .filter(x=>/^\d{4}$/.test(x)));
+  set.add(nowY);
+  return [...set].filter(y => y===nowY || !since || (y+'-01-01')>=since)
+    .sort().reverse();
+}
+function fillYearSelect(){
+  const sel=$('#momYear');
+  if(!sel) return;
+  const years=momYears(momRows(), momSince()), keep=sel.value, nowY=String(new Date().getFullYear());
+  sel.innerHTML=years.map(y=>`<option value="${y}">${y} 年${y===nowY?'（今年）':''}</option>`).join('');
+  sel.value=years.includes(keep)?keep:years[0];
+}
+function syncMomUnit(){
+  const year=momUnit()==='year';
+  $('#momMonthWrap')?.classList.toggle('hidden', year);
+  $('#momYearWrap')?.classList.toggle('hidden', !year);
+  if(year) fillYearSelect();
+}
 function momMonths(rows){
   const nowYm=ISO(new Date()).slice(0,7);
   const set=new Set((rows||[]).map(r=>String(r.used_on||'').slice(0,7))
@@ -9474,14 +9549,56 @@ function setMomRows(rows, sinceIso){
       `<option value="${ym}">${ym.replace('-',' 年 ')} 月${ym===nowYm?'（本月）':''}</option>`).join('');
     sel.value=months.includes(keep)?keep:months[0];
   }
+  syncMomUnit();
   renderMomSelected();
 }
 function renderMomSelected(){
-  const ym=$('#momMonth')?.value || ISO(new Date()).slice(0,7);
-  const prev=prevYmStr(ym);
-  // 上個月落在資料視窗外時不能假裝它是 0——那會變成一個憑空的「▲ 100%」
-  renderMoMCompare(MOM_ROWS, ym, prev, !MOM_SINCE || (prev+'-01')>=MOM_SINCE);
-  renderMonthDailyChart(ym);
+  const year=momUnit()==='year';
+  const rows=momRows(), since=momSince();
+  const key = year ? ($('#momYear')?.value || String(new Date().getFullYear()))
+                   : ($('#momMonth')?.value || ISO(new Date()).slice(0,7));
+  const prev = year ? String(Number(key)-1) : prevYmStr(key);
+  // 上一期落在資料視窗外時不能假裝它是 0——那會變成一個憑空的「▲ 100%」
+  const prevKnown = !since || (year ? (prev+'-01-01') : (prev+'-01')) >= since;
+  renderMoMCompare(rows, key, prev, prevKnown, year);
+  if(year) renderYearMonthlyChart(key, rows);
+  else renderMonthDailyChart(key);
+}
+/* 選到的那一年，一個月一個點。跟月份那張用同一支 svgLineChart，只是視窗換成
+   「那一年的 1 月到 12 月（今年就畫到這個月）」。 */
+function renderYearMonthlyChart(y, rows){
+  const box=$('#boardMonthChart');
+  if(!box) return;
+  const metric=$('#trendMetric')?.value||'amount';
+  const nowYm=ISO(new Date()).slice(0,7);
+  const months=[];
+  for(let m=1;m<=12;m++){
+    const ym=`${y}-${String(m).padStart(2,'0')}`;
+    if(ym>nowYm) break;                           // 今年不要畫到還沒發生的月份
+    months.push(ym);
+  }
+  if(!months.length){ box.innerHTML=''; return; }
+  const bySaved=new Map(), byCount=new Map();
+  let total=0;
+  (rows||[]).forEach(r=>{
+    const ym=String(r.used_on||'').slice(0,7);
+    if(ym.slice(0,4)!==String(y)) return;
+    total += r.success_uses||0;
+    bySaved.set(ym, (bySaved.get(ym)||0) + (r.saved||0));
+    byCount.set(ym, (byCount.get(ym)||0) + (r.success_uses||0));
+  });
+  if(!total){
+    box.innerHTML=`<div style="color:var(--ink-3);font-size:.86rem">${esc(String(y))} 年還沒有成功回報。</div>`;
+    return;
+  }
+  const by = metric==='count' ? byCount : bySaved;
+  const chartRows=months.map(ym=>({date:`${Number(ym.slice(5))}月`, v:by.get(ym)||0}));
+  const label = metric==='count' ? '當月成功使用次數' : '當月省下金額';
+  const titleMetric = metric==='count' ? '使用次數' : '省錢';
+  box.innerHTML = svgLineChart(chartRows,
+    [{key:'v', label, color:'var(--accent)'}],
+    {title:`${esc(String(y))} 年每個月的${titleMetric}（共 ${total} 次成功使用）`}, BOARD_CHARTS);
+  wireChartTooltips(box, BOARD_CHARTS);
 }
 /* 選到的那個月，一天一個點。跟「走勢」那張用同一支 svgLineChart，
    只是視窗換成「那個月的 1 號到月底（當月就畫到今天）」。 */
@@ -9522,17 +9639,23 @@ function renderMonthDailyChart(ym){
     {title:`${esc(ym)} 每天的${titleMetric}（共 ${total} 次成功使用）`}, BOARD_CHARTS);
   wireChartTooltips(box, BOARD_CHARTS);
 }
-function renderMoMCompare(trendRows, curYm, prevYm, prevKnown=true){
+function renderMoMCompare(trendRows, curYm, prevYm, prevKnown=true, isYear=false){
   const box=$('#boardMoM');
   if(!box) return;
-  const cur=monthTotals(trendRows, curYm), prev=monthTotals(trendRows, prevYm);
+  // 月份跟年份是同一張卡，只有「上個月／去年」這幾個字不一樣
+  const w = isYear
+    ? {title:`${esc(String(curYm))} 年`, prev:'去年', both:'今年跟去年',
+       same:'同一份回報資料，只是按年加總', edge:'上一年不在資料範圍內，所以沒有比較'}
+    : {title:esc(curYm), prev:'上個月', both:'這個月跟上個月',
+       same:'跟「走勢」分頁的每月金額是同一份資料', edge:'這是手上最早的一個月，上個月不在資料範圍內，所以沒有比較'};
+  const cur=periodTotals(trendRows, curYm), prev=periodTotals(trendRows, prevYm);
   const curSaved=cur.saved, prevSaved=prev.saved;
   const curUses=cur.uses, prevUses=prev.uses;
-  const head=prevKnown ? `${esc(curYm)} 跟上個月比` : `${esc(curYm)}`;
-  // 選到一個兩邊都沒有資料的月份時要講出來，不是把整張卡變不見
+  const head=prevKnown ? `${w.title} 跟${w.prev}比` : w.title;
+  // 選到一個兩邊都沒有資料的期間時要講出來，不是把整張卡變不見
   if(!curSaved && !prevSaved && prevKnown){
     box.innerHTML=`<div class="dash-chart viz"><b>${head}</b>
-      <div class="viz-sub">這個月跟上個月都還沒有成功使用的回報。</div></div>`;
+      <div class="viz-sub">${w.both}都還沒有成功使用的回報。</div></div>`;
     return;
   }
   // 形式：兩個數字＋變化 → 數字卡加漲跌標籤（不畫成兩根柱子）
@@ -9546,12 +9669,11 @@ function renderMoMCompare(trendRows, curYm, prevYm, prevKnown=true){
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <span style="font-size:1.8rem;font-weight:800;letter-spacing:-.02em;line-height:1.1">${v}</span>${d}</div>
       <div style="font-size:.78rem;color:var(--ink-3);margin-top:3px">${esc(k)}${
-        prevTxt==null?'':`　<span>上個月 ${prevTxt}</span>`}</div>
+        prevTxt==null?'':`　<span>${w.prev} ${prevTxt}</span>`}</div>
     </div>`;
   box.innerHTML=`<div class="dash-chart viz">
     <b>${head}</b>
-    <div class="viz-sub">${prevKnown ? '跟「走勢」分頁的每月金額是同一份資料'
-      : '這是手上最早的一個月，上個月不在資料範圍內，所以沒有比較'}</div>
+    <div class="viz-sub">${prevKnown ? w.same : w.edge}</div>
     <div class="viz-body" style="display:flex;gap:18px 28px;flex-wrap:wrap">
       ${tile(nt(curSaved), '累積省下', prevKnown?delta(curSaved,prevSaved):'', prevKnown?nt(prevSaved):null)}
       ${tile(`${curUses} 次`, '成功使用', prevKnown?delta(curUses,prevUses):'', prevKnown?`${prevUses} 次`:null)}
