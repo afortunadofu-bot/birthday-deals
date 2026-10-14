@@ -1538,6 +1538,14 @@
             <option value="1">1 公里</option><option value="3">3 公里</option><option value="5">5 公里</option>
             <option value="10">10 公里</option><option value="30">30 公里</option>
           </select></label>
+        <!-- celine：「我希望地圖那裡可以一鍵查看已收藏的附近店家」。
+             收藏的通常就是真的打算去的那幾家，但「附近」一開是全部幾百筆，
+             要自己在裡面找。這顆就是把清單跟地圖同時收成只剩收藏的。 -->
+        <button class="btn sm" id="btnNearWish" type="button" aria-pressed="false"
+          title="只看待辦清單裡的店">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+            stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px"
+            aria-hidden="true"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/></svg>只看收藏</button>
         <button class="btn sm" id="btnNearLocate" type="button">重新定位</button>
         <button class="btn sm" id="btnNearPlace" type="button">換地點</button>
         <button class="btn sm" id="btnNearMap" type="button">地圖</button>
@@ -3564,6 +3572,7 @@ async function loadWishlist(){
   }
   const {data}=await sb.from('wishlist').select('offer_id').eq('user_id',me.id);
   WISH=new Set((data||[]).map(r=>String(r.offer_id)));
+  if(NEAR_MAP) paintNearPins();     // 登入後收藏才讀得到，地圖要重畫一次
   render();
 }
 /* ---- 我自己回報過「用過了」的優惠：卡片列表要看得到，不然使用者送出回報後
@@ -3731,6 +3740,7 @@ async function toggleWish(id, btn){
   const has=WISH.has(String(id));
   has?WISH.delete(String(id)):WISH.add(String(id));
   syncWishButtons(id, !has);
+  if(NEAR_MAP) paintNearPins();     // 地圖上那一點的顏色／存不存在要跟著改
   if(LIVE&&me){
     const {error}= has
       ? await sb.from('wishlist').delete().eq('user_id',me.id).eq('offer_id',Number(id))
@@ -4445,7 +4455,7 @@ const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
 /* 更新紀錄的內容在 updates.json，build.py 注入這裡，同一份資料也產生整頁的
    updates.html。「我的」頁面只用到日期跟標題（最新幾筆＋NEW 標記），
    細項（items）留著是給 updates.html 用的。 */
-const SITE_UPDATES = [{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
+const SITE_UPDATES = [{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
 const SITE_UPDATES_SHOW=3;
 
 function updatesSeenDate(){
@@ -5332,10 +5342,11 @@ function mapTileConfig(){
   return MAP_TILE_DEFAULT;
 }
 const NEAR={active:false, lat:null, lng:null, label:'', km:3, byOffer:null, loading:false,
-  reqSeq:0, sortTouched:false};
+  reqSeq:0, sortTouched:false, wishOnly:false};
 try{ const k=Number(localStorage.getItem('sxr_near_km')); if([1,3,5,10,30].includes(k)) NEAR.km=k; }catch{}
 let NEAR_MAP=null, NEAR_MAP_CENTER=null, NEAR_MAP_CIRCLE=null, NEAR_MAP_PINS=null, NEAR_PIN_TIMER=null;
 let NEAR_PIN_KEY='';   // 上一次查分店的畫面範圍，範圍沒變就不重查
+let NEAR_PIN_ROWS=[];  // 上一次查回來的分店，切「只看收藏」時直接重畫，不用再查一次
 
 function fmtDistance(m){
   if(m==null) return '';
@@ -5350,12 +5361,23 @@ function renderNearBar(){
   btn.setAttribute('aria-pressed', String(NEAR.active));
   btn.classList.toggle('active', NEAR.active);
   $('#nearBar').classList.toggle('hidden', !NEAR.active);
+  // 「只看收藏」的按鈕狀態在關掉附近模式時也要跟著收掉（下面就 return 了）
+  const wb=$('#btnNearWish');
+  if(wb){
+    wb.setAttribute('aria-pressed', String(NEAR.active && NEAR.wishOnly));
+    wb.classList.toggle('active', NEAR.active && NEAR.wishOnly);
+  }
   if(!NEAR.active) return;
   $('#nearKm').value=String(NEAR.km);
-  const n=NEAR.byOffer?NEAR.byOffer.size:0;
+  // 只看收藏時要數「收藏的有幾筆」，不是全部幾筆——不然數字跟列表對不起來
+  const ids=NEAR.byOffer?[...NEAR.byOffer.keys()]:[];
+  const n=NEAR.wishOnly ? ids.filter(id=>WISH.has(id)).length : ids.length;
+  const what=NEAR.wishOnly?'收藏的優惠有分店':'筆優惠有分店';
   $('#nearStatus').innerHTML = NEAR.loading ? '找附近的分店中…'
     : NEAR.lat==null ? '還沒有位置——允許定位，或打開地圖點一下你要查的地方。'
-    : `📍 <b>${esc(NEAR.label)}</b>附近 ${NEAR.km} 公里內，有 ${n} 筆優惠有分店`;
+    : `📍 <b>${esc(NEAR.label)}</b>附近 ${NEAR.km} 公里內，有 ${n} ${what}`
+      + (NEAR.wishOnly && !n && WISH.size ? '（附近沒有你收藏的店，可以把距離調遠一點）' : '')
+      + (NEAR.wishOnly && !WISH.size ? '——待辦清單還是空的，在優惠卡片右上角按一下書籤就會收藏起來。' : '');
 }
 function startNear(){
   if(!LIVE){ alert('離線模式查不到分店位置，請先用 python serve.py 啟動並設定 config.js。'); return; }
@@ -5378,7 +5400,7 @@ function startNear(){
 }
 function stopNear(){
   NEAR.active=false; NEAR.byOffer=null; NEAR.lat=NEAR.lng=null; NEAR.loading=false;
-  NEAR.reqSeq++; NEAR.sortTouched=false;
+  NEAR.reqSeq++; NEAR.sortTouched=false; NEAR.wishOnly=false;
   if($('#sort').value==='distance') $('#sort').value='value';
   closeNearMap();
   $('#nearMapHint').textContent='';
@@ -5481,19 +5503,40 @@ async function loadNearPins(){
   const {data,error}=await sb.rpc('offer_stores_in_bounds',
     {p_south:b.getSouth(), p_west:b.getWest(), p_north:b.getNorth(), p_east:b.getEast(), p_limit:500});
   if(error){ hint.textContent='分店載入失敗：'+error.message; return; }
+  NEAR_PIN_ROWS=data||[];
+  paintNearPins();
+}
+/* 畫面範圍沒變、只是切了「只看收藏」的話不用再查一次資料庫——上一次查回來的
+   分店留在 NEAR_PIN_ROWS，直接重畫就好（地圖是預設開啟的，每一次查詢都會
+   直接反映在資料庫的負擔上）。 */
+function paintNearPins(){
+  if(!NEAR_MAP||!NEAR_MAP_PINS) return;
+  const hint=$('#nearMapHint');
   NEAR_MAP_PINS.clearLayers();
-  (data||[]).forEach(st=>{
+  let hidden=0;
+  NEAR_PIN_ROWS.forEach(st=>{
     const o=OFFERS.find(x=>String(x.id)===String(st.offer_id));
     if(!o) return;
-    L.circleMarker([st.lat,st.lng],{radius:7,weight:2,color:'#c2410c',fillColor:'#fb923c',fillOpacity:.85})
-      .bindPopup(`<b>${esc(o.brand)}</b><br><span style="font-size:.8rem">${esc(st.name)}</span><br>
+    const wished=WISH.has(String(o.id));
+    if(NEAR.wishOnly && !wished){ hidden++; return; }
+    // 收藏的用強調色畫大一點：沒開「只看收藏」時，一眼就看得出哪幾家是自己收的
+    const c = wished ? {color:'#7c2d12', fill:'#f59e0b', r:9} : {color:'#c2410c', fill:'#fb923c', r:7};
+    L.circleMarker([st.lat,st.lng],{radius:c.r,weight:2,color:c.color,fillColor:c.fill,fillOpacity:.85})
+      .bindPopup(`<b>${esc(o.brand)}</b>${wished?' <span style="font-size:.75rem">· 已收藏</span>':''}<br>
+        <span style="font-size:.8rem">${esc(st.name)}</span><br>
         <span style="font-size:.8rem">${esc(String(o.offer||'').slice(0,60))}</span><br>
         <button type="button" class="btn sm map-open-offer" data-id="${esc(o.id)}" style="margin-top:6px">看優惠</button>
         <a href="${esc(mapsLink(st))}" target="_blank" rel="noopener" style="margin-left:6px;font-size:.8rem">導航↗</a>`)
       .addTo(NEAR_MAP_PINS);
   });
   const n=NEAR_MAP_PINS.getLayers().length;
-  hint.textContent=(n?`這個畫面裡有 ${n} 家分店有優惠。`:'這個畫面裡還沒有分店資料。')+'點地圖任一處可以改查那裡附近。';
+  hint.textContent = NEAR.wishOnly
+    ? (n ? `這個畫面裡有 ${n} 家是你收藏的（另外 ${hidden} 家先藏起來了）。`
+         : (hidden ? `這個畫面裡的 ${hidden} 家都不在你的待辦清單裡。`
+                   : '這個畫面裡還沒有分店資料。'))
+      + '再按一次「只看收藏」就看得到全部。'
+    : (n ? `這個畫面裡有 ${n} 家分店有優惠。` : '這個畫面裡還沒有分店資料。')
+      + '點地圖任一處可以改查那裡附近。';
 }
 $('#btnNear').onclick=()=>NEAR.active?stopNear():startNear();
 $('#btnNearClose').onclick=stopNear;
@@ -5502,6 +5545,13 @@ $('#btnNearInfo').onclick=()=>{
   const box=$('#nearNotes'), open=box.classList.contains('hidden');
   box.classList.toggle('hidden', !open);
   $('#btnNearInfo').setAttribute('aria-expanded', String(open));
+};
+$('#btnNearWish').onclick=()=>{
+  NEAR.wishOnly=!NEAR.wishOnly;
+  renderNearBar();
+  paintNearPins();     // 地圖不用重查，直接重畫
+  render();
+  logEvent('near_wish_only', {on:NEAR.wishOnly});
 };
 $('#btnNearLocate').onclick=startNear;
 $('#btnNearMap').onclick=()=>$('#nearMapWrap').classList.contains('hidden')?openNearMap():closeNearMap();
@@ -5598,6 +5648,7 @@ function render(){
   let list=OFFERS.filter(o=>{
     if(onlyNewActive&&!NEW_OFFER_IDS.has(o.id)) return false;
     if(NEAR.active&&NEAR.byOffer&&!NEAR.byOffer.has(String(o.id))) return false;
+    if(NEAR.active&&NEAR.wishOnly&&!WISH.has(String(o.id))) return false;
     if(activeCat.size&&!activeCat.has(o.category)) return false;
     if(activeFree.size&&!activeFree.has(o.freeTier)) return false;
     if(activeTiming.size&&!activeTiming.has(o.timing)) return false;
