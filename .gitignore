@@ -8,3 +8,5 @@ node_modules/
 stores_import.sql
 stores_fetched.json
 stores_import_*.sql
+stores_fetched_regions.json
+region_fill_report.md

@@ -26,6 +26,15 @@
   python fetch_stores.py                      # 全部
 然後把 stores_import_*.sql 依序全部貼進 Supabase SQL Editor 執行（要先跑過 schema_v58）。
   python fetch_stores.py --cache-only         # 改完比對規則／別名後，只用快取重算，不花錢
+  python fetch_stores.py --fill-regions       # 只跑「適用縣市」空白的那幾筆，照分店回推縣市
+
+--fill-regions：使用者（金信宇）回報「篩花蓮縣跑出一堆不是花蓮的店」，查下去發現線上有
+67 筆優惠的「適用縣市」整個是空的——任何縣市篩選都找不到它們，在「附近」也不會出現。
+這些沒有縣市可以照著查，所以改成「全台一次查完，再從每一家店的地址回推它在哪個縣市」
+（逐縣市掃等於每個品牌打 22 個查詢，而這些大多是只有一兩家店的獨立店）。只有被 60 筆
+上限截斷的大連鎖才會再逐縣市掃一遍。輸出 stores_import_regions_*.sql（不會蓋掉既有的
+stores_import_*.sql）和 region_fill_report.md（貼進資料庫前先人工掃一遍）。
+縣市本身由 schema_v110_regions_from_stores.sql 照 offer_stores 補上。
 
 品牌名稱跟 Google 上的店名常常不一樣（例如「Global Mall 環球購物中心」在
 Google 上是「環球購物中心 板橋車站」），或是純線上／App 的優惠根本沒有實體店，
@@ -61,6 +70,7 @@ ALIASES = HERE / "store_search_aliases.json"
 ROWS_PER_FILE = 400
 CACHE_ONLY = False     # --cache-only：只用快取重算、不打 API
 OUT_JSON = HERE / "stores_fetched.json"
+REGION_REPORT = HERE / "region_fill_report.md"   # --fill-regions 跑完給人看的報告
 
 # 跟前端 COUNTIES 同一份（不含「全台」）
 COUNTIES = ['基隆市', '台北市', '新北市', '桃園市', '新竹市', '新竹縣', '苗栗縣', '台中市',
@@ -104,6 +114,15 @@ def tw(s):
     """地址／店名裡的異體字統一後再比：臺台混用；平禄寿司（優惠）vs 平禄壽司（Google）；
     辻利茶舖 vs 辻利茶舗；武藏野森咖啡 vs 武蔵野森珈琲（日文漢字）；beard papa‘s 的彎引號 vs 直引號。"""
     return (s or "").translate(VARIANTS)
+
+
+def county_of(addr):
+    """從 Google 回的地址判斷縣市。--fill-regions 沒有「適用縣市」可以照著查，
+    改成全台一次查完、再從每一家店的地址回推它在哪個縣市。
+    地址裡同時出現兩個縣市名（路名撞到）的時候取出現得比較前面的那個。"""
+    a = tw(addr or "")
+    hits = [(a.index(tw(c)), c) for c in COUNTIES if tw(c) in a]
+    return min(hits)[1] if hits else None
 
 
 def norm_brand(s):
@@ -465,6 +484,28 @@ def fetch_county(api_key, query, keys, county, refresh, max_pages):
     return out, calls, info
 
 
+def discover_nationwide(api_key, query, keys, refresh, max_pages):
+    """全台一次查完，縣市從每一家店的地址回推。回傳 (分店, 計費次數, 是否被 60 筆上限截斷)。
+
+    為什麼不直接逐縣市掃：「適用縣市」空白的優惠沒有縣市可以照著查，逐縣市掃等於每個
+    品牌都打 22 個查詢，而這些大多是只有一兩家店的獨立店（啄手咖啡、豆豆里、青春漢堡），
+    一個查詢就找完了。只有被 60 筆上限截斷、代表 Google 手上還有更多的大連鎖
+    （寶島眼鏡這種），才值得再逐縣市掃一遍。"""
+    any_keys, all_keys = (keys["any"], keys["all"]) if isinstance(keys, dict) else (keys, [])
+    relevant = lambda p: name_matches((p.get("displayName") or {}).get("text", ""), any_keys, all_keys)
+    places, calls, capped = paged(api_key, query, TAIWAN_RECT, refresh, max_pages, relevant)
+    out, seen = [], set()
+    for p in places:
+        county = county_of(p.get("formattedAddress", ""))
+        if not county:
+            continue
+        r = keep_place(p, keys, county)
+        if r and r["place_id"] not in seen:
+            seen.add(r["place_id"])
+            out.append(r)
+    return out, calls, capped
+
+
 def row_sql(r):
     return (f"({int(r['offer_id'])},{sql_str(r['place_id'])}::text,{sql_str(r['name'])}::text,"
             f"{sql_str(r['address'])}::text,{sql_str(r['county'])}::text,{float(r['lat'])}::float8,"
@@ -477,69 +518,20 @@ def sql_str(v):
     return "'" + str(v).replace("'", "''") + "'"
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--dry-run", action="store_true", help="只列出會打幾次 API，不真的查")
-    ap.add_argument("--only", help="只跑品牌名稱包含這個字串的優惠")
-    ap.add_argument("--max-pages", type=int, default=3, help="每個查詢最多翻幾頁（每頁 20 筆，上限 3 頁）")
-    ap.add_argument("--refresh", action="store_true", help="忽略快取強制重抓")
-    ap.add_argument("--cache-only", action="store_true",
-                    help="只用 .places_cache 裡查過的結果重算（改比對規則／別名後用，不打 API、不花錢）")
-    ap.add_argument("--rows-per-file", type=int, default=ROWS_PER_FILE,
-                    help=f"每個匯入檔幾家分店（預設 {ROWS_PER_FILE}；SQL Editor 報 request entity too large 就調小）")
-    args = ap.parse_args()
-    global CACHE_ONLY
-    CACHE_ONLY = args.cache_only
+def write_imports(rows, offer_ids, per, prefix="stores_import", tail_extra=()):
+    """產生依序貼進 SQL Editor 的匯入檔，回傳 (檔名清單, 這一輪的時間戳)。
 
-    api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "")
-    if not api_key and not args.dry_run and not args.cache_only:
-        sys.exit("請先設定環境變數 GOOGLE_MAPS_API_KEY（見檔頭用法）")
-
-    aliases = load_aliases()
-    offers = load_offers()
-    if args.only:
-        offers = [o for o in offers if args.only in o["brand"]]
-    skip = set(aliases["skip"])
-
-    planned = [(o, *plan_for(o, aliases)) for o in offers if o["brand"] not in skip]
-    n_queries = sum(len(q) * len(c) for _, q, _, c in planned)
-    print(f"{len(planned)} 筆優惠（略過 {len(offers) - len(planned)} 筆），"
-          f"共 {n_queries} 個縣市查詢；每個查詢最多 {args.max_pages} 頁，"
-          f"最多 {n_queries * args.max_pages} 次 API 呼叫（有結果不滿一頁就不會翻下一頁）。\n"
-          f"大縣市被 60 筆上限截斷時會自動分區補抓，實際呼叫次數會比這個多一些。")
-    if args.dry_run:
-        for o, q, _, c in planned:
-            print(f"  #{o['id']} {o['brand']}  查「{'」「'.join(q)}」× {len(c)} 縣市")
-        return
-
-    rows, calls, per_offer, tiled_log, still_capped = [], 0, {}, [], []
-    for o, queries, keys, counties in planned:
-        seen, offer_rows = set(), []
-        for query, county in ((q, c) for q in queries for c in counties):
-            found, c, info = fetch_county(api_key, query, keys, county, args.refresh, args.max_pages)
-            calls += c
-            if info["tiles"]:
-                tiled_log.append(f"{o['brand']}／{county}：分 {info['tiles']} 區補抓")
-            if info["still_capped"]:
-                still_capped.append(f"{o['brand']}／{county}")
-            for r in found:
-                if r["place_id"] in seen:
-                    continue
-                seen.add(r["place_id"])
-                offer_rows.append({"offer_id": o["id"], "brand": o["brand"], **r})
-        offer_rows = dedupe_nearby(offer_rows)
-        seen = {r["place_id"] for r in offer_rows}
-        rows.extend(offer_rows)
-        per_offer[o["brand"]] = len(seen)
-        print(f"  #{o['id']} {o['brand']}：{len(seen)} 家分店")
-
-    OUT_JSON.write_text(json.dumps(rows, ensure_ascii=False, indent=1), encoding="utf-8")
-
+    prefix 可以換一組檔名：--fill-regions 只跑「適用縣市」空白的那幾筆，輸出
+    stores_import_regions_*.sql，不會蓋掉既有的 stores_import_*.sql（那些是全部品牌的，
+    已經匯入過了）。最後一個檔的「沒再出現就自動隱藏」只會動到這一輪有查的優惠。"""
     run_ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    offer_ids = sorted({o["id"] for o, *_ in planned})
-    for old in HERE.glob("stores_import*.sql"):
+    stale = sorted(HERE.glob(f"{prefix}_[0-9]*.sql"))
+    if prefix == "stores_import":
+        # 全部跑完的話，上一次 --fill-regions 的那組就過期了（裡面的「沒再出現就隱藏」
+        # 會把這一輪新找到的分店藏掉），一起清掉
+        stale += sorted(HERE.glob("stores_import_regions_[0-9]*.sql"))
+    for old in stale:
         old.unlink()
-    per = max(50, args.rows_per_file)
     parts = [rows[i:i + per] for i in range(0, len(rows), per)] or [[]]
     out_files = []
     for n, chunk in enumerate(parts, 1):
@@ -567,7 +559,11 @@ def main():
                 "  hidden = case when offer_stores.hidden_by = 'import' then false else offer_stores.hidden end,",
                 "  hidden_by = case when offer_stores.hidden_by = 'import' then null else offer_stores.hidden_by end;",
             ]
-        if last:
+        # 一家都沒找到（金鑰沒帶、查詢全失敗、--cache-only 只用查過的結果重算）的時候
+        # 絕對不能跑「沒再出現就隱藏」——那會把這幾筆優惠現有的分店全部藏掉，而「全部
+        # 歇業」跟「這一輪根本沒查成功」從結果上分不出來。--cache-only 本來就只是拿來看
+        # 比對結果的，產生的檔不該貼進資料庫。
+        if last and rows and not CACHE_ONLY:
             ids = ",".join(map(str, offer_ids)) or "null"
             lines += [
                 "-- 前面的檔案都貼過了，才把「這一輪有查、但分店沒再出現」（已歇業或之前抓錯）的",
@@ -575,7 +571,7 @@ def main():
                 "do $$",
                 "begin",
                 f"  if (select count(*) from public.offer_stores where fetched_at = timestamptz {sql_str(run_ts)}) < {len(rows)} then",
-                f"    raise exception '前面的 stores_import 檔案還沒全部貼完（這一輪應該有 {len(rows)} 家），先把缺的貼完再貼一次最後這個檔。';",
+                f"    raise exception '前面的 {prefix} 檔案還沒全部貼完（這一輪應該有 {len(rows)} 家），先把缺的貼完再貼一次最後這個檔。';",
                 "  end if;",
                 "end $$;",
                 "update public.offer_stores set hidden = true, hidden_by = 'import'",
@@ -583,10 +579,165 @@ def main():
                 f"  and offer_id in ({ids})",
                 f"  and fetched_at < timestamptz {sql_str(run_ts)};",
             ]
+        if last and (not rows or CACHE_ONLY):
+            why = "--cache-only 只用查過的結果重算" if CACHE_ONLY else "這一輪一家分店都沒找到"
+            lines.append(f"-- 這個檔沒有「沒再出現就自動隱藏」那一段（{why}），"
+                         "免得把現有的分店整批藏掉。")
+        if last:
+            lines += list(tail_extra)
         lines.append("commit;")
-        name = f"stores_import_{n:02d}.sql"
+        name = f"{prefix}_{n:02d}.sql"
         (HERE / name).write_text("\n".join(lines) + "\n", encoding="utf-8")
         out_files.append(name)
+    return out_files, run_ts
+
+
+def write_region_report(found_regions, out_files):
+    """--fill-regions 跑完寫一份給人看的報告。
+
+    為什麼要有：這一步是「照 Google 上找到的分店，回頭決定這筆優惠寫哪幾個縣市」，
+    比對錯一家店就會多一個縣市，而且錯了很難從網站上看出來（使用者只會覺得「篩花蓮
+    又跑出不是花蓮的店」——這整件事就是這樣被回報的）。所以每一筆都把實際找到的店名
+    跟地址列出來，貼進資料庫之前先掃一遍。"""
+    lines = [f"# 「適用縣市」空白的優惠：照 Google 上的分店回推（{len(found_regions)} 筆）", "",
+             "貼進 Supabase 之前先掃一遍這份。縣市是從「找到的分店地址」回推的，",
+             "所以**比對到別家店 = 多一個不該有的縣市**；看到不對的就到 `store_search_aliases.json`",
+             "設 `match`／`exclude`，再跑一次 `--cache-only`（不花錢）。", "",
+             f"匯入檔：{'、'.join(out_files) or '（無）'}", ""]
+    ok = [x for x in found_regions if x[1]]
+    zero = [x for x in found_regions if not x[1]]
+    lines += [f"## 找到了（{len(ok)} 筆）", "",
+              "| # | 品牌 | 分店 | 回推出來的適用縣市 | 抽查（最多 3 家） |",
+              "| --- | --- | --- | --- | --- |"]
+    for o, counties, rows in ok:
+        sample = "<br>".join(f"{r['name']}｜{r['address']}" for r in rows[:3])
+        lines.append(f"| {o['id']} | {o['brand']} | {len(rows)} | {'、'.join(counties)} | {sample} |")
+    if zero:
+        lines += ["", f"## 一家都沒找到（{len(zero)} 筆）", "",
+                  "這幾筆的「適用縣市」還是會留空白——寧可空白，也不要瞎猜一個縣市。兩種情況：",
+                  "",
+                  "- **店名跟 Google 上不一樣**：到 `store_search_aliases.json` 的 `brands` 設 "
+                  "`query`（拿去搜的字）和 `match`（店名要包含其中一個才收），再跑 `--cache-only` 看結果",
+                  "- **純線上／App／會員優惠，沒有實體店**（HAPPY GO 這種）：加進 `skip`，"
+                  "適用縣市手動填「全台」", ""]
+        for o, _, _ in zero:
+            lines.append(f"- #{o['id']} {o['brand']}（{o.get('category') or '—'}）")
+    REGION_REPORT.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dry-run", action="store_true", help="只列出會打幾次 API，不真的查")
+    ap.add_argument("--only", help="只跑品牌名稱包含這個字串的優惠")
+    ap.add_argument("--max-pages", type=int, default=3, help="每個查詢最多翻幾頁（每頁 20 筆，上限 3 頁）")
+    ap.add_argument("--refresh", action="store_true", help="忽略快取強制重抓")
+    ap.add_argument("--cache-only", action="store_true",
+                    help="只用 .places_cache 裡查過的結果重算（改比對規則／別名後用，不打 API、不花錢）")
+    ap.add_argument("--fill-regions", action="store_true",
+                    help="只跑「適用縣市」空白的優惠，全台一次查完、照找到的分店回推縣市"
+                         "（輸出 stores_import_regions_*.sql，不會動到既有的 stores_import_*.sql）")
+    ap.add_argument("--rows-per-file", type=int, default=ROWS_PER_FILE,
+                    help=f"每個匯入檔幾家分店（預設 {ROWS_PER_FILE}；SQL Editor 報 request entity too large 就調小）")
+    args = ap.parse_args()
+    global CACHE_ONLY
+    CACHE_ONLY = args.cache_only
+
+    api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "")
+    if not api_key and not args.dry_run and not args.cache_only:
+        sys.exit("請先設定環境變數 GOOGLE_MAPS_API_KEY（見檔頭用法）")
+
+    aliases = load_aliases()
+    offers = load_offers()
+    if args.only:
+        offers = [o for o in offers if args.only in o["brand"]]
+    skip = set(aliases["skip"])
+    if args.fill_regions:
+        offers = [o for o in offers if not (o.get("regions") or [])]
+        if not offers:
+            print("沒有「適用縣市」空白的優惠，不用跑。")
+            return
+
+    planned = [(o, *plan_for(o, aliases)) for o in offers if o["brand"] not in skip]
+    if args.fill_regions:
+        n_queries = sum(len(q) for _, q, _, _ in planned)
+        print(f"{len(planned)} 筆「適用縣市」空白的優惠（略過 {len(offers) - len(planned)} 筆），"
+              f"先全台一次查完，共 {n_queries} 個查詢、最多 {n_queries * args.max_pages} 次 API 呼叫。\n"
+              f"只有被 60 筆上限截斷（代表 Google 手上還有更多）的大連鎖，才會再逐縣市查一遍。")
+    else:
+        n_queries = sum(len(q) * len(c) for _, q, _, c in planned)
+        print(f"{len(planned)} 筆優惠（略過 {len(offers) - len(planned)} 筆），"
+              f"共 {n_queries} 個縣市查詢；每個查詢最多 {args.max_pages} 頁，"
+              f"最多 {n_queries * args.max_pages} 次 API 呼叫（有結果不滿一頁就不會翻下一頁）。\n"
+              f"大縣市被 60 筆上限截斷時會自動分區補抓，實際呼叫次數會比這個多一些。")
+    if args.dry_run:
+        for o, q, _, c in planned:
+            print(f"  #{o['id']} {o['brand']}  查「{'」「'.join(q)}」"
+                  + ("（全台一次）" if args.fill_regions else f" × {len(c)} 縣市"))
+        return
+
+    rows, calls, per_offer, tiled_log, still_capped = [], 0, {}, [], []
+    found_regions = []          # --fill-regions：每筆優惠回推出來的縣市，最後寫成報告
+    for o, queries, keys, counties in planned:
+        seen, offer_rows = set(), []
+
+        def keep(found):
+            for r in found:
+                if r["place_id"] in seen:
+                    continue
+                seen.add(r["place_id"])
+                offer_rows.append({"offer_id": o["id"], "brand": o["brand"], **r})
+
+        sweep = []              # 還要逐縣市查的 (查的字, 縣市)
+        for query in queries:
+            if not args.fill_regions:
+                sweep += [(query, c) for c in counties]
+                continue
+            found, c, capped = discover_nationwide(api_key, query, keys, args.refresh, args.max_pages)
+            calls += c
+            keep(found)
+            if capped:
+                print(f"    「{query}」全台一次就滿 60 筆，改逐縣市查一遍")
+                sweep += [(query, c) for c in counties]
+        for query, county in sweep:
+            found, c, info = fetch_county(api_key, query, keys, county, args.refresh, args.max_pages)
+            calls += c
+            if info["tiles"]:
+                tiled_log.append(f"{o['brand']}／{county}：分 {info['tiles']} 區補抓")
+            if info["still_capped"]:
+                still_capped.append(f"{o['brand']}／{county}")
+            keep(found)
+        offer_rows = dedupe_nearby(offer_rows)
+        seen = {r["place_id"] for r in offer_rows}
+        rows.extend(offer_rows)
+        per_offer[o["brand"]] = len(seen)
+        counties_found = sorted({r["county"] for r in offer_rows}, key=COUNTIES.index)
+        if args.fill_regions:
+            found_regions.append((o, counties_found, offer_rows))
+        print(f"  #{o['id']} {o['brand']}：{len(seen)} 家分店"
+              + (f"　{'、'.join(counties_found) or '（一家都沒找到）'}" if args.fill_regions else ""))
+
+    out_json = (HERE / "stores_fetched_regions.json") if args.fill_regions else OUT_JSON
+    out_json.write_text(json.dumps(rows, ensure_ascii=False, indent=1), encoding="utf-8")
+
+    tail = []
+    if args.fill_regions:
+        tail = [
+            "-- 分店匯進來之後，順手把「適用縣市」空白的那幾筆照實際分店所在的縣市補上",
+            "-- （schema_v110_regions_from_stores.sql 裡的函式）。還沒跑過 v110 就只提醒一聲，",
+            "-- 分店還是會匯進來，貼完 v110 就會補上。",
+            "do $$",
+            "begin",
+            "  if exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace",
+            "              where n.nspname = 'public' and p.proname = 'fill_offer_regions_from_stores') then",
+            "    raise notice '照分店補上適用縣市：% 筆', public.fill_offer_regions_from_stores();",
+            "  else",
+            "    raise notice '還沒跑過 schema_v110_regions_from_stores.sql，分店已經匯入，但「適用縣市」還是空的。';",
+            "  end if;",
+            "end $$;",
+        ]
+    out_files, run_ts = write_imports(
+        rows, sorted({o["id"] for o, *_ in planned}), max(50, args.rows_per_file),
+        prefix="stores_import_regions" if args.fill_regions else "stores_import", tail_extra=tail)
 
     if tiled_log:
         print(f"\n這些縣市被 60 筆上限截斷，已自動分區補抓：")
@@ -598,9 +749,15 @@ def main():
             print("  -", x)
     zero = [b for b, n in per_offer.items() if n == 0]
     print(f"\n完成：{len(rows)} 家分店，實際計費 API 呼叫 {calls} 次（其餘走快取）。")
-    print(f"輸出：{'、'.join(out_files)}（依序全部貼進 SQL Editor）、{OUT_JSON.name}（人工檢查用）")
+    print(f"輸出：{'、'.join(out_files)}（依序全部貼進 SQL Editor）、{out_json.name}（人工檢查用）")
     if CACHE_ONLY:
         print("（--cache-only：沒查過的分區補抓區塊都略過了，要補齊請拿金鑰正常跑一次）")
+    if args.fill_regions:
+        write_region_report(found_regions, out_files)
+        filled = [x for x in found_regions if x[1]]
+        print(f"\n照分店回推出適用縣市的有 {len(filled)} 筆，"
+              f"一家都沒找到、縣市留空白的有 {len(found_regions) - len(filled)} 筆。")
+        print(f"貼進 Supabase 之前先看一遍 {REGION_REPORT.name}（每一筆都有抽查用的店名跟地址）。")
     if zero:
         print(f"\n⚠️ 下面 {len(zero)} 筆一家都沒找到，可能是店名跟 Google 不同（到 "
               f"store_search_aliases.json 設 query/match），或是純線上優惠（加進 skip）：")

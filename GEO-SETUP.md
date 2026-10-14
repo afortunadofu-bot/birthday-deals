@@ -13,6 +13,7 @@
 | 資料表＋距離查詢 | `schema_v58_offer_stores.sql` | `offer_stores` 分店表、`nearest_offer_stores()`（每筆優惠最近的一家）、`offer_stores_in_bounds()`（地圖畫面內的分店）、`offer_store_coverage`（管理員查哪些優惠沒有分店） |
 | 抓分店 | `fetch_stores.py` | 用 Google Places API（New）Text Search，逐縣市查每個品牌（大縣市被 60 筆上限截斷時自動分區補抓），產生 `stores_import_*.sql` |
 | 品牌別名 | `store_search_aliases.json` | 品牌名稱跟 Google 店名對不上、聯名卡要拆成好幾個品牌搜、純線上優惠要略過，都在這裡設定 |
+| 補空白的適用縣市 | `fetch_stores.py --fill-regions`、`schema_v110_regions_from_stores.sql` | 「適用縣市」空白的優惠，全台一次查完、照分店地址回推縣市（見最後一節） |
 | 前端 | `template.html` | 「📍 附近」按鈕、距離範圍、離我最近排序、卡片上的「最近分店＋導航」、Leaflet 地圖（點地圖可以換查詢位置） |
 
 ## 一、申請 Google API 金鑰（只要做一次）
@@ -95,3 +96,48 @@ git merge feature/geo
 ```bash
 git push origin main
 ```
+
+## 補上空白的適用縣市（2026-10-14 加的，獨立流程）
+
+使用者（金信宇）回報「篩花蓮縣跑出很多不是花蓮的店」，查下去發現線上有 **67 筆優惠的
+「適用縣市」整個是空的**——任何縣市篩選都找不到它們，「📍 附近」也不會出現。
+
+這些沒有縣市可以照著查，所以多了一個模式：**全台一次查完，再從每一家店的地址回推它在
+哪個縣市**。逐縣市掃等於每個品牌打 22 個查詢（67 × 22 = 1,474 個），而這些大多是只有
+一兩家店的獨立店，一個查詢就找完了——實際只要 67 個查詢。只有被 60 筆上限截斷
+（代表 Google 手上還有更多）的大連鎖，才會再逐縣市掃一遍。
+
+```bash
+python fetch_stores.py --fill-regions --dry-run
+```
+
+```bash
+$env:GOOGLE_MAPS_API_KEY="你的金鑰"; python fetch_stores.py --fill-regions
+```
+
+跑完會多兩個東西：
+
+- **`region_fill_report.md`**：每一筆回推出來的縣市，附上實際找到的店名跟地址。
+  **貼進資料庫之前先掃一遍**——比對到別家店就會多一個不該有的縣市，而且錯了很難從
+  網站上看出來（使用者只會覺得「篩花蓮又跑出不是花蓮的店」，就是這件事被回報的原因）。
+  不對的就照上面第四節設 `match`／`exclude`，再跑 `--cache-only` 重算（不花錢）。
+- **`stores_import_regions_01.sql`…**：只含這幾筆優惠的分店，**不會蓋掉既有的
+  `stores_import_*.sql`**（那些是全部品牌的，已經匯入過了）。
+
+匯入順序：
+
+1. `schema_v110_regions_from_stores.sql`（定義「照分店補縣市」的函式，順手把已經有分店、
+   縣市卻空白的那幾筆補上）
+2. `stores_import_regions_*.sql` 依序全部貼完——最後一個檔會自動再呼叫一次那個函式
+3. 檢查還有哪幾筆是空的：
+
+   ```sql
+   select id, brand, category from public.offers
+    where status = 'approved' and coalesce(array_length(regions, 1), 0) = 0 order by id;
+   ```
+
+   還是空的通常是**純線上／App／會員優惠**（HAPPY GO 這種本來就沒有實體店）：
+   把品牌加進 `store_search_aliases.json` 的 `skip`，適用縣市手動填「全台」。
+
+一家都沒找到的時候**縣市會留空白，不會瞎猜一個**——寧可繼續躺在那邊，也不要把台北的
+使用者送去一家只有高雄有的店。
