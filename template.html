@@ -2332,8 +2332,9 @@
        而且 v14 就建了 (event_type, created_at) 的索引，用 head+count 查
        只回數字、不回資料列。 -->
   <div class="panel" id="pnlCoffeeStats">
-    <h2>咖啡按鈕</h2>
-    <p class="sub">左下角那顆的點閱狀況。「點開說明」是按了按鈕、「去 Buy Me a Coffee」是看完說明還願意出去的人。</p>
+    <h2>咖啡按鈕與站外連結</h2>
+    <p class="sub">左下角那顆的點閱狀況（「點開說明」是按了按鈕、「去 Buy Me a Coffee」是看完說明還願意出去的人），
+      以及頁尾「小數據所」那組連結有沒有人點進去。</p>
     <div class="row" style="margin:0 0 10px;align-items:center">
       <label class="lbl">區間<select id="coffeeRange">
         <option value="7">近 7 天</option>
@@ -2344,6 +2345,9 @@
       <button type="button" class="btn sm" id="btnCoffeeStatsReload">重新整理</button>
     </div>
     <div id="coffeeStatsBody"></div>
+    <!-- celine：「幫我再多偵測有點進去品牌頁任何網址的」 -->
+    <h3 style="margin:18px 0 6px;font-size:.95rem">站外連結</h3>
+    <div id="linkStatsBody"></div>
   </div>
   <!-- celine：「管理員可以加一個按鈕，是可以關掉品牌頁跟捐款頁的，跟個別可以選要加甚麼展示」 -->
   <div class="panel" id="pnlSiteFlags">
@@ -3239,6 +3243,27 @@ function logEvent(type, meta={}){
   }catch{}
 }
 
+/* celine：「幫我再多偵測有點進去品牌頁任何網址的」。
+
+   用事件委派抓整個文件的 <a>，不是一條一條掛 onclick——頁尾那組連結之後如果
+   搬位置、或是哪天在別的地方再放一次品牌頁的連結，都會自動被算到，不用記得
+   回來補。比對的是網址本身，所以連結長在哪裡不重要。
+
+   三條都是 target="_blank"，頁面不會離開，事件送得出去（不需要 sendBeacon）。
+   about.html 是沒有這支程式的靜態頁，它自己有一小段同樣的記錄（見那個檔）。 */
+const OUT_LINKS=[
+  {to:'brandpage',   re:/afortunadofu-bot\.github\.io\/celinefubrandpage/i},
+  {to:'bandary',     re:/forms\.gle\/FhBJgWBWb72MCg5x5/i},
+  {to:'relatestats', re:/forms\.gle\/6HT4LzRSsPA76b6s7/i},
+];
+document.addEventListener('click', e=>{
+  const a = e.target?.closest?.('a[href]');
+  if(!a) return;
+  const href = a.getAttribute('href') || '';
+  const hit = OUT_LINKS.find(x=>x.re.test(href));
+  if(hit) logEvent('studio_click', {to:hit.to, from:'footer'});
+}, true);   // 捕獲階段：就算有人中途擋掉冒泡也還是算得到
+
 /* ---- 離線／登入失敗診斷：直接告訴使用者卡在哪 ---- */
 function renderDiagnostics(mb){
   const rows = [
@@ -3289,7 +3314,7 @@ async function onSession(s){
   if(me){ loadMyStuff(); loadWishlist(); loadMyUsedOffers(); flushPendingReport(); loadPendingPreview(); loadPendingEditsPreview(); loadNotifCount(); }
   else { $('#pendPreviewPanel').classList.add('hidden'); $('#pendEditsPreviewPanel').classList.add('hidden'); $('#btnNotif').classList.add('hidden'); }
   if(myProfile?.is_admin){ loadPending(); loadPendingEdits(); loadRejected(); loadApproved();
-    loadAdminSettings(); renderSiteFlagsPanel(); loadCoffeeStats(); loadAdminDashboard(); loadFeedbackList(); loadUsageReportsAdmin(); loadSurveyAdmin(); renderMergePanel();
+    loadAdminSettings(); renderSiteFlagsPanel(); loadCoffeeStats(); loadLinkStats(); loadAdminDashboard(); loadFeedbackList(); loadUsageReportsAdmin(); loadSurveyAdmin(); renderMergePanel();
     loadAdminCommentList(); loadReviewInsights(); }
 }
 
@@ -4788,8 +4813,44 @@ async function loadCoffeeStats(){
       : '只看得到「按了幾次」。'}有沒有真的請到咖啡要去
       Buy Me a Coffee 自己的後台看——我們這邊不會知道，也收不到任何金流資訊。</p>`;
 }
-$('#coffeeRange').onchange=loadCoffeeStats;
-$('#btnCoffeeStatsReload').onclick=loadCoffeeStats;
+/* 頁尾那組「小數據所」連結的點擊（studio_click，meta.to 記點到哪一個）。
+   跟咖啡那塊共用同一個區間選單——問的是同一件事：有多少人真的往外走。 */
+const LINK_LABEL={brandpage:'品牌頁 小數據所', bandary:'Bandary 聽團曆（報名表）',
+  relatestats:'RelateStats（報名表）', 其他:'其他'};
+async function loadLinkStats(){
+  const box=$('#linkStatsBody');
+  if(!box || !myProfile?.is_admin || !LIVE) return;
+  const days=Number($('#coffeeRange')?.value||30);
+  box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">載入中…</div>';
+  const {data,error}=await sb.rpc('admin_link_stats',{p_days:days});
+  if(error){
+    box.innerHTML=`<div class="note${/function|does not exist|schema cache/i.test(error.message)?'':' alert'}">${
+      /function|does not exist|schema cache/i.test(error.message)
+        ? '要先在 Supabase 執行 schema_v113_link_stats.sql。'
+        : `讀取失敗：${esc(error.message)}`}</div>`;
+    return;
+  }
+  const rows=(data||[]).filter(r=>Number(r.clicks)>0);
+  const label = days>0 ? `近 ${days} 天` : '全部時間';
+  if(!rows.length){
+    box.innerHTML=`<div style="color:var(--ink-3);font-size:.86rem">${esc(label)}還沒有人點頁尾那組連結。</div>`;
+    return;
+  }
+  const off = SITE_FLAGS.show_studio_footer===false
+    ? '<div class="note alert" style="margin-top:10px">頁尾整塊目前是關掉的，所以不會再有新的數字。</div>' : '';
+  renderCollapsibleTable(box,
+    '<th>連到哪</th><th class="amt">人</th><th class="amt">次</th><th class="amt">最後一次</th>',
+    rows.map(r=>`<tr><td>${esc(LINK_LABEL[r.target]||r.target)}</td>
+      <td class="amt">${nt2(r.people)}</td>
+      <td class="amt">${nt2(r.clicks)}</td>
+      <td class="amt" style="font-weight:400;color:var(--ink-3)">${r.last_at?esc(String(r.last_at).slice(0,10)):'—'}</td></tr>`),
+    5, 'link-stats-more', '');
+  box.insertAdjacentHTML('beforeend', off +
+    `<p class="hint" style="margin-top:8px">${esc(label)}。「人」跟上面一樣算的是瀏覽器。
+      about.html（「關於」那一頁）裡的品牌頁連結也算得到——它自己有一小段同樣的記錄。</p>`);
+}
+$('#coffeeRange').onchange=()=>{ loadCoffeeStats(); loadLinkStats(); };
+$('#btnCoffeeStatsReload').onclick=()=>{ loadCoffeeStats(); loadLinkStats(); };
 
 function renderSiteFlagsPanel(){
   const box=$('#siteFlagsBody');

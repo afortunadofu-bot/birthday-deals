@@ -119,5 +119,39 @@
 </footer>
 <script>document.getElementById('y').textContent=new Date().getFullYear();</script>
 
+<!-- celine：「幫我再多偵測有點進去品牌頁任何網址的」。這一頁是靜態的，沒有載
+     主程式，所以自己記一筆（主程式那邊是 OUT_LINKS 的事件委派）。
+     刻意不載 Supabase 的 JS 函式庫——為了一筆記錄多拉一包 100KB 不划算，
+     直接 POST 到 REST 端點就好。session_id 讀的是跟主程式同一把 localStorage
+     key（同一個網域），所以同一個人從哪一頁點進去都算同一個人。
+     失敗就算了，絕對不能擋住連結本身。 -->
+<script src="config.js"></script>
+<script>
+(function(){
+  var cfg = window.SUPABASE_CONFIG;
+  if(!cfg || !cfg.url || !cfg.anonKey) return;
+  var sid = '';
+  try{
+    sid = localStorage.getItem('sxr_sid') || '';
+    if(!sid){ sid = 's' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem('sxr_sid', sid); }
+  }catch(e){}
+  document.addEventListener('click', function(e){
+    var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+    if(!a) return;
+    if(!/afortunadofu-bot\.github\.io\/celinefubrandpage/i.test(a.getAttribute('href')||'')) return;
+    try{
+      fetch(cfg.url + '/rest/v1/site_events', {
+        method:'POST', keepalive:true,
+        headers:{'Content-Type':'application/json', apikey:cfg.anonKey,
+                 Authorization:'Bearer ' + cfg.anonKey, Prefer:'return=minimal'},
+        body: JSON.stringify({event_type:'studio_click', session_id:sid,
+                              meta:{to:'brandpage', from:'about'}}),
+      }).catch(function(){});
+    }catch(err){}
+  }, true);
+})();
+</script>
+
 </body>
 </html>
