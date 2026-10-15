@@ -51,7 +51,29 @@ const about = fs.readFileSync(path.join(root, 'about.html'), 'utf8');
   t.eq('站內的連結不記', events.length, 0);
 
   t.ok('比對的是網址，不是某一個 id（連結搬家也還算得到）',
-    /OUT_LINKS[\s\S]{0,400}celinefubrandpage/.test(index));
+    /OUT_LINKS[\s\S]{0,500}celinefubrandpage/.test(index));
+
+  /* 兩個 app 2026-10-15 從封測報名表換成 Google Play。新舊網址都要算同一個 to，
+     不然換連結那天看起來會像「突然沒人點了」。 */
+  const linkTo = (href) => {
+    events.length = 0;
+    const a = doc.createElement('a');
+    a.href = href; a.textContent = 'x';
+    doc.body.appendChild(a);
+    click(a);
+    a.remove();
+    return events.length ? events[0].meta.to : null;
+  };
+  t.eq('Google Play 的 Bandary', linkTo('https://play.google.com/store/apps/details?id=com.bandary.app'), 'bandary');
+  t.eq('Google Play 的 RelateStats', linkTo('https://play.google.com/store/apps/details?id=com.relatestats.app'), 'relatestats');
+  t.eq('舊的報名表連結也還算同一個（數字才接得起來）',
+    linkTo('https://forms.gle/FhBJgWBWb72MCg5x5'), 'bandary');
+  t.eq('不相干的 Google Play app 不算', linkTo('https://play.google.com/store/apps/details?id=com.whatsapp'), null);
+  // 比字串就好——在測試裡再寫一次那串 regex 只是多一個會打錯的地方
+  const bandaryLine = fs.readFileSync(path.join(root, 'track.js'), 'utf8')
+    .split('\n').find((l) => l.includes("to: 'bandary'"));
+  t.ok('track.js 也是同一套新舊並存',
+    bandaryLine.includes('bandary') && bandaryLine.includes('forms'), bandaryLine);
   t.ok('用捕獲階段，中途被擋掉冒泡也算得到',
     /OUT_LINKS[\s\S]{0,600}\}, true\);/.test(index));
 

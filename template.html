@@ -2437,11 +2437,11 @@
     <nav class="xsj-apps" aria-label="小數據所的產品">
       <a href="./" aria-current="page">壽星日</a>
       <span class="xsj-sep">·</span>
-      <a href="https://forms.gle/FhBJgWBWb72MCg5x5" target="_blank" rel="noopener"
-         data-flag="show_studio_bandary">Bandary 聽團曆 · 封閉測試報名</a>
+      <a href="https://play.google.com/store/apps/details?id=com.bandary.app" target="_blank" rel="noopener"
+         data-flag="show_studio_bandary">Bandary 聽團曆 · Google Play</a>
       <span class="xsj-sep">·</span>
-      <a href="https://forms.gle/6HT4LzRSsPA76b6s7" target="_blank" rel="noopener"
-         data-flag="show_studio_relatestats">RelateStats · 封閉測試報名</a>
+      <a href="https://play.google.com/store/apps/details?id=com.relatestats.app" target="_blank" rel="noopener"
+         data-flag="show_studio_relatestats">RelateStats · Google Play</a>
     </nav>
     <div class="xsj-meta">© <span id="xsjYear"></span> 小數據所 · Celine Fu</div>
   </div>
@@ -3274,10 +3274,12 @@ function logEvent(type, meta={}){
 
    三條都是 target="_blank"，頁面不會離開，事件送得出去（不需要 sendBeacon）。
    about.html 是沒有這支程式的靜態頁，它自己有一小段同樣的記錄（見那個檔）。 */
+/* 兩個 app 2026-10-15 從「封測報名表」換成 Google Play 的上架頁。新舊網址都留著比對，
+   算同一個 to——這樣換連結前後的數字是連續的，不會看起來像「那天突然沒人點了」。 */
 const OUT_LINKS=[
   {to:'brandpage',   re:/afortunadofu-bot\.github\.io\/celinefubrandpage/i},
-  {to:'bandary',     re:/forms\.gle\/FhBJgWBWb72MCg5x5/i},
-  {to:'relatestats', re:/forms\.gle\/6HT4LzRSsPA76b6s7/i},
+  {to:'bandary',     re:/id=com\.bandary\.app|forms\.gle\/FhBJgWBWb72MCg5x5/i},
+  {to:'relatestats', re:/id=com\.relatestats\.app|forms\.gle\/6HT4LzRSsPA76b6s7/i},
 ];
 document.addEventListener('click', e=>{
   const a = e.target?.closest?.('a[href]');
@@ -4689,8 +4691,8 @@ const FLAG_LABEL={
   show_dev_intro:'「我的」底部的「關於」入口',
   show_studio_footer:'頁尾「小數據所」整塊',
   show_studio_brandpage:'連回品牌頁',
-  show_studio_bandary:'Bandary 封測報名',
-  show_studio_relatestats:'RelateStats 封測報名',
+  show_studio_bandary:'Bandary（Google Play）',
+  show_studio_relatestats:'RelateStats（Google Play）',
   show_coffee:'左下角的咖啡按鈕',
 };
 const FLAG_NOTE={
@@ -4840,8 +4842,8 @@ async function loadCoffeeStats(){
 }
 /* 頁尾那組「小數據所」連結的點擊（studio_click，meta.to 記點到哪一個）。
    跟咖啡那塊共用同一個區間選單——問的是同一件事：有多少人真的往外走。 */
-const LINK_LABEL={brandpage:'品牌頁 小數據所', bandary:'Bandary 聽團曆（報名表）',
-  relatestats:'RelateStats（報名表）', other:'其他連結',
+const LINK_LABEL={brandpage:'品牌頁 小數據所', bandary:'Bandary 聽團曆',
+  relatestats:'RelateStats', other:'其他連結',
   page_about:'關於這個網站', page_privacy:'隱私權政策', page_terms:'服務條款',
   page_updates:'更新紀錄', page_other:'其他頁面'};
 async function loadLinkStats(){

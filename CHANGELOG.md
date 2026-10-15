@@ -13,6 +13,47 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v116　兩個 app 的連結換成 Google Play
+
+**沒有資料庫變更。** 動 `template.html`、`about.html`、`track.js`。
+
+> celine：「先把兩個app超連結這兩個 也要記錄流量次數計算」
+> `https://play.google.com/store/apps/details?id=com.bandary.app`
+> `https://play.google.com/store/apps/details?id=com.relatestats.app`
+
+頁尾那兩條從 Google 表單（封閉測試報名）換成 Google Play 的上架頁，文字跟著改成
+「Bandary 聽團曆 · Google Play」「RelateStats · Google Play」。`about.html` 的
+「小數據所的三個 app」那一節本來只有名字、沒有地方可以去，也補上兩條下載連結。
+
+### 新舊網址都算同一個 app
+
+```js
+{to:'bandary', re:/id=com\.bandary\.app|forms\.gle\/FhBJgWBWb72MCg5x5/i}
+```
+
+`OUT_LINKS`（主程式）跟 `track.js`（靜態頁）都保留舊的表單網址。換連結那天的數字
+才是連續的，不會在「站外連結」那張表上看起來像「那天之後突然沒人點了」。
+不相干的 Google Play 連結（`id=com.whatsapp`）不會被算進去，測試有擋。
+
+### ⚠️ 兩個網址現在是 404
+
+```
+com.whatsapp        → 200   （對照組，確認檢查方式是對的）
+com.bandary.app     → 404
+com.relatestats.app → 404
+```
+
+**封閉測試中的 app，公開的上架頁本來就看不到**（只有測試者從測試連結進得去）。
+所以連結換了，但在正式上架之前，訪客點下去會看到 Play 商店的「找不到項目」。
+
+好消息是這兩條本來就各自掛著開關（`show_studio_bandary`、`show_studio_relatestats`），
+在審核頁的「網站顯示設定」一點就能關掉，上架之後再打開。這件事寫在這裡，
+決定權在 celine。
+
+`t22`、`t36`、`t45` 跟著改；全套 **47 支全綠**。
+
+---
+
 ## v115　那幾頁也要有人次；儀表板重畫；「只看收藏」給它顏色
 
 **資料庫：`schema_v115_page_stats.sql`。**

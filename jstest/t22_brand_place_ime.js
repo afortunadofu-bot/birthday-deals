@@ -26,13 +26,16 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.eq('點陣標誌的點位跟品牌規範一樣', dots.join(''), '.W.A' + 'WA..' + '..AW' + 'A.W.');
   const apps = () => $$('.xsj-apps a').map((x) => [x.textContent.trim(), x.getAttribute('href')]);
   t.eq('列出三個產品', apps().map((x) => x[0]),
-    ['壽星日', 'Bandary 聽團曆 · 封閉測試報名', 'RelateStats · 封閉測試報名']);
+    ['壽星日', 'Bandary 聽團曆 · Google Play', 'RelateStats · Google Play']);
   t.eq('壽星日標成目前這一站', $('.xsj-apps [aria-current="page"]').textContent.trim(), '壽星日');
-  // celine：另外兩個連到封閉測試的報名表單
-  t.eq('Bandary 連到報名表單', apps()[1][1], 'https://forms.gle/FhBJgWBWb72MCg5x5');
-  t.eq('RelateStats 連到報名表單', apps()[2][1], 'https://forms.gle/6HT4LzRSsPA76b6s7');
+  // 2026-10-15 上架了，另外兩個從封測報名表換成 Google Play 的上架頁
+  t.eq('Bandary 連到 Google Play', apps()[1][1],
+    'https://play.google.com/store/apps/details?id=com.bandary.app');
+  t.eq('RelateStats 連到 Google Play', apps()[2][1],
+    'https://play.google.com/store/apps/details?id=com.relatestats.app');
+  t.ok('不要還留著舊的報名表連結', !/forms\.gle/.test($('.xsj-apps').innerHTML));
   t.ok('外部連結都開新分頁且加了 noopener',
-    $$('.xsj-apps a[href^="https://forms.gle"]').every((a) => a.target === '_blank' && /noopener/.test(a.rel)));
+    $$('.xsj-apps a[href^="https://play.google.com"]').every((a) => a.target === '_blank' && /noopener/.test(a.rel)));
   t.eq('年份是今年', $('#xsjYear').textContent, String(new Date().getFullYear()));
 
   /* ================= 1.5 「我的」看得到自己回報過的問題（v73）================= */
