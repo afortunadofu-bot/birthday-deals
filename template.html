@@ -596,6 +596,15 @@
   /* 審核頁「站外連結」的每一列：左邊連到哪、右邊人數／次數。
      本來是借用排行榜的 table.lb，但那張表把第二欄寫死成「撐滿的那一欄」，
      而這裡第二欄是「人」——結果左邊的名稱被擠成一個字一行（celine：「很醜」）。 */
+  /* 問卷「大家說了什麼」：一則一張卡，文字是主角，誰跟什麼時候是配角。
+     原本要一份一份點開才看得到留言，這裡直接攤平。 */
+  .say{padding:10px 12px;background:var(--surface);border:1px solid var(--line-soft);
+    border-radius:var(--r-xs)}
+  .say+.say{margin-top:8px}
+  .say-text{font-size:.9rem;line-height:1.65;color:var(--ink);white-space:pre-wrap;
+    overflow-wrap:anywhere}
+  .say-meta{margin-top:6px;font-size:.74rem;color:var(--ink-3)}
+  .say-meta b{color:var(--ink-2);font-weight:700}
   .linkrow{display:flex;align-items:baseline;gap:10px;padding:8px 11px;font-size:.82rem;
     background:var(--line-soft)}
   .linkrow:nth-child(even){background:var(--surface)}
@@ -2225,8 +2234,25 @@
       <label class="lbl hidden" id="svFilterAWrap">答案<select id="svFilterA"></select></label>
     </div>
     <div id="svAdminMsg"></div>
-    <div id="svBody"></div>
-    <div id="svResponses" style="margin-top:12px"></div>
+    <!-- celine：「問卷的蒐選結果還是很難篩選，我想直接看所有人的回饋意見」
+         「除了回饋，其他欄位也都要能這樣篩選，不然每次都要滑到底才能看到」。
+         原本所有圖表在上面、逐筆回覆在最下面，想看一句話要先滑過七八張圖。
+         改成四個小分頁，預設停在「大家說了什麼」——那是最常要看的東西。 -->
+    <div class="subtabs" role="tablist" data-group="survey">
+      <button type="button" class="subtab" role="tab" data-pane="svPaneSay">大家說了什麼</button>
+      <button type="button" class="subtab" role="tab" data-pane="svPaneQ">逐題看</button>
+      <button type="button" class="subtab" role="tab" data-pane="svPaneAll">逐筆回覆</button>
+      <button type="button" class="subtab" role="tab" data-pane="svPaneSum">總覽圖表</button>
+    </div>
+    <div class="subpane" id="svPaneSay"><div id="svComments"></div></div>
+    <div class="subpane" id="svPaneQ">
+      <div class="row" style="margin:0 0 10px">
+        <label class="lbl">看哪一題<select id="svQPick"></select></label>
+      </div>
+      <div id="svByQ"></div>
+    </div>
+    <div class="subpane" id="svPaneAll"><div id="svResponses"></div></div>
+    <div class="subpane" id="svPaneSum"><div id="svBody"></div></div>
   </div>
   <div class="panel" id="pnlFeedback">
     <h2>問題回報／建議<span class="n hidden" id="fbCount"></span></h2>
@@ -11500,8 +11526,100 @@ async function loadSurveyAdmin(){
   const f=surveyFiltered();
   if(f) renderSurveySummary(surveyAggregate(f.rows), `${label}・${f.label}・`);
   else renderSurveySummary(d||{}, label);
+  SV_SAY_SHOW=30;
+  fillSurveyQPick();
+  renderSurveyComments();
+  renderSurveyByQuestion();
   await renderSurveyResponses();
 }
+/* 現在這一刻要看的是哪幾份（有設篩選就是篩過的，沒設就是全部）。
+   三個分頁共用同一份，才不會「圖表算 30 份、留言列 50 則」這種對不起來的事。 */
+function surveyRowsNow(){ const f=surveyFiltered(); return f?f.rows:(SV_RAW||[]); }
+function surveyWho(r){
+  return r.user_id ? (r.profiles?.display_name || '會員（沒設暱稱）') : '訪客';
+}
+
+/* 「大家說了什麼」：所有人的文字回饋，照時間由新到舊，直接攤平。
+   celine：「我想直接看所有人的回饋意見」——原本這些字散在每一份回覆裡面，
+   要一份一份點開才看得到，而且還在所有圖表的下面。 */
+let SV_SAY_SHOW=30;
+function renderSurveyComments(){
+  const el=$('#svComments');
+  if(!el) return;
+  const f=surveyFiltered();
+  const rows=surveyRowsNow().filter(r=>String(r.comment||'').trim());
+  if(!SV_RAW.length){ el.innerHTML=''; return; }
+  if(!rows.length){
+    el.innerHTML=`<div class="hint">${esc(SV_LABEL||'')}${f?'・'+esc(f.label):''}沒有人留下文字。
+      （有填問卷但沒寫字的不算——那一份還是在「逐筆回覆」裡。）</div>`;
+    return;
+  }
+  const shown=rows.slice(0,SV_SAY_SHOW);
+  el.innerHTML=`<div class="sv-toolbar"><b>大家說了什麼（${rows.length} 則）</b></div>
+    ${f?`<div class="sv-filter-note">篩選：${esc(f.label)}</div>`:''}
+    <div style="margin-top:8px">${shown.map(r=>`<div class="say">
+      <div class="say-text">${esc(r.comment)}</div>
+      <div class="say-meta">${esc(fmtDT(r.created_at))}・<b>${esc(surveyWho(r))}</b>
+        ・滿意度 ${esc(String(r.overall))}・推薦 ${esc(String(r.nps))}</div>
+    </div>`).join('')}</div>
+    ${rows.length>SV_SAY_SHOW
+      ? `<button type="button" class="btn sm" id="btnSayMore" style="margin-top:10px">再看 30 則（還有 ${rows.length-SV_SAY_SHOW} 則）</button>`
+      : ''}`;
+  const more=$('#btnSayMore');
+  if(more) more.onclick=()=>{ SV_SAY_SHOW+=30; renderSurveyComments(); };
+}
+
+/* 「逐題看」：選一題，一次看完所有人在那一題答了什麼。
+   celine：「除了回饋，其他欄位也都要能這樣篩選，不然每次都要滑到底才能看到」。
+   上面是每個選項幾個人（照人數排），下面是每一份各自答了什麼。 */
+function fillSurveyQPick(){
+  const sel=$('#svQPick');
+  if(!sel) return;
+  const qs=surveyFilterQuestions().filter(q=>q.key!=='person');   // 「填表人」在這裡沒意義
+  const keep=sel.value;
+  sel.innerHTML=qs.map(q=>`<option value="${esc(q.key)}">${esc(q.label)}</option>`).join('');
+  sel.value=qs.some(q=>q.key===keep) ? keep : (qs.find(q=>q.key==='liked')?.key || qs[0].key);
+}
+function renderSurveyByQuestion(){
+  const el=$('#svByQ');
+  if(!el) return;
+  const q=surveyFilterQuestions().find(x=>x.key===$('#svQPick')?.value);
+  if(!q || !SV_RAW.length){ el.innerHTML=''; return; }
+  const rows=surveyRowsNow();
+  const label=k=>(q.opts.find(o=>o[0]===String(k))
+    || [k, SURVEY_LEGACY_LABELS[k] ? SURVEY_LEGACY_LABELS[k]+'（舊版）' : k])[1];
+  const answersOf=r=>{ const v=q.get(r); return v==null ? [] : (Array.isArray(v)?v:[v]).filter(x=>x!=null&&x!==''); };
+  const count=new Map();
+  let blank=0;
+  rows.forEach(r=>{
+    const list=answersOf(r);
+    if(!list.length){ blank++; return; }
+    list.forEach(k=>count.set(String(k), (count.get(String(k))||0)+1));
+  });
+  const sorted=[...count.entries()].sort((a,b)=>b[1]-a[1]);
+  const max=sorted.length?sorted[0][1]:0;
+  const answered=rows.length-blank;
+  el.innerHTML=`<div class="sv-toolbar"><b>${esc(q.label)}</b>
+      <span class="hint">${answered} 份有答${blank?`・${blank} 份沒答`:''}${q.multi?'・可複選':''}</span></div>
+    ${sorted.length?`<div class="sub-list" style="margin:8px 0 14px">${sorted.map(([k,n])=>`
+      <div class="linkrow">
+        <span class="lr-name">${esc(label(k))}</span>
+        <span class="lr-n"><b>${n}</b> 人${answered?`・${Math.round(100*n/answered)}%`:''}</span>
+        <span class="lr-when" style="width:60px"><span class="vm-track" style="display:block"><span class="vm-fill"
+          style="width:${max?Math.round(100*n/max):0}%"></span></span></span>
+      </div>`).join('')}</div>`
+    : '<div class="hint" style="margin:8px 0 14px">這段期間沒有人答這一題。</div>'}
+    <div class="sv-toolbar"><b>每一份各自答了什麼</b></div>
+    <div class="sub-list" style="margin-top:8px">${rows.slice(0,100).map(r=>{
+      const list=answersOf(r);
+      return `<div class="linkrow">
+        <span class="lr-name">${esc(list.length?list.map(label).join('、'):'—')}</span>
+        <span class="lr-n">${esc(surveyWho(r))}</span>
+        <span class="lr-when">${esc(String(r.created_at||'').slice(5,10))}</span>
+      </div>`;}).join('')}</div>
+    ${rows.length>100?`<div class="hint" style="margin-top:6px">只列出最近 100 份（這段期間共 ${rows.length} 份）。</div>`:''}`;
+}
+
 // 逐筆回覆：時間、名字（訪客標訪客）、信箱、分數、每一題的答案、還想說的話
 async function renderSurveyResponses(){
   const el=$('#svResponses'); if(!el) return;
@@ -11587,12 +11705,15 @@ async function renderSurveyResponses(){
 $('#svFilterQ').onchange=()=>{ renderSurveyFilterAnswers(); applySurveyFilter(); };
 $('#svFilterA').onchange=()=>applySurveyFilter();
 function applySurveyFilter(){
-  SV_SHOW=30;
+  SV_SHOW=30; SV_SAY_SHOW=30;
   const f=surveyFiltered();
   if(f) renderSurveySummary(surveyAggregate(f.rows), `${SV_LABEL}・${f.label}・`);
   else loadSurveyAdmin();
+  renderSurveyComments();
+  renderSurveyByQuestion();
   renderSurveyResponses();
 }
+$('#svQPick').onchange=renderSurveyByQuestion;
 function renderSurveySummary(d, label){
   const total=Number(d.total||0);
   $('#svCount').textContent=total; $('#svCount').classList.toggle('hidden',!total);
