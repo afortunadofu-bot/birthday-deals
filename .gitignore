@@ -10,3 +10,14 @@ stores_fetched.json
 stores_import_*.sql
 stores_fetched_regions.json
 region_fill_report.md
+
+# Capacitor App 外殼（app/）——產物與建置快取不進 git。
+# android/ 本身要進 git：裡面有 AndroidManifest、圖示、簽章設定，CI 要用。
+app/www/
+app/android/app/build/
+app/android/build/
+app/android/.gradle/
+app/android/local.properties
+app/android/app/release/
+app/ios/App/Pods/
+app/ios/App/build/

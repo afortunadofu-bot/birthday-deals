@@ -13,6 +13,7 @@
  *
  * 三個端點（都只接 GET）：
  *   /offers  已上架的優惠（offers_public，自動翻頁，不受 PostgREST 1000 筆上限影響）
+ *   /offers/first  開場先畫的前 60 筆（照「依省最多」排，跟網站的預設排序同一套）
  *   /stats   站台數據（site_stats_cached，沒跑 v78 就退回 site_stats）
  *   /board   排行榜那一頁要的 14 份公開統計，打包成一包
  *   /boot    每開一次網頁都要問的兩筆（公告、顯示開關），快取 60 秒
@@ -48,7 +49,13 @@ const DEFAULTS = {
 const FRESH_TTL = 600;        // 10 分鐘內算新鮮，直接回快取
 // 開場那兩筆只快取 60 秒：顯示開關是管理員即時在調的，關掉某個東西
 // 不該等十分鐘才在訪客那邊生效。
-const TTL = { offers: FRESH_TTL, stats: FRESH_TTL, board: FRESH_TTL, boot: 60 };
+const TTL = { offers: FRESH_TTL, offersFirst: FRESH_TTL, stats: FRESH_TTL, board: FRESH_TTL, boot: 60 };
+
+/* 開場先給幾筆。整包 482 筆是 91KB（gzip 後的真實流量）、未壓縮 671KB，手機要
+   等它傳完＋解析完才看得到真的資料（在那之前畫面上是內建的示範資料，回報次數
+   都是 0）。先給 60 筆大約 14KB，第一螢幕就能換成真的，剩下的在背景補。
+   60 是「捲一兩下才會到底」的量；再多就失去意義了。 */
+const FIRST_N = 60;
 const STALE_TTL = 86400;      // 上游掛掉時，24 小時內的舊資料還可以頂著用
 const PAGE = 1000;            // PostgREST 的 max-rows，一頁最多就是這麼多
 const MAX_PAGES = 10;
@@ -109,6 +116,16 @@ async function fromSupabase(env, kind) {
       one('site_settings?select=key,enabled'),
     ]);
     return { announcement: Array.isArray(ann) ? (ann[0] || null) : (ann || null), flags };
+  }
+
+  /* 開場那 60 筆：照 value_twd 由大到小，跟網站預設的「依省最多」同一個排序，
+     所以背景把完整那包換上來的時候，前幾張卡片不會整個跳掉重排。 */
+  if (kind === 'offersFirst') {
+    const res = await fetch(
+      `${base}/rest/v1/offers_public?select=*&order=value_twd.desc.nullslast,brand.asc&limit=${FIRST_N}`,
+      { headers });
+    if (!res.ok) throw new Error(`offers_public(first) ${res.status}`);
+    return await res.json();
   }
 
   const out = [];
@@ -235,13 +252,13 @@ async function statusPage(request) {
   const origin = new URL(request.url).origin;
   const cache = caches.default;
   const warm = {};
-  for (const kind of ['offers', 'stats', 'board', 'boot']) {
+  for (const kind of ['offers', 'offersFirst', 'stats', 'board', 'boot']) {
     warm[kind] = !!(await cache.match(new Request(`${origin}/__cache/${kind}/fresh`, { method: 'GET' })));
   }
   const now = new Date().toISOString();
 
   if (!(request.headers.get('accept') || '').includes('text/html')) {
-    return json({ ok: true, service: '壽星日 edge cache', paths: ['/offers', '/stats', '/board', '/boot', '/health'], cache: warm, now },
+    return json({ ok: true, service: '壽星日 edge cache', paths: ['/offers', '/offers/first', '/stats', '/board', '/boot', '/health'], cache: warm, now },
       { ttl: 0 });
   }
 
@@ -271,6 +288,7 @@ p.note{font-size:.84rem;color:#8f8482;margin-top:22px}
 <h1>壽星日 邊緣快取</h1>
 <div class="ok">● 運作中</div>
 <div class="row"><code><a href="/offers">/offers</a></code>　優惠清單　${mark(warm.offers)}</div>
+<div class="row"><code><a href="/offers/first">/offers/first</a></code>　開場先畫的前 ${FIRST_N} 筆　${mark(warm.offersFirst)}</div>
 <div class="row"><code><a href="/stats">/stats</a></code>　站台數據　${mark(warm.stats)}</div>
 <div class="row"><code><a href="/board">/board</a></code>　排行榜統計　${mark(warm.board)}</div>
 <div class="row"><code><a href="/boot">/boot</a></code>　公告＋顯示開關　${mark(warm.boot)}</div>
@@ -295,6 +313,7 @@ const handler = {
 
     if (request.method === 'GET' || request.method === 'HEAD') {
       if (path === '/offers') return serve(request, env, ctx, 'offers');
+      if (path === '/offers/first') return serve(request, env, ctx, 'offersFirst');
       if (path === '/stats') return serve(request, env, ctx, 'stats');
       if (path === '/board') return serve(request, env, ctx, 'board');
       if (path === '/boot') return serve(request, env, ctx, 'boot');
@@ -307,7 +326,7 @@ const handler = {
 
     if (path === '/' && (request.method === 'GET' || request.method === 'HEAD')) return statusPage(request);
 
-    return json({ error: 'not found', paths: ['/offers', '/stats', '/board', '/boot', '/health'] }, { status: 404, ttl: 0 });
+    return json({ error: 'not found', paths: ['/offers', '/offers/first', '/stats', '/board', '/boot', '/health'] }, { status: 404, ttl: 0 });
   },
 };
 

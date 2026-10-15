@@ -26,7 +26,7 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.eq('點陣標誌的點位跟品牌規範一樣', dots.join(''), '.W.A' + 'WA..' + '..AW' + 'A.W.');
   const apps = () => $$('.xsj-apps a').map((x) => [x.textContent.trim(), x.getAttribute('href')]);
   t.eq('列出三個產品', apps().map((x) => x[0]),
-    ['壽星日', 'Bandary 聽團曆 · Google Play', 'RelateStats · Google Play']);
+    ['壽星日', 'Bandary 聽團曆', 'RelateStats']);
   t.eq('壽星日標成目前這一站', $('.xsj-apps [aria-current="page"]').textContent.trim(), '壽星日');
   // 2026-10-15 上架了，另外兩個從封測報名表換成 Google Play 的上架頁
   t.eq('Bandary 連到 Google Play', apps()[1][1],

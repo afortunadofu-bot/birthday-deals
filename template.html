@@ -2438,10 +2438,10 @@
       <a href="./" aria-current="page">壽星日</a>
       <span class="xsj-sep">·</span>
       <a href="https://play.google.com/store/apps/details?id=com.bandary.app" target="_blank" rel="noopener"
-         data-flag="show_studio_bandary">Bandary 聽團曆 · Google Play</a>
+         data-flag="show_studio_bandary">Bandary 聽團曆</a>
       <span class="xsj-sep">·</span>
       <a href="https://play.google.com/store/apps/details?id=com.relatestats.app" target="_blank" rel="noopener"
-         data-flag="show_studio_relatestats">RelateStats · Google Play</a>
+         data-flag="show_studio_relatestats">RelateStats</a>
     </nav>
     <div class="xsj-meta">© <span id="xsjYear"></span> 小數據所 · Celine Fu</div>
   </div>
@@ -3532,16 +3532,46 @@ async function bootBundle(){
   })();
   return BOOT_INFLIGHT;
 }
+/* 開場先畫前 60 筆（celine：「先給前幾十筆、捲到再補後面」）。
+
+   整包 482 筆是 91KB（gzip 後的真實流量）、未壓縮 671KB。在它傳完＋解析完之前，
+   畫面上是內建的示範資料——那份的回報次數、省下金額全是 0（嵐回報過「明明很多人
+   回報，但回報紀錄都是 0」就是在講這個畫面）。先拿 60 筆（約 14KB）把第一螢幕換成
+   真的，剩下的在背景補。
+
+   三個刻意的選擇：
+   - Worker 那邊照 value_twd 由大到小給，跟網站預設的「依省最多」同一個排序，
+     所以完整那包換上來的時候，前幾張卡片不會整個跳掉重排。
+   - 完整那包先開始跑，預覽才去要——預覽只是順便，不能拖慢正事。網路夠快、
+     完整那包先回來的話就直接跳過預覽，不要多閃一次。
+   - loadOffers() 還是等完整那包到齊才回來，所以開場後面那些「標記已看過」
+     之類的步驟永遠拿到的是完整資料，不會被半份資料影響。 */
+let PREVIEW_ONLY=false;   // 只拿到預覽那 60 筆，完整那包還沒到（或掛了）
+async function previewFirstOffers(fullPromise){
+  if(!edgeApi()) return false;
+  const first=await Promise.race([edgeFetch('/offers/first'), fullPromise.then(()=>null, ()=>null)]);
+  if(!Array.isArray(first) || !first.length) return false;   // 舊版 Worker 沒這個端點就回 null
+  OFFERS=first.map(fromRow);
+  render();
+  return true;
+}
 async function loadOffers(force){
   if(!force){
     const cached=readOffersCache();
     if(cached){ OFFERS=cached.map(fromRow); return; }
     // force 時刻意跳過邊緣快取：那是「自己剛回報／投稿完」才會用的路徑，
     // 要拿到最新的狀態，不能拿一份最多舊 10 分鐘的共用快取。
-    const rows=await edgeFetch('/offers');
+    const fullP=edgeFetch('/offers');
+    const previewed=await previewFirstOffers(fullP);
+    const rows=await fullP;
     if(Array.isArray(rows) && rows.length){
-      OFFERS=rows.map(fromRow); writeOffersCache(rows); return;
+      OFFERS=rows.map(fromRow); writeOffersCache(rows);
+      if(previewed) render();     // 預覽畫過一次了，這裡要再畫一次才會是完整的
+      return;
     }
+    // 預覽成功、完整那包卻掛了：預覽那 60 筆留著（真的資料，比示範資料好），
+    // 下面再試一次直接問 Supabase
+    if(previewed) PREVIEW_ONLY=true;
   }
   // PostgREST 的 max-rows 是 1000（v82 就是栽在這裡），`.limit(3000)` 擋不住。
   // 現在站上 426 筆還沒到，但總有一天會到——到的時候不能默默只顯示前 1000 筆。
@@ -3559,11 +3589,15 @@ async function loadOffers(force){
   // 示範資料，那份的回報次數、省下金額全部是 0——不講清楚的話，看起來就像
   // 「大家的回報都不見了」。這裡直接寫明現在看到的數字不是真的。
   if(error){
-    note($('#modeBanner'),'alert',
-      `<b>優惠資料暫時讀不到</b>（${esc(error.message)}）——現在畫面上是內建的示範資料，`
-      +`<b>回報次數與省下金額都還不是真的</b>，重新整理一次通常就會回來。`);
+    // 預覽那 60 筆是真資料，這時候不能說「畫面上是示範資料」——那是另一回事
+    note($('#modeBanner'),'alert', PREVIEW_ONLY
+      ? `<b>只讀到前 ${OFFERS.length} 筆優惠</b>（${esc(error.message)}）——剩下的暫時拿不到，`
+        +`重新整理一次通常就會回來。`
+      : `<b>優惠資料暫時讀不到</b>（${esc(error.message)}）——現在畫面上是內建的示範資料，`
+        +`<b>回報次數與省下金額都還不是真的</b>，重新整理一次通常就會回來。`);
     return;
   }
+  PREVIEW_ONLY=false;
   OFFERS = data.map(fromRow);
   writeOffersCache(data);
 }
@@ -4380,8 +4414,12 @@ function showOAuthError(){
 }
 
 /* ---- PWA ---- */
+/* 包成 App（Capacitor）時不註冊 service worker：那時候所有資產本來就在手機本機，
+   再疊一層快取只會讓改版後「到底是哪一份在跑」變得很難查。
+   window.Capacitor 是原生端注入的，網頁版永遠是 undefined，所以這行對網站沒有影響。 */
+const IS_APP = typeof window.Capacitor !== 'undefined';
 function registerSW(){
-  if('serviceWorker' in navigator && !IS_FILE)
+  if('serviceWorker' in navigator && !IS_FILE && !IS_APP)
     navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 // 加到主畫面：改成右下角（手機貼底）會自動消失的提示條，不要一直釘在頁首佔位置。
@@ -4691,8 +4729,8 @@ const FLAG_LABEL={
   show_dev_intro:'「我的」底部的「關於」入口',
   show_studio_footer:'頁尾「小數據所」整塊',
   show_studio_brandpage:'連回品牌頁',
-  show_studio_bandary:'Bandary（Google Play）',
-  show_studio_relatestats:'RelateStats（Google Play）',
+  show_studio_bandary:'Bandary 聽團曆',
+  show_studio_relatestats:'RelateStats',
   show_coffee:'左下角的咖啡按鈕',
 };
 const FLAG_NOTE={

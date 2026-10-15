@@ -1,0 +1,11 @@
+{
+  "appId": "work.celinefu.shouxing",
+  "appName": "壽星日",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

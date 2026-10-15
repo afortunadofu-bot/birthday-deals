@@ -1,0 +1,17 @@
+{
+  "name": "shouxing-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "壽星日 App 外殼（Capacitor）。網站原始碼仍在上一層的 template.html。",
+  "scripts": {
+    "sync": "python sync_www.py && cap sync",
+    "sync:only": "python sync_www.py"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.3"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/core": "^8.5.3"
+  }
+}

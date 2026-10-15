@@ -72,8 +72,8 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   win.eval('SITE_FLAGS.show_studio_bandary = false; applySiteFlags();');
   const bandary = linkOf('show_studio_bandary');
   t.eq('Bandary 也是只拿掉連結', bandary.getAttribute('href'), null);
-  t.ok('字照樣看得到（2026-10-15 從封測報名換成 Google Play）',
-    /Bandary/.test(bandary.textContent) && /Google Play/.test(bandary.textContent));
+  t.ok('字照樣看得到（連結換成 Google Play，但畫面上不寫 Play）',
+    /Bandary/.test(bandary.textContent) && !/Google Play/.test(bandary.textContent));
   t.ok('RelateStats 不受影響',
     /play\.google\.com/.test(linkOf('show_studio_relatestats').getAttribute('href') || ''));
   // 文字留著，所以中間那個「·」也要留著，不會變成孤單的分隔點
