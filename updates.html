@@ -200,5 +200,10 @@
 </footer>
 <script>document.getElementById('y').textContent=new Date().getFullYear();</script>
 
+<!-- 這一頁被打開幾次、有沒有人從這裡點進品牌頁（審核頁的「咖啡按鈕與站外連結」看得到）。
+     見 track.js：不載 Supabase 的 JS 函式庫，直接 POST 一筆；失敗就算了，不擋頁面。 -->
+<script src="config.js"></script>
+<script src="track.js" data-page="updates"></script>
+
 </body>
 </html>

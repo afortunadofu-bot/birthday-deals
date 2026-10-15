@@ -18,23 +18,11 @@ celine：「為啥你現在 SQL 編號都是亂碼亂跳」。
 
 ## 現在要跑的
 
-> 最後確認時間：2026-10-14（直接打資料庫驗過，不是憑印象）
+> 最後確認時間：2026-10-15（直接打資料庫驗過，不是憑印象）
 
 | 檔案 | 做什麼 | 什麼時候跑 |
 | --- | --- | --- |
-| `schema_v110_regions_from_stores.sql` | 照 `offer_stores` 裡實際找到的分店，補上「適用縣市」空白的優惠 | 隨時可以貼，之後每次重抓分店都可以再跑 |
-| `schema_v112_coffee_stats.sql` | 咖啡按鈕「被幾個人點過」（現在只數得出「幾次」） | 隨時可以貼，貼完審核頁那一塊就會多出人數 |
-| `schema_v113_link_stats.sql` | 頁尾「小數據所」那組連結（品牌頁、兩個 app）被幾個人點過 | 同上，跟 v112 一起貼 |
-
-線上有 67 筆優惠的「適用縣市」是空的（任何縣市篩選都找不到它們）。v110 先把
-**已經有分店資料、縣市卻空白**的那幾筆補上；剩下的要先抓分店：
-
-```
-$env:GOOGLE_MAPS_API_KEY="你的金鑰"; python fetch_stores.py --fill-regions
-```
-
-跑完看一遍 `region_fill_report.md`，再把 `stores_import_regions_*.sql` 依序貼完
-（最後一個檔會自動再呼叫 v110 的函式）。細節見 `GEO-SETUP.md` 的「補上空白的適用縣市」。
+| `schema_v115_page_stats.sql` | 「關於」「隱私權」「服務條款」「更新紀錄」這幾頁也要有人次 | 隨時可以貼。要連 `track.js` 跟那四頁一起重新上傳，才會開始有數字 |
 
 ## 已經跑過的（確認過，不用再跑）
 
@@ -44,6 +32,9 @@ $env:GOOGLE_MAPS_API_KEY="你的金鑰"; python fetch_stores.py --fill-regions
 | `schema_v92_site_events_io.sql` | `admin_events_prune_preview`、`admin_dashboard_stats` 這兩支函式都在（anon 呼叫回 42501「權限不足」，不是「找不到函式」）|
 | `schema_v95_site_settings.sql` | 被 `v97` 覆蓋（它是超集）。**不要再跑它**：它的 key 白名單沒有 `show_dev_intro`，重跑會報 `site_settings_key_known is violated by some row`（2026-10-14 踩過）|
 | `v73`–`v83` | 2026-10-06 一支一支打過 RPC／view 驗過（見 CHANGELOG v92 那段）|
+| `schema_v110_regions_from_stores.sql` | 2026-10-15 查線上資料：「適用縣市」空白的從 **67 筆降到 14 筆**，爬蟲補上了 53 筆 |
+| `schema_v112_coffee_stats.sql` | celine 的截圖裡「咖啡按鈕」已經顯示人數（63 人／共 76 次），代表函式在 |
+| `schema_v113_link_stats.sql` | 同一張截圖裡「站外連結」那張表有資料（品牌頁 1 人 1 次）|
 
 ## 跑法
 

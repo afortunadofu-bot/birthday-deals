@@ -530,6 +530,11 @@
   .near-info[aria-expanded="true"]{color:var(--accent)}
   .near-trigger{flex:none;white-space:nowrap}
   .near-trigger.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  /* 「只看收藏」按下去要看得出來。不用實心紅——旁邊的「📍 附近」已經是實心的，
+     兩顆紅的擺在一起會分不出誰是主要的那顆。 */
+  #btnNearWish.active{border-color:var(--accent);color:var(--accent-dark);
+    background:var(--accent-soft);font-weight:700}
+  #btnNearWish.active svg{fill:var(--accent)}
   .line.near-line{color:var(--ink-2)}
   .near-line a{margin-left:6px;font-size:.78rem}
   .flag.free{background:var(--free-bg);border-color:var(--free-line);color:var(--free)}
@@ -588,6 +593,16 @@
     font-size:.79rem;color:var(--accent-dark);font-weight:700;display:flex;align-items:center;gap:4px}
   .sub-toggle svg{width:12px;height:12px;transition:transform .16s var(--ease)}
   .sub-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
+  /* 審核頁「站外連結」的每一列：左邊連到哪、右邊人數／次數。
+     本來是借用排行榜的 table.lb，但那張表把第二欄寫死成「撐滿的那一欄」，
+     而這裡第二欄是「人」——結果左邊的名稱被擠成一個字一行（celine：「很醜」）。 */
+  .linkrow{display:flex;align-items:baseline;gap:10px;padding:8px 11px;font-size:.82rem;
+    background:var(--line-soft)}
+  .linkrow:nth-child(even){background:var(--surface)}
+  .linkrow .lr-name{flex:1;min-width:0;color:var(--ink-2)}
+  .linkrow .lr-n{flex:none;font-variant-numeric:tabular-nums;color:var(--ink-3);white-space:nowrap}
+  .linkrow .lr-n b{color:var(--ink);font-weight:800}
+  .linkrow .lr-when{flex:none;color:var(--ink-3);font-size:.72rem;white-space:nowrap}
   .sub-list{display:grid;gap:0;margin:0;border-radius:var(--r-xs);overflow:hidden;
     border:1px solid var(--line-soft)}
   .sub-list.hidden{display:none}
@@ -4807,7 +4822,7 @@ async function loadCoffeeStats(){
     : '';
   const people = openPeople!=null;
   const tile=(v, unit, k)=>`<div><div class="v">${nt2(v)}${unit}</div><div class="k">${k}</div></div>`;
-  box.innerHTML=`<div class="stats">
+  box.innerHTML=`<div class="bigstat">
       ${people ? tile(openPeople,' 人', `${esc(label)}點開說明的人（共 ${nt2(open)} 次）`)
                : tile(open,'', `${esc(label)}點開說明`)}
       ${people ? tile(goPeople,' 人', `按了「去 Buy Me a Coffee」的人（共 ${nt2(go)} 次）`)
@@ -4826,7 +4841,9 @@ async function loadCoffeeStats(){
 /* 頁尾那組「小數據所」連結的點擊（studio_click，meta.to 記點到哪一個）。
    跟咖啡那塊共用同一個區間選單——問的是同一件事：有多少人真的往外走。 */
 const LINK_LABEL={brandpage:'品牌頁 小數據所', bandary:'Bandary 聽團曆（報名表）',
-  relatestats:'RelateStats（報名表）', 其他:'其他'};
+  relatestats:'RelateStats（報名表）', other:'其他連結',
+  page_about:'關於這個網站', page_privacy:'隱私權政策', page_terms:'服務條款',
+  page_updates:'更新紀錄', page_other:'其他頁面'};
 async function loadLinkStats(){
   const box=$('#linkStatsBody');
   if(!box || !myProfile?.is_admin || !LIVE) return;
@@ -4842,22 +4859,30 @@ async function loadLinkStats(){
   }
   const rows=(data||[]).filter(r=>Number(r.clicks)>0);
   const label = days>0 ? `近 ${days} 天` : '全部時間';
-  if(!rows.length){
-    box.innerHTML=`<div style="color:var(--ink-3);font-size:.86rem">${esc(label)}還沒有人點頁尾那組連結。</div>`;
-    return;
-  }
+  const isPage=r=>String(r.target||'').startsWith('page_');
+  const pages=rows.filter(isPage), links=rows.filter(r=>!isPage(r));
+  // 借排行榜的 table.lb 畫過一版，但那張表把第二欄寫死成「撐滿的那一欄」，
+  // 而這裡第二欄是「人」——左邊的名稱被擠成一個字一行。改成自己的 .linkrow。
+  const row=r=>`<div class="linkrow">
+      <span class="lr-name">${esc(LINK_LABEL[r.target]||r.target)}</span>
+      <span class="lr-n"><b>${nt2(r.people)}</b> 人 · ${nt2(r.clicks)} 次</span>
+      <span class="lr-when">${r.last_at?esc(String(r.last_at).slice(5,10)):'—'}</span>
+    </div>`;
+  const group=(title, list, empty)=>`<div style="margin-bottom:12px">
+      <div style="font-size:.78rem;color:var(--ink-3);font-weight:700;margin:0 0 5px">${esc(title)}</div>
+      ${list.length?`<div class="sub-list">${list.map(row).join('')}</div>`
+        : `<div style="color:var(--ink-3);font-size:.8rem">${empty}</div>`}
+    </div>`;
   const off = SITE_FLAGS.show_studio_footer===false
-    ? '<div class="note alert" style="margin-top:10px">頁尾整塊目前是關掉的，所以不會再有新的數字。</div>' : '';
-  renderCollapsibleTable(box,
-    '<th>連到哪</th><th class="amt">人</th><th class="amt">次</th><th class="amt">最後一次</th>',
-    rows.map(r=>`<tr><td>${esc(LINK_LABEL[r.target]||r.target)}</td>
-      <td class="amt">${nt2(r.people)}</td>
-      <td class="amt">${nt2(r.clicks)}</td>
-      <td class="amt" style="font-weight:400;color:var(--ink-3)">${r.last_at?esc(String(r.last_at).slice(0,10)):'—'}</td></tr>`),
-    5, 'link-stats-more', '');
-  box.insertAdjacentHTML('beforeend', off +
-    `<p class="hint" style="margin-top:8px">${esc(label)}。「人」跟上面一樣算的是瀏覽器。
-      about.html（「關於」那一頁）裡的品牌頁連結也算得到——它自己有一小段同樣的記錄。</p>`);
+    ? '<div class="note alert" style="margin-top:4px">頁尾整塊目前是關掉的，所以站外連結不會再有新的數字。</div>' : '';
+  box.innerHTML =
+    group('往站外去（品牌頁、兩個 app）', links, `${esc(label)}還沒有人點。`)
+    + group('站內的幾頁', pages,
+        '還沒有紀錄——要先執行 schema_v115_page_stats.sql，而且那幾頁要重新上傳一次。')
+    + off
+    + `<p class="hint" style="margin:6px 0 0">${esc(label)}。右邊的日期是最後一次。
+      「人」跟上面一樣算的是瀏覽器。「關於」「隱私權」「服務條款」「更新紀錄」這幾頁沒有載主程式，
+      是各自記一筆（見 track.js），所以它們不會算進排行榜上公開的「總瀏覽人次」。</p>`;
 }
 $('#coffeeRange').onchange=()=>{ loadCoffeeStats(); loadLinkStats(); };
 $('#btnCoffeeStatsReload').onclick=()=>{ loadCoffeeStats(); loadLinkStats(); };
