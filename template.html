@@ -3385,16 +3385,44 @@ function renderDiagnostics(mb){
 }
 
 let PROFILE_ERROR=false;
+/* 個人檔案（暱稱、是不是管理員、有沒有被停權）在這個分頁裡存一份，10 分鐘內
+   重開、切分頁、換網址都不用再查一次。
+
+   為什麼只存 10 分鐘、而且只存在 sessionStorage：這一列決定「你是不是管理員」
+   跟「有沒有被停權」。存太久的話，剛被停權的人還能繼續操作一陣子；存在
+   localStorage 的話連關掉瀏覽器都還在。10 分鐘＋關掉分頁就沒了，是「省一次
+   查詢」跟「權限要很快生效」之間的折衷。
+
+   另外：任何寫入被資料庫擋下來（RLS 拒絕）時會強制重查一次——被停權的人
+   第一次按下去就會立刻發現自己的狀態變了，不用等那 10 分鐘。 */
+const PROFILE_TTL_MS=10*60*1000;
+function cachedProfile(uid){
+  try{
+    const raw=JSON.parse(sessionStorage.getItem('sxr_profile')||'null');
+    if(raw && raw.id===uid && Date.now()-raw.at<PROFILE_TTL_MS) return raw.row;
+  }catch{}
+  return null;
+}
+function cacheProfile(uid, row){
+  try{
+    if(row) sessionStorage.setItem('sxr_profile', JSON.stringify({id:uid, at:Date.now(), row}));
+    else sessionStorage.removeItem('sxr_profile');
+  }catch{}
+}
+function forgetProfile(){ cacheProfile(null, null); }
 async function onSession(s){
   me = s?.user || null;
   PROFILE_ERROR=false;
   if(me){
-    const {data,error} = await sb.from('profiles').select('*').eq('id',me.id).single();
+    const hit=cachedProfile(me.id);
+    const {data,error} = hit ? {data:hit, error:null}
+      : await sb.from('profiles').select('*').eq('id',me.id).single();
+    if(!hit) cacheProfile(me.id, data||null);
     if(error || !data){
       // profiles 沒查到列，最常見原因是這個帳號在 schema.sql 的自動建檔 trigger
       // 安裝之前就登入過，導致 profiles 表根本沒有這一列。
       // 不要靜默失敗——把 user id 直接秀出來，讓使用者能貼去 SQL 裡查。
-      myProfile = null; PROFILE_ERROR=true;
+      myProfile = null; PROFILE_ERROR=true; forgetProfile();
       note($('#modeBanner'),'alert',
         `<b>讀不到你的個人檔案</b>（${esc(error?.message||'查無資料')}）。<br>
          你的帳號 id：<code>${esc(me.id)}</code>　信箱：<code>${esc(me.email||'—')}</code><br>
@@ -4480,7 +4508,7 @@ $('#btnLogin').onclick = async()=>{
 // 按鈕的登入邏輯，不用重複寫一次 OAuth 流程。
 $('#btnMineLogin').onclick = ()=>$('#btnLogin').click();
 $('#btnLbLogin').onclick = ()=>$('#btnLogin').click();
-$('#btnLogout').onclick = async()=>{ await sb.auth.signOut(); location.reload(); };
+$('#btnLogout').onclick = async()=>{ forgetProfile(); await sb.auth.signOut(); location.reload(); };
 
 /* OAuth 失敗時 Supabase 會把原因塞在網址的 # 後面帶回來。
    不主動讀出來的話，使用者只會看到「按了沒反應、回到首頁」。 */
@@ -5323,8 +5351,14 @@ function ensureTabData(tab){
   if(tab==='mine'){
     if(!me) return;
     TAB_LOADED.add(tab);
-    loadMyStuff(); loadPendingPreview(); loadPendingEditsPreview();
+    loadMyTab();
     return;
+  }
+  /* 投稿表單打店名時會即時比對「是不是已經有人投過同一家」，用的是
+     PENDING_PREVIEW——那份本來跟著開場一起載，現在改成切到「新增」才載。 */
+  if(tab==='submit'){
+    if(!me || PENDING_PREVIEW.length) return;
+    loadPendingPreview();
   }
   if(tab==='admin'){
     if(!myProfile?.is_admin) return;
@@ -7508,6 +7542,7 @@ $('#submitForm').onsubmit=async e=>{
 $('#optLeaderboard').onchange=async e=>{
   if(!LIVE||!me) return;
   const {error}=await sb.from('profiles').update({show_on_leaderboard:e.target.checked}).eq('id',me.id);
+  forgetProfile();   // 自己改過了，快取裡那一份已經過期
   if(error){ alert('設定失敗：'+error.message); e.target.checked=!e.target.checked; }
 };
 
@@ -7519,6 +7554,7 @@ $('#btnSaveNickname').onclick=async()=>{
   if(!v){ note($('#nicknameMsg'),'alert','暱稱不能空白。'); return; }
   const btn=$('#btnSaveNickname'); btn.disabled=true;
   const {error}=await sb.from('profiles').update({display_name:v}).eq('id',me.id);
+  forgetProfile();   // 自己改過了，快取裡那一份已經過期
   btn.disabled=false;
   if(error){ note($('#nicknameMsg'),'alert','儲存失敗：'+esc(error.message)); return; }
   myProfile = myProfile ? {...myProfile, display_name:v} : myProfile;
@@ -7539,6 +7575,7 @@ $('#btnSaveBirthday').onclick=async()=>{
   const d=$('#bday').value?Number($('#bday').value):null;
   const btn=$('#btnSaveBirthday'); btn.disabled=true;
   const {error}=await sb.from('profiles').update({birth_month:m, birth_day:d}).eq('id',me.id);
+  forgetProfile();   // 自己改過了，快取裡那一份已經過期
   btn.disabled=false;
   if(error){
     const hint=/relation|does not exist|column/i.test(error.message)?'（Supabase 可能還沒跑 schema_v18_misc.sql）':'';
@@ -7772,6 +7809,22 @@ function renderBadges(sv){
 /* 我已經評過哪幾筆——拿來算「用過但還沒給星等」的那幾家（見 unratedUsed()）。
    本來跟「我的」那一包綁在一起，但排行榜的「還沒評分」提示跟優惠詳情裡的星等
    在哪一頁都看得到，所以這一支留在開場，其餘的切到「我的」才載。 */
+/* 「我的」那一頁本來要打四支（省下多少、我的回報、審核中的投稿、審核中的修改建議）。
+   v124 的 my_dashboard() 一次回一包，四支變一支。
+
+   還沒跑 v124 的站台不會壞：呼叫失敗就讓那三支各自去查自己的，跟以前一模一樣
+   （它們都接受「已經拿到的資料」，拿不到才自己查）。 */
+async function loadMyTab(){
+  if(!LIVE||!me) return;
+  let d=null;
+  try{
+    const {data,error}=await sb.rpc('my_dashboard');
+    if(!error && data && typeof data==='object') d=data;
+  }catch{}
+  loadMyStuff(d);
+  loadPendingPreview(d?d.pending||[]:null);
+  loadPendingEditsPreview(d?d.pending_edits||[]:null);
+}
 async function loadMyRatings(){
   if(!LIVE||!me) return;
   const {data}=await sb.from('offer_ratings').select('offer_id,score').eq('user_id',me.id);
@@ -7794,10 +7847,11 @@ async function loadPendingBadge(){
     el.textContent=n; el.classList.toggle('hidden', !n);
   });
 }
-async function loadMyStuff(){
+async function loadMyStuff(pre){
   if(!LIVE||!me) return;
   if($('#fNickname')&&document.activeElement!==$('#fNickname')) $('#fNickname').value=myProfile?.display_name||'';
-  const {data:sv}=await sb.from('my_savings').select('*').eq('user_id',me.id).maybeSingle();
+  const {data:sv} = pre ? {data:pre.savings||null}
+    : await sb.from('my_savings').select('*').eq('user_id',me.id).maybeSingle();
   $('#mySavings').innerHTML = sv ? `
     <div class="hero"><div class="v">${nt(sv.saved_total)}</div><div class="k">累積省下</div></div>
     <div><div class="v">${nt(sv.saved_this_year)}</div><div class="k">今年省下</div></div>
@@ -7828,9 +7882,10 @@ async function loadMyStuff(){
   }
 
   const R={success:['成功','ok'],partial:['部分','partial'],failed:['失敗','fail']};
-  const {data:reps}=await sb.from('usage_reports')
-    .select('id,used_on,result,saved_twd,spent_twd,store,note,created_at,offer_id,offers(id,brand,offer,timing,value_twd)')
-    .eq('user_id',me.id).order('used_on',{ascending:false});
+  const {data:reps} = pre ? {data:pre.reports||[]}
+    : await sb.from('usage_reports')
+      .select('id,used_on,result,saved_twd,spent_twd,store,note,created_at,offer_id,offers(id,brand,offer,timing,value_twd)')
+      .eq('user_id',me.id).order('used_on',{ascending:false});
   MY_REPORTS=reps||[];
   renderMyReports(R);
   maybeShowRateNudge();
@@ -8766,12 +8821,13 @@ function brandChipsHtml(brands, idx){
 }
 
 /* ---- 待審投稿公開預覽：唯讀，一般人看得到但不能審核（審核走 RPC，本來就擋非管理員） ---- */
-async function loadPendingPreview(){
+async function loadPendingPreview(pre){
   const panel=$('#pendPreviewPanel'), box=$('#pendPreview'), cnt=$('#pendPrevCount');
   if(!LIVE||!me){ panel.classList.add('hidden'); PENDING_PREVIEW=[]; return; }
   panel.classList.remove('hidden');
-  const {data,error}=await sb.from('offers_pending_preview').select('*')
-    .order('created_at',{ascending:false}).limit(30);
+  const {data,error} = pre ? {data:pre, error:null}
+    : await sb.from('offers_pending_preview').select('*')
+      .order('created_at',{ascending:false}).limit(30);
   if(error){
     const hint=/relation|does not exist/i.test(error.message)?'（Supabase 可能還沒跑 schema_v13_ratings.sql）':'';
     box.innerHTML=`<div class="note alert">讀取失敗：${esc(error.message)}${hint}</div>`;
@@ -8822,12 +8878,13 @@ async function loadPendingPreview(){
 /* ---- 修改建議公開預覽：唯讀，讓大家先看到已上架的優惠可能會被改成什麼樣子，
    審核跟套用一樣只有管理員能做（走 review_offer_edit RPC）。跟上面「大家最近
    投稿了什麼」是同一個精神，只是這個是「改」不是「新增」。 ---- */
-async function loadPendingEditsPreview(){
+async function loadPendingEditsPreview(pre){
   const panel=$('#pendEditsPreviewPanel'), box=$('#pendEditsPreview'), cnt=$('#pendEditsPrevCount');
   if(!LIVE||!me){ panel.classList.add('hidden'); return; }
   panel.classList.remove('hidden');
-  const {data,error}=await sb.from('offer_edits_pending_preview').select('*')
-    .order('created_at',{ascending:false}).limit(30);
+  const {data,error} = pre ? {data:pre, error:null}
+    : await sb.from('offer_edits_pending_preview').select('*')
+      .order('created_at',{ascending:false}).limit(30);
   if(error){
     const hint=/relation|does not exist/i.test(error.message)
       ?'（Supabase 可能還沒跑 schema_v30_feedback_and_edit_preview.sql）':'';
@@ -10196,6 +10253,7 @@ function squareJpeg(file, size=256){
 }
 async function setAvatarUrl(url){
   const {error}=await sb.from('profiles').update({avatar_url:url}).eq('id',me.id);
+  forgetProfile();   // 自己改過了，快取裡那一份已經過期
   if(error) throw error;
   myProfile={...(myProfile||{}), avatar_url:url};
   paintAuth();
