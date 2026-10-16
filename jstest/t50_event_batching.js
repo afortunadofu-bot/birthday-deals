@@ -17,13 +17,16 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   const { win } = await boot();
   const doc = win.document;
 
-  /* ========== 1. 輪詢間隔 ========== */
-  t.eq('在線人數改成 60 秒問一次', win.eval('ONLINE_POLL_MS'), 60000);
-  t.ok('兩個輪詢都用同一個常數，不會改一半',
-    !/\}, 20000\);/.test(index), '還有寫死的 20000');
-  t.eq('用到的地方有兩處（排行榜＋管理員）',
-    (index.match(/ONLINE_POLL_MS\)/g) || []).length, 2);
-  t.ok('切到背景就不打', /document\.hidden \|\| ACTIVE_TAB!=='board'/.test(index));
+  /* ========== 1. 不再自動輪詢「即時在線人數」 ========== */
+  t.eq('整支程式只剩一個 setInterval（問卷的停留計時，不打資料庫）',
+    (index.match(/setInterval\(/g) || []).length, 1);
+  t.ok('那一個不是拿來問在線人數的',
+    !/setInterval[\s\S]{0,200}online_now/.test(index));
+  t.ok('改成點數字底下那行就重新算', /id="btnBoardOnline"/.test(index) && /id="btnDashOnline"/.test(index));
+  t.ok('按鈕按下去才打 site_online_now',
+    /btnBoardOnline[\s\S]{0,400}sb\.rpc\('site_online_now'\)/.test(index));
+  t.ok('按的時候先 disable，不要連點連打',
+    /b\.disabled=true;[\s\S]{0,200}b\.disabled=false;/.test(index));
 
   /* ========== 2. 事件批次 ========== */
   const posts = [];

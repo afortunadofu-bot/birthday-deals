@@ -598,6 +598,11 @@
      而這裡第二欄是「人」——結果左邊的名稱被擠成一個字一行（celine：「很醜」）。 */
   /* 問卷「大家說了什麼」：一則一張卡，文字是主角，誰跟什麼時候是配角。
      原本要一份一份點開才看得到留言，這裡直接攤平。 */
+  /* 數字底下那行說明本身就是「重新算一次」的按鈕：看起來跟原本的說明文字一樣，
+     不要為了一個很少按的動作多長一顆按鈕出來 */
+  .num-refresh{border:none;background:none;padding:0;font:inherit;color:inherit;cursor:pointer}
+  .num-refresh:hover{color:var(--accent-dark);text-decoration:underline}
+  .num-refresh:disabled{opacity:.5;cursor:default}
   .say{padding:10px 12px;background:var(--surface);border:1px solid var(--line-soft);
     border-radius:var(--r-xs)}
   .say+.say{margin-top:8px}
@@ -3282,14 +3287,6 @@ async function connectLive(retry=0){
   }, 1200);
 }
 
-/* 「即時在線人數」多久問一次。原本是 20 秒——排行榜或管理員分頁只要開著沒關，
-   一小時就是 180 次請求，一個下午掛在那邊就好幾千次。Supabase 免費方案的
-   Log Ingestion 是 1GB，2026-10-16 已經 1.235GB 超額，而這兩個輪詢是整站
-   「沒人在操作也會一直打」的唯一來源。
-   改成 60 秒：在線人數本來就是個概數（site_online_now 數的是最近 5 分鐘有
-   動作的 session），慢 40 秒看不出差別，請求數直接少三分之二。 */
-const ONLINE_POLL_MS=60000;
-
 /* ---- 成效追蹤：極簡事件記錄，失敗就默默略過，不能影響網站正常使用 ---- */
 const SESSION_ID = (()=>{
   try{
@@ -3409,11 +3406,19 @@ async function onSession(s){
   } else myProfile = null;
   paintAuth();
   renderMyDebug();
-  if(me){ loadMyStuff(); loadWishlist(); loadMyUsedOffers(); flushPendingReport(); loadPendingPreview(); loadPendingEditsPreview(); loadNotifCount(); }
+  /* 開場只載「不在那個分頁也會用到的」——其餘的切到分頁才載（ensureTabData）。
+     Log Ingestion 是按請求數算的，而登入一次本來會連打九支，其中六支是
+     「我的」跟「審核」分頁裡的東西，可能整場都不會被點開。
+       收藏／用過了  → 優惠卡片上的書籤跟「已用」要對
+       我的評分      → 排行榜的「還沒評分」提示跟詳情頁的星等要對
+       通知數字      → 鈴鐺的紅點在每一頁都看得到
+       flushPendingReport → 補送上次沒送成功的回報，不能拖 */
+  if(me){ loadWishlist(); loadMyUsedOffers(); loadMyRatings(); flushPendingReport(); loadNotifCount(); }
   else { $('#pendPreviewPanel').classList.add('hidden'); $('#pendEditsPreviewPanel').classList.add('hidden'); $('#btnNotif').classList.add('hidden'); }
-  if(myProfile?.is_admin){ loadPending(); loadPendingEdits(); loadRejected(); loadApproved();
-    loadAdminSettings(); renderSiteFlagsPanel(); loadCoffeeStats(); loadLinkStats(); loadAdminDashboard(); loadFeedbackList(); loadUsageReportsAdmin(); loadSurveyAdmin(); renderMergePanel();
-    loadAdminCommentList(); loadReviewInsights(); }
+  /* 管理員那一包有十幾支查詢，開場全部打完等於每次重新整理就是十幾次請求——
+     而且大部分時候根本沒點進「審核」。改成切到那個分頁才載，只留徽章那一支
+     （不載的話就看不到「有幾筆待審」，那顆紅點是整個審核流程的入口）。 */
+  if(myProfile?.is_admin) loadPendingBadge();
 }
 
 /* ---- P0：管理員權限診斷區。永遠顯示（登入後），出問題時使用者能直接複製這裡的資訊。 ---- */
@@ -5307,6 +5312,29 @@ $('#btnShareSite').onclick = async()=>{
 
 /* ---- 分頁 ---- */
 let ACTIVE_TAB='browse';
+/* 切到分頁才去載那一頁的資料。排行榜本來就是這樣（它自己有 10 分鐘快取），
+   現在「我的」跟「審核」也一樣——這兩包加起來十幾支查詢，開場就打完的話，
+   每次重新整理都是十幾次請求，而且常常整場都沒點進去過。
+   只載一次：之後各自的操作（核可、回報完…）會自己重新整理自己那一塊。 */
+const TAB_LOADED=new Set();
+function ensureTabData(tab){
+  if(tab==='board'){ loadBoard(); return; }        // 它自己有快取，每次切過去都問沒關係
+  if(TAB_LOADED.has(tab)) return;
+  if(tab==='mine'){
+    if(!me) return;
+    TAB_LOADED.add(tab);
+    loadMyStuff(); loadPendingPreview(); loadPendingEditsPreview();
+    return;
+  }
+  if(tab==='admin'){
+    if(!myProfile?.is_admin) return;
+    TAB_LOADED.add(tab);
+    loadPending(); loadPendingEdits(); loadRejected(); loadApproved();
+    loadAdminSettings(); renderSiteFlagsPanel(); loadCoffeeStats(); loadLinkStats();
+    loadAdminDashboard(); loadFeedbackList(); loadUsageReportsAdmin(); loadSurveyAdmin();
+    renderMergePanel(); loadAdminCommentList(); loadReviewInsights();
+  }
+}
 $$('.tab').forEach(t=>t.onclick=()=>{
   // 「打開我的分頁幾秒就算看過更新」原本在這裡各自起一個 4 秒的計時器，起了就收不回來
   // ——人早就切到別的分頁了還是會被標成看過。現在統一由 armUpdatesSeen()／
@@ -5315,7 +5343,7 @@ $$('.tab').forEach(t=>t.onclick=()=>{
   $$('.tab').forEach(x=>x.setAttribute('aria-selected', x===t));
   ['browse','board','submit','mine','admin'].forEach(n=>
     $('#tab-'+n).classList.toggle('hidden', n!==t.dataset.tab));
-  if(t.dataset.tab==='board') loadBoard();
+  ensureTabData(t.dataset.tab);
   // 點的是目前已經在看的那個分頁（點兩下）就滑回最上方，方便滑很長的清單時快速歸零。
   if(already) window.scrollTo({top:0, behavior:'smooth'});
   ACTIVE_TAB=t.dataset.tab;
@@ -7741,6 +7769,31 @@ function renderBadges(sv){
   });
 }
 
+/* 我已經評過哪幾筆——拿來算「用過但還沒給星等」的那幾家（見 unratedUsed()）。
+   本來跟「我的」那一包綁在一起，但排行榜的「還沒評分」提示跟優惠詳情裡的星等
+   在哪一頁都看得到，所以這一支留在開場，其餘的切到「我的」才載。 */
+async function loadMyRatings(){
+  if(!LIVE||!me) return;
+  const {data}=await sb.from('offer_ratings').select('offer_id,score').eq('user_id',me.id);
+  MY_RATED=new Set((data||[]).map(r=>String(r.offer_id)));
+  MY_SCORES=new Map((data||[]).map(r=>[String(r.offer_id), r.score]));
+  renderRatedCta();
+  maybeShowRateNudge();
+}
+/* 「審核」分頁的紅點：那一包十幾支查詢改成切過去才載之後，這一支要留下來，
+   不然看不到「有幾筆待審」——那顆紅點是整個審核流程的入口。
+   用 head+count 只回一個數字，不把整批待審資料拉下來。 */
+async function loadPendingBadge(){
+  if(!LIVE||!myProfile?.is_admin) return;
+  const {count,error}=await sb.from('offers').select('id',{count:'exact', head:true})
+    .eq('status','pending');
+  if(error) return;
+  const n=count||0;
+  [$('#pendCount'), $('#pendQueueCount')].forEach(el=>{
+    if(!el) return;
+    el.textContent=n; el.classList.toggle('hidden', !n);
+  });
+}
 async function loadMyStuff(){
   if(!LIVE||!me) return;
   if($('#fNickname')&&document.activeElement!==$('#fNickname')) $('#fNickname').value=myProfile?.display_name||'';
@@ -7779,11 +7832,6 @@ async function loadMyStuff(){
     .select('id,used_on,result,saved_twd,spent_twd,store,note,created_at,offer_id,offers(id,brand,offer,timing,value_twd)')
     .eq('user_id',me.id).order('used_on',{ascending:false});
   MY_REPORTS=reps||[];
-  // 我已經評過哪幾筆——拿來算「用過但還沒給星等」的那幾家（見 unratedUsed()）
-  const {data:myRates}=await sb.from('offer_ratings').select('offer_id,score').eq('user_id',me.id);
-  MY_RATED=new Set((myRates||[]).map(r=>String(r.offer_id)));
-  MY_SCORES=new Map((myRates||[]).map(r=>[String(r.offer_id), r.score]));
-  renderRatedCta();
   renderMyReports(R);
   maybeShowRateNudge();
 
@@ -9287,7 +9335,9 @@ function renderBoardStats(lb, pop, allTimeSavedRows, usedRows, siteStatsRow, onl
   // 站台一開始沒人回報過也看得到，所以拉到 !reports 的提早 return 之前，
   // 兩張卡片永遠都會畫出來。
   const liveStatsHtml=
-    `<div><div class="v" id="boardOnlineNow">${onlineNow==null?'—':onlineNow}</div><div class="k">即時在線人數</div></div>
+    `<div><div class="v" id="boardOnlineNow">${onlineNow==null?'—':onlineNow}</div>
+      <div class="k"><button type="button" class="num-refresh" id="btnBoardOnline"
+        title="點一下重新算">即時在線人數 ↻</button></div></div>
     <div><div class="v">${nt2(siteStatsRow?.pageview_count)}</div><div class="k">平台總瀏覽人次</div></div>`;
   // 收藏之後真的去用的比例（v74 的 site_wish_conversion）。沒跑 v74 就整張卡不畫。
   const convRate = wishConv && wishConv.rate!=null ? Number(wishConv.rate) : null;
@@ -9332,14 +9382,22 @@ function renderBoardStats(lb, pop, allTimeSavedRows, usedRows, siteStatsRow, onl
 // 管理，這裡用同樣的「離開分頁/背景分頁就不打」邏輯，換一個獨立的計時器
 // 跟管理員那邊的 startOnlineRefresh() 分開，兩邊互不影響。
 let boardOnlineTimer=null;
+/* 本來每 60 秒自動問一次（更早是 20 秒）。分頁開著沒關就一直打——掛一個下午
+   就是幾百次請求，而且這個數字根本沒有人會盯著看它跳。
+   改成「進來的時候算一次，想更新自己按」。Log Ingestion 是整站唯一一個
+   「沒人在操作也會一直累積」的來源，拿掉它等於把那條線壓平。 */
 function startBoardOnlineRefresh(){
-  if(boardOnlineTimer) return;
-  boardOnlineTimer=setInterval(async ()=>{
-    if(document.hidden || ACTIVE_TAB!=='board' || !LIVE) return;
+  const b=$('#btnBoardOnline');
+  if(!b || b.dataset.wired) return;
+  b.dataset.wired='1';
+  b.onclick=async()=>{
+    if(!LIVE) return;
+    b.disabled=true;
     const {data,error}=await sb.rpc('site_online_now');
     const el=$('#boardOnlineNow');
     if(!error && el) el.textContent=data??0;
-  }, ONLINE_POLL_MS);
+    b.disabled=false;
+  };
 }
 /* ===================== 圖表元件 =====================
    celine：「統計圖表形式都過於單一，希望每一份數據找到最適合的方式呈現」。
@@ -12041,7 +12099,9 @@ async function loadAdminDashboard(days){
     ${cell(d.total_users??0,'累積會員數')}
     ${cell(d.total_offers??0,'上架優惠數')}
     ${cell(d.pending_offers??0,'待審投稿')}
-    <div><div class="v" id="dashOnlineNow">${e5?'—':(online??0)}</div><div class="k">即時在線（5 分鐘內）</div></div>
+    <div><div class="v" id="dashOnlineNow">${e5?'—':(online??0)}</div>
+      <div class="k"><button type="button" class="num-refresh" id="btnDashOnline"
+        title="點一下重新算">即時在線（5 分鐘內）↻</button></div></div>
   </div>
   <p class="statline" style="margin-top:8px">累積瀏覽 ${nt2(d.pageviews_total)}　·　累積使用回報 ${nt2(d.total_use_reports)}
     　·　待處理問題回報 ${nt2(d.open_feedback)}</p>
@@ -12069,15 +12129,19 @@ async function loadAdminDashboard(days){
 // admin_online_now() 這支輕量 RPC（只回一個數字，不像整份儀表板要撈
 // 一堆統計）。離開管理員分頁、切到背景分頁、或不是管理員時就不打，
 // 省幾次不必要的請求。
-let onlineTimer=null;
+/* 跟排行榜那顆同一個理由：不再自動輪詢，想更新自己按。 */
 function startOnlineRefresh(){
-  if(onlineTimer) return;   // 已經在跑了，不用重複開
-  onlineTimer=setInterval(async ()=>{
-    if(document.hidden || ACTIVE_TAB!=='admin' || !myProfile?.is_admin || !LIVE) return;
+  const b=$('#btnDashOnline');
+  if(!b || b.dataset.wired) return;
+  b.dataset.wired='1';
+  b.onclick=async()=>{
+    if(!LIVE || !myProfile?.is_admin) return;
+    b.disabled=true;
     const {data,error}=await sb.rpc('admin_online_now');
     const el=$('#dashOnlineNow');
     if(!error && el) el.textContent=data??0;
-  }, ONLINE_POLL_MS);
+    b.disabled=false;
+  };
 }
 function nt2(v){ return v==null?'0':Number(v).toLocaleString('zh-Hant'); }
 $('#dashRange')?.addEventListener('change', ()=>loadAdminDashboard($('#dashRange').value));
