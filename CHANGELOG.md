@@ -13,6 +13,30 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v121　sitemap 改成沒有 `.html` 的網址（Search Console 的「替代頁面」）
+
+**沒有資料庫變更。** 只動 `sitemap.xml`。
+
+celine 轉了 Search Console 的通知：「找不到網頁 (404)」「替代頁面（有適當的標準標記）」。
+
+查了線上的實際狀況（2026-10-16）：
+
+| 網址 | 回應 |
+| --- | --- |
+| `/about`、`/updates`、`/privacy`、`/terms` | **200** |
+| `/about.html`、`/updates.html`、`/privacy.html`、`/terms.html` | **307**（轉到上面那個） |
+
+而 `sitemap.xml` 裡放的是 **`/terms.html`、`/privacy.html`**——等於主動告訴 Google
+「請收錄這兩個網址」，Google 去抓卻拿到一個轉址，於是標成「替代頁面（有適當的標準
+標記）」：**那兩頁等於沒有被收錄**。
+
+改成沒有 `.html` 的那一種，順便把漏掉的 `/about`（「關於」）跟 `/updates`
+（更新紀錄）補進去——這兩頁本來就不在 sitemap 裡。
+
+`sitemap.xml` 要重新上傳，之後在 Search Console 按一次「重新整理」會比較快。
+
+---
+
 ## v120　待辦清單：一顆按鈕直接看地圖、由近到遠
 
 **沒有資料庫變更。** 只動 `template.html`。

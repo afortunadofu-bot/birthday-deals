@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- 網址一律用「沒有 .html」的那一種：主機（Cloudflare）會把 /terms.html 307 轉到
+     /terms，所以 sitemap 裡放 .html 的話，Google 收到的是一個轉址，會在 Search Console
+     報「替代頁面（有適當的標準標記）」——那一頁等於沒有被收錄。2026-10-16 實測：
+     /about /updates /privacy /terms 都是 200，四個 .html 版本都是 307。 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://birthdaydeals.celine-fu-work.workers.dev/</loc>
@@ -6,12 +10,22 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://birthdaydeals.celine-fu-work.workers.dev/terms.html</loc>
+    <loc>https://birthdaydeals.celine-fu-work.workers.dev/about</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://birthdaydeals.celine-fu-work.workers.dev/updates</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://birthdaydeals.celine-fu-work.workers.dev/privacy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://birthdaydeals.celine-fu-work.workers.dev/privacy.html</loc>
+    <loc>https://birthdaydeals.celine-fu-work.workers.dev/terms</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
