@@ -3282,6 +3282,14 @@ async function connectLive(retry=0){
   }, 1200);
 }
 
+/* 「即時在線人數」多久問一次。原本是 20 秒——排行榜或管理員分頁只要開著沒關，
+   一小時就是 180 次請求，一個下午掛在那邊就好幾千次。Supabase 免費方案的
+   Log Ingestion 是 1GB，2026-10-16 已經 1.235GB 超額，而這兩個輪詢是整站
+   「沒人在操作也會一直打」的唯一來源。
+   改成 60 秒：在線人數本來就是個概數（site_online_now 數的是最近 5 分鐘有
+   動作的 session），慢 40 秒看不出差別，請求數直接少三分之二。 */
+const ONLINE_POLL_MS=60000;
+
 /* ---- 成效追蹤：極簡事件記錄，失敗就默默略過，不能影響網站正常使用 ---- */
 const SESSION_ID = (()=>{
   try{
@@ -3290,13 +3298,46 @@ const SESSION_ID = (()=>{
     return s;
   }catch{ return ''; }
 })();
-function logEvent(type, meta={}){
-  if(!LIVE) return;
+/* 事件改成「攢著一起送」。
+
+   為什麼：一個人逛一圈可能記到五六筆（點開咖啡、點了站外連結、給了星等、
+   按了「只看收藏」…），本來是一筆一個 POST。Log Ingestion 是按請求數算的，
+   而這些事件沒有一筆需要「馬上」寫進去——反正是給管理員事後看的。
+
+   唯一的例外是 pageview：排行榜的「即時在線人數」就是數最近有 pageview 的
+   session，排隊到關頁面才送的話，那個數字會變成「幾分鐘前有幾個人」。
+
+   送的時機：攢到 10 筆、或 15 秒後、或頁面要關／切到背景時。
+   最後那個用 fetch 的 keepalive（跟 track.js 同一招）——supabase-js 在
+   unload 的時候常常來不及送出去。 */
+const EV_QUEUE=[];
+let EV_TIMER=null;
+function flushEvents(){
+  clearTimeout(EV_TIMER); EV_TIMER=null;
+  if(!EV_QUEUE.length || !LIVE || !CFG?.url) return;
+  const rows=EV_QUEUE.splice(0, EV_QUEUE.length);
   try{
-    sb.from('site_events').insert({event_type:type, session_id:SESSION_ID, user_id: me?.id||null, meta})
-      .then(()=>{}, ()=>{});
+    fetch(`${CFG.url}/rest/v1/site_events`, {
+      method:'POST', keepalive:true,
+      headers:{'Content-Type':'application/json', apikey:CFG.anonKey,
+               Authorization:`Bearer ${CFG.anonKey}`, Prefer:'return=minimal'},
+      body:JSON.stringify(rows),
+    }).catch(()=>{});
   }catch{}
 }
+function logEvent(type, meta={}){
+  if(!LIVE) return;
+  const row={event_type:type, session_id:SESSION_ID, user_id: me?.id||null, meta};
+  if(type==='pageview'){        // 在線人數靠它，不能排隊
+    try{ sb.from('site_events').insert(row).then(()=>{}, ()=>{}); }catch{}
+    return;
+  }
+  EV_QUEUE.push(row);
+  if(EV_QUEUE.length>=10) flushEvents();
+  else if(!EV_TIMER) EV_TIMER=setTimeout(flushEvents, 15000);
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) flushEvents(); });
+addEventListener('pagehide', flushEvents);
 
 /* celine：「幫我再多偵測有點進去品牌頁任何網址的」。
 
@@ -9298,7 +9339,7 @@ function startBoardOnlineRefresh(){
     const {data,error}=await sb.rpc('site_online_now');
     const el=$('#boardOnlineNow');
     if(!error && el) el.textContent=data??0;
-  }, 20000);
+  }, ONLINE_POLL_MS);
 }
 /* ===================== 圖表元件 =====================
    celine：「統計圖表形式都過於單一，希望每一份數據找到最適合的方式呈現」。
@@ -12036,7 +12077,7 @@ function startOnlineRefresh(){
     const {data,error}=await sb.rpc('admin_online_now');
     const el=$('#dashOnlineNow');
     if(!error && el) el.textContent=data??0;
-  }, 20000);
+  }, ONLINE_POLL_MS);
 }
 function nt2(v){ return v==null?'0':Number(v).toLocaleString('zh-Hant'); }
 $('#dashRange')?.addEventListener('change', ()=>loadAdminDashboard($('#dashRange').value));
