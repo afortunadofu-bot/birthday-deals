@@ -60,9 +60,11 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
   win.eval(`myProfile={is_admin:true};`);
   win.eval(`ensureTabData('admin')`);
-  t.eq('切到「審核」才載，十幾支一次到位', hits.length, 15);
-  t.ok('待審佇列那幾支都在',
-    ['loadPending', 'loadPendingEdits', 'loadRejected', 'loadApproved'].every((f) => hits.includes(f)));
+  // v125 之後又細分了一層：收起來的那幾塊要打開才載（t53 專門驗那個）。
+  // 這裡只驗「切過去才載」跟「待審佇列一定在」。
+  t.ok('切到「審核」才載', hits.length > 0);
+  t.ok('待審佇列那兩支一定在（那是進去就看得到的）',
+    ['loadPending', 'loadPendingEdits'].every((f) => hits.includes(f)), hits.join(','));
   hits.length = 0;
   win.eval(`ensureTabData('admin')`);
   t.eq('再切回去也不重載', hits.length, 0);

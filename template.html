@@ -5363,10 +5363,15 @@ function ensureTabData(tab){
   if(tab==='admin'){
     if(!myProfile?.is_admin) return;
     TAB_LOADED.add(tab);
-    loadPending(); loadPendingEdits(); loadRejected(); loadApproved();
-    loadAdminSettings(); renderSiteFlagsPanel(); loadCoffeeStats(); loadLinkStats();
-    loadAdminDashboard(); loadFeedbackList(); loadUsageReportsAdmin(); loadSurveyAdmin();
-    renderMergePanel(); loadAdminCommentList(); loadReviewInsights();
+    /* 只載「一進來就看得到」的那幾塊。收起來的（已核可、已退回、使用回報、
+       設定、顯示開關、合併重複、咖啡與站外連結、問卷）等它被打開才載，
+       見 PANEL_LOADER／fillPanel。 */
+    loadPending(); loadPendingEdits();
+    loadAdminDashboard(); loadFeedbackList(); loadAdminCommentList(); loadReviewInsights();
+    // 開著的那幾塊（使用者可能自己把預設收起來的打開過）這裡補一次
+    Object.keys(PANEL_LOADER).forEach(id=>{
+      if(!document.getElementById(id)?.classList.contains('collapsed')) fillPanel(id);
+    });
   }
 }
 $$('.tab').forEach(t=>t.onclick=()=>{
@@ -7809,6 +7814,26 @@ function renderBadges(sv){
 /* 我已經評過哪幾筆——拿來算「用過但還沒給星等」的那幾家（見 unratedUsed()）。
    本來跟「我的」那一包綁在一起，但排行榜的「還沒評分」提示跟優惠詳情裡的星等
    在哪一頁都看得到，所以這一支留在開場，其餘的切到「我的」才載。 */
+/* 收起來的管理員區塊，打開才去載。鍵是 panel 的 id，值是那一塊的載入函式。
+   沒列在這裡的（例如公告、通知）本來就不用另外查。 */
+const PANEL_LOADER={
+  pnlApproved:       ()=>loadApproved(),
+  pnlRejected:       ()=>loadRejected(),
+  pnlUsageReports:   ()=>loadUsageReportsAdmin(),
+  pnlAdminSettings:  ()=>loadAdminSettings(),
+  pnlSiteFlags:      ()=>renderSiteFlagsPanel(),
+  pnlMerge:          ()=>renderMergePanel(),
+  pnlCoffeeStats:    ()=>{ loadCoffeeStats(); loadLinkStats(); },
+  pnlSurvey:         ()=>loadSurveyAdmin(),
+};
+const PANEL_FILLED=new Set();
+function fillPanel(id){
+  if(PANEL_FILLED.has(id) || !PANEL_LOADER[id]) return;
+  if(!myProfile?.is_admin || !LIVE) return;   // 還沒確認是管理員就先不要查
+  PANEL_FILLED.add(id);
+  try{ PANEL_LOADER[id](); }catch{}
+}
+
 /* 「我的」那一頁本來要打四支（省下多少、我的回報、審核中的投稿、審核中的修改建議）。
    v124 的 my_dashboard() 一次回一包，四支變一支。
 
@@ -12635,7 +12660,18 @@ function makeCollapsiblePanel(id, defaultOpen){
   h2.appendChild(chev);
   const skey=`sxr_admin_panel_${id}`;
   let open; try{ const v=localStorage.getItem(skey); open = v===null?defaultOpen:v==='1'; }catch{ open=defaultOpen; }
-  const apply=o=>{ panel.classList.toggle('collapsed',!o); body.classList.toggle('hidden',!o); };
+  /* 收著的那幾塊，資料等到它真的被打開才去要。
+
+     審核分頁一進去本來要打十幾支查詢，其中六支是「預設收起來」的那幾塊
+     （已核可、已退回、使用回報、設定、顯示開關、合併重複）——收著的時候
+     查回來也沒人看得到。Log Ingestion 是按請求數算的（見 SUPABASE-流量.md）。
+
+     只載一次：打開→收起→再打開不會重查。那幾塊各自的操作（核可完、改完設定…）
+     本來就會自己重新整理自己。 */
+  const apply=o=>{
+    panel.classList.toggle('collapsed',!o); body.classList.toggle('hidden',!o);
+    if(o) fillPanel(id);
+  };
   apply(open);
   h2.addEventListener('click',()=>{
     const now=panel.classList.contains('collapsed');
