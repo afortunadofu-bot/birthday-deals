@@ -2075,6 +2075,12 @@
         <label class="lbl">標籤<select id="wlTagFilter"></select></label>
         <label class="toggle"><input type="checkbox" id="wlSinkDone" checked> 已使用的排到最下面</label>
         <label class="toggle"><input type="checkbox" id="wlCompact"> 簡易版</label>
+        <!-- celine：「待辦清單新增按距離排序的按鈕，然後導到地圖頁面」
+             （使用者「烏龍綠」2026-10-10 也提過：「希望在收藏的店家也能放以地理位置近的排序」）
+             清單這一頁沒有地圖、也沒有距離，硬塞一個「依距離」排序只會排不出東西。
+             這顆是入口：切到「優惠」分頁、打開「附近」跟「只看收藏」，那邊本來就
+             會由近到遠排、而且有地圖。 -->
+        <button type="button" class="btn sm hidden" id="btnWlNear">📍 看地圖、由近到遠</button>
       </div>
       <div id="myWishlist"></div>
     </div>
@@ -3974,9 +3980,21 @@ function bdayDeadlineText(advanceDays, useAlt){
 }
 // 排序切換不用重打 API，直接用已經抓回來的 WL_ROWS 在前端重排就好——
 // 跟排行榜「隱藏匿名使用者」那組 renderLbBody() 是同一套設計。
+/* 待辦清單 →「附近」：同一批收藏，換個看法。
+   NEAR.wishOnly 先設好再切分頁，startNear() 畫出來的第一眼就已經是「只看收藏」，
+   不會先閃一下全部幾百筆再縮回來。 */
+function wishlistToMap(){
+  if(!WISH.size){ showToast('待辦清單還是空的——在優惠卡片右上角按一下書籤就會收藏起來。'); return; }
+  NEAR.wishOnly=true;
+  document.querySelector('.tab[data-tab="browse"]')?.click();   // 分頁的 key 是 browse，不是 offers
+  startNear();
+  logEvent('wishlist_to_map', {n:WISH.size});
+}
 function renderWishlistBody(){
   const box=$('#myWishlist');
   if(!LIVE||!me) return;
+  // 一筆收藏都沒有的時候不要留一顆按下去只會跳提示的按鈕
+  $('#btnWlNear')?.classList.toggle('hidden', !WISH.size);
   const isDone=w=>MY_USED_OFFER_IDS.has(String(w.offer_id))||w.done;
   const sortBy=$('#wlSort')?.value||'added_desc';
   const sinkDone=$('#wlSinkDone')?.checked!==false;
@@ -11714,6 +11732,7 @@ function applySurveyFilter(){
   renderSurveyResponses();
 }
 $('#svQPick').onchange=renderSurveyByQuestion;
+$('#btnWlNear').onclick=wishlistToMap;
 function renderSurveySummary(d, label){
   const total=Number(d.total||0);
   $('#svCount').textContent=total; $('#svCount').classList.toggle('hidden',!total);
