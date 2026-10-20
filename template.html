@@ -711,6 +711,11 @@
        第二行：優惠內容＋入會期限（淡色小字）
        第三行：標籤膠囊、備註（有寫才攤開輸入框）
      不常用的「移到明年／移回今年」「移除」收進「⋯」選單。 */
+  /* 待辦清單上面那顆「看地圖」：自己一排、整排寬，手機上一眼就看得到 */
+  .wl-near{display:block;width:100%;margin:0 0 10px;text-align:center;
+    border-color:var(--accent-line);color:var(--accent-dark);background:var(--accent-soft)}
+  .wl-near:hover{border-color:var(--accent);background:var(--accent-soft)}
+  .wl-near.hidden{display:none}
   #myWishlist .wl-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
     padding:12px 14px;margin:0 0 10px;transition:border-color .15s var(--ease)}
   #myWishlist .wl-item:hover{border-color:var(--accent-line)}
@@ -2069,6 +2074,18 @@
       <div class="searchbar" style="margin:0 0 10px">
         <input type="search" id="wlSearch" placeholder="搜尋清單裡的店家或優惠">
       </div>
+      <!-- celine：「待辦清單新增按距離排序的按鈕，然後導到地圖頁面」
+           （使用者「烏龍綠」2026-10-10 也提過：「希望在收藏的店家也能放以地理位置近的排序」）
+
+           清單這一頁沒有地圖、也沒有距離，硬塞一個「依距離」的排序選項只會排不出
+           東西。這顆是入口：切到「優惠」分頁、打開「附近」跟「只看收藏」，那邊
+           本來就會由近到遠排、而且有地圖。
+
+           位置：v120 第一版塞在下面那排控制項的最後面（排序、年度、標籤、兩個
+           勾選框之後），手機上會被擠到整排的最底下——celine 隔幾天又提了一次
+           同一個需求，等於沒看到。移到搜尋欄正下方自己一排。 -->
+      <button type="button" class="btn wl-near hidden" id="btnWlNear">
+        📍 看地圖、由近到遠</button>
       <div class="row" style="margin:0 0 10px;flex-wrap:wrap;gap:8px 14px">
         <label class="lbl">排序<select id="wlSort">
           <option value="added_desc">最近加入</option>
@@ -2080,12 +2097,6 @@
         <label class="lbl">標籤<select id="wlTagFilter"></select></label>
         <label class="toggle"><input type="checkbox" id="wlSinkDone" checked> 已使用的排到最下面</label>
         <label class="toggle"><input type="checkbox" id="wlCompact"> 簡易版</label>
-        <!-- celine：「待辦清單新增按距離排序的按鈕，然後導到地圖頁面」
-             （使用者「烏龍綠」2026-10-10 也提過：「希望在收藏的店家也能放以地理位置近的排序」）
-             清單這一頁沒有地圖、也沒有距離，硬塞一個「依距離」排序只會排不出東西。
-             這顆是入口：切到「優惠」分頁、打開「附近」跟「只看收藏」，那邊本來就
-             會由近到遠排、而且有地圖。 -->
-        <button type="button" class="btn sm hidden" id="btnWlNear">📍 看地圖、由近到遠</button>
       </div>
       <div id="myWishlist"></div>
     </div>
