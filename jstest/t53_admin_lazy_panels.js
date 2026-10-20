@@ -31,12 +31,21 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   win.eval(`ensureTabData('admin')`);
   await tick(win, 2);
 
-  t.eq('一進審核只載看得到的那幾塊', hits.slice().sort(),
-    ['loadAdminCommentList', 'loadAdminDashboard', 'loadFeedbackList', 'loadPending',
+  // 進審核是為了「處理東西」，所以只剩這五支；「看數據」的那幾塊要點開才載
+  t.eq('一進審核只載要處理的那幾塊', hits.slice().sort(),
+    ['loadAdminCommentList', 'loadFeedbackList', 'loadPending',
       'loadPendingEdits', 'loadReviewInsights'].sort());
   ['loadApproved', 'loadRejected', 'loadUsageReportsAdmin', 'loadAdminSettings',
-    'renderSiteFlagsPanel', 'renderMergePanel'].forEach((f) =>
+    'renderSiteFlagsPanel', 'renderMergePanel',
+    'loadAdminDashboard', 'loadCoffeeStats', 'loadLinkStats', 'loadSurveyAdmin'].forEach((f) =>
     t.ok(`收著的 ${f} 不載`, !hits.includes(f)));
+
+  // 儀表板一塊就五支 RPC，是最貴的一塊
+  hits.length = 0;
+  win.eval(`fillPanel('pnlDash')`);
+  t.eq('儀表板也是打開才載', hits, ['loadAdminDashboard']);
+  t.ok('而且它預設是收起來的',
+    /'pnlDash','pnlCoffeeStats','pnlSurvey',/.test(index), '預設收合清單裡要有這三個');
 
   // 打開「已核可」才載，而且只載一次
   hits.length = 0;

@@ -5367,7 +5367,7 @@ function ensureTabData(tab){
        設定、顯示開關、合併重複、咖啡與站外連結、問卷）等它被打開才載，
        見 PANEL_LOADER／fillPanel。 */
     loadPending(); loadPendingEdits();
-    loadAdminDashboard(); loadFeedbackList(); loadAdminCommentList(); loadReviewInsights();
+    loadFeedbackList(); loadAdminCommentList(); loadReviewInsights();
     // 開著的那幾塊（使用者可能自己把預設收起來的打開過）這裡補一次
     Object.keys(PANEL_LOADER).forEach(id=>{
       if(!document.getElementById(id)?.classList.contains('collapsed')) fillPanel(id);
@@ -7817,6 +7817,9 @@ function renderBadges(sv){
 /* 收起來的管理員區塊，打開才去載。鍵是 panel 的 id，值是那一塊的載入函式。
    沒列在這裡的（例如公告、通知）本來就不用另外查。 */
 const PANEL_LOADER={
+  // 這一塊自己就五支 RPC（統計、走勢、生日分布、使用時段、在線人數），
+  // 是整個審核分頁最貴的一塊——而它是「看的」，不是「要處理的」
+  pnlDash:           ()=>loadAdminDashboard(),
   pnlApproved:       ()=>loadApproved(),
   pnlRejected:       ()=>loadRejected(),
   pnlUsageReports:   ()=>loadUsageReportsAdmin(),
@@ -12687,6 +12690,11 @@ function makeCollapsiblePanel(id, defaultOpen){
    以後新增區塊什麼都不用做。 */
 const PANEL_DEFAULT_CLOSED=new Set([
   // 審核：歷史性／次要的，不要一進來就滑過幾百筆才找到待辦
+  /* 進審核是為了「處理東西」（待審、修改建議、問題回報、留言），這幾塊是
+     「看數據」——預設收起來，要看再點開。差別很大：儀表板一塊就五支 RPC，
+     加上咖啡／站外連結兩支、問卷兩支，光是這三塊就佔了進審核一半以上的請求。
+     打開過一次之後狀態記在這台裝置上，下次進來還是開著的。 */
+  'pnlDash','pnlCoffeeStats','pnlSurvey',
   'pnlRejected','pnlApproved','pnlUsageReports','pnlAnnounce','pnlMerge',
   'pnlAdminSettings','pnlSiteFlags',
   // 我的：比較像歷史紀錄、不用每次都看到的
