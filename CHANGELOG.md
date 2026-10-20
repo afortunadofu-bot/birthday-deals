@@ -13,6 +13,93 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v130／v131　先把「會爆掉」的兩條路堵起來
+
+**兩支 SQL：`schema_v130_guards.sql`（可以直接跑）、`schema_v131_edge_reader.sql`
+（⚠️ 要照裡面寫的順序，不要整份貼下去跑）。** Worker 也要重新部署。
+
+> celine：「先做預防這幾個的」——指的是 `SUPABASE-流量.md` 裡「以後怎樣才會
+> 爆掉」的 🔴 1（再出一次事故）跟 🔴 2（anon key 被拿去打）。
+
+### v130：事故
+
+2026-10-02～10-04 那次之所以從「有點慢」變成「事故」，是因為**沒有任何東西
+擋著**：一支爛查詢可以跑到天荒地老，而且要等到用量爆掉才會發現。補兩件事：
+
+**1. 查詢有時間上限**
+
+```sql
+alter role anon          set statement_timeout = '8s';
+alter role authenticated set statement_timeout = '20s';
+```
+
+anon 做的事全部都是「讀一包已經算好的東西」，正常都在一秒內；跑超過 8 秒的
+一定是出事了。`authenticated` 放寬到 20 秒是因為管理員那邊有幾塊真的在算東西
+（洞察分析、已核可清單）。**如果之後有一支正常但很慢的管理員查詢被砍掉，
+把數字調大就好，不要把它拿掉。**
+
+**2. `admin_query_cost()`：公開那幾份東西現在各自多貴**
+
+回傳每一份的實際執行時間、讀了幾個區塊、有沒有出現 Seq Scan、回了幾列。
+**加了新的 view 或 RPC 之後跑一次**，把它加進清單裡：
+
+| 看到什麼 | 代表 |
+| --- | --- |
+| `ms > 500` | 它已經在拖慢所有人 |
+| `seq_scan = true` 且 `rows_out` 很大 | 缺索引，資料再長就是上次那場事故 |
+| `blocks` 很大 | 就算快，也是在燒 Disk IO —— 免費方案最早爆的就是這個 |
+
+清單裡特別收了 `site_stats`、`offer_stats`、`wishlist_counts` ——
+**前端直接打、沒有 Worker 快取擋著的那幾份**，也正是上次出事的那幾份。
+
+> 在 SQL Editor 裡呼叫 `admin_query_cost()` 會看到「只有管理員可以跑」。
+> **那是對的，不是壞了** —— SQL Editor 是 `service_role`，`is_admin()` 會是 false。
+
+### v131：爬蟲
+
+`config.js` 裡的 anon key 是公開的（本來就該公開，RLS 才是守門員），但
+`offers_public?select=*` 任何人都打得到，**一次 145 KB、35,000 次就是一個月的
+額度**。Worker 擋不到「不經過 Worker、直接打 Supabase」的人。
+
+做法：整包優惠清單只給一個**前端沒有**的角色讀。
+
+**關鍵是 apikey 跟 authorization 要分開：**
+
+```js
+const authKey = cfg(env, 'SUPABASE_EDGE_KEY') || key;
+const headers = { apikey: key, authorization: `Bearer ${authKey}`, … };
+```
+
+`apikey` 是 Supabase 閘道看的，必須一直是專案的公開金鑰；決定「用哪個角色查」
+的是 `authorization`。**兩個都換掉的話閘道會直接擋下來。**
+沒設 `SUPABASE_EDGE_KEY` 就退回原本的行為，所以這個改動單獨部署也不會壞。
+
+金鑰用 `mint_edge_jwt.py` 在本機簽，**JWT Secret 用 `getpass` 讀，不顯示、
+不寫檔、不進 git**，也不要貼到 jwt.io 那種線上工具。
+
+**代價（寫在 SQL 檔開頭）：**
+
+| 誰 | 做完之後 |
+| --- | --- |
+| 登入的人（含管理員） | **退路還在**，權限一點都沒動 |
+| 沒登入的訪客 | Worker 掛掉時看到「優惠資料暫時讀不到」，不會自己去問 Supabase |
+
+這個代價可以接受，因為網站本身就掛在 Cloudflare 上 —— Cloudflare 掛了連網頁
+都打不開，那條退路本來也救不了；而且 Worker 上游掛掉本來就會拿 24 小時內的
+舊資料頂著。真正用得到那條退路的，只有「`birthdaydeals-api` 被我部署壞掉、
+但網站還活著」。
+
+**`revoke select on public.offers_public from anon;` 那一行在檔案裡是註解掉的。**
+要先確認換了金鑰的 Worker 真的還拿得到資料，才能解開它。檔案最下面有還原用的
+那一行。
+
+### 測試
+
+`t55_incident_and_scrape_guards.js`（22 條）：兩個標頭真的分開、沒設
+`EDGE_KEY` 時行為完全不變、祕密沒有寫進原始碼、最危險那一行確實是註解掉的。
+
+---
+
 ## v129　砍 Egress：Worker 的快取 10 分鐘 → 30 分鐘
 
 **沒有資料庫變更。** 只動 `worker/offers-cache.js`（要重新部署 Worker）。

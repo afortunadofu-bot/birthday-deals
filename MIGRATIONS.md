@@ -42,3 +42,18 @@ Supabase Dashboard → SQL Editor → 貼上整支 → Run。
 
 全部都寫成可重複執行（`create or replace`、`if not exists`、`on conflict do nothing`），
 不確定跑過沒有就再跑一次，不會壞。
+
+### ⚠️ 只有一個例外：`schema_v131_edge_reader.sql`
+
+**這一支不能整份貼下去跑。** 它分成【步驟 A】跟【步驟 B】，中間要先去 Cloudflare
+換 Worker 的金鑰、而且確認 Worker 還拿得到資料，才能跑【步驟 B】。
+順序弄錯的話，站上的優惠清單會整個讀不到（可以復原，但會有一段空窗）。
+
+檔案開頭把順序寫清楚了，**跑之前先把那一段讀完**。
+最危險的那一行（`revoke select … from anon`）在檔案裡是註解掉的，
+要自己解開——那是故意的。
+
+| 檔案 | 怎麼跑 |
+| --- | --- |
+| `schema_v130_guards.sql` | 照常，整份貼下去就好 |
+| `schema_v131_edge_reader.sql` | **分兩次**，照檔案開頭的「上線順序」 |

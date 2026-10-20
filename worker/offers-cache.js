@@ -42,6 +42,8 @@
 
 const DEFAULTS = {
   SUPABASE_URL: 'https://lgshwappyjgnzfkwncjk.supabase.co',
+  // SUPABASE_EDGE_KEY 刻意沒有預設值：它是祕密，只能放 Cloudflare 的環境變數。
+  // 沒設的話下面會自動退回用 anon key，行為跟 v130 之前一模一樣。
   // 公開的 anon key（跟前端 config.js 同一把）
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxnc2h3YXBweWpnbnpma3duY2prIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4MDgxNTAsImV4cCI6MjEwMTM4NDE1MH0.YEAjEdKM8x7wYU_xvS463xw7EAYA5uQZeqE5ATIgqyQ',
 };
@@ -99,7 +101,14 @@ function json(body, { status = 200, ttl = FRESH_TTL, extra = {} } = {}) {
 async function fromSupabase(env, kind) {
   const base = cfg(env, 'SUPABASE_URL');
   const key = cfg(env, 'SUPABASE_ANON_KEY');
-  const headers = { apikey: key, authorization: `Bearer ${key}`, accept: 'application/json' };
+  /* v131：身分可以跟 apikey 分開。
+       apikey        → 給 Supabase 的閘道看的，必須是這個專案的公開金鑰
+       authorization → 決定「用哪個角色查」，PostgREST 看的是這一個
+     設了 SUPABASE_EDGE_KEY（edge_reader 角色、只有 Worker 有）之後，整包優惠
+     清單就可以從 anon 手上收回來——爬蟲拿著公開的 anon key 也撈不走。
+     沒設就退回原本的行為，兩邊都用 anon key。 */
+  const authKey = cfg(env, 'SUPABASE_EDGE_KEY') || key;
+  const headers = { apikey: key, authorization: `Bearer ${authKey}`, accept: 'application/json' };
 
   if (kind === 'stats') {
     // v78 的快取版 RPC；沒跑 v78 的話退回直接查 view
