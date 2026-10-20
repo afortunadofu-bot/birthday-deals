@@ -102,7 +102,28 @@ grant execute on function
   public.site_wish_conversion()
 to edge_reader;
 
--- 確認：這個角色讀得到什麼
+-- ---------------------------------------------------------------------
+-- 【步驟 A 的驗收】三樣都要對，才可以往下做
+--
+--   can_set_role  = true   ← 少了這個，Worker 會拿到 500
+--   table_grants  = 13     ← 少了 offers_public，優惠清單就沒了
+--   function_ok   都是 true ← 少了的話 /stats 或排行榜會缺一塊
+-- ---------------------------------------------------------------------
+select
+  pg_has_role('authenticator', 'edge_reader', 'member')                       as can_set_role,
+  (select count(*) from information_schema.role_table_grants
+    where grantee = 'edge_reader')                                            as table_grants;
+
+select p.proname as function_name,
+       has_function_privilege('edge_reader', p.oid, 'execute') as function_ok
+  from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+ where n.nspname = 'public'
+   and p.proname in ('site_stats_cached', 'site_usage_daily', 'site_offer_usage',
+                     'site_usage_hour_distribution', 'site_wish_conversion')
+ order by p.proname;
+
+-- 這個角色讀得到哪些（應該是 13 份）
 select table_name, privilege_type
   from information_schema.role_table_grants
  where grantee = 'edge_reader'
