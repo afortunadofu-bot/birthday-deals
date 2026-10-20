@@ -46,7 +46,18 @@ const DEFAULTS = {
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxnc2h3YXBweWpnbnpma3duY2prIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4MDgxNTAsImV4cCI6MjEwMTM4NDE1MH0.YEAjEdKM8x7wYU_xvS463xw7EAYA5uQZeqE5ATIgqyQ',
 };
 
-const FRESH_TTL = 600;        // 10 分鐘內算新鮮，直接回快取
+/* 快取多久算新鮮。這個數字直接決定 Supabase 的 Egress（免費方案一個月 5 GB）：
+   每一次過期，Worker 就要跟 Supabase 重抓一次完整清單 —— 實測 **145 KB**
+   （gzip 後、Supabase 那端實際送出的量）。而且 Cloudflare 的快取是**每個機房
+   各一份**，台北、高雄、香港各算一次。
+
+     10 分鐘：一天 144 次 × 145 KB ≈ 21 MB／機房／天 ≈ 0.6 GB／月／機房
+     30 分鐘：一天  48 次 × 145 KB ≈  7 MB／機房／天 ≈ 0.2 GB／月／機房
+
+   代價是「剛核可的優惠最多晚 30 分鐘才出現在別人的畫面上」。優惠一天改不到
+   幾次，這個代價換 3 倍流量是划算的。
+   （`/boot` 另外算：顯示開關是管理員即時在調的，那一包維持 60 秒。） */
+const FRESH_TTL = 1800;       // 30 分鐘內算新鮮，直接回快取
 // 開場那兩筆只快取 60 秒：顯示開關是管理員即時在調的，關掉某個東西
 // 不該等十分鐘才在訪客那邊生效。
 const TTL = { offers: FRESH_TTL, offersFirst: FRESH_TTL, stats: FRESH_TTL, board: FRESH_TTL, boot: 60 };

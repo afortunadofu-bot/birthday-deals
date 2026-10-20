@@ -72,7 +72,7 @@ function fakeCaches() {
   t.eq('翻了兩頁', upstream.length, 2);
   t.ok('標了抓取時間', !!body.at);
   t.ok('任何網站都能讀（CORS）', res.headers.get('access-control-allow-origin') === '*');
-  t.ok('叫瀏覽器也快取 10 分鐘', /max-age=600/.test(res.headers.get('cache-control')));
+  t.ok('叫瀏覽器也快取 30 分鐘', /max-age=1800/.test(res.headers.get('cache-control')));
 
   upstream = [];
   res = await get('/offers');
