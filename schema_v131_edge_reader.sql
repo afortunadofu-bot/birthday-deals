@@ -102,6 +102,67 @@ grant execute on function
   public.site_wish_conversion()
 to edge_reader;
 
+-- =====================================================================
+-- 【步驟 A2】⚠️ 少了這一段，Worker 會拿到「permission denied for table offers」
+--
+-- 2026-10-21 查出來的：`offers_public` 不是普通的 view，它是
+--
+--     create view public.offers_public with (security_invoker = true)
+--     ... from public.offers o left join public.offer_stats s ...
+--
+-- **security_invoker = true 代表這個 view 用「呼叫者自己的權限」去讀底下的表**。
+-- 所以光是 grant select on offers_public 不夠 —— edge_reader 還要讀得到
+-- public.offers、public.offer_stats，以及 offer_stats 底下那幾張。
+-- （大部分排行榜的 view 也是同一個寫法。）
+--
+-- RLS 本身沒問題：`offers_read_approved` 那條政策沒有寫 `to 某個角色`，
+-- 等於 `to public`，edge_reader 一樣適用，而且它只放行 status = 'approved'
+-- ——跟訪客看到的範圍一模一樣，一列都沒有多給。
+--
+-- 下面這段不用自己列表：它沿著 view 的相依關係往下走，把每一張真的會被讀到的
+-- 表／view 都授權給 edge_reader。view 之後改寫、換了底下的表，重跑一次就好。
+-- =====================================================================
+do $$
+declare
+  r record;
+  n int := 0;
+begin
+  for r in
+    with recursive needed(oid) as (
+      -- 起點：Worker 直接查的那幾份
+      select c.oid
+        from pg_class c
+        join pg_namespace ns on ns.oid = c.relnamespace
+       where ns.nspname = 'public'
+         and c.relname in (
+           'offers_public', 'site_stats', 'current_announcement', 'site_settings',
+           'leaderboard', 'leaderboard_prev', 'popular_offers', 'popular_offers_prev',
+           'most_wished', 'most_wished_prev', 'recent_activity',
+           'contribution_leaderboard', 'contribution_leaderboard_prev')
+      union
+      -- 往下：view 的定義裡引用到的每一張表／view
+      select d.refobjid
+        from needed nd
+        join pg_rewrite rw on rw.ev_class = nd.oid
+        join pg_depend  d  on d.objid = rw.oid
+                          and d.refclassid = 'pg_class'::regclass
+                          and d.refobjid <> nd.oid
+    )
+    select distinct c.oid::regclass as rel
+      from needed
+      join pg_class c on c.oid = needed.oid
+      join pg_namespace ns on ns.oid = c.relnamespace
+     where ns.nspname = 'public'
+       and c.relkind in ('r', 'v', 'm', 'p', 'f')
+  loop
+    execute format('grant select on %s to edge_reader', r.rel);
+    n := n + 1;
+  end loop;
+  raise notice '授權了 % 張表／view 給 edge_reader', n;
+end;
+$$;
+
+
 -- ---------------------------------------------------------------------
 -- 【步驟 A 的驗收】三樣都要對，才可以往下做
 --
@@ -123,11 +184,32 @@ select p.proname as function_name,
                      'site_usage_hour_distribution', 'site_wish_conversion')
  order by p.proname;
 
--- 這個角色讀得到哪些（應該是 13 份）
+-- 這個角色讀得到哪些（A2 跑完之後會比 13 多，底下的表也會列進來）
 select table_name, privilege_type
   from information_schema.role_table_grants
  where grantee = 'edge_reader'
  order by table_name;
+
+
+-- ---------------------------------------------------------------------
+-- 【最後、也是最重要的一關】直接用 edge_reader 的身分查一次
+--
+-- 上面那些都只是在看「權限表上寫了什麼」。這一段是真的切成那個角色去查，
+-- 等於把 Worker 待會要做的事先做一遍。
+--
+-- 這兩行一起跑（編輯器只會顯示最後一句的結果）：
+--
+--     set role edge_reader;
+--     select count(*) as offers_看得到, (select count(*) from public.leaderboard) as 排行榜
+--       from public.offers_public;
+--
+-- 看到的數字要跟現在站上的優惠筆數差不多（四百多）。
+--   · 0 筆          → RLS 把它擋掉了，不要往下做
+--   · permission denied → A2 沒跑成功，回去重跑
+--
+-- 查完記得跑一次：
+--     reset role;
+-- ---------------------------------------------------------------------
 
 
 -- =====================================================================

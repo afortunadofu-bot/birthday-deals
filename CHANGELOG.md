@@ -139,13 +139,44 @@ const headers = { apikey: key, authorization: `Bearer ${authKey}`, … };
 舊資料頂著。真正用得到那條退路的，只有「`birthdaydeals-api` 被我部署壞掉、
 但網站還活著」。
 
+### 2026-10-21 補：`offers_public` 是 security_invoker 的 view
+
+celine 跑完【步驟 A】之後，我回去確認 view 的定義，發現原本的授權**不夠**：
+
+```sql
+create view public.offers_public
+with (security_invoker = true) as
+... from public.offers o left join public.offer_stats s ...
+```
+
+`security_invoker = true` 代表這個 view **用呼叫者自己的權限**去讀底下的表。
+所以只 `grant select on offers_public` 的話，Worker 會拿到
+`permission denied for table offers` —— 而且要到換完金鑰、站台壞掉才發現。
+
+補了【步驟 A2】：沿著 `pg_rewrite` / `pg_depend` 的相依關係往下走，把每一張
+真的會被讀到的表／view 都授權給 `edge_reader`。**不是手寫清單**，view 之後
+改寫、換了底下的表，重跑一次就好。
+
+RLS 本身沒問題：`offers_read_approved` 那條政策沒有寫 `to 某個角色`，等於
+`to public`，`edge_reader` 一樣適用，而且它只放行 `status = 'approved'`
+——**跟訪客看到的範圍一模一樣，一列都沒有多給**。
+
+還加了最後一關，直接切成那個角色查一次（上面那些都只是在看權限表上寫了什麼）：
+
+```sql
+set role edge_reader;
+select count(*) from public.offers_public;
+```
+
+`0 筆` ＝ RLS 擋掉了，`permission denied` ＝ A2 沒跑成功，兩種都不要往下做。
+
 **`revoke select on public.offers_public from anon;` 那一行在檔案裡是註解掉的。**
 要先確認換了金鑰的 Worker 真的還拿得到資料，才能解開它。檔案最下面有還原用的
 那一行。
 
 ### 測試
 
-`t55_incident_and_scrape_guards.js`（22 條）：兩個標頭真的分開、沒設
+`t55_incident_and_scrape_guards.js`（26 條）：兩個標頭真的分開、沒設
 `EDGE_KEY` 時行為完全不變、祕密沒有寫進原始碼、最危險那一行確實是註解掉的。
 
 ---

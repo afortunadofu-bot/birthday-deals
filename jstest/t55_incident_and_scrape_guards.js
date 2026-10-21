@@ -97,6 +97,14 @@ function fakeCaches() {
     && !/^\s*revoke select on public\.offers_public from anon;/m.test(v131));
   t.ok('有寫怎麼還原', /grant select on public\.offers_public to anon/.test(v131));
   t.ok('有講清楚登入的人不受影響', /authenticated/.test(v131) && /退路還在/.test(v131));
+  /* offers_public 是 security_invoker 的 view：它用呼叫者的權限去讀底下的
+     public.offers。只 grant 那個 view 的話，Worker 會拿到 permission denied。 */
+  t.ok('有處理 security_invoker（只授權 view 不夠）', /security_invoker/.test(v131));
+  t.ok('沿著相依關係自動授權底下的表，不是手寫清單',
+    /with recursive needed/.test(v131) && /pg_rewrite/.test(v131));
+  t.ok('最後有一關是真的切成 edge_reader 查一次', /set role edge_reader/.test(v131));
+  t.ok('有講「0 筆」跟「permission denied」各代表什麼',
+    /0 筆/.test(v131) && /permission denied/.test(v131));
 
   const mint = read('mint_edge_jwt.py');
   t.ok('產金鑰的腳本用 getpass 讀祕密（不會顯示、不會留檔）', /getpass\.getpass/.test(mint));
