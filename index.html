@@ -3092,7 +3092,7 @@ function fromRow(r){return{
   groupName:r.group_name||'',
   ratingAvg:r.rating_avg==null?null:Number(r.rating_avg),
   ratingCount:r.rating_count||0, wishCount:r.wish_count||0,
-  createdAt:r.created_at, reviewedAt:r.reviewed_at, reviewedBy:r.reviewed_by,
+  createdAt:r.created_at,
   adminEditDiff:r.admin_edit_diff||null, requiresCompanion:!!r.requires_companion,
   transferable:r.transferable||'unknown',
   submitterName:r.profiles?.display_name||null};}

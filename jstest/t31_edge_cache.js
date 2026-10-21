@@ -74,6 +74,25 @@ function fakeCaches() {
   t.ok('任何網站都能讀（CORS）', res.headers.get('access-control-allow-origin') === '*');
   t.ok('叫瀏覽器也快取 30 分鐘', /max-age=1800/.test(res.headers.get('cache-control')));
 
+  /* v132：Worker 改成逐欄點名（select=* → 146KB 變 128KB）。寫死清單的風險是
+     「view 之後加了一欄，Worker 沒跟著加，前端拿不到而且不會報錯」。
+     這一條把 fromRow 真正讀的每一個欄位，跟 Worker 的清單對一次。 */
+  const workerSrc = fs.readFileSync(path.join(__dirname, '..', 'worker', 'offers-cache.js'), 'utf8');
+  const cols = (workerSrc.match(/const OFFER_COLS = '([^']+)'/) || [])[1];
+  t.ok('Worker 有一份明確的欄位清單', !!cols && cols.split(',').length > 30);
+
+  const indexSrc = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const fromRow = indexSrc.slice(indexSrc.indexOf('function fromRow(r){return{'));
+  const used = [...new Set((fromRow.slice(0, fromRow.indexOf('submitterName'))
+    .match(/\br[.]([a-z_]+)/g) || []).map((m) => m.slice(2)))];
+  const missing = used.filter((c) => !cols.split(',').includes(c));
+  t.eq('fromRow 讀的每一欄，Worker 都有去要（漏了前端會靜靜地少一欄）', missing, []);
+
+  const spare = cols.split(',').filter((c) => !used.includes(c));
+  t.eq('也沒有多要用不到的欄位（那是白花的流量）', spare, []);
+
+  t.ok('清單旁邊有寫「加欄位要記得改這裡」', /view 之後加欄位要記得加進來/.test(workerSrc));
+
   upstream = [];
   res = await get('/offers');
   t.eq('第二次直接命中快取', res.headers.get('x-cache'), 'HIT');

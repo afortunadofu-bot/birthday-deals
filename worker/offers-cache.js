@@ -68,6 +68,22 @@ const TTL = { offers: FRESH_TTL, offersFirst: FRESH_TTL, stats: FRESH_TTL, board
    等它傳完＋解析完才看得到真的資料（在那之前畫面上是內建的示範資料，回報次數
    都是 0）。先給 60 筆大約 14KB，第一螢幕就能換成真的，剩下的在背景補。
    60 是「捲一兩下才會到底」的量；再多就失去意義了。 */
+/* v132：跟 Supabase 要哪幾欄。本來是 select=*，實測 146 KB；逐欄點名之後
+   128 KB，**一次省 18 KB（12.5%）**。/offers 是整個系統最大的一筆流量，
+   這 12.5% 直接乘上「每個機房每天 48 次」。
+
+   沒有要的是 view 裡這五欄：
+     slug         前端從來沒讀過
+     updated_at   前端從來沒讀過（要「最近更新」的話看的是 last_checked）
+     sub_offers   fromRow 沒有對應欄位，整包 jsonb 白傳
+     reviewed_by  ─┬─ 只是賦值給 fromRow，下游一個地方都沒用到；
+     reviewed_at  ─┘  而且是 uuid／時間戳，壓縮率很差（同一批改掉了）
+
+   ⚠️ 這份清單是寫死的，所以 **view 之後加欄位要記得加進來**，不然前端會
+      拿不到那一欄、而且不會報錯。jstest/t31 有一條會比對 fromRow 讀的欄位
+      是不是每一個都在這裡，漏掉就測不過。 */
+const OFFER_COLS = 'id,brand,category,regions,region_note,offer,membership,membership_type,membership_cost,free_tier,advance_days,advance_note,offer_window,conditions,validity,validity_type,valid_from,valid_until,sources,status,verified,last_checked,submitted_by,review_note,created_at,timing,value_twd,group_name,admin_edit_diff,requires_companion,transferable,min_spend,report_count,last_used_on,success_rate,comment_count,rating_avg,rating_count,wish_count';
+
 const FIRST_N = 60;
 const STALE_TTL = 86400;      // 上游掛掉時，24 小時內的舊資料還可以頂著用
 const PAGE = 1000;            // PostgREST 的 max-rows，一頁最多就是這麼多
@@ -142,7 +158,8 @@ async function fromSupabase(env, kind) {
      所以背景把完整那包換上來的時候，前幾張卡片不會整個跳掉重排。 */
   if (kind === 'offersFirst') {
     const res = await fetch(
-      `${base}/rest/v1/offers_public?select=*&order=value_twd.desc.nullslast,brand.asc&limit=${FIRST_N}`,
+      `${base}/rest/v1/offers_public?select=${OFFER_COLS}`
+      + `&order=value_twd.desc.nullslast,brand.asc&limit=${FIRST_N}`,
       { headers });
     if (!res.ok) throw new Error(`offers_public(first) ${res.status}`);
     return await res.json();
@@ -151,7 +168,7 @@ async function fromSupabase(env, kind) {
   const out = [];
   for (let page = 0; page < MAX_PAGES; page++) {
     const from = page * PAGE;
-    const res = await fetch(`${base}/rest/v1/offers_public?select=*&order=id.asc`, {
+    const res = await fetch(`${base}/rest/v1/offers_public?select=${OFFER_COLS}&order=id.asc`, {
       headers: { ...headers, range: `${from}-${from + PAGE - 1}` },
     });
     if (!res.ok) throw new Error(`offers_public ${res.status}`);
