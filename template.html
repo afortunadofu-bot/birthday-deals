@@ -1999,7 +1999,62 @@
       </div>
     </div>
     <!-- 回饋問卷入口：訪客、會員都看得到，所以不能放在 #mineAuthedPanels 裡。
-         這裡先寫在最上面，開機時 JS 會把它搬到「推薦給朋友」正下方（見 surveyPanel 搬移那段）。 -->
+         寫在這裡只是因為它要在會員專屬區塊外面——**實際位置不是這裡**：開機時 JS
+         會把它搬到「推薦給朋友」正下方（見 surveyPanel 搬移那段）。 -->
+    <!-- celine（2026-10-17，問卷回饋）：「待辦清單會是生日當月使用最頻繁的，
+         但個人頁面資訊有點多導致我幾次沒辦法馬上找到待辦清單」。
+         本來待辦清單排第 6，前面是問卷、個人資料、推薦給朋友、提醒、幫家人記生日
+         ——全部都是「設定一次就不會再動」的東西，卻擋在每天要看的東西前面。
+         待辦清單跟它算出來的「註冊死線」一起搬到最上面。
+         （自己調過順序的人不受影響，版面設定存下來的順序優先。） -->
+    <div class="panel" id="wishlistPanel" data-block><h2>待辦清單</h2>
+      <p class="sub">點卡片上的星號收藏，勾起來代表用過了。</p>
+      <!-- 嵐：幫別人記生日的話，待辦清單要獨立出來、不同份清單（schema_v71 的 wishlist.person） -->
+      <div class="subtabs wrap hidden" role="tablist" id="wlPersonTabs"></div>
+      <!-- 嵐：「加入搜尋欄，就可以直接搜尋店家」——清單一長（十幾二十筆）用滑的找很久 -->
+      <div class="searchbar" style="margin:0 0 10px">
+        <input type="search" id="wlSearch" placeholder="搜尋清單裡的店家或優惠">
+      </div>
+      <!-- celine：「待辦清單新增按距離排序的按鈕，然後導到地圖頁面」
+           （使用者「烏龍綠」2026-10-10 也提過：「希望在收藏的店家也能放以地理位置近的排序」）
+
+           清單這一頁沒有地圖、也沒有距離，硬塞一個「依距離」的排序選項只會排不出
+           東西。這顆是入口：切到「優惠」分頁、打開「附近」跟「只看收藏」，那邊
+           本來就會由近到遠排、而且有地圖。
+
+           位置：v120 第一版塞在下面那排控制項的最後面（排序、年度、標籤、兩個
+           勾選框之後），手機上會被擠到整排的最底下——celine 隔幾天又提了一次
+           同一個需求，等於沒看到。移到搜尋欄正下方自己一排。 -->
+      <button type="button" class="btn wl-near hidden" id="btnWlNear">
+        📍 看地圖、由近到遠</button>
+      <div class="row" style="margin:0 0 10px;flex-wrap:wrap;gap:8px 14px">
+        <label class="lbl">排序<select id="wlSort">
+          <option value="added_desc">最近加入</option>
+          <option value="added_asc">最早加入</option>
+          <option value="brand">品牌名稱</option>
+          <option value="manual">自訂順序（可上下移動）</option>
+        </select></label>
+        <label class="lbl">年度<select id="wlYear"></select></label>
+        <label class="lbl">標籤<select id="wlTagFilter"></select></label>
+        <label class="toggle"><input type="checkbox" id="wlSinkDone" checked> 已使用的排到最下面</label>
+        <label class="toggle"><input type="checkbox" id="wlCompact"> 簡易版</label>
+      </div>
+      <div id="myWishlist"></div>
+    </div>
+    <section class="planner" id="planner" data-block>
+      <h2 style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>註冊死線</span>
+        <button type="button" class="sub-toggle" id="btnDlCollapse" aria-expanded="true"
+          style="font-size:.78rem;font-weight:400">收起</button>
+      </h2>
+      <p id="plannerSub"></p>
+      <div id="deadlines"></div>
+    </section>
+    <!-- 原本這五塊包在 <div id="mineAuthedPanels"> 裡面一起顯示／隱藏。為了讓
+         「自訂區塊順序」能把它們跟其他區塊一起排（外層 div 會讓它們永遠黏在一起），
+         拆掉外層，改成每一塊自己掛 .authed-only，登入狀態變了就一起切。
+         用 .authed-off 而不是 hidden：badgesPanel 自己也會用 hidden 控制要不要出現，
+         兩套各管各的才不會互相蓋掉。 -->
     <div class="panel" id="surveyPanel" data-block>
       <h2>💬 給壽星日一點回饋</h2>
       <p class="sub">全部用點的，大約 2 分鐘。可以重複填——不同時候的感受都想知道。</p>
@@ -2082,54 +2137,6 @@
       <div id="altBdayMsg"></div>
       <p class="hint" id="altBdayHint" style="margin-top:6px"></p>
     </div>
-    <div class="panel" id="wishlistPanel" data-block><h2>待辦清單</h2>
-      <p class="sub">點卡片上的星號收藏，勾起來代表用過了。</p>
-      <!-- 嵐：幫別人記生日的話，待辦清單要獨立出來、不同份清單（schema_v71 的 wishlist.person） -->
-      <div class="subtabs wrap hidden" role="tablist" id="wlPersonTabs"></div>
-      <!-- 嵐：「加入搜尋欄，就可以直接搜尋店家」——清單一長（十幾二十筆）用滑的找很久 -->
-      <div class="searchbar" style="margin:0 0 10px">
-        <input type="search" id="wlSearch" placeholder="搜尋清單裡的店家或優惠">
-      </div>
-      <!-- celine：「待辦清單新增按距離排序的按鈕，然後導到地圖頁面」
-           （使用者「烏龍綠」2026-10-10 也提過：「希望在收藏的店家也能放以地理位置近的排序」）
-
-           清單這一頁沒有地圖、也沒有距離，硬塞一個「依距離」的排序選項只會排不出
-           東西。這顆是入口：切到「優惠」分頁、打開「附近」跟「只看收藏」，那邊
-           本來就會由近到遠排、而且有地圖。
-
-           位置：v120 第一版塞在下面那排控制項的最後面（排序、年度、標籤、兩個
-           勾選框之後），手機上會被擠到整排的最底下——celine 隔幾天又提了一次
-           同一個需求，等於沒看到。移到搜尋欄正下方自己一排。 -->
-      <button type="button" class="btn wl-near hidden" id="btnWlNear">
-        📍 看地圖、由近到遠</button>
-      <div class="row" style="margin:0 0 10px;flex-wrap:wrap;gap:8px 14px">
-        <label class="lbl">排序<select id="wlSort">
-          <option value="added_desc">最近加入</option>
-          <option value="added_asc">最早加入</option>
-          <option value="brand">品牌名稱</option>
-          <option value="manual">自訂順序（可上下移動）</option>
-        </select></label>
-        <label class="lbl">年度<select id="wlYear"></select></label>
-        <label class="lbl">標籤<select id="wlTagFilter"></select></label>
-        <label class="toggle"><input type="checkbox" id="wlSinkDone" checked> 已使用的排到最下面</label>
-        <label class="toggle"><input type="checkbox" id="wlCompact"> 簡易版</label>
-      </div>
-      <div id="myWishlist"></div>
-    </div>
-    <section class="planner" id="planner" data-block>
-      <h2 style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-        <span>註冊死線</span>
-        <button type="button" class="sub-toggle" id="btnDlCollapse" aria-expanded="true"
-          style="font-size:.78rem;font-weight:400">收起</button>
-      </h2>
-      <p id="plannerSub"></p>
-      <div id="deadlines"></div>
-    </section>
-    <!-- 原本這五塊包在 <div id="mineAuthedPanels"> 裡面一起顯示／隱藏。為了讓
-         「自訂區塊順序」能把它們跟其他區塊一起排（外層 div 會讓它們永遠黏在一起），
-         拆掉外層，改成每一塊自己掛 .authed-only，登入狀態變了就一起切。
-         用 .authed-off 而不是 hidden：badgesPanel 自己也會用 hidden 控制要不要出現，
-         兩套各管各的才不會互相蓋掉。 -->
     <div class="panel authed-only" id="mySavingsPanel" data-block>
       <h2>我省下多少</h2>
       <p class="sub">只計算回報「成功」的紀錄。</p>
