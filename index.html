@@ -348,6 +348,21 @@
   .filter-trigger{position:relative;flex:none;display:flex;align-items:center;gap:6px;min-height:44px}
   .filter-trigger svg{width:16px;height:16px}
   .filter-trigger.active{border-color:var(--accent);color:var(--accent-dark);background:var(--accent-soft)}
+  /* 套用中的篩選，直接攤在列表上面。celine：「手機介面下列表頁清除篩選位置
+     不明顯，是否現在是套用篩選的狀態也不夠明顯」——本來只有「篩選」按鈕上一個
+     數字，看得出「有幾個」，看不出「是哪些」，也不知道怎麼拿掉其中一個。 */
+  .active-filters{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0 2px}
+  .af-label{font-size:.78rem;color:var(--ink-3);margin-right:2px}
+  .af-chip{display:inline-flex;align-items:center;gap:5px;font-size:.8rem;line-height:1;
+    padding:7px 9px 7px 11px;min-height:32px;border-radius:99px;cursor:pointer;
+    border:1px solid var(--accent-line);background:var(--accent-soft);color:var(--accent-dark);
+    font-weight:600}
+  .af-chip:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .af-chip .x{font-size:.95rem;line-height:1;opacity:.7}
+  .af-chip:hover .x{opacity:1}
+  .af-clear{border-style:dashed;background:transparent;color:var(--ink-2);
+    border-color:var(--line);font-weight:600}
+  .af-clear:hover{background:var(--ink);color:var(--surface);border-color:var(--ink)}
   .filter-badge{background:var(--accent);color:#fff;border-radius:99px;font-size:.68rem;
     font-weight:700;padding:0 6px;min-width:16px;text-align:center;line-height:1.5}
 
@@ -1611,6 +1626,7 @@
       <button class="btn sm" id="btnOnlyNew" type="button">只看新的</button>
       <button class="btn sm plain" id="btnDismissNew" type="button" aria-label="關閉">✕</button>
     </div>
+    <div class="active-filters hidden" id="activeFilters"></div>
     <p class="count" id="count"></p>
 
     <!-- 功能介紹小卡（celine）：地圖按鈕加了之後很多人沒發現，在列表最上面講一句，
@@ -4681,7 +4697,7 @@ const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
 /* 更新紀錄的內容在 updates.json，build.py 注入這裡，同一份資料也產生整頁的
    updates.html。「我的」頁面只用到日期跟標題（最新幾筆＋NEW 標記），
    細項（items）留著是給 updates.html 用的。 */
-const SITE_UPDATES = [{"date":"2026-10-22","title":"地圖上的點按得到了，資訊也不會自己消失","items":["橘點的可按範圍變大，比較不會按成「換查詢位置」","按到點之後，資訊會一直留著，不會看到一半就不見"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
+const SITE_UPDATES = [{"date":"2026-10-22","title":"地圖的點按得到了，篩選中的條件也看得見","items":["橘點的可按範圍變大，比較不會按成「換查詢位置」","按到點之後，資訊會一直留著，不會看到一半就不見","現在篩了哪些條件直接列在清單上面，可以一個一個拿掉"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
 const SITE_UPDATES_SHOW=3;
 
 function updatesSeenDate(){
@@ -5922,6 +5938,70 @@ $('#nearKm').onchange=e=>{
 };
 $('#sort').addEventListener('input',()=>{ if(NEAR.active) NEAR.sortTouched=true; });
 
+/* ---- 套用中的篩選：攤在列表上面，每一個都可以單獨拿掉 ----
+
+   celine（2026-10-17，問卷回饋）：「手機介面下列表頁清除篩選位置不明顯，
+   是否現在是套用篩選的狀態也不夠明顯」。
+
+   在這之前，收起篩選面板之後唯一的線索是「篩選」按鈕上的一個數字——看得出
+   「有幾個」，看不出「是哪些」，而且要拿掉其中一個就得重新打開面板、在一長串
+   開關裡找。「清除篩選」那顆也埋在面板最下面。
+
+   問卷「你遇過哪些問題」第二名是「優惠太多看不完」（64 人、22%）：篩選看不見、
+   不好拿掉，就等於沒有在用。 ---- */
+const FILTER_SETS={
+  region:{set:()=>activeRegion, sel:'#regionChips'},
+  mem:   {set:()=>activeMemType, sel:'#memChips'},
+  cat:   {set:()=>activeCat,     sel:'#cats'},
+  free:  {set:()=>activeFree,    sel:'#freeChips'},
+  timing:{set:()=>activeTiming,  sel:'#timingChips'},
+};
+/* 拿掉一個值，面板裡對應的 chip 也要跟著彈起來——不然重新打開面板會看到
+   「這裡還按著，但列表已經沒在篩了」。整組空掉時把「全部」那顆按下去。 */
+function dropFilterValue(kind, value){
+  const f=FILTER_SETS[kind]; if(!f) return;
+  const st=f.set(); st.delete(value);
+  $$(`${f.sel} .chip`).forEach(c=>{
+    if(c.dataset.v===value) c.setAttribute('aria-pressed','false');
+    if(c.dataset.v==='') c.setAttribute('aria-pressed', String(st.size===0));
+  });
+}
+function activeFilterChips(){
+  const out=[];
+  const q=$('#q').value.trim();
+  if(q) out.push({label:`搜尋「${q}」`, drop:()=>{ $('#q').value=''; }});
+  for(const kind of Object.keys(FILTER_SETS))
+    for(const v of FILTER_SETS[kind].set())
+      out.push({label:v, drop:()=>dropFilterValue(kind, v)});
+  const box=(id,label,on=true)=>{
+    if($(id).checked!==on) return;
+    out.push({label, drop:()=>{ $(id).checked=!on; }});
+  };
+  box('#fVerified','已查證');
+  box('#fLive','含過期的', false);          // 預設是勾著的，沒勾才算一個條件
+  box('#fReported','近 90 天有人用');
+  box('#fHasComments','有留言');
+  box('#fNoCompanion','一人也能用');
+  box('#fTransferable','不用本人證件');
+  if($('#fExactRegion').checked && activeRegion.size)
+    out.push({label:'不含全台', drop:()=>{ $('#fExactRegion').checked=false; }});
+  return out;
+}
+function renderActiveFilters(){
+  const box=$('#activeFilters'); if(!box) return;
+  const chips=activeFilterChips();
+  box.classList.toggle('hidden', !chips.length);
+  if(!chips.length){ box.innerHTML=''; return; }
+  box.innerHTML=`<span class="af-label">篩選中</span>`
+    + chips.map((c,i)=>`<button type="button" class="af-chip" data-i="${i}"
+        aria-label="拿掉「${esc(c.label)}」這個條件">${esc(c.label)}<span class="x" aria-hidden="true">✕</span></button>`).join('')
+    + `<button type="button" class="af-chip af-clear" id="afClearAll">全部清除</button>`;
+  $$('#activeFilters .af-chip[data-i]').forEach(b=>{
+    b.onclick=()=>{ chips[Number(b.dataset.i)].drop(); syncExactRegionToggle(); render(); };
+  });
+  $('#afClearAll').onclick=()=>$('#btnClearFilters').click();
+}
+
 function render(){
   const q=$('#q').value.trim().toLowerCase();
   const onlyV=$('#fVerified').checked, hideX=$('#fLive').checked, onlyR=$('#fReported').checked;
@@ -5935,11 +6015,13 @@ function render(){
   if(sortBy==='distance'&&!(NEAR.active&&NEAR.byOffer)){ sortBy='value'; if(!NEAR.active) $('#sort').value='value'; }
 
   const activeCount = (q?1:0)+activeRegion.size+activeMemType.size+activeCat.size+activeFree.size+activeTiming.size
-    +(onlyV?1:0)+(!hideX?1:0)+(onlyR?1:0)+(onlyC?1:0)+(noCompanion?1:0)+(onlyTransferable?1:0);
+    +(onlyV?1:0)+(!hideX?1:0)+(onlyR?1:0)+(onlyC?1:0)+(noCompanion?1:0)+(onlyTransferable?1:0)
+    +(exactRegion?1:0);
   $('#btnClearFilters').classList.toggle('hidden',!activeCount);
   $('#filterBadge').textContent=activeCount;
   $('#filterBadge').classList.toggle('hidden',!activeCount);
   $('#btnOpenFilter').classList.toggle('active',!!activeCount);
+  renderActiveFilters();
 
   let list=OFFERS.filter(o=>{
     if(onlyNewActive&&!NEW_OFFER_IDS.has(o.id)) return false;
