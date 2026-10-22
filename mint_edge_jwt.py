@@ -33,11 +33,63 @@ import hmac
 import json
 import sys
 import time
+import urllib.error
+import urllib.request
 
 ROLE = "edge_reader"
 ISS = "supabase"
 REF = "lgshwappyjgnzfkwncjk"   # 專案代號，跟現有的 anon key 同一個
 YEARS = 10
+
+BASE = "https://lgshwappyjgnzfkwncjk.supabase.co"
+# 公開的 anon key（跟 config.js、worker 的 DEFAULTS 同一把）。
+# 它只是給 Supabase 閘道看的 apikey，不是祕密。
+ANON = ("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+        "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxnc2h3YXBweWpnbnpma3duY2prIiwicm9sZSI6"
+        "ImFub24iLCJpYXQiOjE3ODU4MDgxNTAsImV4cCI6MjEwMTM4NDE1MH0."
+        "YEAjEdKM8x7wYU_xvS463xw7EAYA5uQZeqE5ATIgqyQ")
+
+
+def verify(token: str) -> bool:
+    """拿這把金鑰真的去 Supabase 查一次，就跟 Worker 待會做的一模一樣。
+
+    2026-10-21 的教訓：金鑰沒驗就直接貼上 Cloudflare，Worker 對 Supabase 的
+    每一支查詢都回 401，站台靠 24 小時的舊快取撐了一天才被發現。
+    這一關就是把那次的檢查搬到「碰 Cloudflare 之前」。
+    """
+    url = f"{BASE}/rest/v1/offers_public?select=id&limit=1"
+    req = urllib.request.Request(url, headers={
+        "apikey": ANON,                       # 閘道看的：一定要是公開那把
+        "authorization": f"Bearer {token}",   # 決定角色的：這次要驗的那把
+        "accept": "application/json",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=15) as r:
+            rows = json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", "replace")[:200]
+        print(f"  [X] Supabase 回 {e.code}")
+        print(f"    {detail}")
+        if e.code == 401:
+            print()
+            print("    401 ＝ 簽章對不上。最可能的兩個原因：")
+            print("      - JWT Secret 複製到別的東西了（例如 anon key 或 service_role key）")
+            print("      - 專案已經換成新的 JWT 簽章系統，不能用共用祕密簽")
+            print("    先不要貼去 Cloudflare。")
+        elif e.code == 403:
+            print()
+            print("    403 ＝ 簽章對了，但權限不夠。")
+            print("    schema_v131_edge_reader.sql 的【步驟 A2】沒跑成功，回去重跑。")
+        return False
+    except Exception as e:                                    # noqa: BLE001
+        print(f"  [X] 連不上：{e}")
+        return False
+
+    if not rows:
+        print("  [X] 查得到，但回 0 筆 —— RLS 把它全擋掉了，不要貼去 Cloudflare")
+        return False
+    print(f"  [OK] 可以讀到優惠（試查一筆：id={rows[0].get('id')}）")
+    return True
 
 
 def b64(raw: bytes) -> str:
@@ -76,6 +128,13 @@ def main() -> int:
     print()
     print(f"角色：{ROLE}")
     print(f"到期：{time.strftime('%Y-%m-%d', time.localtime(payload['exp']))}（{YEARS} 年後）")
+    print()
+    print("先拿這把金鑰去 Supabase 查一次（跟 Worker 待會做的一樣）…")
+    if not verify(token):
+        print()
+        print("這把金鑰不能用，**不要貼到 Cloudflare**。上面寫了原因。")
+        return 1
+
     print()
     print(token)
     print()

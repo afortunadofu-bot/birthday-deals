@@ -40,6 +40,11 @@
 --      （這一步什麼都不會壞，anon 的權限一點都沒動。）
 --   2. 在本機產生一把 edge_reader 的金鑰：
 --         python mint_edge_jwt.py
+--
+--      ⚠️ 它會**自己拿那把金鑰去 Supabase 查一次**，驗過了才把 token 印出來。
+--         驗不過就不會印 —— 那代表這把不能用，**不要再往下做**。
+--         （2026-10-21 踩過：金鑰沒驗就貼上 Cloudflare，Worker 對 Supabase
+--           的每一支查詢都回 401，站台靠 24 小時的舊快取撐了一整天。）
 --      （它會跟你要 Supabase 的 JWT Secret：Dashboard → Settings → API →
 --        JWT Settings → JWT Secret。**那把祕密不要貼進任何網站、不要進 git。**）
 --   3. Cloudflare → Workers → birthdaydeals-api → Settings → Variables：
@@ -55,6 +60,18 @@
 --   5. 確認沒問題之後，才跑本檔的【步驟 B】：把 anon 讀 offers_public 的權限收掉。
 --
 -- 要復原：跑最下面的【還原】那一段，再把 Cloudflare 的 SUPABASE_EDGE_KEY 刪掉。
+--
+-- ---------------------------------------------------------------------
+-- Worker 壞掉的時候怎麼最快救回來
+-- ---------------------------------------------------------------------
+-- 到 Cloudflare → birthdaydeals-api → 設定 → 變數和祕密，
+-- **把 SUPABASE_ANON_KEY 跟 SUPABASE_EDGE_KEY 兩個都刪掉**，重新部署。
+--
+-- 不用去翻金鑰貼回來：worker/offers-cache.js 的 DEFAULTS 裡面本來就有一份
+-- 公開的 anon key，兩個變數都沒設的時候會自動用它，站台就回到原狀。
+-- 確認方式：
+--     curl -sI https://birthdaydeals-api.celine-fu-work.workers.dev/offers | grep -i x-cache
+-- 看到 MISS 或 HIT 就好了；看到 STALE 或 502 就是還沒好。
 -- 可重複執行。
 -- =====================================================================
 

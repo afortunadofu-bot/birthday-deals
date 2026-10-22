@@ -108,8 +108,20 @@ function fakeCaches() {
 
   const mint = read('mint_edge_jwt.py');
   t.ok('產金鑰的腳本用 getpass 讀祕密（不會顯示、不會留檔）', /getpass\.getpass/.test(mint));
-  t.ok('腳本不會把祕密寫到任何檔案', !/open\(/.test(mint));
+  // urlopen( 不算（那是去驗金鑰，不是寫檔）——用 \b 把它排除掉
+  t.ok('腳本不會把祕密寫到任何檔案', !/\bopen\(/.test(mint));
   t.ok('腳本叫她新增 EDGE_KEY，不是去改 ANON_KEY', /不要動原本的 SUPABASE_ANON_KEY/.test(mint));
+  /* 2026-10-21 的事故：金鑰沒驗就貼上 Cloudflare，Worker 全部 401，
+     站台靠 24 小時的舊快取撐了一整天都看不出來。檢查要搬到上線之前。 */
+  t.ok('簽完會自己拿去 Supabase 驗一次', /def verify\(/.test(mint) && /offers_public\?select=id/.test(mint));
+  t.ok('驗不過就不印 token（不可能再貼一把壞金鑰上去）',
+    /if not verify\(token\):/.test(mint) && /不要貼到 Cloudflare/.test(mint));
+  t.ok('401／403／0 筆分別講清楚是什麼問題',
+    /401/.test(mint) && /403/.test(mint) && /RLS 把它全擋掉/.test(mint));
+  t.ok('輸出沒有 cp950 印不出來的符號（她的終端機是 Big5）',
+    !/[✓✗⚠]/.test(mint.split('def main')[1] || ''));
+  t.ok('SQL 檔寫了 Worker 壞掉怎麼最快救回來',
+    /兩個都刪掉/.test(v131) || /兩個都刪掉/.test(v131) || /SUPABASE_EDGE_KEY 兩個都刪掉/.test(v131));
 
   t.done();
 })();

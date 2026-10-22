@@ -170,6 +170,40 @@ select count(*) from public.offers_public;
 
 `0 筆` ＝ RLS 擋掉了，`permission denied` ＝ A2 沒跑成功，兩種都不要往下做。
 
+### 2026-10-21 事故：金鑰沒驗就上線，站台靠舊快取撐了一整天
+
+換上 `edge_reader` 的金鑰之後，Worker 對 Supabase 的**每一支**查詢都回 401：
+
+```
+x-upstream-error: offers_public 401
+x-upstream-error: site_settings?select=key,enabled 401
+x-upstream-error: site_stats 401
+```
+
+`STALE_TTL` 是 24 小時，所以 Worker 一聲不響地拿前一天的快取頂著
+（`x-cache: STALE`），**表面上完全正常**，直到 24 小時用完才開始回 502。
+前端還有「直接問 Supabase」的退路，所以使用者看得到資料 —— 但每一位訪客
+都變成自己去拉 146 KB，正是 `SUPABASE-流量.md` 裡寫的第 4 條爆掉路線。
+
+**根本原因是順序**：我叫她「換金鑰 → 部署 → 開網頁看看」。那個檢查太晚、
+而且太弱 —— 有 24 小時的舊快取擋在前面，看網頁**根本看不出來壞了**。
+
+修法是把檢查搬到碰 Cloudflare 之前：`mint_edge_jwt.py` 現在會**自己拿剛簽好的
+金鑰去 Supabase 查一次**，驗過了才把 token 印出來，驗不過就直接拒絕：
+
+| Supabase 回 | 腳本說 |
+| --- | --- |
+| 200、有資料 | `[OK] 可以讀到優惠（試查一筆：id=…）` |
+| 401 | 簽章對不上 —— JWT Secret 複製錯，或專案換了新的簽章系統 |
+| 403 | 簽章對了但權限不夠 —— 【步驟 A2】沒跑成功 |
+| 200、0 筆 | RLS 全擋掉了 |
+
+後面三種都**不印 token**，所以不可能再把一把壞金鑰貼上去。
+
+SQL 檔也補了「Worker 壞掉怎麼最快救回來」：**把兩個環境變數都刪掉重新部署**
+就好 —— `offers-cache.js` 的 `DEFAULTS` 本來就有一份公開的 anon key，
+兩個都沒設時會自動用它，不用去翻金鑰貼回來。
+
 **`revoke select on public.offers_public from anon;` 那一行在檔案裡是註解掉的。**
 要先確認換了金鑰的 Worker 真的還拿得到資料，才能解開它。檔案最下面有還原用的
 那一行。
