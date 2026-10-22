@@ -57,3 +57,4 @@ Supabase Dashboard → SQL Editor → 貼上整支 → Run。
 | --- | --- |
 | `schema_v130_guards.sql` | 照常，整份貼下去就好 |
 | `schema_v131_edge_reader.sql` | **分兩次**，照檔案開頭的「上線順序」 |
+| `schema_v133_tw_to_counties.sql` | 照常貼，但**整份只會跑預覽**；看過表再解開【執行】那一行 |
