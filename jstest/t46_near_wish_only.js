@@ -39,11 +39,17 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
       return m; } };
     render();
   `);
-  const pins = () => win.__pins;
+  /* v134 之後每一家店畫兩圈：一圈看不見的大判定圈（手指按得到）＋看得見的點。
+     只有看得見的那一顆有 _sxKey，拿它來數「地圖上有幾家店」。 */
+  const pins = () => win.__pins.filter((p) => p._sxKey);
+  const allLayers = () => win.__pins;
   const listIds = () => [...doc.querySelectorAll('#grid .card')].map((c) => c.dataset.id);
 
   win.eval('paintNearPins()');
   t.eq('沒按之前：三家店都在地圖上', pins().length, 3);
+  t.eq('每一家都有「判定圈＋看得見的點」兩層（v134）', allLayers().length, 6);
+  t.ok('判定圈比看得見的點大很多（手指按得到）',
+    allLayers().filter((p) => !p._sxKey).every((p) => p.opt.radius >= 16));
   t.eq('列表也是三筆', listIds().length, 3);
   const pinOf = (o) => pins().find((p) => p.html.includes(o.brand));
   t.ok('收藏的那一家本來就畫得比較大（一眼看得出哪家是自己收的）',

@@ -5615,6 +5615,9 @@ const NEAR={active:false, lat:null, lng:null, label:'', km:3, byOffer:null, load
   reqSeq:0, sortTouched:false, wishOnly:false};
 try{ const k=Number(localStorage.getItem('sxr_near_km')); if([1,3,5,10,30].includes(k)) NEAR.km=k; }catch{}
 let NEAR_MAP=null, NEAR_MAP_CENTER=null, NEAR_MAP_CIRCLE=null, NEAR_MAP_PINS=null, NEAR_PIN_TIMER=null;
+/* 現在打開的是哪一家的資訊。paintNearPins() 會把整個圖層清掉重畫，popup 當然
+   跟著不見——重畫完照這個 key 把它開回來，使用者才不會「看到一半就沒了」。 */
+let NEAR_POPUP_KEY='';
 let NEAR_PIN_KEY='';   // 上一次查分店的畫面範圍，範圍沒變就不重查
 let NEAR_PIN_ROWS=[];  // 上一次查回來的分店，切「只看收藏」時直接重畫，不用再查一次
 
@@ -5730,7 +5733,15 @@ async function openNearMap(){
   L.tileLayer(tiles.url,{maxZoom:tiles.maxZoom||20, subdomains:tiles.subdomains||'abc',
     attribution:tiles.attribution}).addTo(NEAR_MAP);
   NEAR_MAP_PINS=L.layerGroup().addTo(NEAR_MAP);
-  NEAR_MAP.on('click', e=>setNearCenter(e.latlng.lat, e.latlng.lng, '地圖上選的位置'));
+  /* 使用者陳（2026-10-16）：「橘點有時候較難按（會觸發成圖釘），或是按到橘點後
+     顯示的資訊很快就消失得再按一次橘點」。
+     第二件事的原因在這一行：按到橘點旁邊一點點 → 這個 click 就換了查詢位置 →
+     重新查分店 → paintNearPins() 把圖層整個清掉 → 剛打開的 popup 跟著消失。
+     所以有 popup 開著的時候，第一下只關掉它，不換位置。 */
+  NEAR_MAP.on('click', e=>{
+    if(NEAR_MAP._popup){ NEAR_MAP.closePopup(); return; }
+    setNearCenter(e.latlng.lat, e.latlng.lng, '地圖上選的位置');
+  });
   // 每次停下來都查一次分店，拖一下地圖就是一次查詢——地圖現在是預設開啟的，
   // 這個量會直接反映在資料庫的負擔上。等久一點（600ms）再查，而且畫面範圍
   // 沒有真的變（小數第三位以內，約 100 公尺）就不重查。
@@ -5739,7 +5750,9 @@ async function openNearMap(){
   NEAR_MAP.on('popupopen', e=>{
     const b=e.popup.getElement()?.querySelector('.map-open-offer');
     if(b) b.onclick=()=>openDetail(b.dataset.id);
+    NEAR_POPUP_KEY=e.popup._source?._sxKey||'';
   });
+  NEAR_MAP.on('popupclose', ()=>{ NEAR_POPUP_KEY=''; });
   syncNearMapCenter(false);
   loadNearPins();
 }
@@ -5782,6 +5795,7 @@ async function loadNearPins(){
 function paintNearPins(){
   if(!NEAR_MAP||!NEAR_MAP_PINS) return;
   const hint=$('#nearMapHint');
+  const reopen=NEAR_POPUP_KEY;        // clearLayers() 會把它清掉，先記下來
   NEAR_MAP_PINS.clearLayers();
   let hidden=0;
   NEAR_PIN_ROWS.forEach(st=>{
@@ -5790,14 +5804,26 @@ function paintNearPins(){
     const wished=WISH.has(String(o.id));
     if(NEAR.wishOnly && !wished){ hidden++; return; }
     // 收藏的用強調色畫大一點：沒開「只看收藏」時，一眼就看得出哪幾家是自己收的
-    const c = wished ? {color:'#7c2d12', fill:'#f59e0b', r:9} : {color:'#c2410c', fill:'#fb923c', r:7};
-    L.circleMarker([st.lat,st.lng],{radius:c.r,weight:2,color:c.color,fillColor:c.fill,fillOpacity:.85})
-      .bindPopup(`<b>${esc(o.brand)}</b>${wished?' <span style="font-size:.75rem">· 已收藏</span>':''}<br>
+    const c = wished ? {color:'#7c2d12', fill:'#f59e0b', r:10} : {color:'#c2410c', fill:'#fb923c', r:8};
+    const html=`<b>${esc(o.brand)}</b>${wished?' <span style="font-size:.75rem">· 已收藏</span>':''}<br>
         <span style="font-size:.8rem">${esc(st.name)}</span><br>
         <span style="font-size:.8rem">${esc(String(o.offer||'').slice(0,60))}</span><br>
         <button type="button" class="btn sm map-open-offer" data-id="${esc(o.id)}" style="margin-top:6px">看優惠</button>
-        <a href="${esc(mapsLink(st))}" target="_blank" rel="noopener" style="margin-left:6px;font-size:.8rem">導航↗</a>`)
-      .addTo(NEAR_MAP_PINS);
+        <a href="${esc(mapsLink(st))}" target="_blank" rel="noopener" style="margin-left:6px;font-size:.8rem">導航↗</a>`;
+    /* closeOnClick:false ——「按一下地圖」不要順手把剛打開的資訊關掉。
+       autoClose 維持預設（按另一個點時前一個會關），不然會同時開一堆。 */
+    const popup={closeOnClick:false, autoPan:true, autoPanPadding:[24,24]};
+    /* 看得見的點只有 16～20px，手指按不準（Apple／Google 的建議是 44px）。
+       先鋪一圈看不見的大圈當判定範圍：填色透明但 fill 有值，SVG 一樣吃得到點擊。
+       它先 addTo 所以在底下，不會蓋住看得見的點。 */
+    L.circleMarker([st.lat,st.lng],{radius:16,weight:0,opacity:0,fillOpacity:0,
+      fillColor:c.fill, bubblingMouseEvents:false})
+      .bindPopup(html, popup).addTo(NEAR_MAP_PINS);
+    const dot=L.circleMarker([st.lat,st.lng],{radius:c.r,weight:2,color:c.color,
+      fillColor:c.fill, fillOpacity:.85, bubblingMouseEvents:false})
+      .bindPopup(html, popup).addTo(NEAR_MAP_PINS);
+    dot._sxKey=`${o.id}@${st.lat},${st.lng}`;
+    if(dot._sxKey===reopen) dot.openPopup();
   });
   const n=NEAR_MAP_PINS.getLayers().length;
   hint.textContent = NEAR.wishOnly
