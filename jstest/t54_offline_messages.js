@@ -58,8 +58,11 @@ const sync = fs.readFileSync(path.join(root, 'app', 'sync_www.py'), 'utf8');
   /* ========== 2. App 裡先用打包進去的 SDK ========== */
   t.ok('sync_www.py 本來就把 SDK 打包進去了', /vendor\/supabase\.min\.js/.test(sync));
   t.ok('網頁這邊現在真的會去讀它', /loadScriptTag\('vendor\/supabase\.min\.js'/.test(index));
-  t.ok('只有 App 裡才先試（網頁版不要白白多一個 404）',
-    /if\(IN_APP\)\{\s*await loadScriptTag\('vendor\/supabase\.min\.js'/.test(index.replace(/\r/g, '')));
+  /* v128 原本寫「只有 App 裡才先試」，理由是「線上沒有 vendor/，不要讓訪客白白
+     多一個 404」。那個判斷就是 10/22 再次回報的原因——tomoe_hot 用的是「加到主
+     畫面」的網頁版、不是 APK，所以那條路對他完全沒生效。v138 改成所有人都先試，
+     vendor/ 也放到網站上了。這條斷言留著只會再擋一次正確的修法。 */
+  t.ok('v138：所有人都先試本站那一份，不是只有 App', !/if\(IN_APP\)/.test(index));
   t.ok('試完還是會退回 CDN（打包的那份壞掉也不能整個死掉）',
     /vendor\/supabase\.min\.js[\s\S]{0,200}for\(const url of SDK_URLS\)/.test(index));
 

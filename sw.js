@@ -7,9 +7,13 @@
    - Supabase API：完全不攔截。優惠資料必須是最新的，
      快取住反而會給人過期的優惠資訊，那比開不了還糟。
 */
-const CACHE = 'shouxing-v6';
+const CACHE = 'shouxing-v7';
+/* v138：Supabase SDK 也一起預先快取。本來它是跟 CDN 拿的，CDN 一慢或被擋就整個
+   降級成離線模式（使用者 tomoe_hot 連續兩天回報）。放自己站上＋預先快取之後，
+   連沒網路都還能用快取那一份把畫面跑起來。 */
 const ASSETS = ['./', './index.html', './manifest.json', './icon.svg',
-                './icon-192.png', './icon-512.png'];
+                './icon-192.png', './icon-512.png',
+                './vendor/supabase.min.js'];
 
 self.addEventListener('install', e => {
   e.waitUntil(

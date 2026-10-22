@@ -3286,28 +3286,36 @@ const SDK_URLS=[
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
   'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js'
 ];
-/* 包成 App 之後（Capacitor），SDK 先用打包在 APK 裡的那一份。
+/* SDK 一律先用自己站上那一份，CDN 只是備援。
 
-   使用者 tomoe_hot（2026-10-20，Threads 私訊）：「壽星日 app 顯示離線模式查不到
-   分店位置……這問題 app 才有，我用電腦看網頁不會有問題」。
+   使用者 tomoe_hot（Threads 私訊）：
+     10/20「壽星日 app 顯示離線模式查不到分店位置……這問題 app 才有」
+     10/22「我剛看到你這訊息，去 app 點了〔排序〕〔篩選〕都沒反應，然後點〔附近〕
+            出現（現在連不到資料庫…）**但我網路正常，頁面也重新整理了幾次**」
 
-   原因：`app/sync_www.py` 早就把 SDK 下載成 `www/vendor/supabase.min.js` 打包進去，
-   但網頁這邊從來沒有去讀它——還是照樣跑去 CDN 拿。手機網路差一點、或 CDN 被擋，
-   10 秒逾時之後整個 App 就降級成離線模式。打包在身上的檔案不用等網路，
-   一定比 CDN 快也比較不會失敗。
+   v128 只讓「App 裡」（window.Capacitor 存在）先讀打包的那一份，理由是「線上沒有
+   vendor/，不要讓訪客白白多一個 404」。但他第二次回報的訊息裡寫的是**「或頁面重新
+   整理」——那是網頁版的句子**（App 裡會寫「把 App 關掉再打開」）。所以他用的根本
+   不是 APK，是**「加到主畫面」的網頁版**，v128 那個判斷對他完全沒有生效。
 
-   網頁版不受影響：線上沒有 vendor/ 這個資料夾，所以只在 App 裡（window.Capacitor
-   存在）才先試它，不會讓一般訪客白白多一個 404。 */
+   所以乾脆把 vendor/supabase.min.js 也放到網站上，**所有人都先讀自己站上那一份**：
+
+     · 同網域，不會被擋、不受 CDN 連不連得到影響（這才是 10 秒逾時的根源）
+     · 同網域 → service worker 會把它一起快取，沒網路也開得起來
+     · 比 CDN 快：不用多一次 DNS／TLS
+
+   ⚠️ 上傳網站時 vendor/supabase.min.js 要一起傳，漏掉的話會退回 CDN
+      （還是會動，只是又回到原本那個會逾時的路）。 */
+let SDK_FROM='';            // 最後是從哪裡載到 SDK 的，診斷資訊會用到
 async function loadSupabaseSdk(){
   if(window.supabase) return true;
-  if(IN_APP){
-    await loadScriptTag('vendor/supabase.min.js', 10000);
-    if(window.supabase) return true;
-  }
+  await loadScriptTag('vendor/supabase.min.js', 10000);
+  if(window.supabase){ SDK_FROM='本站'; return true; }
   for(const url of SDK_URLS){
     await loadScriptTag(url, 10000);
-    if(window.supabase) return true;
+    if(window.supabase){ SDK_FROM=new URL(url).hostname; return true; }
   }
+  SDK_FROM='都失敗';
   return false;
 }
 let PAGEVIEW_LOGGED=false;
@@ -3463,15 +3471,57 @@ document.addEventListener('click', e=>{
 }, true);   // 捕獲階段：就算有人中途擋掉冒泡也還是算得到
 
 /* ---- 離線／登入失敗診斷：直接告訴使用者卡在哪 ---- */
+/* 複製給我們的那段字。只有「查這個問題真的需要」的東西：
+   沒有帳號、沒有位置、沒有任何可以認出是誰的資料。 */
+function diagnosticText(){
+  const sw = ('serviceWorker' in navigator)
+    ? (navigator.serviceWorker.controller ? '有（已接管）' : '有（還沒接管）') : '沒有';
+  return [
+    '壽星日・連線狀況',
+    `更新版本：${(SITE_UPDATES[0]||{}).date||'不明'}`,
+    `開啟方式：${IN_APP?'App':(matchMedia('(display-mode: standalone)').matches?'加到主畫面':'瀏覽器')}`,
+    `網址：${location.origin}`,
+    `設定檔：${HAS_CFG?'有':'沒讀到'}`,
+    `連線元件：${HAS_SDK?('有，來自 '+(SDK_FROM||'不明')):('載入失敗（'+(SDK_FROM||'不明')+'）')}`,
+    `系統說有沒有網路：${navigator.onLine?'有':'沒有'}`,
+    `離線快取：${sw}`,
+    `瀏覽器：${navigator.userAgent}`,
+  ].join(String.fromCharCode(10));   // 不寫跳脫字元：這份檔案常被腳本改，
+ 很容易被吃掉
+
+}
 function renderDiagnostics(mb){
   /* 一般使用者（線上或 App）看到的是人話，不是我的除錯清單。
      下面那三行講的是 file://、config.js、CDN——對他們來說不但看不懂，
      而且沒有一條是他們能動手修的。開發機上照舊全部列出來。 */
   if(!IS_DEV){
+    /* 使用者 tomoe_hot 連續兩天回報，兩次我都只能用症狀猜原因。所以多一顆
+       「複製狀況」——按一下就把真正需要知道的幾個值複製起來，可以直接貼回來。
+       比「請你截圖」好，因為真正的線索（SDK 從哪載、瀏覽器是什麼）畫面上看不到。 */
     mb.innerHTML = `<div class="note alert">
       <b>現在連不到資料庫</b>——畫面上是內建的示範資料（${SEED.offers.length} 筆），
       可以瀏覽跟篩選，但<b>回報次數、省下金額都還不是真的</b>，也沒辦法登入或投稿。<br>
-      網路恢復之後會自動重新連上，${IN_APP?'或把 App 關掉再打開一次':'或重新整理一次'}。</div>`;
+      網路恢復之後會自動重新連上，${IN_APP?'或把 App 關掉再打開一次':'或重新整理一次'}。
+      <div class="row" style="margin-top:10px">
+        <button type="button" class="btn sm" id="btnCopyDiag">複製狀況回報給我們</button>
+        <span class="hint" id="copyDiagMsg"></span>
+      </div></div>`;
+    const btn=mb.querySelector('#btnCopyDiag');
+    if(btn) btn.onclick=async()=>{
+      const txt=diagnosticText();
+      let ok=false;
+      try{ await navigator.clipboard.writeText(txt); ok=true; }catch{}
+      if(!ok){
+        // 有些手機瀏覽器不給 clipboard：退而求其次，選起來讓他自己複製
+        const ta=document.createElement('textarea');
+        ta.value=txt; ta.style.cssText='position:fixed;left:0;top:0;width:96%;height:120px;z-index:9999';
+        mb.appendChild(ta); ta.focus(); ta.select();
+        try{ ok=document.execCommand('copy'); }catch{}
+        if(ok) ta.remove();
+      }
+      mb.querySelector('#copyDiagMsg').textContent =
+        ok ? '已複製，貼給我們就好' : '複製失敗，上面那塊字請手動選起來複製';
+    };
     return;
   }
   const rows = [
@@ -4648,9 +4698,10 @@ function showOAuthError(){
 /* 包成 App（Capacitor）時不註冊 service worker：那時候所有資產本來就在手機本機，
    再疊一層快取只會讓改版後「到底是哪一份在跑」變得很難查。
    window.Capacitor 是原生端注入的，網頁版永遠是 undefined，所以這行對網站沒有影響。 */
-const IS_APP = typeof window.Capacitor !== 'undefined';
+/* v138：這裡本來還有一個跟上面 IN_APP 判斷一模一樣的旗標。留兩個遲早會改到
+   其中一個、忘了另一個，所以合併成 IN_APP 一個。 */
 function registerSW(){
-  if('serviceWorker' in navigator && !IS_FILE && !IS_APP)
+  if('serviceWorker' in navigator && !IS_FILE && !IN_APP)
     navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 // 加到主畫面：改成右下角（手機貼底）會自動消失的提示條，不要一直釘在頁首佔位置。
