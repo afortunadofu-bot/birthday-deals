@@ -351,6 +351,24 @@
   /* 套用中的篩選，直接攤在列表上面。celine：「手機介面下列表頁清除篩選位置
      不明顯，是否現在是套用篩選的狀態也不夠明顯」——本來只有「篩選」按鈕上一個
      數字，看得出「有幾個」，看不出「是哪些」，也不知道怎麼拿掉其中一個。 */
+  /* 行程分頁的場館清單 */
+  .venue{border:1px solid var(--line);border-radius:var(--r-sm);margin:8px 0;overflow:hidden}
+  .venue-head{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;
+    min-height:48px;background:var(--surface);border:0;cursor:pointer;text-align:left;
+    font-size:.92rem;color:var(--ink)}
+  .venue-head:hover{background:var(--line-soft)}
+  .venue-head[aria-expanded="true"]{background:var(--accent-soft)}
+  .venue-name{font-weight:700;flex:1 1 auto;min-width:0}
+  .venue-n{font-weight:800;color:var(--accent-dark);white-space:nowrap}
+  .venue-cty{font-size:.78rem;color:var(--ink-3);white-space:nowrap}
+  .venue-body{padding:4px 10px 10px;background:var(--line-soft)}
+  .venue-offer{display:flex;align-items:baseline;gap:8px;width:100%;padding:9px 8px;
+    min-height:40px;background:transparent;border:0;border-top:1px solid var(--line);
+    cursor:pointer;text-align:left;font-size:.85rem;color:var(--ink)}
+  .venue-offer:hover{background:var(--surface)}
+  .vo-brand{font-weight:700;white-space:nowrap}
+  .vo-offer{flex:1 1 auto;min-width:0;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}
   .active-filters{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0 2px}
   .af-label{font-size:.78rem;color:var(--ink-3);margin-right:2px}
   .af-chip{display:inline-flex;align-items:center;gap:5px;font-size:.8rem;line-height:1;
@@ -1475,8 +1493,11 @@
         <svg class="tab-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3.25H4a1 1 0 0 0-1 1v5.59a2 2 0 0 0 .58 1.41l9.6 9.59a2 2 0 0 0 2.82 0l4.6-4.6a2 2 0 0 0 0-2.83Z"/><circle cx="7.5" cy="7.5" r="1"/></svg>優惠</button>
       <button class="tab" role="tab" data-tab="board" aria-selected="false">
         <svg class="tab-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>排行榜</button>
-      <button class="tab" role="tab" data-tab="submit" aria-selected="false">
-        <svg class="tab-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>新增</button>
+      <!-- celine：「新的一區建議可以獨立一個分頁，取代新增的分頁（新增按鈕移到
+           主頁跟我的頁）」。#tab-submit 那一整段**沒有拿掉**，只是不再掛在底部
+           ——改由「優惠」頁底部跟「我的」那兩顆按鈕進去（見 showSection）。 -->
+      <button class="tab" role="tab" data-tab="trip" aria-selected="false">
+        <svg class="tab-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z"/></svg>行程</button>
       <button class="tab" role="tab" data-tab="mine" aria-selected="false">
         <svg class="tab-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>我的</button>
       <button class="tab hidden" role="tab" data-tab="admin" aria-selected="false">
@@ -1642,6 +1663,13 @@
     <div id="gridSentinel" aria-hidden="true"></div>
     <div id="gridMore" class="hidden" style="text-align:center;margin-top:14px">
       <button type="button" class="btn sm" id="btnGridMore"></button>
+    </div>
+    <!-- 「新增」從底部分頁搬下來的入口之一。放清單最下面是刻意的：
+         **捲到底的人正好就是「沒找到想要的那家」那群人。** -->
+    <div class="new-banner" id="submitCta" style="margin-top:16px">
+      <span class="nb-icon" aria-hidden="true">＋</span>
+      <div style="flex:1">找不到想要的店？<b>幫大家補一筆</b>——投稿會先經過審核。</div>
+      <button type="button" class="btn sm primary" id="btnGoSubmitList">我要投稿</button>
     </div>
     <div class="empty hidden" id="empty">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
@@ -1879,6 +1907,10 @@
 <section id="tab-submit" class="hidden">
   <main class="wrap">
     <div class="panel">
+      <!-- 「新增」不再是底部的分頁了，所以進到這一頁時底部**沒有任何一格亮著**。
+           沒有這顆的話等於走進一個沒有出口的房間。 -->
+      <button type="button" class="btn sm plain" id="btnSubmitBack"
+        style="margin-bottom:8px">← 回優惠清單</button>
       <h2 id="submitTitle">新增一筆優惠</h2>
       <p class="sub" id="submitSub">送出後進入待審，管理員核可才會公開。每人每天上限 10 筆。</p>
       <div id="submitGate"></div>
@@ -1985,6 +2017,27 @@
 </section>
 
 <!-- ==================== 我的 ==================== -->
+<!-- ==================== 行程 ====================
+     celine：「多一區寫說去哪裡可以一次使用到最多店家之類的，微風、精湛、
+     中友百貨之類的…可以一鍵加入收藏」
+
+     場館＝**商圈**不是單一棟（她選的）：一格 160 公尺裡常常有好幾棟，
+     「中山站・南京西路」那一格同時有誠品南西、新光三越南西、中山地下街、
+     寶雅——取其中任何一棟的名字都是錯的。正式館名顯示在每一家店自己的
+     名字上，那本來就是對的。 -->
+<section id="tab-trip" class="hidden">
+  <div class="wrap">
+    <div class="panel" id="pnlVenues">
+      <h2>一趟用最多</h2>
+      <p class="sub">哪些地方一次就能用到最多家生日優惠。點開看裡面有哪幾家。</p>
+      <div class="row" style="margin:10px 0 2px">
+        <select id="venueCounty" aria-label="縣市"><option value="">全部縣市</option></select>
+      </div>
+      <div id="venueList"><div class="hint">載入中…</div></div>
+    </div>
+  </div>
+</section>
+
 <section id="tab-mine" class="hidden">
   <main class="wrap">
     <!-- celine：「我的」那邊也要提醒使用者可以加到主畫面。原本的 #a2hsPanel 其實訪客也看得到，
@@ -2152,7 +2205,14 @@
       <div id="badgesBody" class="badge-grid"></div>
     </div>
     <div class="panel authed-only" id="myReportsPanel" data-block><h2>我的使用回報</h2><p class="sub">點一筆可以看詳情、編輯或刪除。</p><div id="myReports"></div></div>
-    <div class="panel authed-only" id="myOffersPanel" data-block><h2>我的投稿</h2><div id="myOffers"></div></div>
+    <div class="panel authed-only" id="myOffersPanel" data-block>
+      <h2 style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>我的投稿</span>
+        <!-- 「新增」的第二個入口（見 showSection） -->
+        <button type="button" class="btn sm primary" id="btnGoSubmitMine"
+          style="font-size:.78rem;font-weight:600">＋ 投稿</button>
+      </h2>
+      <div id="myOffers"></div></div>
     <!-- 嵐：「我填寫過的回報問題，要可以出現在我的頁面」（schema_v73 開的讀自己那幾筆的權限） -->
     <div class="panel authed-only" id="myFeedbackPanel" data-block><h2>我回報過的問題<span class="n hidden" id="myFbCount"></span></h2>
       <p class="sub">你用上面「回報網站問題」送出的內容，還有管理員的回覆。</p>
@@ -4653,7 +4713,7 @@ $('#btnLogin').onclick = async()=>{
   if(!LIVE){
     // 不要沉默。直接把診斷結果推到使用者眼前。
     $$('.tab').forEach(x=>x.setAttribute('aria-selected', x.dataset.tab==='browse'));
-    ['browse','board','submit','mine','admin'].forEach(n=>
+    ['browse','board','trip','submit','mine','admin'].forEach(n=>
       $('#tab-'+n).classList.toggle('hidden', n!=='browse'));
     const mb=$('#modeBanner');
     mb.scrollIntoView({behavior:'smooth', block:'center'});
@@ -5516,7 +5576,88 @@ let ACTIVE_TAB='browse';
    每次重新整理都是十幾次請求，而且常常整場都沒點進去過。
    只載一次：之後各自的操作（核可、回報完…）會自己重新整理自己那一塊。 */
 const TAB_LOADED=new Set();
+/* ---- 行程分頁：場館清單 ----
+
+   資料來自 v142 的 venues_public（只有 is_public 的才看得到）。
+   **v142 還沒跑的話這裡會優雅地什麼都不顯示**，不是壞掉——分頁本身還在，
+   只是清單是空的，並且告訴管理員要跑哪一支 SQL。 */
+let VENUES=null, VENUE_OPEN=null;
+async function loadVenues(){
+  const box=$('#venueList');
+  if(!LIVE){ box.innerHTML='<div class="hint">'+esc(offlineMsg('看不到場館清單'))+'</div>'; return; }
+  const {data,error}=await sb.from('venues_public').select('*')
+    .order('offer_count',{ascending:false}).limit(200);
+  if(error){
+    // 表還沒建起來跟「真的壞了」要分開講：前者是管理員的事，不是使用者的錯
+    const missing=/venues_public|does not exist|schema cache/i.test(error.message);
+    box.innerHTML='<div class="hint">'+(missing
+      ? '這一區還沒開放。'+(myProfile?.is_admin?'（管理員：要先跑 schema_v142_venues.sql，並把場館設成公開）':'')
+      : '載入失敗：'+esc(error.message))+'</div>';
+    return;
+  }
+  VENUES=data||[];
+  const sel=$('#venueCounty');
+  const counties=[...new Set(VENUES.map(v=>v.county).filter(Boolean))];
+  sel.innerHTML='<option value="">全部縣市</option>'
+    +counties.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  renderVenues();
+}
+function renderVenues(){
+  const box=$('#venueList'), cty=$('#venueCounty').value;
+  const list=(VENUES||[]).filter(v=>!cty||v.county===cty);
+  if(!list.length){ box.innerHTML='<div class="hint">這個縣市還沒有資料。</div>'; return; }
+  box.innerHTML=list.map(v=>`<div class="venue" data-id="${esc(String(v.id))}">
+    <button type="button" class="venue-head" data-id="${esc(String(v.id))}"
+      aria-expanded="${VENUE_OPEN===v.id?'true':'false'}">
+      <span class="venue-name">${esc(v.name)}</span>
+      <span class="venue-n">${v.offer_count} 家</span>
+      <span class="venue-cty">${esc(v.county||'')}</span>
+    </button>
+    <div class="venue-body${VENUE_OPEN===v.id?'':' hidden'}" id="venueBody${esc(String(v.id))}"></div>
+  </div>`).join('');
+  $$('#venueList .venue-head').forEach(b=>b.onclick=()=>toggleVenue(Number(b.dataset.id)));
+  if(VENUE_OPEN!=null) fillVenue(VENUE_OPEN);
+}
+function toggleVenue(id){
+  VENUE_OPEN = (VENUE_OPEN===id) ? null : id;
+  renderVenues();
+  logEvent('venue_open', {id});
+}
+/* 場館裡有哪幾筆優惠：venue_offer_ids 只回 id，名稱直接用手上的 OFFERS 對，
+   不用再跟資料庫要一次（優惠清單本來就全部在記憶體裡）。 */
+async function fillVenue(id){
+  const body=$('#venueBody'+id); if(!body) return;
+  body.innerHTML='<div class="hint">載入中…</div>';
+  const {data,error}=await sb.rpc('venue_offer_ids',{p_venue_id:id});
+  if(error){ body.innerHTML='<div class="hint">載入失敗：'+esc(error.message)+'</div>'; return; }
+  const ids=new Set((data||[]).map(x=>String(x.venue_offer_ids ?? x)));
+  const list=OFFERS.filter(o=>ids.has(String(o.id)));
+  if(!list.length){ body.innerHTML='<div class="hint">這裡的優惠暫時查不到。</div>'; return; }
+  body.innerHTML=list.map(o=>`<button type="button" class="venue-offer" data-id="${esc(String(o.id))}">
+      <span class="vo-brand">${esc(o.brand)}</span>
+      <span class="vo-offer">${esc(String(o.offer||'').slice(0,40))}</span>
+      ${WISH.has(String(o.id))?'<span class="flag">已收藏</span>':''}
+    </button>`).join('');
+  $$('#venueBody'+id+' .venue-offer').forEach(b=>b.onclick=()=>openDetail(b.dataset.id));
+}
+
+/* 「新增」不再是底部的分頁，但那一整段還在。這支負責「只顯示某一段」，
+   給那兩顆新增按鈕用。 */
+function showSection(name){
+  $$('.tab').forEach(x=>x.setAttribute('aria-selected', x.dataset.tab===name));
+  ['browse','board','trip','submit','mine','admin'].forEach(n=>
+    $('#tab-'+n).classList.toggle('hidden', n!==name));
+  ensureTabData(name);
+  ACTIVE_TAB=name;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function goSubmit(from){
+  SUBMIT_FROM = (from==='mine') ? 'mine' : 'browse';
+  showSection('submit'); logEvent('go_submit', {from});
+}
+
 function ensureTabData(tab){
+  if(tab==='trip'){ if(!VENUES) loadVenues(); return; }
   if(tab==='board'){ loadBoard(); return; }        // 它自己有快取，每次切過去都問沒關係
   if(TAB_LOADED.has(tab)) return;
   if(tab==='mine'){
@@ -5551,13 +5692,20 @@ $$('.tab').forEach(t=>t.onclick=()=>{
   // disarmUpdatesSeen() 管（上面「什麼叫看過更新」那一段），切走就收掉。
   const already = t.dataset.tab===ACTIVE_TAB;
   $$('.tab').forEach(x=>x.setAttribute('aria-selected', x===t));
-  ['browse','board','submit','mine','admin'].forEach(n=>
+  ['browse','board','trip','submit','mine','admin'].forEach(n=>
     $('#tab-'+n).classList.toggle('hidden', n!==t.dataset.tab));
   ensureTabData(t.dataset.tab);
   // 點的是目前已經在看的那個分頁（點兩下）就滑回最上方，方便滑很長的清單時快速歸零。
   if(already) window.scrollTo({top:0, behavior:'smooth'});
   ACTIVE_TAB=t.dataset.tab;
 });
+
+$('#venueCounty').onchange=()=>{ VENUE_OPEN=null; renderVenues(); };
+$('#btnGoSubmitList').onclick=()=>goSubmit('list_bottom');
+$('#btnGoSubmitMine').onclick=()=>goSubmit('mine');
+// 從哪裡進來就回哪裡（預設回優惠清單）
+let SUBMIT_FROM='browse';
+$('#btnSubmitBack').onclick=()=>showSection(SUBMIT_FROM);
 
 /* ---- 回到最上方按鈕：往下滑超過一個畫面高度才出現 ---- */
 const btnToTop=$('#btnToTop');
@@ -7632,7 +7780,10 @@ async function startEditOffer(id, asAdmin=false, asSuggestion=false){
   const {data:o,error}=await sb.from('offers').select('*').eq('id',id).single();
   if(error||!o){ alert('讀取失敗：'+(error?.message||'找不到這筆投稿')); return; }
   if(!asAdmin && !asSuggestion && o.status!=='pending'){ alert('已經審核過的投稿不能再編輯，如果想改，請用「建議修改」。'); return; }
-  $('.tab[data-tab="submit"]').click();
+  /* v143 把「新增」從底部分頁拿掉之後，這裡原本是去點那顆分頁按鈕——按鈕沒了
+     就變成 null，一按「編輯」整支就炸掉（t24 抓到的）。改走 showSection。
+     t64 有一條會掃全站，確保沒有人再去點不存在的分頁。 */
+  showSection('submit');
   editingOfferId=id; editingAsAdmin=asAdmin; editingAsSuggestion=asSuggestion;
   editingWasPending = asAdmin && o.status==='pending';
   $('#brandDupHint').classList.add('hidden');
