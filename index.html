@@ -340,6 +340,11 @@
   /* 窄螢幕：搜尋框自己一行，三顆按鈕排第二行——比「搜尋框＋排序」「篩選＋附近」
      這種一半一半的斷法整齊，搜尋框也拿得到完整寬度。 */
   @media(max-width:560px){ .searchbar input[type=search]{flex:1 1 100%} }
+  /* 待辦清單裡的搜尋框：跟首頁那一條長得一樣，但**不是** sticky，
+     所以也不需要底色——在 panel 裡面那條底色看起來就是一條灰帶。 */
+  .wl-searchbar{display:flex;max-width:100%}
+  .wl-searchbar input[type=search]{flex:1 1 100%;min-width:0;border-radius:12px;
+    padding:11px 16px;min-height:44px}
   /* 手機版原生 select 排序選單很難讀（文字被截斷、觸控目標小），改用觸發
      按鈕開一個底部彈出選單；桌機維持原生 select，這顆按鈕預設隱藏。 */
   .sort-trigger{display:none;flex:none;align-items:center;gap:6px;min-height:44px;max-width:120px}
@@ -369,6 +374,16 @@
   .vo-brand{font-weight:700;white-space:nowrap}
   .vo-offer{flex:1 1 auto;min-width:0;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;
     white-space:nowrap}
+  /* 一鍵加入待辦清單：場館裡那顆按鈕 ＋ 彈出來的勾選清單 */
+  .venue-bulk-bar{display:flex;align-items:center;gap:8px;padding:8px 2px 4px}
+  .bulk-list{max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm)}
+  .bulk-row{display:flex;align-items:center;gap:8px;padding:10px;min-height:44px;
+    border-top:1px solid var(--line);font-size:.85rem;cursor:pointer}
+  .bulk-row:first-child{border-top:0}
+  .bulk-row input{flex:none;width:18px;height:18px}
+  .bulk-brand{font-weight:700;white-space:nowrap}
+  .bulk-offer{flex:1 1 auto;min-width:0;color:var(--ink-2);overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
   .active-filters{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0 2px}
   .af-label{font-size:.78rem;color:var(--ink-3);margin-right:2px}
   .af-chip{display:inline-flex;align-items:center;gap:5px;font-size:.8rem;line-height:1;
@@ -881,7 +896,8 @@
   table.lb .lb-row.open .lb-chev{transform:rotate(180deg);color:var(--accent)}
   table.lb .lb-detail td{padding:2px 0 12px;border-bottom:1px solid var(--line-soft)}
   table.lb .lb-detail .chip{font-size:.76rem;padding:3px 10px}
-  table.lb .rk{width:34px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  table.lb .rk{width:34px;color:var(--ink-3);font-variant-numeric:tabular-nums;
+    white-space:nowrap}
   /* 切成 PR 顯示時那一格要放得下「PR 93」，字小一點、不換行，欄寬放寬一些 */
   table.lb .rk .pr{font-size:.74rem;font-weight:700;white-space:nowrap;letter-spacing:-.02em}
   table.lb:has(.pr) .rk{width:52px}
@@ -2065,7 +2081,7 @@
       <!-- 嵐：幫別人記生日的話，待辦清單要獨立出來、不同份清單（schema_v71 的 wishlist.person） -->
       <div class="subtabs wrap hidden" role="tablist" id="wlPersonTabs"></div>
       <!-- 嵐：「加入搜尋欄，就可以直接搜尋店家」——清單一長（十幾二十筆）用滑的找很久 -->
-      <div class="searchbar" style="margin:0 0 10px">
+      <div class="wl-searchbar" style="margin:0 0 10px">
         <input type="search" id="wlSearch" placeholder="搜尋清單裡的店家或優惠">
       </div>
       <!-- celine：「待辦清單新增按距離排序的按鈕，然後導到地圖頁面」
@@ -2118,7 +2134,7 @@
     </div>
     <div class="panel hidden" id="mineLoginCta" style="text-align:center">
       <h2>登入解鎖完整功能</h2>
-      <p class="sub">目前是訪客瀏覽模式，資料只存在這台裝置上。登入後（只要 Google 帳號）還能：</p>
+      <p class="sub">資料只存在這台裝置上。登入後還能：</p>
       <ul style="text-align:left;max-width:420px;margin:10px auto;font-size:.86rem;color:var(--ink-2);line-height:1.9">
         <li>待辦清單自動同步雲端，換手機、清瀏覽器資料都不會不見</li>
         <li>記錄省下多少、累積成就徽章、上省錢排行榜</li>
@@ -2158,7 +2174,7 @@
           <button class="btn" id="btnClearBirthday" type="button">清除</button>
         </div>
       </div>
-      <p class="sub">用來預設篩選你的生日月份，也會拿去算下面的註冊死線。</p>
+      <p class="sub">拿來預設生日月份、算入會死線。</p>
       <div id="birthdayMsg"></div>
     </div>
     <!-- 不管有沒有登入都看得到——分享網站是幫網站觸及更多人的入口，不應該
@@ -2166,7 +2182,6 @@
          才看得到，才有機會真的被點到。 -->
     <div class="panel" id="shareSitePanel" data-block>
       <h2>推薦給朋友</h2>
-      <p class="sub">找生日優惠很花時間，你已經幫自己省到了——分享給朋友，讓他們也不用自己一家一家查。</p>
       <button type="button" class="btn primary" id="btnShareSite">📤 分享壽星日</button>
       <p class="sub" style="margin:8px 0 0">朋友生日快到時傳一下，是最實用的生日提醒。</p>
     </div>
@@ -2177,7 +2192,7 @@
     <!-- 第二組生日（嵐許願）：幫家人／另一半也記一個生日。預設收著，不想用的人不會被打擾。 -->
     <div class="panel" id="altBdayPanel" data-block>
       <h2>🎁 幫家人／另一半也記一個生日</h2>
-      <p class="sub">記一組就好。生日快到時會提醒你，待辦清單裡貼上他的標籤，入會死線也會照他的生日算。只有你自己看得到。</p>
+      <p class="sub">記一組就好，只有你自己看得到。</p>
       <label class="lbl">稱呼<input id="altLabel" maxlength="10" placeholder="例如：媽媽、老公、女兒"></label>
       <label class="lbl birthday-row">生日
         <select id="altMonth"><option value="">月</option></select>
@@ -2197,14 +2212,13 @@
       <div class="bigstat" id="mySavings"></div>
       <button type="button" class="btn sm hidden" id="btnShareSavings" style="margin-top:8px">📤 分享我的省錢成果</button>
       <label class="toggle"><input type="checkbox" id="optLeaderboard"> 在排行榜顯示我的暱稱與頭像</label>
-      <p class="sub" style="margin-top:4px">省下金額本來就會計入排行榜；這個選項只決定要不要顯示你的暱稱跟頭像——關掉的話還是會上榜，但顯示成「匿名使用者」。</p>
+      <p class="sub" style="margin-top:4px">關掉還是會上榜，只是顯示成「匿名使用者」。</p>
     </div>
     <div class="panel hidden authed-only" id="badgesPanel" data-block>
       <h2>成就徽章</h2>
-      <p class="sub">用回報紀錄自動累積，達成門檻就會亮起來。</p>
       <div id="badgesBody" class="badge-grid"></div>
     </div>
-    <div class="panel authed-only" id="myReportsPanel" data-block><h2>我的使用回報</h2><p class="sub">點一筆可以看詳情、編輯或刪除。</p><div id="myReports"></div></div>
+    <div class="panel authed-only" id="myReportsPanel" data-block><h2>我的使用回報</h2><div id="myReports"></div></div>
     <div class="panel authed-only" id="myOffersPanel" data-block>
       <h2 style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span>我的投稿</span>
@@ -2221,7 +2235,7 @@
          不應該卡在登入門檻後面。 -->
     <div class="panel" id="a2hsPanel" data-block>
       <h2>加到主畫面</h2>
-      <p class="sub">加到主畫面後可以像 App 一樣直接點圖示打開，不用再開瀏覽器慢慢找網址。</p>
+      <p class="sub">像 App 一樣點圖示就打開，不用再找網址。</p>
       <button type="button" class="btn primary hidden" id="btnA2hsDirect" style="margin-bottom:10px">加到主畫面</button>
       <div style="font-size:.84rem;color:var(--ink-2);line-height:1.9">
         <p style="margin:0 0 6px"><b>Android（Chrome）</b>：點右上角「⋮」選單 →「加到主畫面」或「安裝應用程式」。</p>
@@ -2246,8 +2260,8 @@
          放在「我的」這裡，跟上面那塊速度說明、下面自己回報過的紀錄排在一起。 -->
     <div class="panel" id="feedbackPanel" data-block>
       <h2>🛠 回報網站問題</h2>
-      <p class="sub">網站怪怪的、哪裡不好用、想要什麼功能，都可以告訴我。
-        優惠內容有誤的話，請直接在那張優惠卡片上用「建議修改」，處理起來比較快。</p>
+      <p class="sub">網站哪裡不好用都可以告訴我。
+        優惠內容有誤請用卡片上的「建議修改」。</p>
       <button type="button" class="btn primary" id="btnFeedback">回報問題或建議</button>
     </div>
     <!-- 更新紀錄：celine 要「我的」頁面有個小地方記每次更新的日期、簡單說改了哪裡。
@@ -2257,7 +2271,6 @@
          這裡只留最新三筆的日期＋標題，細項在那一頁。 -->
     <div class="panel" id="siteUpdatesPanel" data-block>
       <h2>🆕 更新紀錄 <span class="upd-new hidden" id="updHeadNew">NEW</span></h2>
-      <p class="sub">最近改了什麼。</p>
       <div id="siteUpdatesList"></div>
       <a class="panel-go" href="updates.html">看完整更新紀錄 <span aria-hidden="true">→</span></a>
     </div>
@@ -2279,7 +2292,7 @@
          工具。兩頁的順序收在同一個地方調，排行榜那頁也不用再掛一條排序列。 -->
     <div class="panel" id="layoutPanel" data-block>
       <h2>版面設定</h2>
-      <p class="sub">把常看的區塊往前搬。順序只記在這台裝置上，換手機要重排一次。</p>
+      <p class="sub">把常看的往前搬。順序只記在這台裝置上。</p>
       <div class="row" style="margin:0 0 10px;gap:8px;align-items:center">
         <label class="lbl">哪一頁<select id="layoutPage">
           <option value="mine">我的</option>
@@ -2601,14 +2614,14 @@
        所以只留「壽星日的功能全部免費。」一句。
        「要去站外」這件事交給按鈕自己講：上面寫著「去 Buy Me a Coffee ↗」，
        箭頭也說明了會開新分頁——已經夠清楚，不用再補一行散文。 -->
-  <p class="sub">壽星日的功能全部免費。</p>
+  <p class="sub">壽星日的功能全部免費，也沒有廣告。</p>
   <!-- celine：「不用提一個人做的，然後這跟免費伺服器的論述衝突，改一下」。
        原本寫「主機跟網域的錢也是自己付」，可是「我的」頁面同時掛著一塊
        「它整個跑在免費方案上，所以有時候會慢」——兩套說法互相打架，而且
        自己掏錢那套還是不成立的那一套。照實寫就好：跑在免費額度上，
        所以會慢；想換成付費的，這就是咖啡的用途。
        順帶把「我一個人做的」拿掉——要講身世，about.html 有一整頁可以講。 -->
-  <p class="coffee-say">也沒有廣告。它現在整個跑在免費方案上，所以人多的時候會慢。<br><br>
+  <p class="coffee-say">它現在整個跑在免費方案上，所以人多的時候會慢。<br><br>
     想做的下一步是換成付費的方案，讓它快一點、穩一點。
     如果它幫你省到了什麼，請我喝杯咖啡會很有幫助。</p>
   <div class="foot">
@@ -2846,6 +2859,26 @@
   <div id="rateAllList"></div>
   <div class="foot">
     <button class="btn" value="cancel" id="btnRateAllClose">關起來</button>
+  </div>
+</form></dialog>
+
+<!-- ==================== 一鍵加入待辦清單 ====================
+     celine：「一鍵加入收藏希望是可以套用在這」「然後要可以勾選不是全部」。
+
+     「一鍵」刻意不等於「直接幫你全加」：一個商圈最多 31 筆，整批塞進待辦
+     清單裡面一定有幾家根本不會去，之後還要一筆一筆刪掉。按下去先開這張
+     **預設全勾**的清單，把不要的拿掉再送出。 -->
+<dialog id="dlgBulkAdd"><form method="dialog" class="dlg">
+  <h2>加進待辦清單</h2>
+  <p class="sub" id="bulkAddSub"></p>
+  <div class="row" style="margin:0 0 8px">
+    <button type="button" class="btn sm" id="btnBulkAll">全部勾選</button>
+    <button type="button" class="btn sm" id="btnBulkNone">全部取消</button>
+  </div>
+  <div id="bulkAddList" class="bulk-list"></div>
+  <div class="foot">
+    <button type="button" class="btn primary" id="btnBulkAdd">加入待辦清單</button>
+    <button class="btn" value="cancel" id="btnBulkCancel">取消</button>
   </div>
 </form></dialog>
 
@@ -4866,7 +4899,7 @@ const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
 /* 更新紀錄的內容在 updates.json，build.py 注入這裡，同一份資料也產生整頁的
    updates.html。「我的」頁面只用到日期跟標題（最新幾筆＋NEW 標記），
    細項（items）留著是給 updates.html 用的。 */
-const SITE_UPDATES = [{"date":"2026-10-29","title":"底部多了「行程」，新增搬到兩個地方","items":["「行程」會告訴你哪些地方一次就能用到最多家優惠","投稿改從優惠清單最下面、或「我的投稿」旁邊那顆進去"]},{"date":"2026-10-28","title":"地圖上直接就能記「我用過了」","items":["地圖的店家小視窗多一顆「我用過了」，不用再回清單找","優惠詳情視窗下面也加了同一顆","回報用過之後會提醒你順便給星等，排行榜的說明也剪短了"]},{"date":"2026-10-23","title":"手機上比較不會跳出「連不到資料庫」了","items":["連線元件改成從本站載入，不再等外部網站，慢或被擋都不受影響","真的連不上時，多一顆「複製狀況」可以把情況傳給我們"]},{"date":"2026-10-22","title":"地圖好按了、篩選看得見、折扣寫出幾折","items":["地圖上的點變好按了，資訊也不會看到一半就不見","現在篩了哪些條件直接列在清單上面，可以一個一個拿掉","「我的」打開就是待辦清單；折扣會寫出幾折、折多少錢"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
+const SITE_UPDATES = [{"date":"2026-10-29","title":"底部多了「排行程」，新增搬到兩個地方","items":["「排行程」會告訴你哪些地方一次就能用到最多家優惠","場館可以一鍵加進待辦清單，加之前先勾掉不想要的","投稿搬到清單最下面跟「我的」；名次跑版、灰字太多也修了"]},{"date":"2026-10-28","title":"地圖上直接就能記「我用過了」","items":["地圖的店家小視窗多一顆「我用過了」，不用再回清單找","優惠詳情視窗下面也加了同一顆","回報用過之後會提醒你順便給星等，排行榜的說明也剪短了"]},{"date":"2026-10-23","title":"手機上比較不會跳出「連不到資料庫」了","items":["連線元件改成從本站載入，不再等外部網站，慢或被擋都不受影響","真的連不上時，多一顆「複製狀況」可以把情況傳給我們"]},{"date":"2026-10-22","title":"地圖好按了、篩選看得見、折扣寫出幾折","items":["地圖上的點變好按了，資訊也不會看到一半就不見","現在篩了哪些條件直接列在清單上面，可以一個一個拿掉","「我的」打開就是待辦清單；折扣會寫出幾折、折多少錢"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
 const SITE_UPDATES_SHOW=3;
 
 function updatesSeenDate(){
@@ -5646,12 +5679,109 @@ async function fillVenue(id){
   const ids=new Set((data||[]).map(x=>String(x.venue_offer_ids ?? x)));
   const list=OFFERS.filter(o=>ids.has(String(o.id)));
   if(!list.length){ body.innerHTML='<div class="hint">這裡的優惠暫時查不到。</div>'; return; }
-  body.innerHTML=list.map(o=>`<button type="button" class="venue-offer" data-id="${esc(String(o.id))}">
+  /* 記下這一格裡有哪幾筆，「一鍵加入」就不用再向資料庫要一次。 */
+  VENUE_OFFERS.set(id, list.map(o=>String(o.id)));
+  const left=list.filter(o=>!WISH.has(String(o.id))).length;
+  body.innerHTML='<div class="venue-bulk-bar">'
+    +`<button type="button" class="btn sm primary" id="venueBulk${id}"${left?'':' disabled'}>`
+    +(left?`一鍵加入待辦清單（${left} 筆）`:'這裡的都收藏了')
+    +'</button></div>'
+    +list.map(o=>`<button type="button" class="venue-offer" data-id="${esc(String(o.id))}">
       <span class="vo-brand">${esc(o.brand)}</span>
       <span class="vo-offer">${esc(String(o.offer||'').slice(0,40))}</span>
       ${WISH.has(String(o.id))?'<span class="flag">已收藏</span>':''}
     </button>`).join('');
+  const bulkBtn=$('#venueBulk'+id);
+  if(bulkBtn) bulkBtn.onclick=()=>openBulkAdd(id);
   $$('#venueBody'+id+' .venue-offer').forEach(b=>b.onclick=()=>openDetail(b.dataset.id));
+}
+
+/* ---- 一鍵加入待辦清單（勾選清單）----
+
+   celine：「一鍵加入收藏希望是可以套用在這」「然後要可以勾選不是全部」。
+
+   兩件事沒做，是故意的：
+     · 已經在待辦清單裡的不列出來——重複加沒意義，列出來只會讓
+       「已選 N 筆」跟「你真的會多拿到幾筆」對不上
+     · 沒有「加入行程」那顆——行程本體還沒做，現在加了根本沒地方看。
+       排行程是下一版，這張清單到時候再多一顆。 ---- */
+const VENUE_OFFERS=new Map();
+let BULK=null;   // {venueId, ids:[字串 id], picks:Set}
+function openBulkAdd(venueId){
+  const all=VENUE_OFFERS.get(venueId)||[];
+  const ids=all.filter(id=>!WISH.has(String(id)));
+  if(!ids.length) return;
+  /* 預設全勾，但**回報過用過了的預設不勾**：生日優惠大多一年一次，
+     勾了也用不到。判断用的是跟待辦清單的「用過了」同一份
+     MY_USED_OFFER_IDS（沒有分年度），所以文案寫的是「你回報過用過了」
+     而不是「今年用過了」。真的還要自己勾回來就好。 */
+  BULK={venueId, ids, picks:new Set(ids.filter(id=>!MY_USED_OFFER_IDS.has(String(id))))};
+  renderBulkAdd();
+  $('#dlgBulkAdd').showModal(); pushDlgHistory();
+  logEvent('bulk_open', {venue_id:venueId, n:ids.length});
+}
+function renderBulkAdd(){
+  if(!BULK) return;
+  const v=(VENUES||[]).find(x=>x.id===BULK.venueId);
+  const skipped=(VENUE_OFFERS.get(BULK.venueId)||[]).length-BULK.ids.length;
+  $('#bulkAddSub').textContent=(v?v.name+'：':'')
+    +`這裡有 ${BULK.ids.length} 筆可以加`
+    +(skipped?`，另外 ${skipped} 筆已經在你的待辦清單裡。`:'。');
+  $('#bulkAddList').innerHTML=BULK.ids.map(id=>{
+    const o=OFFERS.find(x=>String(x.id)===String(id));
+    if(!o) return '';
+    const used=MY_USED_OFFER_IDS.has(String(id));
+    return `<label class="bulk-row">
+      <input type="checkbox" data-id="${esc(String(id))}"${BULK.picks.has(id)?' checked':''}>
+      <span class="bulk-brand">${esc(o.brand)}</span>
+      <span class="bulk-offer">${esc(String(o.offer||'').slice(0,40))}</span>
+      ${used?'<span class="flag">你回報過用過了</span>':''}
+    </label>`;
+  }).join('');
+  $$('#bulkAddList input[type=checkbox]').forEach(c=>c.onchange=()=>{
+    c.checked?BULK.picks.add(c.dataset.id):BULK.picks.delete(c.dataset.id);
+    updateBulkCount();
+  });
+  updateBulkCount();
+}
+function updateBulkCount(){
+  const n=BULK?BULK.picks.size:0, btn=$('#btnBulkAdd');
+  if(!btn) return;
+  btn.textContent=n?`加入待辦清單（${n} 筆）`:'一筆都沒選';
+  btn.disabled=!n;
+}
+/* 整批寫進資料庫**成功之後**才動 WISH。toggleWish 是先改畫面再寫
+   （一筆，失敗就改回來，使用者最多看到一個圖示閃一下）；整批不能這樣做
+   ——十八筆一起失敗的話，畫面上十八個「已收藏」全是假的，而使用者會
+   以為收好了、不會再加一次。 */
+async function doBulkAdd(){
+  if(!BULK||!BULK.picks.size) return;
+  const ids=[...BULK.picks], venueId=BULK.venueId, btn=$('#btnBulkAdd');
+  btn.disabled=true; btn.textContent='加入中…';
+  if(LIVE&&me){
+    const person=wishPersonNow();
+    const rows=ids.map(id=>({user_id:me.id, offer_id:Number(id)}));
+    let r=await sb.from('wishlist').upsert(person?rows.map(x=>({...x, person})):rows,
+      {onConflict:'user_id,offer_id'});
+    // v71 還沒跑（沒有 person 欄位）：跟 toggleWish 一樣退回不帶清單
+    if(r.error && person && /person|column|schema cache/i.test(r.error.message||''))
+      r=await sb.from('wishlist').upsert(rows,{onConflict:'user_id,offer_id'});
+    if(r.error){ updateBulkCount(); alert('加入失敗：'+r.error.message); return; }
+  } else {
+    ids.forEach(id=>WISH.add(String(id)));
+    localStorage.setItem('sxr_wishlist', JSON.stringify([...WISH]));
+  }
+  ids.forEach(id=>{ WISH.add(String(id)); syncWishButtons(id, true); });
+  BULK=null;
+  $('#dlgBulkAdd').close();
+  showToast(`已加入 ${ids.length} 筆`);
+  hintWishlistLocation();
+  logEvent('bulk_wish', {venue_id:venueId, n:ids.length});
+  if(NEAR_MAP) paintNearPins();
+  render();
+  if(!$('#tab-mine').classList.contains('hidden')) renderMyWishlist();
+  renderReminders();
+  fillVenue(venueId);   // 場館清單上的「已收藏」跟那顆按鈕要跟著更新
 }
 
 /* 「新增」不再是底部的分頁，但那一整段還在。這支負責「只顯示某一段」，
@@ -5714,6 +5844,9 @@ $$('.tab').forEach(t=>t.onclick=()=>{
 });
 
 $('#venueCounty').onchange=()=>{ VENUE_OPEN=null; renderVenues(); };
+$('#btnBulkAll').onclick=()=>{ if(!BULK) return; BULK.ids.forEach(id=>BULK.picks.add(id)); renderBulkAdd(); };
+$('#btnBulkNone').onclick=()=>{ if(!BULK) return; BULK.picks.clear(); renderBulkAdd(); };
+$('#btnBulkAdd').onclick=doBulkAdd;
 $('#btnGoSubmitList').onclick=()=>goSubmit('list_bottom');
 $('#btnGoSubmitMine').onclick=()=>goSubmit('mine');
 // 從哪裡進來就回哪裡（預設回優惠清單）
@@ -7449,7 +7582,7 @@ window.addEventListener('popstate', ()=>{
   if(DLG_HISTORY_PUSHED){
     DLG_HISTORY_PUSHED=false;
     [$('#dlgDetail'),$('#dlgReport'),$('#dlgFeedback'),$('#dlgNotif'),$('#dlgSharePreview'),
-     $('#dlgCoffee')].forEach(d=>{ if(d.open) d.close(); });
+     $('#dlgCoffee'),$('#dlgBulkAdd')].forEach(d=>{ if(d.open) d.close(); });
     // 手機篩選／排序底部彈出視窗不是 <dialog>，沒有原生 close 事件，
     // 這裡直接呼叫對應的關閉函式（DLG_HISTORY_PUSHED 已經是 false，
     // 函式裡再呼叫一次 consumeDlgHistory() 會被自己的保護擋掉，不會重複觸發）。

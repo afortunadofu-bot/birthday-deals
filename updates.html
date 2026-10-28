@@ -28,9 +28,11 @@
   header .wrap{display:flex;align-items:center;gap:10px}
   .logo{font-weight:800;font-size:1.05rem;color:var(--ink);text-decoration:none}
   .back{margin-left:auto;font-size:.85rem}
-  main{padding:28px 0 56px}
-  h1{font-size:1.5rem;margin:0 0 6px;line-height:1.35}
-  .lead{color:var(--ink-2);font-size:.92rem;margin:0 0 24px}
+  /* celine：「更新紀錄標題太靠上了，留白空間太小」——標題本來只跟上面那條
+     header 隔 28px，在手機上看起來像黏在導覽列下面。 */
+  main{padding:44px 0 64px}
+  h1{font-size:1.5rem;margin:0 0 10px;line-height:1.35}
+  .lead{color:var(--ink-2);font-size:.92rem;margin:0 0 28px}
   /* 一筆一張卡：日期在上面當小標，標題粗體，下面是這次改了什麼。
      不用時間軸的線條跟圓點——在手機上那條線永遠跟文字搶左邊的空間。 */
   .u{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
@@ -64,8 +66,8 @@
   <p class="lead">壽星日每次改了什麼，都記在這裡。由新到舊。</p>
   <article class="u">
     <div class="u-date">2026-10-29</div>
-    <h2>底部多了「行程」，新增搬到兩個地方</h2>
-    <ul><li>「行程」會告訴你哪些地方一次就能用到最多家優惠</li><li>投稿改從優惠清單最下面、或「我的投稿」旁邊那顆進去</li></ul>
+    <h2>底部多了「排行程」，新增搬到兩個地方</h2>
+    <ul><li>「排行程」會告訴你哪些地方一次就能用到最多家優惠</li><li>場館可以一鍵加進待辦清單，加之前先勾掉不想要的</li><li>投稿搬到清單最下面跟「我的」；名次跑版、灰字太多也修了</li></ul>
   </article>
   <article class="u">
     <div class="u-date">2026-10-28</div>

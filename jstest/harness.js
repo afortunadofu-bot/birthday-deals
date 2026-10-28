@@ -214,9 +214,15 @@ function makeAsserts(title) {
   };
   const eq = (name, actual, expected) =>
     ok(name, JSON.stringify(actual) === JSON.stringify(expected), { actual, expected });
+  /* done() 以前只回傳 true/false，要靠每一支測試自己寫
+     `process.exit(t.done() ? 0 : 1)` 才會讓 run_all 看到紅燈。
+     t55 之後新加的十三支都只寫了 `t.done();`——**它們印出 FAIL，但整批還是
+     報 ALL PASS**。2026-10-29 抓到（t67 有一條 FAIL，總結卻寫「ALL PASS（68 支）」）。
+     改成 done() 自己把 exitCode 設起來：兩種寫法都會紅，以後新測試怎麼寫都不會漏。 */
   const done = () => {
     const bad = results.filter((r) => !r.pass);
     console.log(`[${title}] ${results.length - bad.length}/${results.length} passed`);
+    if (bad.length) process.exitCode = 1;
     return bad.length === 0;
   };
   return { ok, eq, done, results };

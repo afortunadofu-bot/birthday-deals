@@ -21,9 +21,14 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   /* v120 第一版塞在「排序／年度／標籤／兩個勾選框」那排的最後面，手機上會被擠到
      整排最底下——celine 隔幾天又提了一次同一個需求，等於沒看到。
      現在在搜尋欄正下方自己一排。 */
+  /* v146 把這裡的搜尋框從 .searchbar（首頁那條 sticky 的）換成 .wl-searchbar，
+     因為 sticky 的底色在 panel 裡看起來是一條沒來由的灰帶。這條驗的是「位置」，
+     不是「叫什麼名字」，所以兩個都認。 */
+  const prev = btn.previousElementSibling;
   t.ok('自己一排，不是擠在那排控制項裡',
-    !btn.closest('.row') && btn.previousElementSibling?.classList.contains('searchbar')
-      || btn.previousElementSibling?.nodeType === 8,
+    !btn.closest('.row')
+      && (prev?.classList.contains('wl-searchbar') || prev?.classList.contains('searchbar')
+        || prev?.nodeType === 8),
     btn.parentElement.className);
   t.ok('整排寬，看得出是可以按的', /wl-near/.test(btn.className));
   t.ok('一筆收藏都沒有的時候先藏起來', btn.classList.contains('hidden'));
