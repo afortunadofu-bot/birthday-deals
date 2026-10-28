@@ -1808,16 +1808,16 @@
          評的人越多，自己的分數才越站得住。資料直接從 OFFERS 算，不用多打 API。 -->
     <div class="panel" id="pnlTopRated" data-block>
       <h2>用過的人最推薦</h2>
-      <p class="sub">用過之後給幾顆星。評分高、而且評的人多的排前面；至少要兩個人評過才會上榜。
-        右邊兩欄是「幾個人給過星等」跟「總共被回報用過幾次」——分數高但只有兩三個人評過的，
-        跟被用過幾十次的，心裡要有不一樣的底。</p>
+      <!-- celine：「灰色小字太多，心裡有不一樣的底不用寫」。原本 100 字，其中一半
+           在解釋右邊那兩欄是什麼——可是欄位標題上就寫著「評分人數／用過次數」了。 -->
+      <p class="sub">用過之後給幾顆星。評分高、評的人多的排前面，至少兩個人評過才會上榜。</p>
       <div id="ratedBody"></div>
       <!-- celine：「這塊排行榜也要有」鼓勵評分的入口。只有「用過但還沒評」的人看得到。 -->
       <div class="rated-cta hidden" id="ratedCta"></div>
     </div>
     <div class="panel" id="pnlLb" data-block>
       <h2>省錢排行榜</h2>
-      <p class="sub">每個人只要有成功回報就會上榜，暱稱要不要公開可以自己到「我的」分頁調整。金額跟次數都能排序——省最多不代表用最勤，反過來也一樣。</p>
+      <p class="sub">有成功回報就會上榜，金額跟次數都能排序。暱稱要不要公開可以到「我的」調整。</p>
       <div class="note hidden" id="lbLoginHint" style="margin:0 0 12px">
         現在還沒登入，回報使用心得不會被記錄、也不會出現在這份排行榜裡——
         <button type="button" class="btn sm" id="btnLbLogin" style="margin-left:4px">登入才能上榜</button>
@@ -1851,7 +1851,7 @@
     </div>
     <div class="panel" id="pnlContrib" data-block>
       <h2>貢獻度排行榜</h2>
-      <p class="sub">投稿新優惠、提出修改建議，只要被管理員核可就算一次貢獻——退回的不算。跟省錢排行榜是分開計算的兩件事。</p>
+      <p class="sub">投稿或提修改建議被核可就算一次貢獻，退回的不算。跟省錢排行榜分開計算。</p>
       <div class="row" style="margin-bottom:10px;flex-wrap:wrap">
         <label class="lbl">期間<select id="contribPeriod">
           <option value="all">總累積</option>
@@ -7034,16 +7034,24 @@ async function openDetail(id, fallback=null, focusRate=false){
       <button type="button" class="btn sm primary" id="btnInlineReport">我用過了</button>
       <button type="button" class="btn plain" id="btnDismissCommentPrompt" aria-label="關閉提示">✕</button>
     </div>`:''}
-    ${showReportFollowupPrompt?`<div class="new-banner" id="postReportFollowupPrompt" style="margin-bottom:10px">
+    ${showReportFollowupPrompt?(()=>{
+      /* celine：「記得提醒使用完優惠可以評分」。本來評分只是句子裡三件事的其中一件，
+         看起來跟「留言」「建議修改」一樣重。
+         三種人要講三種話——**沒有評分按鈕的人就不要跟他說「給它幾顆星」**：
+           還沒評分的會員 → 整句只講評分
+           已經評過的會員 → 問留言
+           訪客（評分要登入）→ 問留言 */
+      const canRate = !!me && !MY_RATED.has(String(id));
+      const line = canRate ? '<b>用得還順利嗎？給它幾顆星</b>，別人就知道值不值得跑一趟。'
+                           : '要不要留個言說說好不好用？';
+      return `<div class="new-banner" id="postReportFollowupPrompt" style="margin-bottom:10px">
       <span class="nb-icon" aria-hidden="true">✅</span>
-      <div style="flex:1">回報送出了！${(me && MY_RATED.has(String(id)))
-        ? '要不要再留個言說說好不好用，或這筆優惠有什麼需要修正的地方？'
-        : '要不要順便幫這家店評分、留言說說好不好用，或這筆優惠有什麼需要修正的地方？'}</div>
-      ${(me && !MY_RATED.has(String(id)))?`<button type="button" class="btn sm primary" id="btnInlineRate">評分</button>`:''}
-      <button type="button" class="btn sm${me?'':' primary'}" id="btnInlineComment">留言</button>
+      <div style="flex:1">回報送出了！${line}</div>
+      ${canRate?`<button type="button" class="btn sm primary" id="btnInlineRate">評分</button>`:''}
+      <button type="button" class="btn sm${canRate?'':' primary'}" id="btnInlineComment">留言</button>
       ${me?`<button type="button" class="btn sm" id="btnInlineSuggestEdit">建議修改</button>`:''}
       <button type="button" class="btn plain" id="btnDismissReportPrompt" aria-label="關閉提示">✕</button>
-    </div>`:''}
+    </div>`;})():''}
     ${(r||[]).map(x=>`<div class="rep rep-full"><span>${esc(x.used_on)}</span>
       <span class="${R[x.result][1]}">${R[x.result][0]}</span>
       ${x.saved_twd?`<span>省 ${nt(x.saved_twd)}</span>`:''}

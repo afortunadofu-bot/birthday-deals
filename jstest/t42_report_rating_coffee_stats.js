@@ -92,9 +92,11 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   t.ok('而且不會 alert 把人嚇一跳',
     !/rErr[\s\S]{0,60}alert\(/.test(index));
 
-  // 表單裡給過了，送出後那張提示卡就不用再問一次「要不要評分」
+  // 表單裡給過了，送出後那張提示卡就不用再問一次「要不要評分」。
+  // v140 把這個條件抽成 canRate（因為連那句話也要跟著換），條件本身沒變。
   t.ok('已經評過就不再問一次',
-    /\$\{\(me && !MY_RATED\.has\(String\(id\)\)\)\?`<button[^`]*btnInlineRate/.test(index));
+    /const canRate = !!me && !MY_RATED\.has\(String\(id\)\)/.test(index)
+    && /\$\{canRate\?`<button[^`]*btnInlineRate/.test(index));
 
   /* ================= 2. 咖啡按鈕的點閱率 ================= */
   const panel = $('#pnlCoffeeStats');
