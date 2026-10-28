@@ -2807,7 +2807,14 @@
        看到的人按一下就好，不用自己去寫「我覺得這兩筆一樣」。 -->
   <button type="button" class="btn sm" id="btnDtlDup" style="margin:-6px 0 12px">🔁 這筆重複了</button>
   <div id="dtlBody"></div>
-  <div class="foot"><button type="button" class="btn" id="btnDtlClose">關閉</button></div>
+  <!-- 使用者陳（2026-10-07，問題回報）：「希望在點開地圖上的地標然後按『看優惠』後，
+       有『我用過了』的欄位，這樣就不用再另外打字搜尋店家才能紀錄~」
+       卡片上一直都有這顆，但**詳情視窗裡沒有**——從地圖點進來的人只會走到這裡，
+       等於沒有路可以記錄。 -->
+  <div class="foot">
+    <button type="button" class="btn primary" id="btnDtlReport">✓ 我用過了</button>
+    <button type="button" class="btn" id="btnDtlClose">關閉</button>
+  </div>
 </div></dialog>
 
 <script>
@@ -5859,8 +5866,13 @@ async function openNearMap(){
   NEAR_MAP.on('moveend', ()=>{ clearTimeout(NEAR_PIN_TIMER); NEAR_PIN_TIMER=setTimeout(loadNearPins, 600); });
   // Leaflet 的 popup 會擋掉 click 往外冒泡，所以按鈕要在 popup 打開時直接綁
   NEAR_MAP.on('popupopen', e=>{
-    const b=e.popup.getElement()?.querySelector('.map-open-offer');
+    const el=e.popup.getElement();
+    const b=el?.querySelector('.map-open-offer');
     if(b) b.onclick=()=>openDetail(b.dataset.id);
+    /* 陳：「不用再另外打字搜尋店家才能紀錄」——所以從地標直接記，
+       連詳情視窗都不用開。 */
+    const r=el?.querySelector('.map-report');
+    if(r) r.onclick=()=>openReport(r.dataset.id);
     NEAR_POPUP_KEY=e.popup._source?._sxKey||'';
   });
   NEAR_MAP.on('popupclose', ()=>{ NEAR_POPUP_KEY=''; });
@@ -5920,6 +5932,7 @@ function paintNearPins(){
         <span style="font-size:.8rem">${esc(st.name)}</span><br>
         <span style="font-size:.8rem">${esc(String(o.offer||'').slice(0,60))}</span><br>
         <button type="button" class="btn sm map-open-offer" data-id="${esc(o.id)}" style="margin-top:6px">看優惠</button>
+        <button type="button" class="btn sm primary map-report" data-id="${esc(o.id)}" style="margin:6px 0 0 6px">✓ 我用過了</button>
         <a href="${esc(mapsLink(st))}" target="_blank" rel="noopener" style="margin-left:6px;font-size:.8rem">導航↗</a>`;
     /* closeOnClick:false ——「按一下地圖」不要順手把剛打開的資訊關掉。
        autoClose 維持預設（按另一個點時前一個會關），不然會同時開一堆。 */
@@ -6917,6 +6930,9 @@ async function openDetail(id, fallback=null, focusRate=false){
   const dtlEditBtn=$('#dtlAdminEdit');
   dtlEditBtn.classList.toggle('hidden', !(myProfile?.is_admin && o?.status==='approved'));
   dtlEditBtn.onclick=()=>{ $('#dlgDetail').close(); startEditOffer(id, true, false); };
+  /* 「我用過了」：先把詳情關掉再開回報視窗。兩個 <dialog> 疊著開的話，
+     手機上回報那張會被詳情的捲動鎖住，按鈕點得到但畫面推不動。 */
+  $('#btnDtlReport').onclick=()=>{ $('#dlgDetail').close(); openReport(id); };
   // 刪除：清單上找不到的舊優惠，從詳情頁也刪得掉（已通過清單只列最新 200 筆）
   const dtlDelBtn=$('#dtlAdminDelete');
   dtlDelBtn.classList.toggle('hidden', !myProfile?.is_admin);
