@@ -59,4 +59,5 @@ Supabase Dashboard → SQL Editor → 貼上整支 → Run。
 | `schema_v131_edge_reader.sql` | **分兩次**，照檔案開頭的「上線順序」 |
 | `schema_v133_tw_to_counties.sql` | 照常貼，但**整份只會跑預覽**；看過表再解開【執行】那一行 |
 | `schema_v141_fix_unknown_tiers.sql` | 照常貼，會改 9 筆；剩 4 筆是註解掉的 |
+| `schema_v144_auto_approve.sql` | 照常貼。**開關預設關著**，跑這支不會讓任何東西自動上架 |
 | `schema_v142_venues.sql` | 照常貼。**場館是草稿（`is_public=false`）**，看過名字才上架；最後那段公告要等前端上線再解開 |

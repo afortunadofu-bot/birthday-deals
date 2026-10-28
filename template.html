@@ -1497,7 +1497,7 @@
            主頁跟我的頁）」。#tab-submit 那一整段**沒有拿掉**，只是不再掛在底部
            ——改由「優惠」頁底部跟「我的」那兩顆按鈕進去（見 showSection）。 -->
       <button class="tab" role="tab" data-tab="trip" aria-selected="false">
-        <svg class="tab-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z"/></svg>行程</button>
+        <svg class="tab-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3"/><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z"/></svg>排行程</button>
       <button class="tab" role="tab" data-tab="mine" aria-selected="false">
         <svg class="tab-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>我的</button>
       <button class="tab hidden" role="tab" data-tab="admin" aria-selected="false">
@@ -2504,6 +2504,13 @@
     <div id="linkStatsBody"></div>
   </div>
   <!-- celine：「管理員可以加一個按鈕，是可以關掉品牌頁跟捐款頁的，跟個別可以選要加甚麼展示」 -->
+  <!-- v144：自動上架的要看得到、退得回去。沒有這一塊的話，自動通過的東西就混在
+       幾百筆已核可裡面，出事了連「要檢查哪幾筆」都不知道。 -->
+  <div class="panel" id="pnlAutoApproved">
+    <h2>自動上架的</h2>
+    <p class="sub">「老手的新投稿自動上架」打開之後，這裡列出最近 14 天直接上架、沒有經過你的那幾筆。覺得不對就退回。</p>
+    <div id="autoApprovedBody"></div>
+  </div>
   <div class="panel" id="pnlSiteFlags">
     <h2>網站顯示設定</h2>
     <p class="sub">勾起來才會出現在網站上。改完<strong>對所有訪客生效</strong>（他們下次重新整理就會看到），不只是你這台裝置。</p>
@@ -5072,9 +5079,10 @@ Object.keys(BLK_PAGES).forEach(applyBlockOrder);
 
    咖啡按鈕是例外：它是第三方腳本、會種 cookie，所以**確定是開著才載入**，
    而不是先載進來再用 CSS 藏。關掉就是真的完全不會去碰 buymeacoffee.com。 */
-const FLAG_KEYS=['show_dev_intro','show_studio_footer','show_studio_brandpage','show_studio_bandary',
-                 'show_studio_relatestats','show_coffee'];
+const FLAG_KEYS=['auto_approve','show_dev_intro','show_studio_footer','show_studio_brandpage',
+                 'show_studio_bandary','show_studio_relatestats','show_coffee'];
 const FLAG_LABEL={
+  auto_approve:'老手的新投稿自動上架',
   show_dev_intro:'「我的」底部的「關於」入口',
   show_studio_footer:'頁尾「小數據所」整塊',
   show_studio_brandpage:'連回品牌頁',
@@ -5083,6 +5091,10 @@ const FLAG_LABEL={
   show_coffee:'左下角的咖啡按鈕',
 };
 const FLAG_NOTE={
+  /* celine：「管理員可以開啟自動按鈕，可以自動通過修改跟新增的優惠，打開按鈕才會啟動」。
+     說明要講清楚「誰」會被自動通過——這顆開下去等於那些人不用再經過你。 */
+  auto_approve:'打開之後，**已經有 2 筆投稿被核可過**的人再投新的，會直接上架、不用等審核。'
+    +'新帳號、被停權的人照舊進待審佇列。自動上架的會列在下面「自動上架的」那一塊，隨時可以退回。',
   show_dev_intro:'「我的」最底部進「關於」那一頁的入口。關掉整塊不見（about.html 本身還在）。',
   show_studio_footer:'關掉整塊不見。',
   show_coffee:'左下角那顆咖啡圖示。按下去會先說明，確定了才去 buymeacoffee.com。',
@@ -5090,6 +5102,7 @@ const FLAG_NOTE={
 /* 版面：第一項底下縮排三個子項（celine：「網站顯示設定很醜」——原本是五個平鋪的
    勾選框加「└」符號，看不出層級，說明文字也比選項本身還搶眼）。 */
 const FLAG_GROUPS=[
+  {key:'auto_approve', kids:[]},
   {key:'show_dev_intro', kids:[]},
   {key:'show_studio_footer', kids:['show_studio_brandpage','show_studio_bandary','show_studio_relatestats'],
    kidsNote:'這三項關掉時字會留著，只是不能點。'},
@@ -8253,7 +8266,44 @@ function renderBadges(sv){
    在哪一頁都看得到，所以這一支留在開場，其餘的切到「我的」才載。 */
 /* 收起來的管理員區塊，打開才去載。鍵是 panel 的 id，值是那一塊的載入函式。
    沒列在這裡的（例如公告、通知）本來就不用另外查。 */
+async function loadAutoApproved(){
+  const box=$('#autoApprovedBody'); if(!box) return;
+  // 離線／還沒連上就不要去碰 sb（它那時候是 null）
+  if(!LIVE || !sb){ box.innerHTML='<div class="hint">連上資料庫之後才看得到。</div>'; return; }
+  box.innerHTML='<div class="hint">載入中…</div>';
+  const {data,error}=await sb.rpc('admin_auto_approved',{p_days:14});
+  if(error){
+    const missing=/admin_auto_approved|does not exist|schema cache/i.test(error.message);
+    box.innerHTML='<div class="hint">'+(missing
+      ? '還沒啟用（要先跑 schema_v144_auto_approve.sql）。'
+      : '載入失敗：'+esc(error.message))+'</div>';
+    return;
+  }
+  if(!data||!data.length){
+    box.innerHTML='<div class="hint">最近 14 天沒有自動上架的。</div>'; return;
+  }
+  box.innerHTML=data.map(r=>`<div class="rep rep-full">
+    <span>${esc(fmtD(r.reviewed_at))}</span>
+    <b style="flex:1 1 auto;min-width:0">${esc(r.brand)}</b>
+    <span style="color:var(--ink-3);font-size:.78rem">${esc(r.submitter)}</span>
+    <button type="button" class="btn sm aa-detail" data-id="${esc(String(r.id))}">細節</button>
+    <button type="button" class="btn sm aa-undo" data-id="${esc(String(r.id))}"
+      style="border-color:var(--alert-line);color:var(--alert)">退回</button>
+    <div class="rep-note">${esc(r.offer)}</div>
+  </div>`).join('');
+  $$('#autoApprovedBody .aa-detail').forEach(b2=>b2.onclick=()=>openDetail(b2.dataset.id));
+  $$('#autoApprovedBody .aa-undo').forEach(b2=>b2.onclick=async()=>{
+    if(!confirm('把這筆退回待審？使用者會看不到它。')) return;
+    // 退回就是走原本那條審核路徑，不用新東西
+    const {error}=await sb.rpc('review_offer',
+      {p_offer_id:Number(b2.dataset.id), p_status:'pending', p_verified:false, p_note:'自動上架後由管理員退回'});
+    if(error){ alert('退回失敗：'+error.message); return; }
+    loadAutoApproved(); loadOffers(true).then(render); loadPending();
+  });
+}
+
 const PANEL_LOADER={
+  pnlAutoApproved:   ()=>loadAutoApproved(),
   // 這一塊自己就五支 RPC（統計、走勢、生日分布、使用時段、在線人數），
   // 是整個審核分頁最貴的一塊——而它是「看的」，不是「要處理的」
   pnlDash:           ()=>loadAdminDashboard(),

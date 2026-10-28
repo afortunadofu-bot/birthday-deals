@@ -16,7 +16,7 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.eq('底部四格（審核是管理員才有的第五格）',
     tabs.filter((x) => x !== 'admin'), ['browse', 'board', 'trip', 'mine']);
   t.ok('「新增」不再是底部的一格', !tabs.includes('submit'));
-  t.eq('第三格叫「行程」', $('.tab[data-tab="trip"]').textContent.trim(), '行程');
+  t.eq('第三格叫「排行程」', $('.tab[data-tab="trip"]').textContent.trim(), '排行程');
 
   /* ---- 但投稿那一整段還在 ---- */
   t.ok('#tab-submit 沒有被拿掉（表單還是那一份）', !!$('#tab-submit'));

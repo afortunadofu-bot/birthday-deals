@@ -168,7 +168,11 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   /* ================= 5. 管理員面板 ================= */
   win.renderSiteFlagsPanel();
   const boxes = $$('#siteFlagsBody .flag-box');
-  t.eq('六個開關都在', boxes.length, 6);
+  // v144 多了「老手的新投稿自動上架」，所以是七個
+  t.eq('七個開關都在', boxes.length, 7);
+  t.ok('自動上架那顆排第一（它比顯示開關重要）',
+    win.eval("FLAG_GROUPS[0].key") === 'auto_approve'
+    && $('#siteFlagsBody').textContent.includes('自動上架'));
   t.ok('每一個都寫得出是什麼',
     $$('#siteFlagsBody .flag-item').every((r) => r.textContent.trim().length > 2));
   // celine：「網站顯示設定很醜」——原本五個平鋪的勾選框加「└」符號，看不出層級
