@@ -268,6 +268,20 @@
   .badge.earned{border-color:var(--accent);background:var(--accent-soft)}
   .badge.earned .b-label{color:var(--accent-dark)}
   .badge.locked{opacity:.45;filter:grayscale(1)}
+  /* 解鎖新徽章那張小卡（celine：「成就徽章每次達成都會跳 popup 是希望妳改成要跳」）。
+     只有圖示彈一下，不放彩帶——.bday-confetti 是 inset:0 貼著父層算的，塞進對話框
+     就變成「在小卡裡面下雪」，而且紙片的 animation-delay 最多 6 秒，跳出來的當下
+     大半還在可見範圍外面。 */
+  .bu-hero{font-size:2.6rem;line-height:1;text-align:center;margin:2px 0 8px;
+    animation:buPop .45s cubic-bezier(.2,1.5,.4,1) both}
+  @keyframes buPop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+  #dlgBadgeUnlock h2,#dlgBadgeUnlock p.sub{text-align:center}
+  .bu-row{display:flex;align-items:center;gap:10px;padding:10px;margin-top:8px;
+    border:1px solid var(--accent);border-radius:var(--r-sm);background:var(--accent-soft)}
+  .bu-row .b-icon{font-size:1.6rem;line-height:1;flex:none}
+  .bu-row b{font-size:.92rem;color:var(--accent-dark)}
+  .bu-why{font-size:.76rem;color:var(--ink-2);margin-top:2px}
+  @media(prefers-reduced-motion:reduce){ .bu-hero{animation:none} }
   /* 管理員分頁／「我的」分頁的每個 panel 都能收合——一次展開十個區塊、
      每個底下都是長長的清單，滑起來很累。h2 本身可以點，右邊再放一個
      小箭頭圖示，兩個都能觸發收合，收合狀態記在 localStorage，下次進來
@@ -2879,6 +2893,19 @@
   <div class="foot">
     <button type="button" class="btn primary" id="btnBulkAdd">加入待辦清單</button>
     <button class="btn" value="cancel" id="btnBulkCancel">取消</button>
+  </div>
+</form></dialog>
+
+<!-- 解鎖新徽章。只有「這次才拿到」才跳：拿過的記在這台裝置上，所以這個功能
+     上線後第一次打開「我的」不會把舊的八個一次全噴出來。 -->
+<dialog id="dlgBadgeUnlock"><form method="dialog" class="dlg">
+  <div class="bu-hero" id="buHero" aria-hidden="true">🎉</div>
+  <h2 id="buTitle">解鎖新徽章！</h2>
+  <p class="sub" id="buSub"></p>
+  <div id="buList"></div>
+  <div class="foot">
+    <button type="button" class="btn" id="btnBuSee">看我的徽章</button>
+    <button class="btn primary" value="ok" id="btnBuOk">太好了</button>
   </div>
 </form></dialog>
 
@@ -5847,6 +5874,14 @@ $('#venueCounty').onchange=()=>{ VENUE_OPEN=null; renderVenues(); };
 $('#btnBulkAll').onclick=()=>{ if(!BULK) return; BULK.ids.forEach(id=>BULK.picks.add(id)); renderBulkAdd(); };
 $('#btnBulkNone').onclick=()=>{ if(!BULK) return; BULK.picks.clear(); renderBulkAdd(); };
 $('#btnBulkAdd').onclick=doBulkAdd;
+$('#btnBuSee').onclick=()=>{
+  $('#dlgBadgeUnlock').close();
+  $('.tab[data-tab="mine"]')?.click();
+  const p=$('#badgesPanel');
+  // 「我的」的 panel 可以摺疊，之前收起來的話要先打開，不然跳過去什麼都看不到
+  if(p?.classList.contains('collapsed')) p.querySelector('h2')?.click();
+  p?.scrollIntoView({behavior:'smooth',block:'start'});
+};
 $('#btnGoSubmitList').onclick=()=>goSubmit('list_bottom');
 $('#btnGoSubmitMine').onclick=()=>goSubmit('mine');
 // 從哪裡進來就回哪裡（預設回優惠清單）
@@ -7582,7 +7617,7 @@ window.addEventListener('popstate', ()=>{
   if(DLG_HISTORY_PUSHED){
     DLG_HISTORY_PUSHED=false;
     [$('#dlgDetail'),$('#dlgReport'),$('#dlgFeedback'),$('#dlgNotif'),$('#dlgSharePreview'),
-     $('#dlgCoffee'),$('#dlgBulkAdd')].forEach(d=>{ if(d.open) d.close(); });
+     $('#dlgCoffee'),$('#dlgBulkAdd'),$('#dlgBadgeUnlock')].forEach(d=>{ if(d.open) d.close(); });
     // 手機篩選／排序底部彈出視窗不是 <dialog>，沒有原生 close 事件，
     // 這裡直接呼叫對應的關閉函式（DLG_HISTORY_PUSHED 已經是 false，
     // 函式裡再呼叫一次 consumeDlgHistory() 會被自己的保護擋掉，不會重複觸發）。
@@ -7607,6 +7642,10 @@ $('#dlgNotif').addEventListener('close', consumeDlgHistory);
 $('#dlgSharePreview').addEventListener('close', consumeDlgHistory);
 // 咖啡視窗當初也漏掛（它開場有 pushDlgHistory），症狀跟通知視窗一樣
 $('#dlgCoffee').addEventListener('close', consumeDlgHistory);
+/* 場館的「一鍵加入」（v145）跟解鎖徽章（v147）開場都有 pushDlgHistory()，
+   當初也漏掛——症狀跟上面那兩個一樣：返回鍵第一下會被幽靈紀錄吃掉。 */
+$('#dlgBulkAdd').addEventListener('close', consumeDlgHistory);
+$('#dlgBadgeUnlock').addEventListener('close', consumeDlgHistory);
 
 /* ---- 問題回報／建議：訪客也能填，不用登入。不收信箱了——處理完成後改用
    站內通知（notifications 表）回覆登入的送出者，見 admin_resolve_feedback()
@@ -8357,21 +8396,98 @@ function renderSavingsSinceVisit(){
 // 原本 check() 就夠畫格子，但沒辦法從 check() 反推「你現在多少、門檻多少」
 // 這種話講給人聽，所以拆出 metric（目前數值）跟 threshold（門檻）分開存。
 const BADGE_DEFS=[
-  {icon:'🎉',label:'初體驗',hint:'首次成功回報',metric:sv=>sv.success_count||0,unit:'次',threshold:1,check:sv=>(sv.success_count||0)>=1},
-  {icon:'🔥',label:'常客',hint:'成功回報滿 10 次',metric:sv=>sv.success_count||0,unit:'次',threshold:10,check:sv=>(sv.success_count||0)>=10},
-  {icon:'👑',label:'老饕',hint:'成功回報滿 30 次',metric:sv=>sv.success_count||0,unit:'次',threshold:30,check:sv=>(sv.success_count||0)>=30},
-  {icon:'💵',label:'小資達人',hint:'累積省下滿 $500',metric:sv=>sv.saved_total||0,unit:'元',threshold:500,check:sv=>(sv.saved_total||0)>=500},
-  {icon:'💰',label:'省錢高手',hint:'累積省下滿 $2,000',metric:sv=>sv.saved_total||0,unit:'元',threshold:2000,check:sv=>(sv.saved_total||0)>=2000},
-  {icon:'🏆',label:'省錢大戶',hint:'累積省下滿 $5,000',metric:sv=>sv.saved_total||0,unit:'元',threshold:5000,check:sv=>(sv.saved_total||0)>=5000},
-  {icon:'🗺️',label:'跑遍各家',hint:'用過 5 個不同品牌',metric:sv=>sv.brands_used||0,unit:'個品牌',threshold:5,check:sv=>(sv.brands_used||0)>=5},
-  {icon:'🌟',label:'品牌收藏家',hint:'用過 10 個不同品牌',metric:sv=>sv.brands_used||0,unit:'個品牌',threshold:10,check:sv=>(sv.brands_used||0)>=10},
+  {id:'first',icon:'🎉',label:'初體驗',hint:'首次成功回報',metric:sv=>sv.success_count||0,unit:'次',threshold:1,check:sv=>(sv.success_count||0)>=1},
+  {id:'regular',icon:'🔥',label:'常客',hint:'成功回報滿 10 次',metric:sv=>sv.success_count||0,unit:'次',threshold:10,check:sv=>(sv.success_count||0)>=10},
+  {id:'gourmet',icon:'👑',label:'老饕',hint:'成功回報滿 30 次',metric:sv=>sv.success_count||0,unit:'次',threshold:30,check:sv=>(sv.success_count||0)>=30},
+  {id:'save500',icon:'💵',label:'小資達人',hint:'累積省下滿 $500',metric:sv=>sv.saved_total||0,unit:'元',threshold:500,check:sv=>(sv.saved_total||0)>=500},
+  {id:'save2k',icon:'💰',label:'省錢高手',hint:'累積省下滿 $2,000',metric:sv=>sv.saved_total||0,unit:'元',threshold:2000,check:sv=>(sv.saved_total||0)>=2000},
+  {id:'save5k',icon:'🏆',label:'省錢大戶',hint:'累積省下滿 $5,000',metric:sv=>sv.saved_total||0,unit:'元',threshold:5000,check:sv=>(sv.saved_total||0)>=5000},
+  {id:'brands5',icon:'🗺️',label:'跑遍各家',hint:'用過 5 個不同品牌',metric:sv=>sv.brands_used||0,unit:'個品牌',threshold:5,check:sv=>(sv.brands_used||0)>=5},
+  {id:'brands10',icon:'🌟',label:'品牌收藏家',hint:'用過 10 個不同品牌',metric:sv=>sv.brands_used||0,unit:'個品牌',threshold:10,check:sv=>(sv.brands_used||0)>=10},
 ];
+/* nt() 自己會加上 $，所以原本一律 `nt(val)+unit` 會印成「$500元」「$3次」。
+   金額用 nt()（跟條件寫的「滿 $500」一致），次數跟品牌數只要純數字加單位。 */
+const badgeAmt=(b,v)=> b.unit==='元' ? nt(v) : nt2(v)+b.unit;
+/* ---- 解鎖新徽章要跳出來（celine 指定）----------------------------------
+   只在「這次才拿到」的時候跳。拿過哪些記在這台裝置上（分帳號）。
+
+   為什麼第一次要先安靜地建檔：這個功能上線以前拿到的徽章，在任何裝置上都
+   沒有紀錄。如果把「沒紀錄」當成「剛解鎖」，更新上線後第一次打開「我的」
+   會一次噴八個——那不是恭喜，那是當機。所以沒有紀錄時只記下現況、不恭喜，
+   之後多出來的才跳。
+
+   記在 localStorage 而不是資料庫：要存進資料庫得多開一個欄位、改 schema，
+   而這件事猜錯的代價只是「換一台裝置可能再恭喜你一次」。代價可以接受，
+   所以不值得為它動資料表。 ---- */
+function badgeSeenKey(){ return 'sxr_badges_seen'+(me?.id?('_'+me.id):''); }
+function loadBadgeSeen(){
+  try{
+    const a=JSON.parse(localStorage.getItem(badgeSeenKey())||'null');
+    return Array.isArray(a) ? new Set(a.map(String)) : null;   // null＝還沒建檔
+  }catch{ return null; }
+}
+function saveBadgeSeen(set){
+  try{ localStorage.setItem(badgeSeenKey(), JSON.stringify([...set])); }catch{}
+}
+let BADGE_QUEUE=[];
+function noteBadgeUnlocks(earned, sv){
+  if(!sv) return;
+  const seen=loadBadgeSeen();
+  if(seen===null){ saveBadgeSeen(new Set(earned.map(b=>b.id))); return; }
+  const fresh=earned.filter(b=>!seen.has(b.id));
+  /* 只增不減：資料事後被修正、徽章掉回未解鎖，也不要之後再恭喜一次 */
+  earned.forEach(b=>seen.add(b.id));
+  saveBadgeSeen(seen);
+  if(!fresh.length) return;
+  BADGE_QUEUE=fresh.map(b=>({...b, val:b.metric(sv)}));
+  showBadgeUnlockSoon();
+}
+/* 擠不下一張卡片的時候就只講一句——徽章已經記成「看過」了，不能整個吞掉 */
+function badgeUnlockToast(){
+  if(!BADGE_QUEUE.length) return;
+  const names=BADGE_QUEUE.map(b=>b.icon+' '+b.label).join('、');
+  BADGE_QUEUE=[];
+  showToast('順便解鎖了新徽章：'+names+'（在「我的」看得到）', 4200);
+}
+/* 不跟別的視窗疊在一起：送出使用回報之後會先自動開「優惠詳情」問星等，
+   這張卡等那邊關掉再出來。兩個 showModal 疊起來技術上做得到，但使用者會看到
+   一張卡壓在另一張上面，關掉之後底下還有一張，像是沒關掉。
+   生日卡片是例外——那天螢幕上已經有一場了，不跟它搶，改成一句提示。 */
+function showBadgeUnlockSoon(tries){
+  tries=tries||0;
+  if(!BADGE_QUEUE.length) return;
+  const dlg=$('#dlgBadgeUnlock');
+  if(!dlg) return;
+  const cheer=$('#bdayCheer');
+  if(cheer && !cheer.classList.contains('hidden')) return badgeUnlockToast();
+  const other=[...document.querySelectorAll('dialog')].find(d=>d.open && d!==dlg);
+  if(other){
+    /* 正常情況靠 close 事件，關掉就馬上跳。但真機上量到有瀏覽器**不派送**
+       close（見上面 <dialog> 那段的補救），光等事件會把這次恭喜整個吞掉——
+       而徽章已經記成「看過」，不會再有第二次機會。所以再加一道定時重試。
+       等超過一分鐘就改成一句提示，不要過了半天才突然跳一張卡出來。 */
+    if(!tries) other.addEventListener('close',()=>showBadgeUnlockSoon(),{once:true});
+    if(tries<75){ setTimeout(()=>showBadgeUnlockSoon(tries+1), 800); return; }
+    return badgeUnlockToast();
+  }
+  const list=BADGE_QUEUE; BADGE_QUEUE=[];
+  $('#buHero').textContent = list.length===1 ? list[0].icon : '🎉';
+  $('#buTitle').textContent = list.length===1 ? '解鎖新徽章！' : `解鎖 ${list.length} 個新徽章！`;
+  $('#buSub').textContent = '回報使用狀況累積出來的，徽章都收在「我的」。';
+  $('#buList').innerHTML = list.map(b=>`<div class="bu-row">
+      <span class="b-icon" aria-hidden="true">${b.icon}</span>
+      <div><b>${esc(b.label)}</b><div class="bu-why">${esc(b.hint)}（目前 ${badgeAmt(b,b.val)}）</div></div>
+    </div>`).join('');
+  dlg.showModal(); pushDlgHistory();
+  logEvent('badge_unlock', {ids:list.map(b=>b.id).join(','), n:list.length});
+}
 function renderBadges(sv){
   const panel=$('#badgesPanel'), body=$('#badgesBody');
   if(!panel||!body) return;
   if(!sv){ panel.classList.add('hidden'); return; }
   const earned=BADGE_DEFS.filter(b=>b.check(sv));
   panel.classList.toggle('hidden', earned.length===0 && (sv.success_count||0)===0);
+  noteBadgeUnlocks(earned, sv);
   body.innerHTML=BADGE_DEFS.map((b,i)=>{
     const got=b.check(sv);
     return `<div class="badge ${got?'earned':'locked'}" data-badge-i="${i}" role="button" tabindex="0">
@@ -8387,8 +8503,8 @@ function renderBadges(sv){
     const b=BADGE_DEFS[Number(el.dataset.badgeI)];
     const val=b.metric(sv), got=b.check(sv);
     const msg=got
-      ? `${b.icon} ${b.label}——${b.hint}，你已經達成了！（目前 ${nt(val)}${b.unit}）`
-      : `${b.icon} ${b.label}——${b.hint}，你目前 ${nt(val)}${b.unit}，還差 ${nt(Math.max(0,b.threshold-val))}${b.unit}解鎖`;
+      ? `${b.icon} ${b.label}——${b.hint}，你已經達成了！（目前 ${badgeAmt(b,val)}）`
+      : `${b.icon} ${b.label}——${b.hint}，你目前 ${badgeAmt(b,val)}，還差 ${badgeAmt(b,Math.max(0,b.threshold-val))}解鎖`;
     el.onclick=()=>showToast(msg,3200);
     el.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); showToast(msg,3200); } });
   });

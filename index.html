@@ -268,6 +268,20 @@
   .badge.earned{border-color:var(--accent);background:var(--accent-soft)}
   .badge.earned .b-label{color:var(--accent-dark)}
   .badge.locked{opacity:.45;filter:grayscale(1)}
+  /* 解鎖新徽章那張小卡（celine：「成就徽章每次達成都會跳 popup 是希望妳改成要跳」）。
+     只有圖示彈一下，不放彩帶——.bday-confetti 是 inset:0 貼著父層算的，塞進對話框
+     就變成「在小卡裡面下雪」，而且紙片的 animation-delay 最多 6 秒，跳出來的當下
+     大半還在可見範圍外面。 */
+  .bu-hero{font-size:2.6rem;line-height:1;text-align:center;margin:2px 0 8px;
+    animation:buPop .45s cubic-bezier(.2,1.5,.4,1) both}
+  @keyframes buPop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+  #dlgBadgeUnlock h2,#dlgBadgeUnlock p.sub{text-align:center}
+  .bu-row{display:flex;align-items:center;gap:10px;padding:10px;margin-top:8px;
+    border:1px solid var(--accent);border-radius:var(--r-sm);background:var(--accent-soft)}
+  .bu-row .b-icon{font-size:1.6rem;line-height:1;flex:none}
+  .bu-row b{font-size:.92rem;color:var(--accent-dark)}
+  .bu-why{font-size:.76rem;color:var(--ink-2);margin-top:2px}
+  @media(prefers-reduced-motion:reduce){ .bu-hero{animation:none} }
   /* 管理員分頁／「我的」分頁的每個 panel 都能收合——一次展開十個區塊、
      每個底下都是長長的清單，滑起來很累。h2 本身可以點，右邊再放一個
      小箭頭圖示，兩個都能觸發收合，收合狀態記在 localStorage，下次進來
@@ -2882,6 +2896,19 @@
   </div>
 </form></dialog>
 
+<!-- 解鎖新徽章。只有「這次才拿到」才跳：拿過的記在這台裝置上，所以這個功能
+     上線後第一次打開「我的」不會把舊的八個一次全噴出來。 -->
+<dialog id="dlgBadgeUnlock"><form method="dialog" class="dlg">
+  <div class="bu-hero" id="buHero" aria-hidden="true">🎉</div>
+  <h2 id="buTitle">解鎖新徽章！</h2>
+  <p class="sub" id="buSub"></p>
+  <div id="buList"></div>
+  <div class="foot">
+    <button type="button" class="btn" id="btnBuSee">看我的徽章</button>
+    <button class="btn primary" value="ok" id="btnBuOk">太好了</button>
+  </div>
+</form></dialog>
+
 <!-- 留言／使用回報獨立視窗——不在列表上直接顯示，點「留言」才打開 -->
 <dialog id="dlgDetail"><div class="dlg">
   <div class="dtl-topbar">
@@ -4899,7 +4926,7 @@ const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
 /* 更新紀錄的內容在 updates.json，build.py 注入這裡，同一份資料也產生整頁的
    updates.html。「我的」頁面只用到日期跟標題（最新幾筆＋NEW 標記），
    細項（items）留著是給 updates.html 用的。 */
-const SITE_UPDATES = [{"date":"2026-10-29","title":"底部多了「排行程」，新增搬到兩個地方","items":["「排行程」會告訴你哪些地方一次就能用到最多家優惠","場館可以一鍵加進待辦清單，加之前先勾掉不想要的","投稿搬到清單最下面跟「我的」；名次跑版、灰字太多也修了"]},{"date":"2026-10-28","title":"地圖上直接就能記「我用過了」","items":["地圖的店家小視窗多一顆「我用過了」，不用再回清單找","優惠詳情視窗下面也加了同一顆","回報用過之後會提醒你順便給星等，排行榜的說明也剪短了"]},{"date":"2026-10-23","title":"手機上比較不會跳出「連不到資料庫」了","items":["連線元件改成從本站載入，不再等外部網站，慢或被擋都不受影響","真的連不上時，多一顆「複製狀況」可以把情況傳給我們"]},{"date":"2026-10-22","title":"地圖好按了、篩選看得見、折扣寫出幾折","items":["地圖上的點變好按了，資訊也不會看到一半就不見","現在篩了哪些條件直接列在清單上面，可以一個一個拿掉","「我的」打開就是待辦清單；折扣會寫出幾折、折多少錢"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
+const SITE_UPDATES = [{"date":"2026-10-29","title":"底部多了「排行程」，新增搬到兩個地方","items":["「排行程」會告訴你哪些地方一次就能用到最多家優惠","場館可以一鍵加進待辦清單，加之前先勾掉不想要的","解鎖新徽章會跳出來；投稿搬到清單最下面跟「我的」，名次跑版也修了"]},{"date":"2026-10-28","title":"地圖上直接就能記「我用過了」","items":["地圖的店家小視窗多一顆「我用過了」，不用再回清單找","優惠詳情視窗下面也加了同一顆","回報用過之後會提醒你順便給星等，排行榜的說明也剪短了"]},{"date":"2026-10-23","title":"手機上比較不會跳出「連不到資料庫」了","items":["連線元件改成從本站載入，不再等外部網站，慢或被擋都不受影響","真的連不上時，多一顆「複製狀況」可以把情況傳給我們"]},{"date":"2026-10-22","title":"地圖好按了、篩選看得見、折扣寫出幾折","items":["地圖上的點變好按了，資訊也不會看到一半就不見","現在篩了哪些條件直接列在清單上面，可以一個一個拿掉","「我的」打開就是待辦清單；折扣會寫出幾折、折多少錢"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
 const SITE_UPDATES_SHOW=3;
 
 function updatesSeenDate(){
@@ -5847,6 +5874,14 @@ $('#venueCounty').onchange=()=>{ VENUE_OPEN=null; renderVenues(); };
 $('#btnBulkAll').onclick=()=>{ if(!BULK) return; BULK.ids.forEach(id=>BULK.picks.add(id)); renderBulkAdd(); };
 $('#btnBulkNone').onclick=()=>{ if(!BULK) return; BULK.picks.clear(); renderBulkAdd(); };
 $('#btnBulkAdd').onclick=doBulkAdd;
+$('#btnBuSee').onclick=()=>{
+  $('#dlgBadgeUnlock').close();
+  $('.tab[data-tab="mine"]')?.click();
+  const p=$('#badgesPanel');
+  // 「我的」的 panel 可以摺疊，之前收起來的話要先打開，不然跳過去什麼都看不到
+  if(p?.classList.contains('collapsed')) p.querySelector('h2')?.click();
+  p?.scrollIntoView({behavior:'smooth',block:'start'});
+};
 $('#btnGoSubmitList').onclick=()=>goSubmit('list_bottom');
 $('#btnGoSubmitMine').onclick=()=>goSubmit('mine');
 // 從哪裡進來就回哪裡（預設回優惠清單）
@@ -7582,7 +7617,7 @@ window.addEventListener('popstate', ()=>{
   if(DLG_HISTORY_PUSHED){
     DLG_HISTORY_PUSHED=false;
     [$('#dlgDetail'),$('#dlgReport'),$('#dlgFeedback'),$('#dlgNotif'),$('#dlgSharePreview'),
-     $('#dlgCoffee'),$('#dlgBulkAdd')].forEach(d=>{ if(d.open) d.close(); });
+     $('#dlgCoffee'),$('#dlgBulkAdd'),$('#dlgBadgeUnlock')].forEach(d=>{ if(d.open) d.close(); });
     // 手機篩選／排序底部彈出視窗不是 <dialog>，沒有原生 close 事件，
     // 這裡直接呼叫對應的關閉函式（DLG_HISTORY_PUSHED 已經是 false，
     // 函式裡再呼叫一次 consumeDlgHistory() 會被自己的保護擋掉，不會重複觸發）。
@@ -7607,6 +7642,10 @@ $('#dlgNotif').addEventListener('close', consumeDlgHistory);
 $('#dlgSharePreview').addEventListener('close', consumeDlgHistory);
 // 咖啡視窗當初也漏掛（它開場有 pushDlgHistory），症狀跟通知視窗一樣
 $('#dlgCoffee').addEventListener('close', consumeDlgHistory);
+/* 場館的「一鍵加入」（v145）跟解鎖徽章（v147）開場都有 pushDlgHistory()，
+   當初也漏掛——症狀跟上面那兩個一樣：返回鍵第一下會被幽靈紀錄吃掉。 */
+$('#dlgBulkAdd').addEventListener('close', consumeDlgHistory);
+$('#dlgBadgeUnlock').addEventListener('close', consumeDlgHistory);
 
 /* ---- 問題回報／建議：訪客也能填，不用登入。不收信箱了——處理完成後改用
    站內通知（notifications 表）回覆登入的送出者，見 admin_resolve_feedback()
@@ -8357,21 +8396,98 @@ function renderSavingsSinceVisit(){
 // 原本 check() 就夠畫格子，但沒辦法從 check() 反推「你現在多少、門檻多少」
 // 這種話講給人聽，所以拆出 metric（目前數值）跟 threshold（門檻）分開存。
 const BADGE_DEFS=[
-  {icon:'🎉',label:'初體驗',hint:'首次成功回報',metric:sv=>sv.success_count||0,unit:'次',threshold:1,check:sv=>(sv.success_count||0)>=1},
-  {icon:'🔥',label:'常客',hint:'成功回報滿 10 次',metric:sv=>sv.success_count||0,unit:'次',threshold:10,check:sv=>(sv.success_count||0)>=10},
-  {icon:'👑',label:'老饕',hint:'成功回報滿 30 次',metric:sv=>sv.success_count||0,unit:'次',threshold:30,check:sv=>(sv.success_count||0)>=30},
-  {icon:'💵',label:'小資達人',hint:'累積省下滿 $500',metric:sv=>sv.saved_total||0,unit:'元',threshold:500,check:sv=>(sv.saved_total||0)>=500},
-  {icon:'💰',label:'省錢高手',hint:'累積省下滿 $2,000',metric:sv=>sv.saved_total||0,unit:'元',threshold:2000,check:sv=>(sv.saved_total||0)>=2000},
-  {icon:'🏆',label:'省錢大戶',hint:'累積省下滿 $5,000',metric:sv=>sv.saved_total||0,unit:'元',threshold:5000,check:sv=>(sv.saved_total||0)>=5000},
-  {icon:'🗺️',label:'跑遍各家',hint:'用過 5 個不同品牌',metric:sv=>sv.brands_used||0,unit:'個品牌',threshold:5,check:sv=>(sv.brands_used||0)>=5},
-  {icon:'🌟',label:'品牌收藏家',hint:'用過 10 個不同品牌',metric:sv=>sv.brands_used||0,unit:'個品牌',threshold:10,check:sv=>(sv.brands_used||0)>=10},
+  {id:'first',icon:'🎉',label:'初體驗',hint:'首次成功回報',metric:sv=>sv.success_count||0,unit:'次',threshold:1,check:sv=>(sv.success_count||0)>=1},
+  {id:'regular',icon:'🔥',label:'常客',hint:'成功回報滿 10 次',metric:sv=>sv.success_count||0,unit:'次',threshold:10,check:sv=>(sv.success_count||0)>=10},
+  {id:'gourmet',icon:'👑',label:'老饕',hint:'成功回報滿 30 次',metric:sv=>sv.success_count||0,unit:'次',threshold:30,check:sv=>(sv.success_count||0)>=30},
+  {id:'save500',icon:'💵',label:'小資達人',hint:'累積省下滿 $500',metric:sv=>sv.saved_total||0,unit:'元',threshold:500,check:sv=>(sv.saved_total||0)>=500},
+  {id:'save2k',icon:'💰',label:'省錢高手',hint:'累積省下滿 $2,000',metric:sv=>sv.saved_total||0,unit:'元',threshold:2000,check:sv=>(sv.saved_total||0)>=2000},
+  {id:'save5k',icon:'🏆',label:'省錢大戶',hint:'累積省下滿 $5,000',metric:sv=>sv.saved_total||0,unit:'元',threshold:5000,check:sv=>(sv.saved_total||0)>=5000},
+  {id:'brands5',icon:'🗺️',label:'跑遍各家',hint:'用過 5 個不同品牌',metric:sv=>sv.brands_used||0,unit:'個品牌',threshold:5,check:sv=>(sv.brands_used||0)>=5},
+  {id:'brands10',icon:'🌟',label:'品牌收藏家',hint:'用過 10 個不同品牌',metric:sv=>sv.brands_used||0,unit:'個品牌',threshold:10,check:sv=>(sv.brands_used||0)>=10},
 ];
+/* nt() 自己會加上 $，所以原本一律 `nt(val)+unit` 會印成「$500元」「$3次」。
+   金額用 nt()（跟條件寫的「滿 $500」一致），次數跟品牌數只要純數字加單位。 */
+const badgeAmt=(b,v)=> b.unit==='元' ? nt(v) : nt2(v)+b.unit;
+/* ---- 解鎖新徽章要跳出來（celine 指定）----------------------------------
+   只在「這次才拿到」的時候跳。拿過哪些記在這台裝置上（分帳號）。
+
+   為什麼第一次要先安靜地建檔：這個功能上線以前拿到的徽章，在任何裝置上都
+   沒有紀錄。如果把「沒紀錄」當成「剛解鎖」，更新上線後第一次打開「我的」
+   會一次噴八個——那不是恭喜，那是當機。所以沒有紀錄時只記下現況、不恭喜，
+   之後多出來的才跳。
+
+   記在 localStorage 而不是資料庫：要存進資料庫得多開一個欄位、改 schema，
+   而這件事猜錯的代價只是「換一台裝置可能再恭喜你一次」。代價可以接受，
+   所以不值得為它動資料表。 ---- */
+function badgeSeenKey(){ return 'sxr_badges_seen'+(me?.id?('_'+me.id):''); }
+function loadBadgeSeen(){
+  try{
+    const a=JSON.parse(localStorage.getItem(badgeSeenKey())||'null');
+    return Array.isArray(a) ? new Set(a.map(String)) : null;   // null＝還沒建檔
+  }catch{ return null; }
+}
+function saveBadgeSeen(set){
+  try{ localStorage.setItem(badgeSeenKey(), JSON.stringify([...set])); }catch{}
+}
+let BADGE_QUEUE=[];
+function noteBadgeUnlocks(earned, sv){
+  if(!sv) return;
+  const seen=loadBadgeSeen();
+  if(seen===null){ saveBadgeSeen(new Set(earned.map(b=>b.id))); return; }
+  const fresh=earned.filter(b=>!seen.has(b.id));
+  /* 只增不減：資料事後被修正、徽章掉回未解鎖，也不要之後再恭喜一次 */
+  earned.forEach(b=>seen.add(b.id));
+  saveBadgeSeen(seen);
+  if(!fresh.length) return;
+  BADGE_QUEUE=fresh.map(b=>({...b, val:b.metric(sv)}));
+  showBadgeUnlockSoon();
+}
+/* 擠不下一張卡片的時候就只講一句——徽章已經記成「看過」了，不能整個吞掉 */
+function badgeUnlockToast(){
+  if(!BADGE_QUEUE.length) return;
+  const names=BADGE_QUEUE.map(b=>b.icon+' '+b.label).join('、');
+  BADGE_QUEUE=[];
+  showToast('順便解鎖了新徽章：'+names+'（在「我的」看得到）', 4200);
+}
+/* 不跟別的視窗疊在一起：送出使用回報之後會先自動開「優惠詳情」問星等，
+   這張卡等那邊關掉再出來。兩個 showModal 疊起來技術上做得到，但使用者會看到
+   一張卡壓在另一張上面，關掉之後底下還有一張，像是沒關掉。
+   生日卡片是例外——那天螢幕上已經有一場了，不跟它搶，改成一句提示。 */
+function showBadgeUnlockSoon(tries){
+  tries=tries||0;
+  if(!BADGE_QUEUE.length) return;
+  const dlg=$('#dlgBadgeUnlock');
+  if(!dlg) return;
+  const cheer=$('#bdayCheer');
+  if(cheer && !cheer.classList.contains('hidden')) return badgeUnlockToast();
+  const other=[...document.querySelectorAll('dialog')].find(d=>d.open && d!==dlg);
+  if(other){
+    /* 正常情況靠 close 事件，關掉就馬上跳。但真機上量到有瀏覽器**不派送**
+       close（見上面 <dialog> 那段的補救），光等事件會把這次恭喜整個吞掉——
+       而徽章已經記成「看過」，不會再有第二次機會。所以再加一道定時重試。
+       等超過一分鐘就改成一句提示，不要過了半天才突然跳一張卡出來。 */
+    if(!tries) other.addEventListener('close',()=>showBadgeUnlockSoon(),{once:true});
+    if(tries<75){ setTimeout(()=>showBadgeUnlockSoon(tries+1), 800); return; }
+    return badgeUnlockToast();
+  }
+  const list=BADGE_QUEUE; BADGE_QUEUE=[];
+  $('#buHero').textContent = list.length===1 ? list[0].icon : '🎉';
+  $('#buTitle').textContent = list.length===1 ? '解鎖新徽章！' : `解鎖 ${list.length} 個新徽章！`;
+  $('#buSub').textContent = '回報使用狀況累積出來的，徽章都收在「我的」。';
+  $('#buList').innerHTML = list.map(b=>`<div class="bu-row">
+      <span class="b-icon" aria-hidden="true">${b.icon}</span>
+      <div><b>${esc(b.label)}</b><div class="bu-why">${esc(b.hint)}（目前 ${badgeAmt(b,b.val)}）</div></div>
+    </div>`).join('');
+  dlg.showModal(); pushDlgHistory();
+  logEvent('badge_unlock', {ids:list.map(b=>b.id).join(','), n:list.length});
+}
 function renderBadges(sv){
   const panel=$('#badgesPanel'), body=$('#badgesBody');
   if(!panel||!body) return;
   if(!sv){ panel.classList.add('hidden'); return; }
   const earned=BADGE_DEFS.filter(b=>b.check(sv));
   panel.classList.toggle('hidden', earned.length===0 && (sv.success_count||0)===0);
+  noteBadgeUnlocks(earned, sv);
   body.innerHTML=BADGE_DEFS.map((b,i)=>{
     const got=b.check(sv);
     return `<div class="badge ${got?'earned':'locked'}" data-badge-i="${i}" role="button" tabindex="0">
@@ -8387,8 +8503,8 @@ function renderBadges(sv){
     const b=BADGE_DEFS[Number(el.dataset.badgeI)];
     const val=b.metric(sv), got=b.check(sv);
     const msg=got
-      ? `${b.icon} ${b.label}——${b.hint}，你已經達成了！（目前 ${nt(val)}${b.unit}）`
-      : `${b.icon} ${b.label}——${b.hint}，你目前 ${nt(val)}${b.unit}，還差 ${nt(Math.max(0,b.threshold-val))}${b.unit}解鎖`;
+      ? `${b.icon} ${b.label}——${b.hint}，你已經達成了！（目前 ${badgeAmt(b,val)}）`
+      : `${b.icon} ${b.label}——${b.hint}，你目前 ${badgeAmt(b,val)}，還差 ${badgeAmt(b,Math.max(0,b.threshold-val))}解鎖`;
     el.onclick=()=>showToast(msg,3200);
     el.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); showToast(msg,3200); } });
   });

@@ -16,9 +16,11 @@ const { boot, tick, makeSb, makeAsserts, stubHeavy } = require('./harness');
   t.ok('有「全部勾選」跟「全部取消」', !!$('#btnBulkAll') && !!$('#btnBulkNone'));
   t.ok('送出鈕是 type=button（不然 <form method=dialog> 會先把視窗關掉）',
     $('#btnBulkAdd').getAttribute('type') === 'button');
-  /* 手機上按返回鍵要關得掉——不在那份清單裡的話，返回會直接把整頁／App 關掉 */
+  /* 手機上按返回鍵要關得掉——不在那份清單裡的話，返回會直接把整頁／App 關掉。
+     原本寫死「dlgBulkAdd 是清單最後一個」，v147 在它後面再加一個就紅了。
+     驗的是「在不在清單裡」，不是排第幾個。 */
   t.ok('返回鍵的那份清單裡有它',
-    /dlgCoffee'\),\$\('#dlgBulkAdd'\)\]\.forEach/.test(doc.documentElement.outerHTML));
+    /dlgBulkAdd'\)[^\]]*\]\.forEach/.test(doc.documentElement.outerHTML));
 
   /* ---- 場館裡那顆按鈕 ---- */
   const sb = makeSb({
