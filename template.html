@@ -1503,6 +1503,12 @@
     box-shadow:0 6px 18px rgba(232,72,60,.28)}
   #btnCoffee:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
   #btnCoffee.hidden{display:none}
+  /* 審核的「一趟用最多：地點」三段共用同一種列：名字可以直接改，右邊是動作。
+     窄螢幕讓名字自己佔一行，不要把按鈕擠到看不見。 */
+  .va-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    padding:7px 0;border-top:1px solid var(--line-soft)}
+  .va-row .va-name{flex:1 1 180px;min-width:0;font-size:.86rem;padding:5px 8px;
+    border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);color:var(--ink)}
   /* celine：「投稿按鈕多一點，要一按進去首頁就能投稿，例如懸浮圓點」。
      做成藥丸而不是圓點：一個只有「＋」的圓，在一堆圓形浮動按鈕裡認不出是什麼，
      而這顆要在第一眼就講清楚它會做什麼。右下角跟「回到最上方」同一直線，
@@ -2102,6 +2108,7 @@
       <div class="row" style="margin:10px 0 2px">
         <select id="venueCounty" aria-label="縣市"><option value="">全部縣市</option></select>
       </div>
+      <div id="myVenueSuggests"></div>
       <div id="venueList"><div class="hint">載入中…</div></div>
       <!-- celine：「一趟最多目前沒顯示，也沒投稿」。投稿一個地點要的是座標
            （venues 有 lat／lng／radius_m），那不是表單填得出來的東西，所以這裡
@@ -2385,6 +2392,16 @@
     <h2>用一般民眾的樣子看</h2>
     <p class="sub">你的畫面永遠有第五個分頁、永遠有編輯鈕，所以看不到別人看到的版本。</p>
     <button type="button" class="btn" id="btnPublicPreview">切成一般民眾模式</button>
+  </div>
+  <!-- celine：「一趟最多目前沒顯示，也沒投稿」「館名都核對過了」。
+       v142 建了表跟「找熱點」的函式，但「列出草稿→你確認名字→建立」那一塊
+       從來沒做，所以沒有任何畫面能建地點——那一頁空著不是壞掉，是沒有入口。
+       三段放在同一塊：待審的推薦、已經建好的、系統找到還沒建的。 -->
+  <div class="panel" id="pnlVenuesAdmin">
+    <h2>一趟用最多：地點<span class="n hidden" id="vsPendCount"></span></h2>
+    <p class="sub">熱點是從 11,473 家分店的座標算出來的。名字系統只猜得到六成，
+      而且「新光三越」有四個，所以一定要你確認過才上架。</p>
+    <div id="venueAdminBody"><div class="hint">載入中…</div></div>
   </div>
   <div class="panel" id="pnlDash">
     <h2>站台儀表板</h2>
@@ -2707,6 +2724,24 @@
     <button class="btn" value="cancel">下次吧</button>
     <a class="btn primary" id="btnCoffeeGo" href="https://buymeacoffee.com/celinefu"
        target="_blank" rel="noopener">去 Buy Me a Coffee ↗</a>
+  </div>
+</form></dialog>
+<dialog id="dlgVenueSuggest"><form method="dialog" class="dlg">
+  <h2>推薦一個地點</h2>
+  <p class="sub">哪裡一趟就能用到好幾家生日優惠？告訴我們名字就好，座標我們自己對。</p>
+  <div class="field"><label>地點名稱 *</label>
+    <input id="vsName" maxlength="40" autocomplete="off"
+      placeholder="例如：新光三越南西店、新竹巨城"></div>
+  <div class="field"><label>在哪個縣市</label>
+    <select id="vsCounty"><option value="">不確定／跨縣市</option></select></div>
+  <div class="field"><label>裡面有哪幾家？</label>
+    <textarea id="vsNote" maxlength="300"
+      placeholder="記得幾家寫幾家就好，例如：星巴克、康是美、屈臣氏、無印良品"></textarea>
+    <div class="hint">不填也可以送出。</div></div>
+  <div id="vsMsg"></div>
+  <div class="foot">
+    <button type="button" class="btn" id="btnVsCancel">取消</button>
+    <button type="button" class="btn primary" id="btnVsSend">送出</button>
   </div>
 </form></dialog>
 <button type="button" id="btnFabSubmit" aria-label="投稿一筆優惠" title="投稿一筆優惠">
@@ -5524,7 +5559,7 @@ const EVENT_LABEL={
   bulk_wish:'場館一鍵加入（真的加了）', venue_open:'展開一個場館',
   wishlist_to_map:'待辦清單 →「看地圖、由近到遠」', near_wish_only:'附近「只看收藏」',
   geo_ask:'問定位權限', go_submit:'開始投稿',
-  venue_suggest:'推薦一個「一趟用最多」的地點',
+  venue_suggest:'打開「推薦一個地點」',
   rate_cta:'從提示去評分', rate_nudge:'「還沒評分」的提示出現',
   rate_all_open:'一次評很多筆', rate_submit:'送出評分',
   survey_nudge:'問卷提示出現', survey_open:'打開問卷', survey_submit:'送出問卷',
@@ -5580,6 +5615,133 @@ async function loadEventStats(){
         '還沒有紀錄。預設就展開著的區塊不會算——只有「本來收著、你把它點開」才算一次。')
     + `<p class="hint" style="margin:6px 0 0">${esc(label)}。不含瀏覽頁面本身
       （那個是排行榜上的「總瀏覽人次」）。「人」算的是瀏覽器，同一個人換裝置會算兩個。</p>`;
+}
+/* ---- 審核：一趟用最多的地點 -------------------------------------
+   三段同一塊（celine 的「block 過多」是整站的問題，不要在這裡又開三塊）：
+     1. 待審的推薦 —— 使用者送來的名字，收下／退回
+     2. 已經建好的 —— 改名、公開開關、刪除
+     3. 系統找到的熱點 —— 名字先填好，你確認後建立
+   第三段是當初規劃裡寫了、但一直沒做的那一塊，也就是那一頁空著的原因。 */
+let VENUE_ADMIN=null;
+async function loadVenueAdmin(){
+  const box=$('#venueAdminBody');
+  if(!box || !myProfile?.is_admin || !LIVE) return;
+  box.innerHTML='<div class="hint">載入中…</div>';
+  const [sug, mine, cand]=await Promise.all([
+    sb.from('venue_suggestions').select('id,name,county,note,status,created_at')
+      .eq('status','pending').order('created_at',{ascending:false}).limit(50),
+    sb.from('venues').select('id,name,county,is_public').order('name').limit(300),
+    sb.rpc('admin_venue_candidates',{p_min_offers:8}),
+  ]);
+  // venues 讀不到就整塊停下來——後面兩段都要靠它比對「這個熱點建過了沒」
+  if(mine.error){
+    const missing=/venues|does not exist|schema cache/i.test(mine.error.message||'');
+    box.innerHTML=`<div class="note alert">${missing
+      ? '要先在 Supabase 執行 schema_v142_venues.sql 跟 schema_v153_venues_write.sql。'
+      : '讀取失敗：'+esc(mine.error.message)}</div>`;
+    return;
+  }
+  VENUE_ADMIN={sug:sug.error?[]:(sug.data||[]), mine:mine.data||[],
+               cand:cand.error?[]:(cand.data||[]), candErr:cand.error?cand.error.message:''};
+  renderVenueAdmin();
+}
+function renderVenueAdmin(){
+  const box=$('#venueAdminBody'); if(!box||!VENUE_ADMIN) return;
+  const {sug, mine, cand, candErr}=VENUE_ADMIN;
+  const cnt=$('#vsPendCount');
+  if(cnt){ cnt.textContent=sug.length; cnt.classList.toggle('hidden', !sug.length); }
+  /* 已經建過的熱點不用再列一次：座標 200 公尺內就當成同一個地方
+     （venues 的預設半徑是 180 公尺）。 */
+  const near=(a,b)=>111000*Math.sqrt(Math.pow(a.lat-b.lat,2)
+    +Math.pow((a.lng-b.lng)*Math.cos(a.lat*Math.PI/180),2))<200;
+  /* 去重之後的這一份要存回去：下面那排輸入框的編號是**這一份**的編號，
+     而按下「建立」是去拿座標的。拿去對原本那一份 cand 的話，建到的會是
+     另一個熱點的座標——名字是你打的、地點卻跑掉，而且看不出來。 */
+  const fresh=cand.filter(c=>!mine.some(v=>v.lat!=null&&near(c,v)));
+  VENUE_ADMIN.fresh=fresh;
+  const sec=(title,inner)=>`<div style="margin-top:14px">
+      <div style="font-size:.8rem;font-weight:700;color:var(--ink-3);margin-bottom:6px">${esc(title)}</div>
+      ${inner}</div>`;
+  const none=t=>`<div class="hint">${t}</div>`;
+
+  const sugHtml = sug.length ? sug.map(r=>`<div class="va-row">
+      <div style="flex:1 1 auto;min-width:0">
+        <b>${esc(r.name)}</b> <span style="color:var(--ink-3)">${esc(r.county||'')}</span>
+        ${r.note?`<div class="hint" style="margin:2px 0 0">${esc(r.note)}</div>`:''}</div>
+      <button type="button" class="btn sm primary" data-vs-ok="${r.id}">收下</button>
+      <button type="button" class="btn sm" data-vs-no="${r.id}">退回</button>
+    </div>`).join('') : none('沒有待審的推薦。');
+
+  const mineHtml = mine.length ? mine.map(v=>`<div class="va-row">
+      <input class="va-name" data-vname="${v.id}" value="${esc(v.name)}" maxlength="40">
+      <span style="color:var(--ink-3);font-size:.8rem">${esc(v.county||'')}</span>
+      <label class="toggle" style="margin:0;font-size:.8rem">
+        <input type="checkbox" data-vpub="${v.id}"${v.is_public?' checked':''}>公開</label>
+      <button type="button" class="btn sm" data-vdel="${v.id}">刪除</button>
+    </div>`).join('') : none('還沒有任何地點——下面那一段就是用來建立的。');
+
+  const candHtml = candErr ? `<div class="note alert">熱點算不出來：${esc(candErr)}</div>`
+    : (fresh.length ? fresh.slice(0,60).map((c,i)=>`<div class="va-row">
+        <input class="va-name" data-cname="${i}" value="${esc(c.sample_names||'')}"
+          maxlength="40" placeholder="取個名字（系統猜不到）">
+        <span style="color:var(--ink-3);font-size:.8rem;white-space:nowrap">
+          ${esc(c.county||'')} · ${c.offers} 家</span>
+        <button type="button" class="btn sm primary" data-cnew="${i}">建立並公開</button>
+      </div>`).join('') : none('系統找到的熱點都建過了。'));
+
+  box.innerHTML = sec(`使用者推薦的（${sug.length}）`, sugHtml)
+    + sec(`已經建好的（${mine.length}）`, mineHtml)
+    + sec(`系統找到、還沒建的（${fresh.length}）`, candHtml)
+    + '<p class="hint" style="margin:10px 0 0">名字就是使用者會看到的那一個，'
+    + '所以「新光三越」要寫成「新光三越南西店」這種分得出來的寫法。</p>';
+
+  box.querySelectorAll('[data-vs-ok]').forEach(b=>b.onclick=()=>reviewVenueSuggest(b.dataset.vsOk,'accepted'));
+  box.querySelectorAll('[data-vs-no]').forEach(b=>b.onclick=()=>reviewVenueSuggest(b.dataset.vsNo,'rejected'));
+  box.querySelectorAll('[data-vpub]').forEach(b=>b.onchange=()=>saveVenue(b.dataset.vpub));
+  box.querySelectorAll('[data-vname]').forEach(b=>b.onchange=()=>saveVenue(b.dataset.vname));
+  box.querySelectorAll('[data-vdel]').forEach(b=>b.onclick=()=>delVenue(b.dataset.vdel));
+  box.querySelectorAll('[data-cnew]').forEach(b=>b.onclick=()=>createVenue(Number(b.dataset.cnew)));
+}
+async function reviewVenueSuggest(id, status){
+  const {error}=await sb.from('venue_suggestions')
+    .update({status, reviewed_by:me.id, reviewed_at:new Date().toISOString()}).eq('id',id);
+  if(error){ showToast('改不了：'+error.message); return; }
+  loadVenueAdmin();
+}
+async function saveVenue(id){
+  const box=$('#venueAdminBody');
+  const name=box.querySelector(`[data-vname="${id}"]`)?.value.trim();
+  const pub=box.querySelector(`[data-vpub="${id}"]`)?.checked;
+  if(!name || name.length<2){ showToast('名字至少要兩個字'); loadVenueAdmin(); return; }
+  const {error}=await sb.from('venues').update({name, is_public:!!pub}).eq('id',id);
+  if(error){ showToast(venueWriteHint(error)); return; }
+  VENUES=null;                 // 公開清單變了，下次切到排行程重新抓
+  showToast('存好了');
+}
+async function delVenue(id){
+  if(!confirm('刪掉這個地點嗎？裡面的留言跟愛心會一起沒有。')) return;
+  const {error}=await sb.from('venues').delete().eq('id',id);
+  if(error){ showToast(venueWriteHint(error)); return; }
+  VENUES=null; loadVenueAdmin();
+}
+async function createVenue(i){
+  const c=VENUE_ADMIN?.fresh?.[i]; if(!c) return;
+  const name=$('#venueAdminBody').querySelector(`[data-cname="${i}"]`)?.value.trim()||'';
+  if(name.length<2){ showToast('先取個名字（至少兩個字）'); return; }
+  const {error}=await sb.from('venues').insert({
+    name:name.slice(0,40), county:c.county||null,
+    lat:c.lat, lng:c.lng, is_public:true, created_by:me.id });
+  if(error){ showToast(venueWriteHint(error)); return; }
+  VENUES=null; showToast('建好了，「排行程」那一頁就看得到');
+  loadVenueAdmin();
+}
+/* permission denied 看起來很像「我不是管理員」，但在這裡比較可能是表的
+   GRANT 那一層：v142 只明確寫了 select（insert/update 多半有 Supabase 的
+   預設值撐著，但不保證）。v153 那支把寫入權限明確寫出來了，所以講那一支。 */
+function venueWriteHint(error){
+  return /permission denied/i.test(error.message||'')
+    ? '寫不進去：先跑 schema_v153_venues_write.sql 再試一次'
+    : '失敗：'+error.message;
 }
 async function loadLinkStats(){
   const box=$('#linkStatsBody');
@@ -5931,6 +6093,7 @@ const TAB_LOADED=new Set();
    只是清單是空的，並且告訴管理員要跑哪一支 SQL。 */
 let VENUES=null, VENUE_OPEN=null;
 async function loadVenues(){
+  loadMyVenueSuggestions();
   const box=$('#venueList');
   if(!LIVE){ box.innerHTML='<div class="hint">'+esc(offlineMsg('看不到場館清單'))+'</div>'; return; }
   const {data,error}=await sb.from('venues_public').select('*')
@@ -5965,14 +6128,14 @@ function renderVenues(){
        （celine 的截圖就是這一種），看起來像壞掉的。
        venues 預設 is_public=false——名字是從座標猜出來的，要人確認過才上架，
        所以「跑完 SQL 還是空的」是正常狀態，管理員要知道差的是哪一步。 */
+    /* v153：管理員要做什麼**不寫在這裡**。celine：「其他人不該看到這個」——
+       就算有 is_admin 的判斷把它藏起來，站內公開的區塊裡也不該放站務指示：
+       判斷式哪天出錯就是直接漏給所有人看。該講的話搬到「審核」那一塊，
+       那裡本來就只有管理員進得去。 */
     box.innerHTML = all.length
       ? '<div class="hint">「'+esc(cty)+'」還沒有整理好的地點。'
         + '<button type="button" class="btn sm" id="btnVenueAll" style="margin-left:8px">看全部縣市</button></div>'
-      : '<div class="hint">這一區還在整理中，整理好就會出現。'
-        + (myProfile?.is_admin
-            ? '（管理員：schema_v142_venues.sql 跑完之後，venues 預設是不公開的，'
-              + '核對過館名再把那幾筆設成 is_public = true）' : '')
-        + '</div>';
+      : '<div class="hint">這一區還在整理中，整理好就會出現。</div>';
     const b=$('#btnVenueAll');
     if(b) b.onclick=()=>{ $('#venueCounty').value=''; savePref('venueCounty',''); renderVenues(); };
     return;
@@ -6195,16 +6358,55 @@ $$('.tab').forEach(t=>t.onclick=()=>{
 });
 
 $('#venueCounty').onchange=()=>{ VENUE_OPEN=null; renderVenues(); };
-/* 表單先把要問的四件事列出來，使用者照著填就好——開一個空白的輸入框給人，
-   收回來的常常是「新光三越」三個字，哪一間、在哪裡都還要再問一次。 */
-$('#btnVenueSuggest').onclick=()=>{
+/* ---- 推薦一個地點（celine：「這個區塊也要能投稿」）-------------------
+
+   v152 是借「功能建議」那張表單送的，當時的理由是「投稿一個地點要的是座標，
+   不是表單填得出來的東西」。那個理由還是對的——但它推出的結論錯了：
+   座標填不出來，**不代表這件事不能投稿**，只代表投稿收到的是名字、
+   座標要由管理員去對熱點清單。
+
+   所以 v153 給它自己的一張表（venue_suggestions）：
+     · 送出的人在「我送出過的」看得到自己送了什麼、後來怎麼了
+     · 管理員在「審核」有一個真正的佇列，不用在一堆功能建議裡翻
+     · 一天 5 個的上限擋在資料庫的 trigger，不是前端 */
+function openVenueSuggest(){
+  if(!LIVE){ showToast(offlineMsg('推薦地點')); return; }
+  if(!me){ showToast('推薦地點要先登入，右上角可以用 Google 登入'); return; }
+  const sel=$('#vsCounty');
+  if(sel && sel.options.length<=1)
+    sel.innerHTML='<option value="">不確定／跨縣市</option>'
+      +COUNTIES.filter(c=>c!=='全台').map(c=>`<option>${esc(c)}</option>`).join('');
+  $('#vsName').value=''; $('#vsNote').value=''; $('#vsMsg').innerHTML='';
+  // 正在看哪個縣市就先選哪個，多數人就是在幫自己看的那一區補
+  if(sel) sel.value=$('#venueCounty')?.value||'';
+  $('#dlgVenueSuggest').showModal(); pushDlgHistory();
+  $('#vsName').focus();
   logEvent('venue_suggest',{});
-  openFeedback('suggestion', [
-    '想推薦一個「一趟用最多」的地點：',
-    '地點（例如：新光三越南西店）：',
-    '在哪個縣市：',
-    '裡面有哪幾家生日優惠（記得幾家寫幾家就好）：',
-    ''].join('\n'));
+}
+$('#btnVenueSuggest').onclick=openVenueSuggest;
+$('#btnVsCancel').onclick=()=>$('#dlgVenueSuggest').close();
+$('#btnVsSend').onclick=async()=>{
+  const name=$('#vsName').value.trim(), note=$('#vsNote').value.trim();
+  const box=$('#vsMsg');
+  if(name.length<2){ box.innerHTML='<div class="note alert">地點名稱至少要兩個字。</div>'; return; }
+  const btn=$('#btnVsSend'); btn.disabled=true; btn.textContent='送出中…';
+  const {error}=await sb.from('venue_suggestions').insert({
+    name: name.slice(0,40), county: $('#vsCounty').value||null,
+    note: note ? note.slice(0,300) : null, user_id: me.id });
+  btn.disabled=false; btn.textContent='送出';
+  if(error){
+    /* 表還沒建起來跟「真的被擋下來」要分開講：前者是管理員的事。
+       一天 5 個的上限是 trigger 丟出來的，訊息本身就是中文，直接照抄。 */
+    const missing=/venue_suggestions|does not exist|schema cache/i.test(error.message||'');
+    box.innerHTML='<div class="note alert">'
+      +(missing?'這個功能還沒開放（管理員要先跑 schema_v153_venues_write.sql）。'
+               :esc(error.message))+'</div>';
+    return;
+  }
+  box.innerHTML='<div class="note">收到了，謝謝！我們會去對座標，確認之後就會出現在這一頁。</div>';
+  $('#vsName').value=''; $('#vsNote').value='';
+  loadMyVenueSuggestions();
+  setTimeout(()=>$('#dlgVenueSuggest').close(), 1200);
 };
 $('#btnBulkAll').onclick=()=>{ if(!BULK) return; BULK.ids.forEach(id=>BULK.picks.add(id)); renderBulkAdd(); };
 $('#btnBulkNone').onclick=()=>{ if(!BULK) return; BULK.picks.clear(); renderBulkAdd(); };
@@ -8012,6 +8214,7 @@ $('#dlgCoffee').addEventListener('close', consumeDlgHistory);
    當初也漏掛——症狀跟上面那兩個一樣：返回鍵第一下會被幽靈紀錄吃掉。 */
 $('#dlgBulkAdd').addEventListener('close', consumeDlgHistory);
 $('#dlgBadgeUnlock').addEventListener('close', consumeDlgHistory);
+$('#dlgVenueSuggest').addEventListener('close', consumeDlgHistory);
 
 /* ---- 問題回報／建議：訪客也能填，不用登入。不收信箱了——處理完成後改用
    站內通知（notifications 表）回覆登入的送出者，見 admin_resolve_feedback()
@@ -8930,6 +9133,7 @@ const PANEL_LOADER={
   pnlMerge:          ()=>renderMergePanel(),
   pnlCoffeeStats:    ()=>{ loadCoffeeStats(); loadLinkStats(); },
   pnlEventStats:     ()=>loadEventStats(),
+  pnlVenuesAdmin:    ()=>loadVenueAdmin(),
   pnlSurvey:         ()=>loadSurveyAdmin(),
 };
 const PANEL_FILLED=new Set();
@@ -8977,6 +9181,12 @@ async function loadPendingBadge(){
     if(!el) return;
     el.textContent=n; el.classList.toggle('hidden', !n);
   });
+  /* 「一趟用最多：地點」那一塊預設收著（它最貴的那支查詢要分群 11,473 家分店），
+     所以待審幾個用這支便宜的 count 單獨拿——不然有人推薦了也沒人知道。
+     v153 還沒跑的話這支不存在，安靜跳過。 */
+  const {data:vs}=await sb.rpc('admin_venue_suggestion_count');
+  const el=$('#vsPendCount');
+  if(el && typeof vs==='number'){ el.textContent=vs; el.classList.toggle('hidden', !vs); }
 }
 async function loadMyStuff(pre){
   if(!LIVE||!me) return;
@@ -9071,6 +9281,33 @@ async function loadMyStuff(pre){
   loadMyFeedback();
 }
 let MY_OFFERS=[];
+
+/* 自己推薦過的地點：就列在「一趟用最多」那一塊下面，不另外開一塊——
+   你是在這裡送出的，當然也在這裡看它後來怎麼了。 */
+const VS_STATUS={pending:['⏳ 等著對座標',''], accepted:['✓ 收下了','ok'],
+                 rejected:['— 這次沒收','partial']};
+async function loadMyVenueSuggestions(){
+  const box=$('#myVenueSuggests');
+  if(!box) return;
+  if(!LIVE||!me){ box.innerHTML=''; return; }
+  const {data,error}=await sb.from('venue_suggestions')
+    .select('id,name,county,status,created_at')
+    .eq('user_id',me.id).order('created_at',{ascending:false}).limit(20);
+  // 表還沒建起來：整塊安靜地不出現，不要在公開頁面放一行紅字
+  if(error){ box.innerHTML=''; return; }
+  const rows=data||[];
+  if(!rows.length){ box.innerHTML=''; return; }
+  box.innerHTML='<div style="margin-top:14px;border-top:1px solid var(--line);padding-top:10px">'
+    +'<div style="font-size:.8rem;color:var(--ink-3);font-weight:700;margin-bottom:6px">你推薦過的地點</div>'
+    +rows.map(r=>{
+      const [label,cls]=VS_STATUS[r.status]||VS_STATUS.pending;
+      return `<div class="row" style="gap:8px;align-items:baseline;font-size:.84rem;padding:3px 0">
+        <span style="font-weight:700">${esc(r.name)}</span>
+        <span style="color:var(--ink-3)">${esc(r.county||'')}</span>
+        <span class="${cls}" style="margin-left:auto;font-size:.78rem">${label}</span>
+      </div>`;
+    }).join('')+'</div>';
+}
 
 /* ---- 「我的」→ 我回報過的問題（schema_v73）----
    嵐：「我填寫過的回報問題，要可以出現在我的頁面」。送出之後只有管理員看得到，
@@ -13867,7 +14104,10 @@ const PANEL_DEFAULT_CLOSED=new Set([
      「看數據」——預設收起來，要看再點開。差別很大：儀表板一塊就五支 RPC，
      加上咖啡／站外連結兩支、問卷兩支，光是這三塊就佔了進審核一半以上的請求。
      打開過一次之後狀態記在這台裝置上，下次進來還是開著的。 */
-  'pnlDash','pnlCoffeeStats','pnlEventStats','pnlSurvey',
+  /* pnlVenuesAdmin 要跑 admin_venue_candidates()——把 11,473 家分店切成格子
+     分群，是整個審核分頁最貴的一支查詢。待審幾個另外用一支便宜的 count
+     拿（見 loadPendingBadge），所以收著也看得到紅字。 */
+  'pnlDash','pnlCoffeeStats','pnlEventStats','pnlSurvey','pnlVenuesAdmin',
   'pnlRejected','pnlApproved','pnlUsageReports','pnlAnnounce','pnlMerge',
   'pnlAdminSettings','pnlSiteFlags',
   // 我的：比較像歷史紀錄、不用每次都看到的

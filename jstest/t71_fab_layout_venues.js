@@ -142,9 +142,12 @@ const read = (f) => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
   t.ok('一筆都還沒公開：說還在整理，不是說「這個縣市沒有」',
     /還在整理中/.test(vtxt()) && !/這個縣市/.test(vtxt()), vtxt());
   t.ok('一般人看不到資料庫的事', !/is_public|schema_v142/.test(vtxt()), vtxt());
+  /* v153（celine：「其他人不該看到這個」）：連管理員自己看也不要。
+     公開的區塊裡放站務指示，判斷式哪天出錯就是直接漏給所有人看——
+     要做什麼搬到「審核」那一塊，那裡本來就只有管理員進得去。
+     v152 原本在這裡斷言「管理員看得到差哪一步」，現在反過來驗它不在。 */
   win.eval('myProfile={is_admin:true}; renderVenues();');
-  t.ok('管理員看得到差哪一步', /is_public = true/.test(vtxt()), vtxt());
-  t.ok('而且講得出是哪一支 SQL', /schema_v142_venues\.sql/.test(vtxt()));
+  t.ok('管理員看到的也一樣，不是另一句', !/is_public|schema_v/i.test(vtxt()), vtxt());
 
   // 有資料、只是這個縣市沒有：那才是「這個縣市還沒有」
   win.eval(`myProfile=null;
@@ -160,18 +163,15 @@ const read = (f) => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
   t.eq('而且記住了（下次打開不用再切一次）',
     win.eval("JSON.stringify(loadPrefs().venueCounty)"), '""');
 
-  /* 投稿一個地點要的是座標（venues 有 lat／lng／radius_m），不是表單填得出來的，
-     所以走「先告訴我們是哪裡」這條路——用現成的功能建議，不等新表單。 */
+  /* v152 是借「功能建議」那張表單送的，v153 給了它自己的一張表
+     （venue_suggestions）。細節在 t72，這裡只守「入口還在、而且不再借路」。 */
   t.ok('有投稿的入口', !!$('#btnVenueSuggest'));
-  win.eval("document.querySelector('#btnVenueSuggest').click()");
-  t.ok('開的是功能建議', $('#dlgFeedback').open && $('#fbType').value === 'suggestion');
-  const msg = $('#fbMsg').value;
-  t.ok('要問的四件事先列好', /地點/.test(msg) && /縣市/.test(msg) && /哪幾家/.test(msg), msg);
-  t.ok('標題也跟著換成「功能建議」', /功能建議/.test($('#fbDlgTitle').textContent));
-  $('#dlgFeedback').close();
+  t.ok('有自己的視窗', !!$('#dlgVenueSuggest'));
+  t.ok('不再借「功能建議」那條路',
+    !/btnVenueSuggest'\)\.onclick[\s\S]{0,200}openFeedback/.test(index));
 
-  /* 功能統計那張表要看得懂這兩個新事件，不然會印出英文代號 */
-  t.ok('「推薦一個地點」在對照表裡', /venue_suggest:'推薦一個/.test(index));
+  /* 功能統計那張表要看得懂這兩個事件，不然會印出英文代號 */
+  t.ok('「推薦一個地點」在對照表裡', /venue_suggest:'/.test(index));
   t.ok('「開始投稿」本來就在', /go_submit:'開始投稿'/.test(index));
 
   process.exit(t.done() ? 0 : 1);
