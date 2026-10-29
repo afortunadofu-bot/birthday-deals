@@ -268,6 +268,20 @@
   .badge.earned{border-color:var(--accent);background:var(--accent-soft)}
   .badge.earned .b-label{color:var(--accent-dark)}
   .badge.locked{opacity:.45;filter:grayscale(1)}
+
+  /* ---- 優惠清單的簡易版（celine：「首頁可以多個簡易版字少模式」）----
+     規則只有一條：**藏掉安心的，留下要注意的**。
+     所以「已查證」「★ 4.5」「已用 12 次」「會員」這種「看了放心」的收起來，
+     「未查證」「需同行」「剩 3 天」這種「不看會出事」的留著——字少不能變成
+     少告訴你會害你白跑一趟的事。
+     用 CSS 藏而不是另外產一份 HTML：切換不用重畫整片，也不會有兩份卡片長得
+     不一樣、改了一邊忘了另一邊的問題。 */
+  body.lean .card .meta,
+  body.lean .card .kv,
+  body.lean .card .src,
+  body.lean .card .flag.hide-lean,
+  body.lean .card .line:not(.warn):not(.near-line){display:none}
+  body.lean .card .offer{margin-top:6px}
   /* 解鎖新徽章那張小卡（celine：「成就徽章每次達成都會跳 popup 是希望妳改成要跳」）。
      只有圖示彈一下，不放彩帶——.bday-confetti 是 inset:0 貼著父層算的，塞進對話框
      就變成「在小卡裡面下雪」，而且紙片的 animation-delay 最多 6 秒，跳出來的當下
@@ -2307,6 +2321,8 @@
     <div class="panel" id="layoutPanel" data-block>
       <h2>版面設定</h2>
       <p class="sub">把常看的往前搬。順序只記在這台裝置上。</p>
+      <label class="toggle" style="margin:0 0 12px"><input type="checkbox" id="optLeanHome">
+        優惠清單用簡易版（字少：只留品牌、優惠內容跟要注意的事）</label>
       <div class="row" style="margin:0 0 10px;gap:8px;align-items:center">
         <label class="lbl">哪一頁<select id="layoutPage">
           <option value="mine">我的</option>
@@ -3139,6 +3155,63 @@ function loadFilters(){
   if(s.sort) $('#sort').value=s.sort;
 }
 
+/* ---- 記住使用者挑過的顯示方式（celine：「設定類的都要讓使用者保留上次設定」）
+
+   優惠分頁的篩選／排序本來就有在記（上面那組 sxr_filters_v1），這一支管的是
+   其餘散在各處的下拉選單跟勾選框——排行榜的期間、洞察分析的區間、待辦清單的
+   排序跟簡易版、場館的縣市。
+
+   寫成一張清單而不是一個一個補：每加一個設定就要記得多寫一次「存起來」跟
+   「讀回來」的話，早晚會漏掉一個，然後就又變成「怎麼每次都跳回預設」。
+   要加新的就在 REMEMBER 裡加一行。
+
+   不收的：優惠分頁那些 f* 篩選（已經有人管了）、附近的公里數（自己有一把
+   鑰匙）、審核佇列的狀態篩選（記住它等於把待審的藏起來，那是會出事的）。 ---- */
+const PREF_KEY='sxr_prefs_v1';
+const REMEMBER=[
+  // 排行榜
+  'lbPeriod','lbSortBy','lbHideAnon','lbShowPr',
+  'popSortBy','popRange','wishSortBy','contribPeriod','contribSortBy',
+  // 洞察分析
+  'hourDays','monthlyMetric','monthlyMonths','momUnit','trendMetric','trendDays',
+  // 待辦清單
+  'wlSort','wlYear','wlTagFilter','wlSinkDone','wlCompact',
+  // 場館
+  'venueCounty',
+  // 首頁的簡易版
+  'optLeanHome',
+  // 管理員看的那幾個區間
+  'dashRange','svRange','coffeeRange',
+];
+function loadPrefs(){
+  try{ const o=JSON.parse(localStorage.getItem(PREF_KEY)||'{}'); return (o&&typeof o==='object')?o:{}; }
+  catch{ return {}; }
+}
+function savePref(id, val){
+  const p=loadPrefs(); p[id]=val;
+  try{ localStorage.setItem(PREF_KEY, JSON.stringify(p)); }catch{}
+}
+/* 套用一個控制項記住的值。選單的選項是後來才填的（標籤、年度、縣市都是
+   看資料長出來的），所以這一支要能重複呼叫：填完選項再叫一次就好。
+   記住的值已經不在選項裡（標籤被刪掉、那一年的清單清空了）就不套，
+   讓它留在預設——不要選一個不存在的值，那會變成空白一片。 */
+function applyPref(id){
+  const el=$('#'+id); if(!el) return;
+  const v=loadPrefs()[id];
+  if(v===undefined) return;
+  if(el.type==='checkbox'){ el.checked=!!v; return; }
+  if(el.tagName==='SELECT' && ![...el.options].some(o=>o.value===String(v))) return;
+  el.value=String(v);
+}
+function wirePrefs(){
+  REMEMBER.forEach(id=>{
+    const el=$('#'+id); if(!el) return;
+    applyPref(id);
+    /* 用 addEventListener 不用 onchange——各個控制項本來就有自己的 onchange
+       （換了要重畫／重查），指定 onchange 會把那些整個蓋掉。 */
+    el.addEventListener('change', ()=>savePref(id, el.type==='checkbox'?el.checked:el.value));
+  });
+}
 // 使用者回饋：「折扣」跟「買一送一」優惠程度差很多，拆成兩類（schema_v69 加了 bogo）
 const FREE_LABEL={free_no_min:'免費・無低消',free_min:'免費・需消費',bogo:'買一送一',discount:'折扣',unknown:'其他／待確認'};
 const MEM_LABEL={none:'免會員',app:'品牌 APP',line:'LINE',ocard:'Ocard',
@@ -3395,6 +3468,8 @@ function openDeepLinkedOffer(){
 // 有沒有載完全無關，所以不管 CDN 快或慢，使用者幾乎馬上就看得到滿版的卡片。
 function paintSeedNow(){
   loadFilters();
+  wirePrefs();
+  applyLeanHome();
   WISH = new Set(JSON.parse(localStorage.getItem('sxr_wishlist')||'[]'));
   OFFERS = seedOffers();
   paintOffers();
@@ -4384,6 +4459,7 @@ function renderWishlistBody(){
     wlYearSel.innerHTML=`<option value="all">全部年度</option>`+sortedYears.map(y=>
       `<option value="${y}">${y}年${y===CURRENT_YEAR?'（今年）':y===CURRENT_YEAR+1?'（明年）':''}</option>`).join('');
     wlYearSel.value=(prevVal && (prevVal==='all'||sortedYears.includes(Number(prevVal)))) ? prevVal : String(CURRENT_YEAR);
+    if(!prevVal) applyPref('wlYear');   // 第一次填選項，這時候才套得上記住的年度
   }
   renderWlPersonTabs();
   const yearFilter=wlYearSel?.value||'all';
@@ -4396,6 +4472,7 @@ function renderWishlistBody(){
       +used.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')
       +(WL_ROWS.some(w=>!w.tag)?`<option value="__none__">沒有標籤</option>`:'');
     tagSel.value=[...tagSel.options].some(o=>o.value===prevTag)?prevTag:'all';
+    if(!prevTag) applyPref('wlTagFilter');
   }
   const tagFilter=tagSel?.value||'all';
   // 搜尋：店名、優惠內容、自己寫的備註、標籤都比對得到（大小寫不分）
@@ -4670,6 +4747,14 @@ document.addEventListener('click', e=>{
 });
 $('#wlSinkDone').onchange=renderWishlistBody;
 $('#wlCompact').onchange=renderWishlistBody;
+/* 首頁的簡易版：只切 body 上的一個 class，卡片不用重畫 */
+function applyLeanHome(){
+  document.body.classList.toggle('lean', !!$('#optLeanHome')?.checked);
+}
+$('#optLeanHome').onchange=()=>{
+  applyLeanHome();
+  logEvent('lean_home', {on:$('#optLeanHome').checked?1:0});
+};
 
 /* ---- 首頁公告橫幅：讀 current_announcement view（只吐還在效期內的最新一則），
    不用登入也讀得到——這是跟通知鈴鐺分開的公開管道，訪客也看得到最新公告。
@@ -5671,8 +5756,11 @@ async function loadVenues(){
   VENUES=data||[];
   const sel=$('#venueCounty');
   const counties=[...new Set(VENUES.map(v=>v.county).filter(Boolean))];
+  const prevCty=sel.value;
   sel.innerHTML='<option value="">全部縣市</option>'
     +counties.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  if(prevCty && counties.includes(prevCty)) sel.value=prevCty;
+  else applyPref('venueCounty');
   renderVenues();
 }
 function renderVenues(){
@@ -6249,10 +6337,13 @@ function paintNearPins(){
   const hint=$('#nearMapHint');
   const reopen=NEAR_POPUP_KEY;        // clearLayers() 會把它清掉，先記下來
   NEAR_MAP_PINS.clearLayers();
-  let hidden=0;
+  let hidden=0, filtered=0;
+  const pass=filterPredicate();
   NEAR_PIN_ROWS.forEach(st=>{
     const o=OFFERS.find(x=>String(x.id)===String(st.offer_id));
     if(!o) return;
+    // 上面篩了什麼，地圖就只畫那些
+    if(!pass(o)){ filtered++; return; }
     const wished=WISH.has(String(o.id));
     if(NEAR.wishOnly && !wished){ hidden++; return; }
     // 收藏的用強調色畫大一點：沒開「只看收藏」時，一眼就看得出哪幾家是自己收的
@@ -6286,6 +6377,10 @@ function paintNearPins(){
       + '再按一次「只看收藏」就看得到全部。'
     : (n ? `這個畫面裡有 ${n} 家分店有優惠。` : '這個畫面裡還沒有分店資料。')
       + '點地圖任一處可以改查那裡附近。';
+  /* 一定要講出來被篩掉幾家。不講的話，上面篩了「台北市＋餐飲」的人只會看到
+     地圖上的點變少，以為是這一區真的沒有店——而篩選條件在另一個分頁上面，
+     當下根本不在視線裡。 */
+  if(filtered) hint.textContent+=`（目前的篩選條件另外擋掉 ${filtered} 家）`;
 }
 $('#btnNear').onclick=()=>NEAR.active?stopNear():startNear();
 $('#btnNearClose').onclick=stopNear;
@@ -6439,6 +6534,46 @@ function renderActiveFilters(){
   $('#afClearAll').onclick=()=>$('#btnClearFilters').click();
 }
 
+/* ---- 「這一筆有沒有通過目前的篩選」----------------------------------
+   原本只寫在 render() 的 filter 裡面，所以地圖畫點時完全不看篩選——篩了
+   「台北市＋餐飲」再開附近，地圖上還是全部（celine：「附近功能也要可以套用
+   到篩選」）。抽出來兩邊共用。
+
+   附近自己的條件（半徑內、只看收藏）**不**放進來：地圖的點是用畫面範圍查
+   出來的，跟列表用的 NEAR.byOffer 不是同一組資料，混在一起只會互相擋掉。
+
+   回傳一個 closure 而不是每筆都重讀一次控制項：一個畫面最多畫 500 個點，
+   每個點都重讀八九個 DOM 值的話，拖動地圖就會頓。 ---- */
+function filterPredicate(){
+  const q=$('#q').value.trim().toLowerCase();
+  const onlyV=$('#fVerified').checked, hideX=$('#fLive').checked, onlyR=$('#fReported').checked;
+  const onlyC=$('#fHasComments').checked, noCompanion=$('#fNoCompanion').checked;
+  const onlyTransferable=$('#fTransferable').checked;
+  const exactRegion=$('#fExactRegion').checked && activeRegion.size>0;
+  const cat=activeCat, free=activeFree, timing=activeTiming, mem=activeMemType, region=activeRegion;
+  return o=>{
+    if(cat.size&&!cat.has(o.category)) return false;
+    if(free.size&&!free.has(o.freeTier)) return false;
+    if(timing.size&&!timing.has(o.timing)) return false;
+    if(mem.size&&!mem.has(o.membershipType)) return false;
+    if(noCompanion&&o.requiresCompanion) return false;
+    if(onlyTransferable&&o.transferable!=='yes') return false;
+    if(region.size){
+      const ok=[...region].some(r=>r==='__none__'
+        ? !o.regions.length
+        : matchRegion(o,r,exactRegion));
+      if(!ok) return false;
+    }
+    if(onlyV&&!o.verified) return false;
+    if(hideX&&o.validUntil&&dUntil(o.validUntil)<0) return false;
+    if(onlyR&&!(o.lastUsedOn&&dSince(o.lastUsedOn)<=90)) return false;
+    if(onlyC&&!o.commentCount) return false;
+    // 搜尋也吃集團名，這樣打「王品」還是能一次找到旗下所有品牌
+    if(q){const h=[o.brand,o.groupName,o.offer,o.membership,o.conditions,o.category,o.regions.join(' '),o.regionNote]
+      .join(' ').toLowerCase(); if(!h.includes(q)) return false;}
+    return true;
+  };
+}
 function render(){
   const q=$('#q').value.trim().toLowerCase();
   const onlyV=$('#fVerified').checked, hideX=$('#fLive').checked, onlyR=$('#fReported').checked;
@@ -6460,30 +6595,12 @@ function render(){
   $('#btnOpenFilter').classList.toggle('active',!!activeCount);
   renderActiveFilters();
 
+  const pass=filterPredicate();
   let list=OFFERS.filter(o=>{
     if(onlyNewActive&&!NEW_OFFER_IDS.has(o.id)) return false;
     if(NEAR.active&&NEAR.byOffer&&!NEAR.byOffer.has(String(o.id))) return false;
     if(NEAR.active&&NEAR.wishOnly&&!WISH.has(String(o.id))) return false;
-    if(activeCat.size&&!activeCat.has(o.category)) return false;
-    if(activeFree.size&&!activeFree.has(o.freeTier)) return false;
-    if(activeTiming.size&&!activeTiming.has(o.timing)) return false;
-    if(activeMemType.size&&!activeMemType.has(o.membershipType)) return false;
-    if(noCompanion&&o.requiresCompanion) return false;
-    if(onlyTransferable&&o.transferable!=='yes') return false;
-    if(activeRegion.size){
-      const ok=[...activeRegion].some(r=>r==='__none__'
-        ? !o.regions.length
-        : matchRegion(o,r,exactRegion));
-      if(!ok) return false;
-    }
-    if(onlyV&&!o.verified) return false;
-    if(hideX&&o.validUntil&&dUntil(o.validUntil)<0) return false;
-    if(onlyR&&!(o.lastUsedOn&&dSince(o.lastUsedOn)<=90)) return false;
-    if(onlyC&&!o.commentCount) return false;
-    // 搜尋也吃集團名，這樣打「王品」還是能一次找到旗下所有品牌
-    if(q){const h=[o.brand,o.groupName,o.offer,o.membership,o.conditions,o.category,o.regions.join(' '),o.regionNote]
-      .join(' ').toLowerCase(); if(!h.includes(q)) return false;}
-    return true;
+    return pass(o);
   });
 
   const bn=(a,b)=>a.brand.localeCompare(b.brand,'zh-Hant');
@@ -6591,11 +6708,11 @@ function offerCardHtml(o, idx){
           discountLabel(o.offer)?`<span class="flag">${esc(discountLabel(o.offer))}</span>`:''}
         ${/* 嵐：「讓人知道去這家店領生日優惠大概會花多少錢」。免費・需消費以外的類型
              （買一送一、折扣）有低消也要寫出來，上面那一格只處理「免費・需消費」。 */''}
-        ${(o.minSpend!=null && o.freeTier!=='free_min')?`<span class="flag">低消 ${nt(o.minSpend)}</span>`:''}
-        <span class="flag">${esc(MEM_LABEL[o.membershipType]||'會員')}${cost}</span>
-        ${o.verified?'<span class="flag ok-flag">已查證</span>':'<span class="flag alert">未查證</span>'}
-        ${o.ratingCount?`<span class="flag star">★ ${o.ratingAvg}（${o.ratingCount}）</span>`:''}
-        <span class="flag">已用 ${o.reportCount||0} 次</span>
+        ${(o.minSpend!=null && o.freeTier!=='free_min')?`<span class="flag hide-lean">低消 ${nt(o.minSpend)}</span>`:''}
+        <span class="flag hide-lean">${esc(MEM_LABEL[o.membershipType]||'會員')}${cost}</span>
+        ${o.verified?'<span class="flag ok-flag hide-lean">已查證</span>':'<span class="flag alert">未查證</span>'}
+        ${o.ratingCount?`<span class="flag star hide-lean">★ ${o.ratingAvg}（${o.ratingCount}）</span>`:''}
+        <span class="flag hide-lean">已用 ${o.reportCount||0} 次</span>
         ${MY_USED_OFFER_IDS.has(String(o.id))?'<span class="flag ok-flag">✓ 你已回報過</span>':''}
         ${o.requiresCompanion?'<span class="flag alert">需同行</span>':''}
       </div>

@@ -268,6 +268,20 @@
   .badge.earned{border-color:var(--accent);background:var(--accent-soft)}
   .badge.earned .b-label{color:var(--accent-dark)}
   .badge.locked{opacity:.45;filter:grayscale(1)}
+
+  /* ---- 優惠清單的簡易版（celine：「首頁可以多個簡易版字少模式」）----
+     規則只有一條：**藏掉安心的，留下要注意的**。
+     所以「已查證」「★ 4.5」「已用 12 次」「會員」這種「看了放心」的收起來，
+     「未查證」「需同行」「剩 3 天」這種「不看會出事」的留著——字少不能變成
+     少告訴你會害你白跑一趟的事。
+     用 CSS 藏而不是另外產一份 HTML：切換不用重畫整片，也不會有兩份卡片長得
+     不一樣、改了一邊忘了另一邊的問題。 */
+  body.lean .card .meta,
+  body.lean .card .kv,
+  body.lean .card .src,
+  body.lean .card .flag.hide-lean,
+  body.lean .card .line:not(.warn):not(.near-line){display:none}
+  body.lean .card .offer{margin-top:6px}
   /* 解鎖新徽章那張小卡（celine：「成就徽章每次達成都會跳 popup 是希望妳改成要跳」）。
      只有圖示彈一下，不放彩帶——.bday-confetti 是 inset:0 貼著父層算的，塞進對話框
      就變成「在小卡裡面下雪」，而且紙片的 animation-delay 最多 6 秒，跳出來的當下
@@ -2307,6 +2321,8 @@
     <div class="panel" id="layoutPanel" data-block>
       <h2>版面設定</h2>
       <p class="sub">把常看的往前搬。順序只記在這台裝置上。</p>
+      <label class="toggle" style="margin:0 0 12px"><input type="checkbox" id="optLeanHome">
+        優惠清單用簡易版（字少：只留品牌、優惠內容跟要注意的事）</label>
       <div class="row" style="margin:0 0 10px;gap:8px;align-items:center">
         <label class="lbl">哪一頁<select id="layoutPage">
           <option value="mine">我的</option>
@@ -3139,6 +3155,63 @@ function loadFilters(){
   if(s.sort) $('#sort').value=s.sort;
 }
 
+/* ---- 記住使用者挑過的顯示方式（celine：「設定類的都要讓使用者保留上次設定」）
+
+   優惠分頁的篩選／排序本來就有在記（上面那組 sxr_filters_v1），這一支管的是
+   其餘散在各處的下拉選單跟勾選框——排行榜的期間、洞察分析的區間、待辦清單的
+   排序跟簡易版、場館的縣市。
+
+   寫成一張清單而不是一個一個補：每加一個設定就要記得多寫一次「存起來」跟
+   「讀回來」的話，早晚會漏掉一個，然後就又變成「怎麼每次都跳回預設」。
+   要加新的就在 REMEMBER 裡加一行。
+
+   不收的：優惠分頁那些 f* 篩選（已經有人管了）、附近的公里數（自己有一把
+   鑰匙）、審核佇列的狀態篩選（記住它等於把待審的藏起來，那是會出事的）。 ---- */
+const PREF_KEY='sxr_prefs_v1';
+const REMEMBER=[
+  // 排行榜
+  'lbPeriod','lbSortBy','lbHideAnon','lbShowPr',
+  'popSortBy','popRange','wishSortBy','contribPeriod','contribSortBy',
+  // 洞察分析
+  'hourDays','monthlyMetric','monthlyMonths','momUnit','trendMetric','trendDays',
+  // 待辦清單
+  'wlSort','wlYear','wlTagFilter','wlSinkDone','wlCompact',
+  // 場館
+  'venueCounty',
+  // 首頁的簡易版
+  'optLeanHome',
+  // 管理員看的那幾個區間
+  'dashRange','svRange','coffeeRange',
+];
+function loadPrefs(){
+  try{ const o=JSON.parse(localStorage.getItem(PREF_KEY)||'{}'); return (o&&typeof o==='object')?o:{}; }
+  catch{ return {}; }
+}
+function savePref(id, val){
+  const p=loadPrefs(); p[id]=val;
+  try{ localStorage.setItem(PREF_KEY, JSON.stringify(p)); }catch{}
+}
+/* 套用一個控制項記住的值。選單的選項是後來才填的（標籤、年度、縣市都是
+   看資料長出來的），所以這一支要能重複呼叫：填完選項再叫一次就好。
+   記住的值已經不在選項裡（標籤被刪掉、那一年的清單清空了）就不套，
+   讓它留在預設——不要選一個不存在的值，那會變成空白一片。 */
+function applyPref(id){
+  const el=$('#'+id); if(!el) return;
+  const v=loadPrefs()[id];
+  if(v===undefined) return;
+  if(el.type==='checkbox'){ el.checked=!!v; return; }
+  if(el.tagName==='SELECT' && ![...el.options].some(o=>o.value===String(v))) return;
+  el.value=String(v);
+}
+function wirePrefs(){
+  REMEMBER.forEach(id=>{
+    const el=$('#'+id); if(!el) return;
+    applyPref(id);
+    /* 用 addEventListener 不用 onchange——各個控制項本來就有自己的 onchange
+       （換了要重畫／重查），指定 onchange 會把那些整個蓋掉。 */
+    el.addEventListener('change', ()=>savePref(id, el.type==='checkbox'?el.checked:el.value));
+  });
+}
 // 使用者回饋：「折扣」跟「買一送一」優惠程度差很多，拆成兩類（schema_v69 加了 bogo）
 const FREE_LABEL={free_no_min:'免費・無低消',free_min:'免費・需消費',bogo:'買一送一',discount:'折扣',unknown:'其他／待確認'};
 const MEM_LABEL={none:'免會員',app:'品牌 APP',line:'LINE',ocard:'Ocard',
@@ -3395,6 +3468,8 @@ function openDeepLinkedOffer(){
 // 有沒有載完全無關，所以不管 CDN 快或慢，使用者幾乎馬上就看得到滿版的卡片。
 function paintSeedNow(){
   loadFilters();
+  wirePrefs();
+  applyLeanHome();
   WISH = new Set(JSON.parse(localStorage.getItem('sxr_wishlist')||'[]'));
   OFFERS = seedOffers();
   paintOffers();
@@ -4384,6 +4459,7 @@ function renderWishlistBody(){
     wlYearSel.innerHTML=`<option value="all">全部年度</option>`+sortedYears.map(y=>
       `<option value="${y}">${y}年${y===CURRENT_YEAR?'（今年）':y===CURRENT_YEAR+1?'（明年）':''}</option>`).join('');
     wlYearSel.value=(prevVal && (prevVal==='all'||sortedYears.includes(Number(prevVal)))) ? prevVal : String(CURRENT_YEAR);
+    if(!prevVal) applyPref('wlYear');   // 第一次填選項，這時候才套得上記住的年度
   }
   renderWlPersonTabs();
   const yearFilter=wlYearSel?.value||'all';
@@ -4396,6 +4472,7 @@ function renderWishlistBody(){
       +used.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')
       +(WL_ROWS.some(w=>!w.tag)?`<option value="__none__">沒有標籤</option>`:'');
     tagSel.value=[...tagSel.options].some(o=>o.value===prevTag)?prevTag:'all';
+    if(!prevTag) applyPref('wlTagFilter');
   }
   const tagFilter=tagSel?.value||'all';
   // 搜尋：店名、優惠內容、自己寫的備註、標籤都比對得到（大小寫不分）
@@ -4670,6 +4747,14 @@ document.addEventListener('click', e=>{
 });
 $('#wlSinkDone').onchange=renderWishlistBody;
 $('#wlCompact').onchange=renderWishlistBody;
+/* 首頁的簡易版：只切 body 上的一個 class，卡片不用重畫 */
+function applyLeanHome(){
+  document.body.classList.toggle('lean', !!$('#optLeanHome')?.checked);
+}
+$('#optLeanHome').onchange=()=>{
+  applyLeanHome();
+  logEvent('lean_home', {on:$('#optLeanHome').checked?1:0});
+};
 
 /* ---- 首頁公告橫幅：讀 current_announcement view（只吐還在效期內的最新一則），
    不用登入也讀得到——這是跟通知鈴鐺分開的公開管道，訪客也看得到最新公告。
@@ -4926,7 +5011,7 @@ const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
 /* 更新紀錄的內容在 updates.json，build.py 注入這裡，同一份資料也產生整頁的
    updates.html。「我的」頁面只用到日期跟標題（最新幾筆＋NEW 標記），
    細項（items）留著是給 updates.html 用的。 */
-const SITE_UPDATES = [{"date":"2026-10-29","title":"底部多了「排行程」，新增搬到兩個地方","items":["「排行程」會告訴你哪些地方一次就能用到最多家優惠","場館可以一鍵加進待辦清單，加之前先勾掉不想要的","解鎖新徽章會跳出來；投稿搬到清單最下面跟「我的」，名次跑版也修了"]},{"date":"2026-10-28","title":"地圖上直接就能記「我用過了」","items":["地圖的店家小視窗多一顆「我用過了」，不用再回清單找","優惠詳情視窗下面也加了同一顆","回報用過之後會提醒你順便給星等，排行榜的說明也剪短了"]},{"date":"2026-10-23","title":"手機上比較不會跳出「連不到資料庫」了","items":["連線元件改成從本站載入，不再等外部網站，慢或被擋都不受影響","真的連不上時，多一顆「複製狀況」可以把情況傳給我們"]},{"date":"2026-10-22","title":"地圖好按了、篩選看得見、折扣寫出幾折","items":["地圖上的點變好按了，資訊也不會看到一半就不見","現在篩了哪些條件直接列在清單上面，可以一個一個拿掉","「我的」打開就是待辦清單；折扣會寫出幾折、折多少錢"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
+const SITE_UPDATES = [{"date":"2026-10-29","title":"多了「排行程」；設定會記得上次的","items":["「排行程」會告訴你哪些地方一次就能用到最多家優惠","場館可以一鍵加進待辦清單（加之前先勾掉不想要的）；解鎖新徽章會跳出來","設定記得上次的、清單可切字少版、附近吃篩選；投稿搬到清單最下面跟「我的」"]},{"date":"2026-10-28","title":"地圖上直接就能記「我用過了」","items":["地圖的店家小視窗多一顆「我用過了」，不用再回清單找","優惠詳情視窗下面也加了同一顆","回報用過之後會提醒你順便給星等，排行榜的說明也剪短了"]},{"date":"2026-10-23","title":"手機上比較不會跳出「連不到資料庫」了","items":["連線元件改成從本站載入，不再等外部網站，慢或被擋都不受影響","真的連不上時，多一顆「複製狀況」可以把情況傳給我們"]},{"date":"2026-10-22","title":"地圖好按了、篩選看得見、折扣寫出幾折","items":["地圖上的點變好按了，資訊也不會看到一半就不見","現在篩了哪些條件直接列在清單上面，可以一個一個拿掉","「我的」打開就是待辦清單；折扣會寫出幾折、折多少錢"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
 const SITE_UPDATES_SHOW=3;
 
 function updatesSeenDate(){
@@ -5671,8 +5756,11 @@ async function loadVenues(){
   VENUES=data||[];
   const sel=$('#venueCounty');
   const counties=[...new Set(VENUES.map(v=>v.county).filter(Boolean))];
+  const prevCty=sel.value;
   sel.innerHTML='<option value="">全部縣市</option>'
     +counties.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  if(prevCty && counties.includes(prevCty)) sel.value=prevCty;
+  else applyPref('venueCounty');
   renderVenues();
 }
 function renderVenues(){
@@ -6249,10 +6337,13 @@ function paintNearPins(){
   const hint=$('#nearMapHint');
   const reopen=NEAR_POPUP_KEY;        // clearLayers() 會把它清掉，先記下來
   NEAR_MAP_PINS.clearLayers();
-  let hidden=0;
+  let hidden=0, filtered=0;
+  const pass=filterPredicate();
   NEAR_PIN_ROWS.forEach(st=>{
     const o=OFFERS.find(x=>String(x.id)===String(st.offer_id));
     if(!o) return;
+    // 上面篩了什麼，地圖就只畫那些
+    if(!pass(o)){ filtered++; return; }
     const wished=WISH.has(String(o.id));
     if(NEAR.wishOnly && !wished){ hidden++; return; }
     // 收藏的用強調色畫大一點：沒開「只看收藏」時，一眼就看得出哪幾家是自己收的
@@ -6286,6 +6377,10 @@ function paintNearPins(){
       + '再按一次「只看收藏」就看得到全部。'
     : (n ? `這個畫面裡有 ${n} 家分店有優惠。` : '這個畫面裡還沒有分店資料。')
       + '點地圖任一處可以改查那裡附近。';
+  /* 一定要講出來被篩掉幾家。不講的話，上面篩了「台北市＋餐飲」的人只會看到
+     地圖上的點變少，以為是這一區真的沒有店——而篩選條件在另一個分頁上面，
+     當下根本不在視線裡。 */
+  if(filtered) hint.textContent+=`（目前的篩選條件另外擋掉 ${filtered} 家）`;
 }
 $('#btnNear').onclick=()=>NEAR.active?stopNear():startNear();
 $('#btnNearClose').onclick=stopNear;
@@ -6439,6 +6534,46 @@ function renderActiveFilters(){
   $('#afClearAll').onclick=()=>$('#btnClearFilters').click();
 }
 
+/* ---- 「這一筆有沒有通過目前的篩選」----------------------------------
+   原本只寫在 render() 的 filter 裡面，所以地圖畫點時完全不看篩選——篩了
+   「台北市＋餐飲」再開附近，地圖上還是全部（celine：「附近功能也要可以套用
+   到篩選」）。抽出來兩邊共用。
+
+   附近自己的條件（半徑內、只看收藏）**不**放進來：地圖的點是用畫面範圍查
+   出來的，跟列表用的 NEAR.byOffer 不是同一組資料，混在一起只會互相擋掉。
+
+   回傳一個 closure 而不是每筆都重讀一次控制項：一個畫面最多畫 500 個點，
+   每個點都重讀八九個 DOM 值的話，拖動地圖就會頓。 ---- */
+function filterPredicate(){
+  const q=$('#q').value.trim().toLowerCase();
+  const onlyV=$('#fVerified').checked, hideX=$('#fLive').checked, onlyR=$('#fReported').checked;
+  const onlyC=$('#fHasComments').checked, noCompanion=$('#fNoCompanion').checked;
+  const onlyTransferable=$('#fTransferable').checked;
+  const exactRegion=$('#fExactRegion').checked && activeRegion.size>0;
+  const cat=activeCat, free=activeFree, timing=activeTiming, mem=activeMemType, region=activeRegion;
+  return o=>{
+    if(cat.size&&!cat.has(o.category)) return false;
+    if(free.size&&!free.has(o.freeTier)) return false;
+    if(timing.size&&!timing.has(o.timing)) return false;
+    if(mem.size&&!mem.has(o.membershipType)) return false;
+    if(noCompanion&&o.requiresCompanion) return false;
+    if(onlyTransferable&&o.transferable!=='yes') return false;
+    if(region.size){
+      const ok=[...region].some(r=>r==='__none__'
+        ? !o.regions.length
+        : matchRegion(o,r,exactRegion));
+      if(!ok) return false;
+    }
+    if(onlyV&&!o.verified) return false;
+    if(hideX&&o.validUntil&&dUntil(o.validUntil)<0) return false;
+    if(onlyR&&!(o.lastUsedOn&&dSince(o.lastUsedOn)<=90)) return false;
+    if(onlyC&&!o.commentCount) return false;
+    // 搜尋也吃集團名，這樣打「王品」還是能一次找到旗下所有品牌
+    if(q){const h=[o.brand,o.groupName,o.offer,o.membership,o.conditions,o.category,o.regions.join(' '),o.regionNote]
+      .join(' ').toLowerCase(); if(!h.includes(q)) return false;}
+    return true;
+  };
+}
 function render(){
   const q=$('#q').value.trim().toLowerCase();
   const onlyV=$('#fVerified').checked, hideX=$('#fLive').checked, onlyR=$('#fReported').checked;
@@ -6460,30 +6595,12 @@ function render(){
   $('#btnOpenFilter').classList.toggle('active',!!activeCount);
   renderActiveFilters();
 
+  const pass=filterPredicate();
   let list=OFFERS.filter(o=>{
     if(onlyNewActive&&!NEW_OFFER_IDS.has(o.id)) return false;
     if(NEAR.active&&NEAR.byOffer&&!NEAR.byOffer.has(String(o.id))) return false;
     if(NEAR.active&&NEAR.wishOnly&&!WISH.has(String(o.id))) return false;
-    if(activeCat.size&&!activeCat.has(o.category)) return false;
-    if(activeFree.size&&!activeFree.has(o.freeTier)) return false;
-    if(activeTiming.size&&!activeTiming.has(o.timing)) return false;
-    if(activeMemType.size&&!activeMemType.has(o.membershipType)) return false;
-    if(noCompanion&&o.requiresCompanion) return false;
-    if(onlyTransferable&&o.transferable!=='yes') return false;
-    if(activeRegion.size){
-      const ok=[...activeRegion].some(r=>r==='__none__'
-        ? !o.regions.length
-        : matchRegion(o,r,exactRegion));
-      if(!ok) return false;
-    }
-    if(onlyV&&!o.verified) return false;
-    if(hideX&&o.validUntil&&dUntil(o.validUntil)<0) return false;
-    if(onlyR&&!(o.lastUsedOn&&dSince(o.lastUsedOn)<=90)) return false;
-    if(onlyC&&!o.commentCount) return false;
-    // 搜尋也吃集團名，這樣打「王品」還是能一次找到旗下所有品牌
-    if(q){const h=[o.brand,o.groupName,o.offer,o.membership,o.conditions,o.category,o.regions.join(' '),o.regionNote]
-      .join(' ').toLowerCase(); if(!h.includes(q)) return false;}
-    return true;
+    return pass(o);
   });
 
   const bn=(a,b)=>a.brand.localeCompare(b.brand,'zh-Hant');
@@ -6591,11 +6708,11 @@ function offerCardHtml(o, idx){
           discountLabel(o.offer)?`<span class="flag">${esc(discountLabel(o.offer))}</span>`:''}
         ${/* 嵐：「讓人知道去這家店領生日優惠大概會花多少錢」。免費・需消費以外的類型
              （買一送一、折扣）有低消也要寫出來，上面那一格只處理「免費・需消費」。 */''}
-        ${(o.minSpend!=null && o.freeTier!=='free_min')?`<span class="flag">低消 ${nt(o.minSpend)}</span>`:''}
-        <span class="flag">${esc(MEM_LABEL[o.membershipType]||'會員')}${cost}</span>
-        ${o.verified?'<span class="flag ok-flag">已查證</span>':'<span class="flag alert">未查證</span>'}
-        ${o.ratingCount?`<span class="flag star">★ ${o.ratingAvg}（${o.ratingCount}）</span>`:''}
-        <span class="flag">已用 ${o.reportCount||0} 次</span>
+        ${(o.minSpend!=null && o.freeTier!=='free_min')?`<span class="flag hide-lean">低消 ${nt(o.minSpend)}</span>`:''}
+        <span class="flag hide-lean">${esc(MEM_LABEL[o.membershipType]||'會員')}${cost}</span>
+        ${o.verified?'<span class="flag ok-flag hide-lean">已查證</span>':'<span class="flag alert">未查證</span>'}
+        ${o.ratingCount?`<span class="flag star hide-lean">★ ${o.ratingAvg}（${o.ratingCount}）</span>`:''}
+        <span class="flag hide-lean">已用 ${o.reportCount||0} 次</span>
         ${MY_USED_OFFER_IDS.has(String(o.id))?'<span class="flag ok-flag">✓ 你已回報過</span>':''}
         ${o.requiresCompanion?'<span class="flag alert">需同行</span>':''}
       </div>
