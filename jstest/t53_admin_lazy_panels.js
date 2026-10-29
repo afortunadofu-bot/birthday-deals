@@ -44,8 +44,12 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   hits.length = 0;
   win.eval(`fillPanel('pnlDash')`);
   t.eq('儀表板也是打開才載', hits, ['loadAdminDashboard']);
-  t.ok('而且它預設是收起來的',
-    /'pnlDash','pnlCoffeeStats','pnlSurvey',/.test(index), '預設收合清單裡要有這三個');
+  /* 原本是比對原始碼裡那三個名字排在一起，所以只要在中間插一個新的區塊就紅
+     （v151 加「功能被用了幾次」就撞到）。改成直接問那份清單本身——驗的是
+     「在不在裡面」，不是「排第幾個」。 */
+  const closed = win.eval('JSON.stringify([...PANEL_DEFAULT_CLOSED])');
+  ['pnlDash', 'pnlCoffeeStats', 'pnlSurvey'].forEach((id) =>
+    t.ok(`${id} 預設是收起來的`, JSON.parse(closed).includes(id), closed));
 
   // 打開「已核可」才載，而且只載一次
   hits.length = 0;

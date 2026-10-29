@@ -1552,6 +1552,15 @@
 </header>
 
 <div class="wrap" id="modeBanner"></div>
+<!-- 管理員的「用一般民眾的樣子看」。切進去之後整站都看不到管理員的東西，
+     所以回去的路只剩這一條——它一定要在每一頁都看得到，不能放在「審核」
+     分頁裡面（那個分頁在預覽模式下自己也會不見）。 -->
+<div class="wrap"><div class="note alert hidden" id="previewBanner"
+  style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+  <span style="flex:1;min-width:200px">你正在用<b>一般民眾的樣子</b>看這個網站。
+    管理員的東西只是藏起來，<b>資料庫的權限沒有變</b>。</span>
+  <button type="button" class="btn sm" id="btnEndPreview">回到管理員</button>
+</div></div>
 <div class="wrap"><div class="new-banner hidden" id="siteAnnBanner">
   <span class="nb-icon" aria-hidden="true">📣</span>
   <div style="flex:1"><b id="siteAnnTitle"></b><div id="siteAnnBody" style="margin-top:2px;font-size:.82rem;color:var(--ink-2)"></div></div>
@@ -1831,7 +1840,8 @@
         <div id="boardTypeChart"></div>
         <div id="boardMemberChart" style="margin-top:16px"></div>
       </div>
-      <div class="subpane" id="biWeek" role="tabpanel"><div id="boardWeekdayChart"></div></div>
+      <div class="subpane" id="biWeek" role="tabpanel"><div id="boardWeekdayChart"></div>
+        <div id="boardWeekdayVisits"></div></div>
     </div>
     <div class="panel" id="pnlRecentActivity" data-block>
       <h2>最近動態</h2>
@@ -2343,6 +2353,11 @@
 <!-- ==================== 審核 ==================== -->
 <section id="tab-admin" class="hidden">
   <main class="wrap">
+  <div class="panel" id="pnlPreviewAs">
+    <h2>用一般民眾的樣子看</h2>
+    <p class="sub">你的畫面永遠有第五個分頁、永遠有編輯鈕，所以看不到別人看到的版本。</p>
+    <button type="button" class="btn" id="btnPublicPreview">切成一般民眾模式</button>
+  </div>
   <div class="panel" id="pnlDash">
     <h2>站台儀表板</h2>
     <p class="sub">網站瀏覽與使用狀況。走勢圖可以按住拖曳看每天的數字。</p>
@@ -2545,6 +2560,12 @@
     <!-- celine：「幫我再多偵測有點進去品牌頁任何網址的」 -->
     <h3 style="margin:18px 0 6px;font-size:.95rem">站外連結</h3>
     <div id="linkStatsBody"></div>
+  </div>
+  <!-- celine：「管理者要可以看到每個 block 及 app 內每個功能被點擊的次數」 -->
+  <div class="panel" id="pnlEventStats">
+    <h2>功能被用了幾次</h2>
+    <p class="sub">站上每個功能被按了幾次、幾個人按過。跟上面同一個區間。</p>
+    <div id="eventStatsBody"></div>
   </div>
   <!-- celine：「管理員可以加一個按鈕，是可以關掉品牌頁跟捐款頁的，跟個別可以選要加甚麼展示」 -->
   <!-- v144：自動上架的要看得到、退得回去。沒有這一塊的話，自動通過的東西就混在
@@ -3855,6 +3876,48 @@ function promptMineLogin(){
   setTimeout(()=>box.style.boxShadow='', 1600);
 }
 
+/* ---- 用一般民眾的樣子看（celine：「管理員要可以有個按鈕，其他分頁都變成
+   一般民眾模式」）--------------------------------------------------------
+
+   比「把管理員欄位藏起來」更根本的問題是：**你根本看不到民眾看到的版本**。
+   你的畫面永遠有第五個分頁、永遠有編輯鈕、永遠看得到待審的東西，所以版面
+   出問題時你是最後一個發現的人。
+
+   做法是把 myProfile 換成一份 is_admin 為 false 的副本，整站重畫。全站有
+   四十幾個地方在問 `myProfile?.is_admin`——與其一個一個改成新的判斷式
+   （四十幾個改錯一個就是一個漏洞或一個壞掉的功能），不如換掉它們共同問的
+   那個東西。切回來就把原本那份放回去。
+
+   ⚠️ 這**只影響畫面**，資料庫的權限一點都沒變——你在這個模式下還是改得動
+   資料。所以它是預覽功能，不是防誤觸的保險，橫幅上也是這樣寫的。
+
+   刻意**不記住**：重新整理就回到管理員。記住的話，隔天打開看到自己沒有
+   「審核」分頁，第一個念頭會是「我的權限是不是掉了」。 ---- */
+let PUBLIC_PREVIEW=false, ADMIN_PROFILE=null;
+function setPublicPreview(on){
+  on=!!on;
+  if(on===PUBLIC_PREVIEW) return;
+  if(on){
+    if(!myProfile?.is_admin) return;     // 本來就不是管理員，沒什麼好預覽的
+    ADMIN_PROFILE=myProfile;
+    myProfile={...myProfile, is_admin:false};
+    PUBLIC_PREVIEW=true;
+    // 人就站在「審核」分頁上的話，那個分頁正要消失，先把他帶回「優惠」
+    if(!$('#tab-admin').classList.contains('hidden'))
+      document.querySelector('.tab[data-tab="browse"]')?.click();
+  }else{
+    if(ADMIN_PROFILE) myProfile=ADMIN_PROFILE;
+    ADMIN_PROFILE=null;
+    PUBLIC_PREVIEW=false;
+  }
+  $('#previewBanner')?.classList.toggle('hidden', !PUBLIC_PREVIEW);
+  const btn=$('#btnPublicPreview');
+  if(btn) btn.textContent=PUBLIC_PREVIEW?'回到管理員':'切成一般民眾模式';
+  paintAuth();          // 「審核」分頁、名字旁邊的「管」徽章
+  renderMyDebug();      // 「帳號與權限」那一塊是管理員專屬的
+  render();             // 卡片上的編輯／查證鈕
+  logEvent('public_preview', {on:on?1:0});
+}
 function paintAuth(){
   const on=!!me;
   $('#btnLogin').classList.toggle('hidden',on);
@@ -4747,6 +4810,8 @@ document.addEventListener('click', e=>{
 });
 $('#wlSinkDone').onchange=renderWishlistBody;
 $('#wlCompact').onchange=renderWishlistBody;
+$('#btnPublicPreview').onclick=()=>setPublicPreview(!PUBLIC_PREVIEW);
+$('#btnEndPreview').onclick=()=>setPublicPreview(false);
 /* 首頁的簡易版：只切 body 上的一個 class，卡片不用重畫 */
 function applyLeanHome(){
   document.body.classList.toggle('lean', !!$('#optLeanHome')?.checked);
@@ -5391,6 +5456,71 @@ const LINK_LABEL={brandpage:'品牌頁 小數據所', bandary:'Bandary 聽團曆
   relatestats:'RelateStats', other:'其他連結',
   page_about:'關於這個網站', page_privacy:'隱私權政策', page_terms:'服務條款',
   page_updates:'更新紀錄', page_other:'其他頁面'};
+/* ---- 每個功能、每個區塊被用了幾次（celine）--------------------------
+   資料本來就一直在記（logEvent），只是沒有人看得到。admin_event_stats
+   （schema_v151）把 site_events 依 event_type 彙總，panel_open 再依區塊
+   拆開。跟站外連結那張表共用同一個區間選單跟同一套 .linkrow 版型。 ---- */
+const EVENT_LABEL={
+  wish:'收藏（加入待辦清單）', bulk_open:'場館的「一鍵加入」點開',
+  bulk_wish:'場館一鍵加入（真的加了）', venue_open:'展開一個場館',
+  wishlist_to_map:'待辦清單 →「看地圖、由近到遠」', near_wish_only:'附近「只看收藏」',
+  geo_ask:'問定位權限', go_submit:'開始投稿',
+  rate_cta:'從提示去評分', rate_nudge:'「還沒評分」的提示出現',
+  rate_all_open:'一次評很多筆', rate_submit:'送出評分',
+  survey_nudge:'問卷提示出現', survey_open:'打開問卷', survey_submit:'送出問卷',
+  coffee_open:'打開咖啡說明', coffee_go:'真的去 Buy Me a Coffee',
+  studio_click:'站外連結（細項看上面）', static_view:'靜態頁瀏覽（細項看上面）',
+  updates_nudge:'更新紀錄的提示', updates_page_open:'打開更新紀錄那一頁',
+  bday_cheer:'生日卡片跳出來', badge_unlock:'解鎖新徽章',
+  lean_home:'切換清單的簡易版', public_preview:'你自己切成民眾模式',
+};
+/* 區塊的中文名直接從畫面上那顆 h2 讀——另外維護一張對照表的話，
+   改了標題就會對不起來，而且每加一塊新的就要記得回來補。 */
+function panelLabel(id){
+  const h2=document.getElementById(id)?.querySelector('h2');
+  const txt=h2?h2.textContent.replace(/[▾▸收起展開]/g,'').trim():'';
+  return txt?`區塊：${txt}`:`區塊：${id}`;
+}
+async function loadEventStats(){
+  const box=$('#eventStatsBody');
+  if(!box || !myProfile?.is_admin || !LIVE) return;
+  const days=Number($('#coffeeRange')?.value||30);
+  box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">載入中…</div>';
+  const {data,error}=await sb.rpc('admin_event_stats',{p_days:days});
+  if(error){
+    const missing=/function|does not exist|schema cache/i.test(error.message||'');
+    box.innerHTML=`<div class="note${missing?'':' alert'}">${missing
+      ? '要先在 Supabase 執行 schema_v151_event_stats.sql。'
+      : `讀取失敗：${esc(error.message)}`}</div>`;
+    return;
+  }
+  const rows=(data||[]).filter(r=>Number(r.events)>0);
+  if(!rows.length){
+    box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">這個區間還沒有紀錄。</div>';
+    return;
+  }
+  const label = days>0 ? `近 ${days} 天` : '全部時間';
+  const isPanel=r=>String(r.target||'').startsWith('panel:');
+  const name=r=>isPanel(r) ? panelLabel(String(r.target).slice(6))
+                           : (EVENT_LABEL[r.target]||r.target);
+  const row=r=>`<div class="linkrow">
+      <span class="lr-name">${esc(name(r))}</span>
+      <span class="lr-n"><b>${nt2(r.events)}</b> 次 · ${nt2(r.people)} 人</span>
+      <span class="lr-when">${r.last_at?esc(String(r.last_at).slice(5,10)):'—'}</span>
+    </div>`;
+  const feats=rows.filter(r=>!isPanel(r)), panels=rows.filter(isPanel);
+  const group=(title, list, empty)=>`<div style="margin-bottom:12px">
+      <div style="font-size:.78rem;color:var(--ink-3);font-weight:700;margin:0 0 5px">${esc(title)}</div>
+      ${list.length?`<div class="sub-list">${list.map(row).join('')}</div>`
+        : `<div style="color:var(--ink-3);font-size:.8rem">${empty}</div>`}
+    </div>`;
+  box.innerHTML =
+    group('功能', feats, `${esc(label)}還沒有紀錄。`)
+    + group('區塊（被展開幾次）', panels,
+        '還沒有紀錄。預設就展開著的區塊不會算——只有「本來收著、你把它點開」才算一次。')
+    + `<p class="hint" style="margin:6px 0 0">${esc(label)}。不含瀏覽頁面本身
+      （那個是排行榜上的「總瀏覽人次」）。「人」算的是瀏覽器，同一個人換裝置會算兩個。</p>`;
+}
 async function loadLinkStats(){
   const box=$('#linkStatsBody');
   if(!box || !myProfile?.is_admin || !LIVE) return;
@@ -5431,8 +5561,8 @@ async function loadLinkStats(){
       「人」跟上面一樣算的是瀏覽器。「關於」「隱私權」「服務條款」「更新紀錄」這幾頁沒有載主程式，
       是各自記一筆（見 track.js），所以它們不會算進排行榜上公開的「總瀏覽人次」。</p>`;
 }
-$('#coffeeRange').onchange=()=>{ loadCoffeeStats(); loadLinkStats(); };
-$('#btnCoffeeStatsReload').onclick=()=>{ loadCoffeeStats(); loadLinkStats(); };
+$('#coffeeRange').onchange=()=>{ loadCoffeeStats(); loadLinkStats(); loadEventStats(); };
+$('#btnCoffeeStatsReload').onclick=()=>{ loadCoffeeStats(); loadLinkStats(); loadEventStats(); };
 
 function renderSiteFlagsPanel(){
   const box=$('#siteFlagsBody');
@@ -8680,6 +8810,7 @@ const PANEL_LOADER={
   pnlSiteFlags:      ()=>renderSiteFlagsPanel(),
   pnlMerge:          ()=>renderMergePanel(),
   pnlCoffeeStats:    ()=>{ loadCoffeeStats(); loadLinkStats(); },
+  pnlEventStats:     ()=>loadEventStats(),
   pnlSurvey:         ()=>loadSurveyAdmin(),
 };
 const PANEL_FILLED=new Set();
@@ -9215,6 +9346,7 @@ async function loadBoard(){
   renderTypeBreakdown(pop||[]);
   renderMemberBreakdown(pop||[]);
   renderWeekdayBreakdown(trendRows||[]);
+  loadWeekdayVisits();   // 這一張不擋排行榜，抓回來自己補上去
   renderTopRated();
   // 月／週排行沒有 rank 欄位，這裡自己補上名次
   if((monthly||weekly) && lb) lb.forEach((r,i)=>r.rank=i+1);
@@ -11028,12 +11160,67 @@ function renderWeekdayBreakdown(rows){
   // 形式：一週是有順序的 → 直條由週一到週日；要回答「哪天最多」→ 最多的那天用主色、其他灰色
   const items=order.map(i=>({label:`週${WEEKDAY_LABEL[i]}`, short:WEEKDAY_LABEL[i], value:counts[i],
     text:`${counts[i]} 次`, tip:`週${WEEKDAY_LABEL[i]}：${counts[i]} 次（${vizPct(counts[i],total)}%）`,
-    emph:counts[i]===max, showValue:counts[i]===max}));
+    emph:counts[i]===max, showValue:true}));
   const top=order.filter(i=>counts[i]===max).map(i=>'週'+WEEKDAY_LABEL[i]).join('、');
   const weekend=counts[0]+counts[6];
   box.innerHTML=vizCard('近 30 天：星期幾最多人成功使用', vizColumns(items,{height:110}),
     {sub:`最多的是${top}；週末佔 ${vizPct(weekend,total)}%`,
      table:{head:['星期','成功使用次數','佔比'], rows:items.map(it=>[it.label,it.value,vizPct(it.value,total)+'%'])}});
+}
+
+/* ---- 星期幾最多人「上站」（celine：「星期那裡也要附上上線人數」）------
+   上面那張是拿 usage_reports 算的，回答「哪一天大家真的去兌換」。
+   這一張回答另一件事：「哪一天大家會來看」。兩個通常不一樣——上班日滑手機
+   找優惠、週末才真的去用，兩張並排才看得出那個落差。
+
+   資料來自 site_events 的 pageview，跟「使用時段」那張圖同一份
+   （schema_v150_weekday.sql，形狀照抄 v55 的時段版）。函式還沒跑的話
+   這一塊就不出現，不會把錯誤訊息丟給一般使用者看——這是錦上添花的一張圖，
+   不是壞掉。管理員才看得到那一行「要跑哪個 SQL」。 ---- */
+let WEEKDAY_VISITS=null, WEEKDAY_VISITS_ERR='';
+async function loadWeekdayVisits(){
+  if(!LIVE||!sb) return;
+  if(WEEKDAY_VISITS||WEEKDAY_VISITS_ERR) return;   // 一次就夠，切來切去不再打
+  const {data,error}=await sb.rpc('site_weekday_distribution',{p_days:30});
+  if(error) WEEKDAY_VISITS_ERR=error.message;
+  else WEEKDAY_VISITS=Array.isArray(data)?data:[];
+  renderWeekdayVisits();
+}
+function renderWeekdayVisits(){
+  const box=$('#boardWeekdayVisits');
+  if(!box) return;
+  if(WEEKDAY_VISITS_ERR){
+    box.innerHTML = myProfile?.is_admin
+      ? `<div class="note alert">星期的上站人數讀不到：${esc(WEEKDAY_VISITS_ERR)}`
+        +`${/function|does not exist/i.test(WEEKDAY_VISITS_ERR)
+          ? '（要先跑 schema_v150_weekday.sql）':''}</div>`
+      : '';
+    return;
+  }
+  const rows=WEEKDAY_VISITS;
+  if(!rows){ box.innerHTML=''; return; }
+  const by=new Map(rows.map(r=>[Number(r.dow), r]));
+  const order=[1,2,3,4,5,6,0];   // 一～日，跟上面那張排法一致
+  const vals=order.map(i=>Number(by.get(i)?.visitors)||0);
+  const total=vals.reduce((a,b)=>a+b,0);
+  if(!total){ box.innerHTML=''; return; }
+  const max=Math.max(...vals);
+  const items=order.map((i,k)=>({
+    label:`週${WEEKDAY_LABEL[i]}`, short:WEEKDAY_LABEL[i], value:vals[k],
+    text:`${vals[k]} 人`,
+    tip:`週${WEEKDAY_LABEL[i]}：${vals[k]} 人次上站（${vizPct(vals[k],total)}%）`,
+    emph:vals[k]===max,
+    /* 七根而已，每一根都把數字寫出來——這張圖的重點就是那個數字，
+       只標最高的那根等於其他六天都要用猜的。 */
+    showValue:true}));
+  const top=order.filter((i,k)=>vals[k]===max).map(i=>'週'+WEEKDAY_LABEL[i]).join('、');
+  const weekend=(Number(by.get(0)?.visitors)||0)+(Number(by.get(6)?.visitors)||0);
+  box.innerHTML=vizCard('近 30 天：星期幾最多人上站', vizColumns(items,{height:110}),
+    {sub:`最多的是${top}；週末佔 ${vizPct(weekend,total)}%。同一天同一個人只算一次，`
+       +'跨天分開算',
+     table:{head:['星期','上站人次','瀏覽次數','佔比'],
+            rows:order.map((i,k)=>[`週${WEEKDAY_LABEL[i]}`, vals[k],
+              Number(by.get(i)?.views)||0, vizPct(vals[k],total)+'%'])}});
 }
 
 /* ---- 每個月有多少人在收藏、多少人真的去用（嵐）----
@@ -11069,29 +11256,35 @@ function renderMonthlyActivity(){
   }
   const byUsers=$('#monthlyMetric').value==='users';
   const unit=byUsers?'人':'筆';
-  const wish=rows.map(r=>byUsers?r.wish_users:r.wish_count);
-  const use=rows.map(r=>byUsers?r.use_users:r.use_count);
+  /* celine：「洞察分析月份那裡也要看得到次數」。上面那個切換只換「圖畫哪一個」，
+     但底下的「看數字」跟提示本來也跟著只剩一種，等於另一個數字整個消失——
+     兩個數字本來就都在同一份資料裡，沒有理由要切來切去才看得到。 */
+  const wishU=rows.map(r=>r.wish_users||0), wishC=rows.map(r=>r.wish_count||0);
+  const useU=rows.map(r=>r.use_users||0),  useC=rows.map(r=>r.use_count||0);
+  const wish=byUsers?wishU:wishC;
+  const use=byUsers?useU:useC;
   if(!wish.some(v=>v) && !use.some(v=>v)){
     box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">這段期間還沒有收藏或使用紀錄。</div>';
     return;
   }
   const short=ym=>`${Number(ym.slice(5))}月`;
   const cur=rows.length?rows[rows.length-1].ym:'';
-  const cols=(vals,emphColor)=>rows.map((r,i)=>({
+  const cols=(vals,us,cs)=>rows.map((r,i)=>({
     label:r.ym, short:short(r.ym)+(r.ym===cur?'＊':''), value:vals[i],
     text:`${vals[i]} ${unit}`,
-    tip:`${r.ym}${r.ym===cur?'（進行中）':''}：${vals[i]} ${unit}`,
-    soft:r.ym===cur, emph:emphColor && vals[i]===Math.max(...vals) && vals[i]>0,
+    tip:`${r.ym}${r.ym===cur?'（進行中）':''}：${us[i]} 人・${cs[i]} 筆`,
+    soft:r.ym===cur, emph:vals[i]===Math.max(...vals) && vals[i]>0,
     showValue:vals[i]===Math.max(...vals) && vals[i]>0}));
   const sum=a=>a.reduce((x,y)=>x+y,0);
   box.innerHTML=
-    vizCard(`每月收藏的${byUsers?'人數':'筆數'}`, vizColumns(cols(wish,true),{height:110}),
-      {sub:`這段期間合計 ${sum(wish)} ${unit}${byUsers?'（同一個人在不同月份各算一次）':''}`,
-       table:{head:['月份',`收藏${unit}數`], rows:rows.map((r,i)=>[r.ym, wish[i]])}})
-    + vizCard(`每月真的去用的${byUsers?'人數':'筆數'}`, vizColumns(cols(use,true),{height:110}),
-      {sub:'＊這個月還沒結束，數字會繼續增加',
-       table:{head:['月份',`使用${unit}數`,'省下金額'],
-              rows:rows.map((r,i)=>[r.ym, use[i], nt(r.saved_total)])}});
+    vizCard(`每月收藏的${byUsers?'人數':'筆數'}`, vizColumns(cols(wish,wishU,wishC),{height:110}),
+      {sub:`這段期間合計 ${sum(wishU)} 人・${sum(wishC)} 筆（同一個人在不同月份各算一次）`,
+       table:{head:['月份','收藏人數','收藏筆數'],
+              rows:rows.map((r,i)=>[r.ym, wishU[i], wishC[i]])}})
+    + vizCard(`每月真的去用的${byUsers?'人數':'筆數'}`, vizColumns(cols(use,useU,useC),{height:110}),
+      {sub:`這段期間合計 ${sum(useU)} 人・${sum(useC)} 次。＊這個月還沒結束，數字會繼續增加`,
+       table:{head:['月份','使用人數','使用次數','省下金額'],
+              rows:rows.map((r,i)=>[r.ym, useU[i], useC[i], nt(r.saved_total)])}});
 }
 async function refreshMonthlyActivity(force){
   renderMonthlyActivity();          // 先把「載入中」畫出來
@@ -13533,6 +13726,13 @@ function makeCollapsiblePanel(id, defaultOpen){
     const now=panel.classList.contains('collapsed');
     apply(now);
     try{ localStorage.setItem(skey, now?'1':'0'); }catch{}
+    /* celine：「要看到每個 block 被點擊的次數」。只記「展開」，而且**每次
+       開站每一塊只記一次**：site_events 已經十六萬筆，而 Supabase 的 Log
+       計費是按請求數算的（見 SUPABASE-流量.md）。沒有節流的話，一個把某塊
+       開開關關的人就能自己灌出幾十筆。
+       收起來不記：那不是「用了這個功能」，是「看完了」。
+       預設就開著的區塊也不會有數字——沒有人點它。這件事在那張表上有寫。 */
+    if(now && !PANEL_LOGGED.has(id)){ PANEL_LOGGED.add(id); logEvent('panel_open',{id}); }
   });
 }
 /* 嵐：「你的網站顯示設定也不能收闔，我要所有審核、我的跟排行榜頁的東西都能收闔」。
@@ -13541,13 +13741,14 @@ function makeCollapsiblePanel(id, defaultOpen){
    最推薦」跟「網站顯示設定」就是這樣漏掉的。改成自動掃：那三頁裡每一個有
    自己 h2 的 .panel 都套上，只有「預設要收著」的才需要列在下面。
    以後新增區塊什麼都不用做。 */
+const PANEL_LOGGED=new Set();   // 這次開站已經記過的區塊，見上面的節流
 const PANEL_DEFAULT_CLOSED=new Set([
   // 審核：歷史性／次要的，不要一進來就滑過幾百筆才找到待辦
   /* 進審核是為了「處理東西」（待審、修改建議、問題回報、留言），這幾塊是
      「看數據」——預設收起來，要看再點開。差別很大：儀表板一塊就五支 RPC，
      加上咖啡／站外連結兩支、問卷兩支，光是這三塊就佔了進審核一半以上的請求。
      打開過一次之後狀態記在這台裝置上，下次進來還是開著的。 */
-  'pnlDash','pnlCoffeeStats','pnlSurvey',
+  'pnlDash','pnlCoffeeStats','pnlEventStats','pnlSurvey',
   'pnlRejected','pnlApproved','pnlUsageReports','pnlAnnounce','pnlMerge',
   'pnlAdminSettings','pnlSiteFlags',
   // 我的：比較像歷史紀錄、不用每次都看到的
