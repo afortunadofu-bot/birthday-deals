@@ -57,7 +57,10 @@ const sync = fs.readFileSync(path.join(root, 'app', 'sync_www.py'), 'utf8');
 
   /* ========== 2. App 裡先用打包進去的 SDK ========== */
   t.ok('sync_www.py 本來就把 SDK 打包進去了', /vendor\/supabase\.min\.js/.test(sync));
-  t.ok('網頁這邊現在真的會去讀它', /loadScriptTag\('vendor\/supabase\.min\.js'/.test(index));
+  /* 驗的是「會去讀打包的那一份」，不是「用哪一種寫法去讀」——v152 改成一個迴圈
+     同時試 vendor/ 跟根目錄（上傳時那層資料夾會被攤平），寫死呼叫形狀就會誤報。 */
+  t.ok('網頁這邊現在真的會去讀它',
+    /'vendor\/supabase\.min\.js'[\s\S]{0,120}loadScriptTag\(/.test(index));
   /* v128 原本寫「只有 App 裡才先試」，理由是「線上沒有 vendor/，不要讓訪客白白
      多一個 404」。那個判斷就是 10/22 再次回報的原因——tomoe_hot 用的是「加到主
      畫面」的網頁版、不是 APK，所以那條路對他完全沒生效。v138 改成所有人都先試，

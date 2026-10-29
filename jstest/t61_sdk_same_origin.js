@@ -28,15 +28,27 @@ const { makeAsserts } = require('./harness');
   /* ---- 載入順序 ---- */
   const fn = src.slice(src.indexOf('async function loadSupabaseSdk()'),
                        src.indexOf('let PAGEVIEW_LOGGED'));
-  t.ok('第一個試的是本站那一份',
-    fn.indexOf("loadScriptTag('vendor/supabase.min.js'") < fn.indexOf('for(const url of SDK_URLS)'));
+  /* 本來寫 fn.indexOf("loadScriptTag('vendor/…'") < fn.indexOf('for(const url…')，
+     而 indexOf 找不到時回 -1——**-1 比什麼都小，所以這條在找不到的時候反而會過**。
+     v152 把呼叫改成迴圈之後就是這個狀況：字串不在了，斷言照樣綠燈。
+     改成先確認兩個都找得到，再比先後。 */
+  const iLocal = fn.indexOf("'vendor/supabase.min.js'");
+  const iCdn = fn.indexOf('for(const url of SDK_URLS)');
+  t.ok('本站那一份有出現在這支函式裡', iLocal >= 0, fn.slice(0, 120));
+  t.ok('第一個試的是本站那一份', iLocal >= 0 && iCdn >= 0 && iLocal < iCdn);
+  /* 上傳時 vendor/ 那層資料夾會被攤平（線上實測：根目錄那支 200、vendor/ 那支 404，
+     大小一模一樣），所以根目錄也要找一次，找不到才去 CDN。 */
+  t.ok('根目錄那個位置也會找一次', /'supabase\.min\.js'/.test(fn.slice(0, iCdn)));
   t.ok('不再只有 App 裡才試（v128 的判斷是這次沒生效的原因）', !/if\(IN_APP\)/.test(fn));
   t.ok('CDN 還留著當備援', /for\(const url of SDK_URLS\)/.test(fn));
   t.ok('記下是從哪裡載到的', /SDK_FROM='本站'/.test(fn) && /SDK_FROM='都失敗'/.test(fn));
 
   /* ---- service worker ---- */
   t.ok('SDK 也預先快取（沒網路也開得起來）', /vendor\/supabase\.min\.js/.test(sw));
-  t.ok('快取版本有跟著升（不升的話舊使用者拿不到新清單）', /shouxing-v7/.test(sw));
+  /* 寫死 v7 的話，下一次升版就是這條紅——而升版正是它要求的事。
+     改成「至少是 SDK 進清單的那一版（v7）」，之後只會往上。 */
+  const cacheVer = Number((sw.match(/const CACHE = 'shouxing-v(\d+)'/) || [])[1]);
+  t.ok('快取版本有跟著升（不升的話舊使用者拿不到新清單）', cacheVer >= 7, cacheVer);
 
   /* ---- 兩個一樣的旗標合併掉 ---- */
   t.ok('IN_APP 只剩一個判斷（本來還有一個同義的）',

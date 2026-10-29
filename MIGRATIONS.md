@@ -18,16 +18,35 @@ celine：「為啥你現在 SQL 編號都是亂碼亂跳」。
 
 ## 現在要跑的
 
-> 最後確認時間：2026-10-15（直接打資料庫驗過，不是憑印象）
+> 最後確認時間：2026-10-29（直接打資料庫驗過，不是憑印象。做法：拿 anon key 呼叫
+> 那支函式——回 `PGRST202 no matches found` 是**還沒跑**，回 `42501 permission denied`
+> 是**函式在、只是你沒權限**，也就是跑過了。）
 
-| 檔案 | 做什麼 | 什麼時候跑 |
+| 檔案 | 做什麼 | 沒跑會怎樣 |
 | --- | --- | --- |
-| `schema_v115_page_stats.sql` | 「關於」「隱私權」「服務條款」「更新紀錄」這幾頁也要有人次 | 隨時可以貼。要連 `track.js` 跟那四頁一起重新上傳，才會開始有數字 |
+| `schema_v150_weekday.sql` | 排行榜的「星期幾最多人上站」 | 那一塊不出現，其他照常 |
+| `schema_v151_event_stats.sql` | 審核分頁的「功能被用了幾次」 | 那一塊不出現，其他照常 |
+
+### 不是 SQL、但還沒做完的
+
+| 要做什麼 | 現在的狀況 |
+| --- | --- |
+| 把 `venues` 設成公開 | v142 跑過了，但 `venues` 預設 `is_public = false`（館名是從座標猜的），所以 `venues_public` 現在回的是**空陣列**——「排行程」那一頁看起來是空的就是這個原因。核對過那 45 個商圈名之後，把要上架的設成 `is_public = true` |
+| `vendor/supabase.min.js` | 線上 404，但 `/supabase.min.js`（根目錄）是 200、大小一樣——檔案傳上去了，只是資料夾那層被攤平。v152 起兩個位置都會找，所以**不用再處理**；想整齊的話再補傳一次到 `vendor/` 底下 |
+
+### 這兩支沒辦法用上面那招驗
+
+`schema_v133_tw_to_counties.sql` 跟 `schema_v141_fix_unknown_tiers.sql` 改的是**資料**，
+不是函式——而 v133 那支函式呼叫下去就直接改資料了，不能拿來「試試看在不在」。
+要確認的話，開網站看：花蓮還有沒有一批標成「全台」的、「優惠層級」還有沒有「其他」。
 
 ## 已經跑過的（確認過，不用再跑）
 
 | 檔案 | 怎麼確認的 |
 | --- | --- |
+| `schema_v115_page_stats.sql` | 2026-10-29：`admin_link_stats` 回 42501（函式在）。`track.js` 線上也已經是 200，那四頁從現在開始會有人次 |
+| `schema_v142_venues.sql` | 2026-10-29：`venues_public` 回 200 `[]`（view 在，只是還沒有公開的） |
+| `schema_v144_auto_approve.sql` | 2026-10-29：`site_settings` 讀回來含 `auto_approve` 這個 key |
 | `schema_v97_dev_intro_flag.sql` | `site_settings` 讀回來已經是六個 key，含 `show_dev_intro` |
 | `schema_v92_site_events_io.sql` | `admin_events_prune_preview`、`admin_dashboard_stats` 這兩支函式都在（anon 呼叫回 42501「權限不足」，不是「找不到函式」）|
 | `schema_v95_site_settings.sql` | 被 `v97` 覆蓋（它是超集）。**不要再跑它**：它的 key 白名單沒有 `show_dev_intro`，重跑會報 `site_settings_key_known is violated by some row`（2026-10-14 踩過）|

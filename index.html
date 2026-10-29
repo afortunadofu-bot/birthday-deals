@@ -1503,6 +1503,21 @@
     box-shadow:0 6px 18px rgba(232,72,60,.28)}
   #btnCoffee:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
   #btnCoffee.hidden{display:none}
+  /* celine：「投稿按鈕多一點，要一按進去首頁就能投稿，例如懸浮圓點」。
+     做成藥丸而不是圓點：一個只有「＋」的圓，在一堆圓形浮動按鈕裡認不出是什麼，
+     而這顆要在第一眼就講清楚它會做什麼。右下角跟「回到最上方」同一直線，
+     那顆往上讓一格（body.has-fab），不是疊在一起。 */
+  #btnFabSubmit{position:fixed;right:16px;
+    bottom:calc(16px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom));
+    z-index:56;height:42px;padding:0 15px 0 12px;border-radius:21px;
+    border:1px solid var(--accent);background:var(--accent);color:#fff;
+    font-size:.86rem;font-weight:700;line-height:1;cursor:pointer;
+    display:none;align-items:center;gap:5px;
+    box-shadow:0 6px 18px rgba(232,72,60,.28)}
+  #btnFabSubmit.show{display:flex}
+  #btnFabSubmit .fab-plus{font-size:1.05rem;line-height:1}
+  #btnFabSubmit:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+  body.has-fab #btnToTop{bottom:calc(66px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom))}
   #dlgCoffee .foot a.btn{text-decoration:none}
   .coffee-say{font-size:.88rem;line-height:1.8;color:var(--ink-2);margin:10px 0 0}
 </style>
@@ -2088,6 +2103,14 @@
         <select id="venueCounty" aria-label="縣市"><option value="">全部縣市</option></select>
       </div>
       <div id="venueList"><div class="hint">載入中…</div></div>
+      <!-- celine：「一趟最多目前沒顯示，也沒投稿」。投稿一個地點要的是座標
+           （venues 有 lat／lng／radius_m），那不是表單填得出來的東西，所以這裡
+           走「先告訴我們是哪裡」這條路：送進功能建議，拿名字去對座標。
+           這條路現在就能用，不用等一個新的投稿表單。 -->
+      <p class="hint" id="venueSuggest" style="margin:12px 0 0">
+        少了哪個地方？
+        <button type="button" class="btn sm" id="btnVenueSuggest">推薦一個地點</button>
+      </p>
     </div>
   </div>
 </section>
@@ -2215,6 +2238,30 @@
       <p class="sub">拿來預設生日月份、算入會死線。</p>
       <div id="birthdayMsg"></div>
     </div>
+    <!-- 嵐：「調整區塊順序的按鈕太底下了，我希望變成左上角的懸浮按鈕，
+         或是統一移到我的那邊可以當成設定」。
+         選了後者：浮動按鈕的位置已經被「回到頂端」跟咖啡佔走了，再加一顆就是
+         三顆浮在同一片畫面上；而「排版怎麼排」本來就是設定，不是每頁都要有的
+         工具。兩頁的順序收在同一個地方調，排行榜那頁也不用再掛一條排序列。
+
+         celine（v152）：「版面設定往上移，現在的地方太冷門了」。本來排在
+         「我的」倒數第二塊，要滑過十幾塊才看得到——而它正是那個「可以把
+         那十幾塊重排」的地方，等於解法被藏在問題後面。搬到「個人資料」
+         後面：兩塊都是「關於你自己的設定」，而且那個位置滑一下就到。 -->
+    <div class="panel" id="layoutPanel" data-block>
+      <h2>版面設定</h2>
+      <p class="sub">把常看的往前搬。順序只記在這台裝置上。</p>
+      <label class="toggle" style="margin:0 0 12px"><input type="checkbox" id="optLeanHome">
+        優惠清單用簡易版（字少：只留品牌、優惠內容跟要注意的事）</label>
+      <div class="row" style="margin:0 0 10px;gap:8px;align-items:center">
+        <label class="lbl">哪一頁<select id="layoutPage">
+          <option value="mine">我的</option>
+          <option value="board">排行榜</option>
+        </select></label>
+        <button type="button" class="btn sm" id="btnLayoutReset">↺ 回復預設</button>
+      </div>
+      <div id="layoutList"></div>
+    </div>
     <!-- 不管有沒有登入都看得到——分享網站是幫網站觸及更多人的入口，不應該
          卡在登入門檻後面；位置也刻意放在最前面幾個 panel，不是滑到最下面
          才看得到，才有機會真的被點到。 -->
@@ -2322,25 +2369,6 @@
       <p class="sub">壽星日是「小數據所」的其中一個 app。</p>
       <p class="dev-intro-teaser">為什麼會做這幾個東西、它是怎麼養著的，都寫在裡面。</p>
       <a class="panel-go" id="devIntroLink" href="about.html">看完整介紹 <span aria-hidden="true">→</span></a>
-    </div>
-    <!-- 嵐：「調整區塊順序的按鈕太底下了，我希望變成左上角的懸浮按鈕，
-         或是統一移到我的那邊可以當成設定」。
-         選了後者：浮動按鈕的位置已經被「回到頂端」跟咖啡佔走了，再加一顆就是
-         三顆浮在同一片畫面上；而「排版怎麼排」本來就是設定，不是每頁都要有的
-         工具。兩頁的順序收在同一個地方調，排行榜那頁也不用再掛一條排序列。 -->
-    <div class="panel" id="layoutPanel" data-block>
-      <h2>版面設定</h2>
-      <p class="sub">把常看的往前搬。順序只記在這台裝置上。</p>
-      <label class="toggle" style="margin:0 0 12px"><input type="checkbox" id="optLeanHome">
-        優惠清單用簡易版（字少：只留品牌、優惠內容跟要注意的事）</label>
-      <div class="row" style="margin:0 0 10px;gap:8px;align-items:center">
-        <label class="lbl">哪一頁<select id="layoutPage">
-          <option value="mine">我的</option>
-          <option value="board">排行榜</option>
-        </select></label>
-        <button type="button" class="btn sm" id="btnLayoutReset">↺ 回復預設</button>
-      </div>
-      <div id="layoutList"></div>
     </div>
     <div class="panel hidden" id="myDebug">
       <h2>帳號與權限</h2>
@@ -2681,6 +2709,9 @@
        target="_blank" rel="noopener">去 Buy Me a Coffee ↗</a>
   </div>
 </form></dialog>
+<button type="button" id="btnFabSubmit" aria-label="投稿一筆優惠" title="投稿一筆優惠">
+  <span class="fab-plus" aria-hidden="true">＋</span><span>投稿</span>
+</button>
 <button type="button" id="btnToTop" aria-label="回到最上方">↑</button>
 
 <dialog id="dlgFeedback"><form method="dialog" class="dlg">
@@ -3535,12 +3566,20 @@ const SDK_URLS=[
      · 比 CDN 快：不用多一次 DNS／TLS
 
    ⚠️ 上傳網站時 vendor/supabase.min.js 要一起傳，漏掉的話會退回 CDN
-      （還是會動，只是又回到原本那個會逾時的路）。 */
+      （還是會動，只是又回到原本那個會逾時的路）。
+
+   v152：線上那份傳上去了，但**資料夾那一層被攤平了**——
+   `/supabase.min.js` 是 200、`/vendor/supabase.min.js` 是 404（兩邊同樣 218,199
+   bytes，就是同一個檔）。與其要求每次上傳都記得先建一個資料夾，不如兩個位置
+   都找一次：先找 vendor/，沒有就找根目錄，兩邊都沒有才去 CDN。
+   404 會立刻觸發 script 的 onerror，所以多試一次不會多等。 */
 let SDK_FROM='';            // 最後是從哪裡載到 SDK 的，診斷資訊會用到
 async function loadSupabaseSdk(){
   if(window.supabase) return true;
-  await loadScriptTag('vendor/supabase.min.js', 10000);
-  if(window.supabase){ SDK_FROM='本站'; return true; }
+  for(const p of ['vendor/supabase.min.js','supabase.min.js']){
+    await loadScriptTag(p, 10000);
+    if(window.supabase){ SDK_FROM='本站'; return true; }
+  }
   for(const url of SDK_URLS){
     await loadScriptTag(url, 10000);
     if(window.supabase){ SDK_FROM=new URL(url).hostname; return true; }
@@ -5076,7 +5115,7 @@ const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
 /* 更新紀錄的內容在 updates.json，build.py 注入這裡，同一份資料也產生整頁的
    updates.html。「我的」頁面只用到日期跟標題（最新幾筆＋NEW 標記），
    細項（items）留著是給 updates.html 用的。 */
-const SITE_UPDATES = [{"date":"2026-10-29","title":"多了「排行程」；設定會記得上次的","items":["「排行程」會告訴你哪些地方一次就能用到最多家優惠","場館可以一鍵加進待辦清單（加之前先勾掉不想要的）；解鎖新徽章會跳出來","設定記得上次的、清單可切字少版、附近吃篩選；投稿搬到清單最下面跟「我的」"]},{"date":"2026-10-28","title":"地圖上直接就能記「我用過了」","items":["地圖的店家小視窗多一顆「我用過了」，不用再回清單找","優惠詳情視窗下面也加了同一顆","回報用過之後會提醒你順便給星等，排行榜的說明也剪短了"]},{"date":"2026-10-23","title":"手機上比較不會跳出「連不到資料庫」了","items":["連線元件改成從本站載入，不再等外部網站，慢或被擋都不受影響","真的連不上時，多一顆「複製狀況」可以把情況傳給我們"]},{"date":"2026-10-22","title":"地圖好按了、篩選看得見、折扣寫出幾折","items":["地圖上的點變好按了，資訊也不會看到一半就不見","現在篩了哪些條件直接列在清單上面，可以一個一個拿掉","「我的」打開就是待辦清單；折扣會寫出幾折、折多少錢"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
+const SITE_UPDATES = [{"date":"2026-10-29","title":"多了「排行程」；投稿的按鈕跟到每一頁","items":["「排行程」告訴你哪裡一次能用到最多家；可以一鍵加進待辦清單","右下角多一顆「＋投稿」，每一頁都按得到；版面設定搬到「我的」上面","設定記得上次的、清單可切字少版、附近吃篩選；解鎖新徽章會跳出來"]},{"date":"2026-10-28","title":"地圖上直接就能記「我用過了」","items":["地圖的店家小視窗多一顆「我用過了」，不用再回清單找","優惠詳情視窗下面也加了同一顆","回報用過之後會提醒你順便給星等，排行榜的說明也剪短了"]},{"date":"2026-10-23","title":"手機上比較不會跳出「連不到資料庫」了","items":["連線元件改成從本站載入，不再等外部網站，慢或被擋都不受影響","真的連不上時，多一顆「複製狀況」可以把情況傳給我們"]},{"date":"2026-10-22","title":"地圖好按了、篩選看得見、折扣寫出幾折","items":["地圖上的點變好按了，資訊也不會看到一半就不見","現在篩了哪些條件直接列在清單上面，可以一個一個拿掉","「我的」打開就是待辦清單；折扣會寫出幾折、折多少錢"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
 const SITE_UPDATES_SHOW=3;
 
 function updatesSeenDate(){
@@ -5273,6 +5312,26 @@ $('#btnLayoutReset').onclick=()=>{
 };
 // 預設順序＝頁面剛載入、還沒套用使用者設定之前的樣子
 const BLK_DEFAULT={board:blkList('board').map(el=>el.id), mine:blkList('mine').map(el=>el.id)};
+/* v152 把「版面設定」搬到「個人資料」後面——但**已經用過這個網站的人不會看到
+   任何變化**，因為 blkDesired 是存下來的順序優先，HTML 改了也蓋不過去。
+   所以存檔也搬一次：抽出 layoutPanel、插回 profilePanel 後面，做完記一個旗標。
+   只做一次是重點——之後你自己把它搬到別的地方，它就待在你搬的地方，
+   不會下次開站又被拉回來。 */
+const BLK_MOVED_KEY='sxr_order_moved_v152';
+function moveLayoutPanelOnce(){
+  try{
+    if(localStorage.getItem(BLK_MOVED_KEY)) return;
+    localStorage.setItem(BLK_MOVED_KEY,'1');
+    const saved=blkSaved('mine');
+    const i=saved.indexOf('layoutPanel');
+    if(i<0) return;                 // 沒存過順序，或存的時候還沒有這一塊：HTML 的新位置本來就會生效
+    saved.splice(i,1);
+    const at=saved.indexOf('profilePanel');
+    saved.splice(at<0?0:at+1, 0, 'layoutPanel');
+    localStorage.setItem(BLK_PAGES.mine.key, JSON.stringify(saved));
+  }catch{}
+}
+moveLayoutPanelOnce();
 Object.keys(BLK_PAGES).forEach(applyBlockOrder);
 
 /* ---- 全站顯示開關（schema_v95 的 site_settings）----
@@ -5465,6 +5524,7 @@ const EVENT_LABEL={
   bulk_wish:'場館一鍵加入（真的加了）', venue_open:'展開一個場館',
   wishlist_to_map:'待辦清單 →「看地圖、由近到遠」', near_wish_only:'附近「只看收藏」',
   geo_ask:'問定位權限', go_submit:'開始投稿',
+  venue_suggest:'推薦一個「一趟用最多」的地點',
   rate_cta:'從提示去評分', rate_nudge:'「還沒評分」的提示出現',
   rate_all_open:'一次評很多筆', rate_submit:'送出評分',
   survey_nudge:'問卷提示出現', survey_open:'打開問卷', survey_submit:'送出問卷',
@@ -5895,8 +5955,28 @@ async function loadVenues(){
 }
 function renderVenues(){
   const box=$('#venueList'), cty=$('#venueCounty').value;
-  const list=(VENUES||[]).filter(v=>!cty||v.county===cty);
-  if(!list.length){ box.innerHTML='<div class="hint">這個縣市還沒有資料。</div>'; return; }
+  const all=VENUES||[];
+  const list=all.filter(v=>!cty||v.county===cty);
+  if(!list.length){
+    /* 兩種「空的」要分開講：
+         · 一筆都還沒公開 → 是站方還沒整理完，不是使用者選錯縣市
+         · 有資料、只是這個縣市沒有 → 給一顆看全部的按鈕
+       本來兩種都寫「這個縣市還沒有資料」，所以選著「全部縣市」也照樣這樣寫
+       （celine 的截圖就是這一種），看起來像壞掉的。
+       venues 預設 is_public=false——名字是從座標猜出來的，要人確認過才上架，
+       所以「跑完 SQL 還是空的」是正常狀態，管理員要知道差的是哪一步。 */
+    box.innerHTML = all.length
+      ? '<div class="hint">「'+esc(cty)+'」還沒有整理好的地點。'
+        + '<button type="button" class="btn sm" id="btnVenueAll" style="margin-left:8px">看全部縣市</button></div>'
+      : '<div class="hint">這一區還在整理中，整理好就會出現。'
+        + (myProfile?.is_admin
+            ? '（管理員：schema_v142_venues.sql 跑完之後，venues 預設是不公開的，'
+              + '核對過館名再把那幾筆設成 is_public = true）' : '')
+        + '</div>';
+    const b=$('#btnVenueAll');
+    if(b) b.onclick=()=>{ $('#venueCounty').value=''; savePref('venueCounty',''); renderVenues(); };
+    return;
+  }
   box.innerHTML=list.map(v=>`<div class="venue" data-id="${esc(String(v.id))}">
     <button type="button" class="venue-head" data-id="${esc(String(v.id))}"
       aria-expanded="${VENUE_OPEN===v.id?'true':'false'}">
@@ -6037,11 +6117,37 @@ function showSection(name){
     $('#tab-'+n).classList.toggle('hidden', n!==name));
   ensureTabData(name);
   ACTIVE_TAB=name;
+  paintFabSubmit();
   window.scrollTo({top:0, behavior:'smooth'});
 }
+/* 回去的那顆要回到「你剛剛站在哪一頁」。本來只分 mine／browse 兩種，而且那顆
+   按鈕上永遠寫著「← 回優惠清單」——從「我的」投稿的人按下去會被丟到別頁，
+   字也是騙人的。懸浮按鈕出現在三頁之後這件事只會更明顯，所以一起改掉。 */
+const SUBMIT_BACK={browse:'← 回優惠清單', board:'← 回排行榜',
+                   trip:'← 回排行程', mine:'← 回「我的」'};
 function goSubmit(from){
-  SUBMIT_FROM = (from==='mine') ? 'mine' : 'browse';
+  /* from 指名了哪一頁就聽它的，沒指名（'list_bottom'、'fab'）才看你現在站在哪。
+     只看 ACTIVE_TAB 的話，這支函式等於無視自己的參數、改吃一個全域變數——
+     t64 就是這樣抓到的：它直接叫 goSubmit('mine')，而那時候人不在「我的」。 */
+  SUBMIT_FROM = SUBMIT_BACK[from] ? from
+              : (SUBMIT_BACK[ACTIVE_TAB] ? ACTIVE_TAB : 'browse');
+  $('#btnSubmitBack').textContent = SUBMIT_BACK[SUBMIT_FROM];
   showSection('submit'); logEvent('go_submit', {from});
+}
+/* celine：「投稿按鈕多一點，要一按進去首頁就能投稿，例如懸浮圓點」。
+   原本整站只有兩個入口：優惠清單捲到最底下那條、「我的」裡面那顆。捲到底的人
+   確實正好是「沒找到想要的那家」那群，但也是最少數的那群。
+
+   只出現在「在看東西」的三頁：
+     · 「我的」自己已經有一顆，同一頁兩顆是重複
+     · 「審核」是在處理別人的投稿，不是投稿
+     · 「新增」本身就是投稿頁，顯示它等於按了沒反應
+   沒登入也顯示：投稿頁有自己的登入提示（#submitGate），先看到「可以投稿」
+   再被要求登入，比一顆根本不存在的按鈕好。 */
+function paintFabSubmit(){
+  const on = !!SUBMIT_BACK[ACTIVE_TAB] && ACTIVE_TAB!=='mine';
+  $('#btnFabSubmit')?.classList.toggle('show', on);
+  document.body.classList.toggle('has-fab', on);
 }
 
 function ensureTabData(tab){
@@ -6089,6 +6195,17 @@ $$('.tab').forEach(t=>t.onclick=()=>{
 });
 
 $('#venueCounty').onchange=()=>{ VENUE_OPEN=null; renderVenues(); };
+/* 表單先把要問的四件事列出來，使用者照著填就好——開一個空白的輸入框給人，
+   收回來的常常是「新光三越」三個字，哪一間、在哪裡都還要再問一次。 */
+$('#btnVenueSuggest').onclick=()=>{
+  logEvent('venue_suggest',{});
+  openFeedback('suggestion', [
+    '想推薦一個「一趟用最多」的地點：',
+    '地點（例如：新光三越南西店）：',
+    '在哪個縣市：',
+    '裡面有哪幾家生日優惠（記得幾家寫幾家就好）：',
+    ''].join('\n'));
+};
 $('#btnBulkAll').onclick=()=>{ if(!BULK) return; BULK.ids.forEach(id=>BULK.picks.add(id)); renderBulkAdd(); };
 $('#btnBulkNone').onclick=()=>{ if(!BULK) return; BULK.picks.clear(); renderBulkAdd(); };
 $('#btnBulkAdd').onclick=doBulkAdd;
@@ -6101,6 +6218,8 @@ $('#btnBuSee').onclick=()=>{
   p?.scrollIntoView({behavior:'smooth',block:'start'});
 };
 $('#btnGoSubmitList').onclick=()=>goSubmit('list_bottom');
+$('#btnFabSubmit').onclick=()=>goSubmit('fab');
+paintFabSubmit();            // 開場就在「優惠」那一頁，showSection 還沒被叫過
 $('#btnGoSubmitMine').onclick=()=>goSubmit('mine');
 // 從哪裡進來就回哪裡（預設回優惠清單）
 let SUBMIT_FROM='browse';
