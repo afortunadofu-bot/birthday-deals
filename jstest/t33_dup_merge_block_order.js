@@ -205,7 +205,10 @@ const fb = (id, message, extra = {}) => ({
   // 會員專屬區塊：拆出外層 div 之後還是要跟著登入狀態一起切
   win2.eval('me = null; paintAuth();');
   const authed = [...win2.document.querySelectorAll('.authed-only')];
-  t.eq('會員專屬區塊都掛上標記了', authed.length, 5);
+  /* 本來 5 塊。v154 把「我的投稿」「我的使用回報」「我回報過的問題」三塊併成
+     「我送出過的」一塊，所以剩 3 塊——問的是「該掛的都掛了」，用 id 問，不數個數。 */
+  t.eq('會員專屬區塊都掛上標記了', authed.map((el) => el.id).sort(),
+    ['badgesPanel', 'myRecordsPanel', 'mySavingsPanel']);
   t.ok('沒登入時整組收起來', authed.every((el) => el.classList.contains('authed-off')));
   win2.eval('me = {id:"u-1"}; myProfile = {id:"u-1"}; paintAuth();');
   t.ok('登入後整組回來', authed.every((el) => !el.classList.contains('authed-off')));

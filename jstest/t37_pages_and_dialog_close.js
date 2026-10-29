@@ -99,10 +99,17 @@ const read = (f) => fs.readFileSync(path.join(HERE, f), 'utf8');
   const slow = $('#freeTierNote');
   t.ok('「有時候會慢一點」連得到「它是怎麼養著的」',
     [...slow.querySelectorAll('a')].some((a) => a.getAttribute('href') === 'about.html'));
-  t.ok('烏龜不在標題的文字裡（區塊排序的清單是讀 h2 當名字的）',
-    !/🐢/.test(slow.querySelector('h2').textContent), slow.querySelector('h2').textContent);
-  t.eq('區塊排序的清單叫得出它的名字', win.eval('blkName(document.querySelector("#freeTierNote"))'),
-    '有時候會慢一點');
+  /* v154 它收進了「關於壽星日」，標題從 h2 變成那一塊裡的 h3。
+     烏龜照舊留在 CSS 的裝飾位，不寫進字裡。 */
+  const slowHead = slow.querySelector('h3');
+  t.ok('烏龜不在標題的文字裡（留在 CSS 的裝飾位）',
+    !!slowHead && !/🐢/.test(slowHead.textContent), slowHead && slowHead.textContent);
+  t.eq('標題寫的是「有時候會慢一點」', slowHead && slowHead.textContent.trim(), '有時候會慢一點');
+  /* 裝著它的那一塊，標題上會掛 NEW——「版面設定」那張清單不能把 NEW 讀成名字的一部分，
+     不然同一塊有兩個名字（有新的時候一個、看過之後一個）。 */
+  win.eval("document.querySelector('#updHeadNew').classList.remove('hidden')");
+  t.eq('區塊排序的清單叫得出那一塊的名字（NEW 不算名字）',
+    win.eval('blkName(document.querySelector("#aboutSitePanel"))'), '關於壽星日');
   // celine：「文字也怪」——原本兩句各道歉一次
   t.ok('不要道歉兩次', !/請多包涵/.test(slow.textContent) && !/說聲抱歉/.test(slow.textContent),
     slow.textContent.replace(/\s+/g, ' ').trim());

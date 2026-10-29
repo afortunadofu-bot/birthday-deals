@@ -94,6 +94,8 @@ python seed.py
 
 > Supabase 免費專案**閒置 7 天會自動暫停**。如果之前建好放著沒動，
 > 先去 Dashboard 看看有沒有 **Restore project** 的按鈕。
+> 流量尖峰被 Disk IO 拖垮、站上顯示「連不上資料庫」的話，要到 Dashboard 重啟專案。
+> （v155 起這兩句不再寫在網站的告示上——那裡誰都看得到。）
 
 ---
 

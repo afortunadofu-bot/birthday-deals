@@ -89,14 +89,17 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v153_venues_write
   t.ok('不自己決定狀態', calls[0]?.row.status === undefined);
   t.ok('送出去之後有回話', /收到了/.test($('#vsMsg').textContent));
 
-  // 表還沒建起來：要講「要跑哪一支」，不是丟 postgres 的英文
+  /* 表還沒建起來：不丟 postgres 的英文，**也不講要跑哪一支 SQL**——這張表單
+     所有人都打得開（celine：「其他人不該看到這個」）。v153 第一版在這裡寫了
+     「管理員要先跑 schema_v153…」，這條本來就是在守那句話，現在反過來守它不在。 */
   calls.length = 0;
   win.eval("window.__err={message:'Could not find the table public.venue_suggestions in the schema cache'};");
   win.eval("openVenueSuggest(); document.querySelector('#vsName').value='高雄夢時代';");
   win.eval("document.querySelector('#btnVsSend').click()");
   await tick(win, 3);
-  t.ok('表還沒建就講要跑哪一支',
-    /schema_v153_venues_write\.sql/.test($('#vsMsg').textContent), $('#vsMsg').textContent);
+  t.ok('表還沒建：講「還沒開放」', /還沒開放/.test($('#vsMsg').textContent), $('#vsMsg').textContent);
+  t.ok('而且不講 SQL、不講管理員', !/schema_|SQL|管理員/i.test($('#vsMsg').textContent),
+    $('#vsMsg').textContent);
   win.eval('window.__err=null;');
   $('#dlgVenueSuggest').close();
   t.ok('返回鍵有掛上去', /\$\('#dlgVenueSuggest'\)\.addEventListener\('close', consumeDlgHistory\)/.test(index));

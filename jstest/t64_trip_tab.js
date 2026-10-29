@@ -26,8 +26,11 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.ok('優惠清單最下面有一個入口', !!$('#btnGoSubmitList'));
   t.ok('那個入口在清單下面，不是上面',
     $('#grid').compareDocumentPosition($('#submitCta')) & 4);   // 4 = FOLLOWING
-  t.ok('「我的投稿」標題旁邊也有一顆', !!$('#btnGoSubmitMine'));
-  t.ok('那顆在「我的投稿」那一塊裡', $('#myOffersPanel').contains($('#btnGoSubmitMine')));
+  t.ok('「我的」那邊也有一顆', !!$('#btnGoSubmitMine'));
+  /* v154「我的投稿」收進了「我送出過的」，那顆跟著搬到那一塊的標題上——
+     它要在一個「就算整塊收起來也看得到」的位置，也就是標題列。 */
+  t.ok('那顆在「我送出過的」的標題列上',
+    !!$('#myRecordsPanel h2') && $('#myRecordsPanel h2').contains($('#btnGoSubmitMine')));
 
   /* ---- 進去之後要出得來 ---- */
   t.ok('投稿頁有「回優惠清單」', !!$('#btnSubmitBack'));
@@ -58,8 +61,10 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.ok('資料來自 v142 的 venues_public', /venues_public/.test(src));
   /* v142 還沒跑的人不該看到一片紅色錯誤訊息 */
   t.ok('表還沒建起來時講人話，不是丟 error 給使用者', /這一區還沒開放/.test(src));
-  t.ok('而且只有管理員看得到要跑哪一支 SQL',
-    /is_admin[\s\S]{0,60}schema_v142_venues\.sql/.test(src));
+  /* 本來是「只有管理員看得到要跑哪一支 SQL」。celine 看到之後說「其他人不該看到這個」
+     ——公開的區塊連 is_admin 擋著的站務字都不放（判斷式出錯就是全漏），
+     要跑哪一支寫在 MIGRATIONS.md。所以反過來守：這裡不提 SQL。 */
+  t.ok('公開的區塊不提要跑哪一支 SQL', !/schema_v142_venues\.sql/.test(src));
   t.ok('離線時也不會爆', /offlineMsg/.test(src));
   t.ok('點開場館才去查裡面有哪幾家（不是一次全查）',
     /venue_offer_ids/.test(win.eval('String(fillVenue)'))

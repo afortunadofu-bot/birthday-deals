@@ -56,7 +56,7 @@ const { boot, tick, makeAsserts } = require('./harness');
   win.eval('sb = window.__sb; MONTHLY_ROWS = null;');
   await win.refreshMonthlyActivity(true);
   await tick(win, 2);
-  t.ok('v81 沒跑時講要跑哪支 SQL', /schema_v81/.test(box()), box().slice(0, 160));
+  t.ok('v81 沒跑時只講暫時讀不到（v155：排行榜不提 SQL）', /暫時讀不到/.test(box()) && !/schema_|SQL|Supabase|管理員/.test(box()), box().slice(0, 160));
 
   /* ================= 2. 低消 ================= */
   const f = $('#submitForm').elements;

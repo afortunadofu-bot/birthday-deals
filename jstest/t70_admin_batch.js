@@ -89,11 +89,16 @@ const read = (f) => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
   /* 一次就好——切來切去不要一直打同一支 RPC（Log 是按請求數算的） */
   t.ok('抓過就不再抓',
     /if\(WEEKDAY_VISITS\|\|WEEKDAY_VISITS_ERR\) return;/.test(index));
-  /* 函式還沒跑的時候，一般使用者不該看到資料庫的錯誤訊息 */
-  const vis = index.slice(index.indexOf('function renderWeekdayVisits'),
-    index.indexOf('function renderWeekdayVisits') + 900);
-  t.ok('還沒跑 SQL 時只有管理員看得到提示', /myProfile\?\.is_admin/.test(vis), '');
-  t.ok('而且會講要跑哪一支', /schema_v150_weekday\.sql/.test(vis), '');
+  /* 函式還沒跑的時候，這一塊就不出現。v155 起管理員也一樣——celine：「其他人不該看到這個」，
+     is_admin 判斷錯一次就是全站看得到；要跑哪一支看 MIGRATIONS.md。 */
+  win.eval('window.__profBefore=myProfile;');
+  ['一般人', '管理員'].forEach((who, i) => {
+    win.eval(`myProfile=${i ? '{is_admin:true}' : 'null'};
+      WEEKDAY_VISITS=null; WEEKDAY_VISITS_ERR='function public.site_weekday_distribution does not exist';
+      renderWeekdayVisits();`);
+    t.eq(`還沒跑 SQL 時${who}什麼都看不到`, $('#boardWeekdayVisits').innerHTML, '');
+  });
+  win.eval("WEEKDAY_VISITS_ERR=''; myProfile=window.__profBefore;");
 
   // 真的畫得出來
   win.eval(`WEEKDAY_VISITS=[{dow:0,visitors:5,views:9},{dow:1,visitors:12,views:30},

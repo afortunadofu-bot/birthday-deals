@@ -87,9 +87,12 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
      重點是介紹區塊在內容的最後面，不是夾在功能區塊中間。 */
   const tailBlocks=[...doc.querySelectorAll('#tab-mine .wrap > [data-block]')]
     .filter(el=>el.id!=='myDebug' && el.id!=='layoutPanel');
-  t.ok('介紹區塊在「我的」最下面', tailBlocks.pop() === dev,
+  /* v154 介紹收進了「關於壽星日」（它跟更新紀錄、加到主畫面都是「讀一次就夠」的）。
+     要守的還是同一件事：它在內容的最後面——所以問「裝著它的那一塊」是不是最後一塊。 */
+  const devBlock = dev.closest('[data-block]');
+  t.ok('介紹區塊在「我的」最下面', tailBlocks.pop() === devBlock,
     [...doc.querySelectorAll('#tab-mine .wrap > [data-block]')].map(e=>e.id).slice(-3).join(','));
-  t.ok('也能跟著一起排順序', dev.hasAttribute('data-block'));
+  t.ok('也能跟著一起排順序（跟著它住的那一塊）', !!devBlock);
   t.eq('是進「關於」那一頁的入口', $('#devIntroLink').getAttribute('href'), 'about.html');
   t.ok('區塊裡不再塞一整篇身世（細節在那一頁）',
     dev.textContent.replace(/\s+/g, '').length < 110, dev.textContent.replace(/\s+/g, ' ').trim());

@@ -66,7 +66,8 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   win.__sb = sbNoCol; win.eval('sb = window.__sb;');
   doc.querySelector('#btnAltSave').click();
   await tick(win, 3);
-  t.ok('v65 還沒跑時提示要執行哪支 SQL', /schema_v65/.test(doc.querySelector('#altBdayMsg').textContent),
+  t.ok('v65 還沒跑時只講還沒開放（v155：不提 SQL）', /還沒開放/.test(doc.querySelector('#altBdayMsg').textContent)
+    && !/schema_|SQL|Supabase|管理員/.test(doc.querySelector('#altBdayMsg').textContent),
     doc.querySelector('#altBdayMsg').textContent);
   win.__sb = sb; win.eval('sb = window.__sb;');
 

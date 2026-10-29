@@ -11,6 +11,7 @@ const { boot, tick, makeAsserts } = require('./harness');
 (async () => {
   const t = makeAsserts('t59 待辦清單搬到最上面');
   const { win } = await boot();
+  const doc = win.document;
 
   const ids = () => win.eval("blkList('mine').map(el=>el.id)");
   const order = ids();
@@ -21,7 +22,18 @@ const { boot, tick, makeAsserts } = require('./harness');
     ['surveyPanel', 'profilePanel', 'shareSitePanel', 'altBdayPanel']
       .every((id) => order.indexOf(id) > order.indexOf('wishlistPanel')),
     order.slice(0, 8));
-  t.ok('一個區塊都沒有弄丟', order.length >= 18, order.length);
+  /* 本來是「至少 18 塊」。v154 把七塊併成兩塊（celine：「block 過多」），所以要守的
+     變成：區塊少了，但**原本那十八塊的內容一個都沒有弄丟**——每一個舊 id 都還在
+     「我的」裡面，只是有幾個住進了別人的那一塊。 */
+  const OLD18 = ['wishlistPanel', 'planner', 'surveyPanel', 'profilePanel', 'layoutPanel',
+    'shareSitePanel', 'remindersPanel', 'altBdayPanel', 'mySavingsPanel', 'badgesPanel',
+    'myReportsPanel', 'myOffersPanel', 'myFeedbackPanel', 'a2hsPanel', 'freeTierNote',
+    'feedbackPanel', 'siteUpdatesPanel', 'devIntroPanel'];
+  /* 前三個 id 本身被換掉了（外殼換成 myRecordsPanel），對應的是它們裡面的清單容器 */
+  const STILL = { myReportsPanel: 'myReports', myOffersPanel: 'myOffers' };
+  const lost = OLD18.filter((id) => !doc.querySelector(`#tab-mine #${STILL[id] || id}`));
+  t.eq('原本那十八塊的內容一個都沒有弄丟', lost, []);
+  t.ok('區塊數真的變少了', order.length <= 13, order.length);
   t.ok('沒有重複的 id', new Set(order).size === order.length);
 
   /* 搬動的時候最容易出的事：把區塊從 .wrap 裡搬出去，或搬進別的區塊裡面。 */

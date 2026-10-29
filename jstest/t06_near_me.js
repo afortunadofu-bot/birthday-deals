@@ -150,7 +150,9 @@ function setGeo(win, mode) {
   win.eval('sb = window.__sb;');
   km.value = '5'; km.dispatchEvent(new win.Event('change'));
   await tick(win, 4);
-  t.ok('提示管理員執行 schema_v58', /schema_v58/.test(doc.querySelector('#nearStatus').textContent),
+  // v155：公開的地方不講要跑哪支 SQL（celine：「其他人不該看到這個」）
+  t.ok('只講還沒開放，不提 SQL', /還沒開放/.test(doc.querySelector('#nearStatus').textContent)
+    && !/schema_|SQL|Supabase|管理員/.test(doc.querySelector('#nearStatus').textContent),
     doc.querySelector('#nearStatus').textContent);
   t.eq('查詢失敗時列表不被篩掉', matched(), totalCards);
 

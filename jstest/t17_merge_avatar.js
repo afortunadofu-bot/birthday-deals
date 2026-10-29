@@ -154,7 +154,8 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   // 沒有儲存空間（v70 沒跑）
   sbA.storage = { from: () => ({ upload: () => Promise.resolve({ error: { message: 'Bucket not found' } }), getPublicUrl: () => ({ data: {} }), remove: () => Promise.resolve({}) }) };
   await win.uploadAvatar(file);
-  t.ok('v70 沒跑時講要跑哪支 SQL', /schema_v70/.test($('#avatarMsg').textContent), $('#avatarMsg').textContent);
+  t.ok('v70 沒跑時只講還沒開放（v155：「我的」裡不提 SQL）', /還沒開放/.test($('#avatarMsg').textContent)
+    && !/schema_|SQL|Supabase|管理員/.test($('#avatarMsg').textContent), $('#avatarMsg').textContent);
 
   // 用回 Google 頭像
   $('#btnAvatarGoogle').click();

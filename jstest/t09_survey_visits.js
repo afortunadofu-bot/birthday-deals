@@ -133,7 +133,9 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   insertResult = { data: null, error: { message: 'relation "public.survey_responses" does not exist' } };
   doc.querySelector('#btnSvSubmit').click();
   await tick(win, 3);
-  t.ok('資料庫還沒跑 v62 時提示管理員', /schema_v62/.test(doc.querySelector('#svMsg').textContent));
+  // v155：問卷誰都打得開，只講還沒開放（要跑哪支寫在 MIGRATIONS.md）
+  t.ok('資料庫還沒跑 v62 時只講還沒開放', /還沒開放/.test(doc.querySelector('#svMsg').textContent)
+    && !/schema_|SQL|Supabase|管理員/.test(doc.querySelector('#svMsg').textContent), doc.querySelector('#svMsg').textContent);
   insertResult = { data: null, error: null };
   doc.querySelector('#dlgSurvey').close();
 

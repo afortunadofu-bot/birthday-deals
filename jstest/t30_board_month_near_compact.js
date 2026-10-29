@@ -77,7 +77,8 @@ const { boot, tick, makeAsserts } = require('./harness');
   win.eval('sb = window.__sb;');
   $('#popMonth').value = ym; $('#popMonth').dispatchEvent(new win.Event('change'));
   await tick(win, 3);
-  t.ok('v83 沒跑時講要跑哪支 SQL', /schema_v83/.test($('#popBody').textContent), $('#popBody').textContent.slice(0, 120));
+  t.ok('v83 沒跑時只講暫時讀不到（v155：排行榜不提 SQL）', /暫時讀不到/.test($('#popBody').textContent)
+    && !/schema_|SQL|Supabase|管理員/.test($('#popBody').textContent), $('#popBody').textContent.slice(0, 120));
 
   /* ================= 2. 附近面板瘦身 ================= */
   t.ok('有一顆 ⓘ', !!$('#btnNearInfo'));

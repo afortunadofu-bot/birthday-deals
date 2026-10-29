@@ -56,6 +56,31 @@ celine：「為啥你現在 SQL 編號都是亂碼亂跳」。
 | `schema_v112_coffee_stats.sql` | celine 的截圖裡「咖啡按鈕」已經顯示人數（63 人／共 76 次），代表函式在 |
 | `schema_v113_link_stats.sql` | 同一張截圖裡「站外連結」那張表有資料（品牌頁 1 人 1 次）|
 
+## 公開的頁面說「還沒開放」「暫時讀不到」的時候
+
+celine（2026-10-29）：「其他人不該看到這個」。v155 起，優惠／排行榜／排行程／我的，
+還有誰都打得開的對話框，表或函式還沒建起來時**只講人話，不講要跑哪一支**——管理員登入
+看也一樣。要跑哪一支只寫在這裡跟「審核」分頁。對照表：
+
+| 在哪裡看到 | 對應的檔案 |
+| --- | --- |
+| 「讀不到你的個人檔案」（頂端告示、「我的」最下面） | `schema_v9_admin.sql`（會補建缺漏的個人檔案） |
+| 加進待辦清單失敗 | `schema_v8.sql` |
+| 通知、排行榜的最近動態 | `schema_v20_notifications.sql` |
+| 待辦清單：分清單／標籤／第二組生日／切換年度／排序 | `v71`／`v65`／`v65`／`v50`／`v47` |
+| 附近分店 | `schema_v58_offer_stores.sql`（還要匯入分店） |
+| 評分、排行榜本月、待審預覽 | `schema_v13_ratings.sql` |
+| 排行榜本週／貢獻度／每月人數／看月份 | `v45`／`v46`／`v81`／`v83` |
+| 回報網站問題、待審修改預覽 | `schema_v30_feedback_and_edit_preview.sql` |
+| 投稿修改 | `schema_v11_edits.sql` |
+| 「我的」存生日 | `schema_v18_misc.sql` |
+| 取消／刪除自己的投稿 | `v14`／`v17` |
+| 大頭貼 | `schema_v70_split_groups_merge_avatars.sql` |
+| 問卷 | `schema_v62_survey_and_visits.sql` |
+| 排行榜「星期幾最多人上站」那一塊整個沒出現 | `schema_v150_weekday.sql` |
+
+站本身連不上（「連不上資料庫」）、Google 登入失敗：看 `FIX-LOGIN.md`。
+
 ## 跑法
 
 Supabase Dashboard → SQL Editor → 貼上整支 → Run。

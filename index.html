@@ -1477,6 +1477,25 @@
   .note-slow-go{display:inline-block;margin-top:9px;font-size:.8rem;font-weight:700;
     color:var(--accent-dark);text-decoration:none}
   .note-slow-go:hover{text-decoration:underline;text-underline-offset:3px}
+  /* v154「我送出過的」裡的三顆小分頁：一條分段控制，不是三個標題列——
+     這三塊本來就是各佔一個標題，而整頁的問題正是標題列太多。 */
+  .rec-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+  .rec-tab{flex:1 1 auto;min-width:0;padding:7px 10px;font-size:.84rem;font-weight:700;
+    border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);
+    color:var(--ink-2);cursor:pointer;white-space:nowrap}
+  .rec-tab.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .rec-tab .n{margin-left:4px}
+  .rec-pane{display:none}
+  .rec-pane.on{display:block}
+  /* v154「關於壽星日」裡的四段。分隔線只畫在「前面還有一段看得見的」那幾段上——
+     已經裝到主畫面的人第一段整個藏起來，用 :first-child 的話第二段頂上會多一條線。 */
+  .about-row h3{font-size:.92rem;font-weight:800;margin:0 0 4px;color:var(--ink);
+    display:flex;align-items:center;gap:7px}
+  .about-row .sub{margin:0 0 8px}
+  .about-row:not(.hidden) ~ .about-row{margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft)}
+  .about-row.slow h3::before{content:"🐢";font-size:1.05rem;line-height:1}
+  .about-row.slow p{margin:0;font-size:.84rem;line-height:1.8;color:var(--ink-2)}
+  .about-row.slow p b{color:var(--ink)}
   /* 管理員的顯示開關（celine：「網站顯示設定很醜」）。
      原本是五個平鋪的勾選框加「└」符號：看不出層級，說明文字還比選項本身搶眼。
      改成一張清單——名稱靠左、開關靠右、說明用小一號的字接在名稱下面；子項目縮排，
@@ -2310,72 +2329,96 @@
       <h2>成就徽章</h2>
       <div id="badgesBody" class="badge-grid"></div>
     </div>
-    <div class="panel authed-only" id="myReportsPanel" data-block><h2>我的使用回報</h2><div id="myReports"></div></div>
-    <div class="panel authed-only" id="myOffersPanel" data-block>
+    <!-- celine：「「我的」頁面 block 過多，看能不能整合」（v154：18 塊 → 13 塊）。
+
+         「我的投稿」「我的使用回報」「我回報過的問題」本來各佔一個標題列。
+         它們其實是同一件事的三種——**你送出去的東西，以及它後來怎麼了**——
+         而且三塊都是登入才有、三塊本來就都預設收著。合成一塊，裡面三顆小分頁。
+
+         裡面三個容器的 id（#myOffers／#myReports／#myFeedback）一個都沒動，
+         畫清單的那三支完全不用改。#myFeedbackPanel 留著當「問題回報」那一格的
+         外殼：loadMyFeedback() 查不到自己那幾筆時會把它藏起來，分頁鈕跟著它走。 -->
+    <div class="panel authed-only" id="myRecordsPanel" data-block>
       <h2 style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-        <span>我的投稿</span>
+        <span>我送出過的</span>
         <!-- 「新增」的第二個入口（見 showSection） -->
         <button type="button" class="btn sm primary" id="btnGoSubmitMine"
           style="font-size:.78rem;font-weight:600">＋ 投稿</button>
       </h2>
-      <div id="myOffers"></div></div>
-    <!-- 嵐：「我填寫過的回報問題，要可以出現在我的頁面」（schema_v73 開的讀自己那幾筆的權限） -->
-    <div class="panel authed-only" id="myFeedbackPanel" data-block><h2>我回報過的問題<span class="n hidden" id="myFbCount"></span></h2>
-      <p class="sub">你用上面「回報網站問題」送出的內容，還有管理員的回覆。</p>
-      <div id="myFeedback"></div></div>
-    <!-- 不管有沒有登入都看得到——加到主畫面是幫網站觸及更多人的入口，
-         不應該卡在登入門檻後面。 -->
-    <div class="panel" id="a2hsPanel" data-block>
-      <h2>加到主畫面</h2>
-      <p class="sub">像 App 一樣點圖示就打開，不用再找網址。</p>
-      <button type="button" class="btn primary hidden" id="btnA2hsDirect" style="margin-bottom:10px">加到主畫面</button>
-      <div style="font-size:.84rem;color:var(--ink-2);line-height:1.9">
-        <p style="margin:0 0 6px"><b>Android（Chrome）</b>：點右上角「⋮」選單 →「加到主畫面」或「安裝應用程式」。</p>
-        <p style="margin:0"><b>iPhone／iPad（Safari）</b>：點下方工具列的分享圖示 <span aria-hidden="true">⬆️</span> → 往下滑找「加入主畫面」。</p>
+      <div class="rec-tabs" role="tablist" aria-label="我送出過的">
+        <button type="button" class="rec-tab on" role="tab" data-rec="Offers" aria-selected="true">投稿</button>
+        <button type="button" class="rec-tab" role="tab" data-rec="Reports" aria-selected="false">使用回報</button>
+        <button type="button" class="rec-tab" role="tab" data-rec="Feedback" aria-selected="false">問題回報<span class="n hidden" id="myFbCount"></span></button>
       </div>
+      <div class="rec-pane on" id="recOffers" role="tabpanel"><div id="myOffers"></div></div>
+      <div class="rec-pane" id="recReports" role="tabpanel"><div id="myReports"></div></div>
+      <!-- 嵐：「我填寫過的回報問題，要可以出現在我的頁面」（schema_v73 開的讀自己那幾筆的權限） -->
+      <div class="rec-pane" id="recFeedback" role="tabpanel"><div id="myFeedbackPanel">
+        <p class="sub">你用「回報網站問題」送出的內容，還有管理員的回覆。</p>
+        <div id="myFeedback"></div></div></div>
     </div>
-    <!-- 嵐：「在我的頁面加一個 block，上面寫說因為目前網頁是用免費方案架設的，
-         所以有時候稍有延遲，請見諒」。與其讓人以為是自己的網路有問題（或以為
-         網站壞了），不如講清楚。訪客也看得到，所以放在會員專屬區塊外面。
-         celine：「有時候會慢一點那個區塊很醜，文字也怪」——原本是一整個標準面板，
-         標題還掛著 🐢，下面兩句各道歉一次（「先跟你說聲抱歉 🙏」＋「請多包涵」）。
-         為一句免責的話擺這麼大的排場，反而顯得網站很沒把握。改成一條安靜的
-         小告示：烏龜退到 CSS 的裝飾位（也才不會被區塊排序的清單讀成名字的一部分），
-         道歉只留該有的份量，把「為什麼會這樣」交給 about.html 講。 -->
-    <div class="panel note-slow" id="freeTierNote" data-block>
-      <h2>有時候會慢一點</h2>
-      <p>人多的時候壽星日會慢個幾秒，偶爾要重新整理一次才打得開——<b>不是你的網路有問題。</b>
-        它整個跑在免費方案上，正在想辦法讓它快一點、穩一點。</p>
-      <a class="note-slow-go" href="about.html">它是怎麼養著的 <span aria-hidden="true">→</span></a>
-    </div>
-    <!-- 嵐：「回報網站問題移到『我的』」。原本只掛在頁尾的一行小字裡，幾乎沒人看得到；
-         放在「我的」這裡，跟上面那塊速度說明、下面自己回報過的紀錄排在一起。 -->
+    <!-- 嵐：「回報網站問題移到『我的』」。原本只掛在頁尾的一行小字裡，幾乎沒人看得到。
+         v154 把它旁邊那幾塊「讀一次就夠」的收進「關於壽星日」之後，它留著自己一塊：
+         它是一個動作，不是一段說明，不該被收進別人的標題底下。 -->
     <div class="panel" id="feedbackPanel" data-block>
       <h2>🛠 回報網站問題</h2>
       <p class="sub">網站哪裡不好用都可以告訴我。
         優惠內容有誤請用卡片上的「建議修改」。</p>
       <button type="button" class="btn primary" id="btnFeedback">回報問題或建議</button>
     </div>
-    <!-- 更新紀錄：celine 要「我的」頁面有個小地方記每次更新的日期、簡單說改了哪裡。
-         訪客也看得到，所以放在會員專屬區塊外面。
-         內容的唯一來源是 updates.json（build.py 注入這裡，也產生整頁的 updates.html）；
-         celine：「更新紀錄不要寫那麼仔細」「不要是收合，是點進去看到新網頁」——
-         這裡只留最新三筆的日期＋標題，細項在那一頁。 -->
-    <div class="panel" id="siteUpdatesPanel" data-block>
-      <h2>🆕 更新紀錄 <span class="upd-new hidden" id="updHeadNew">NEW</span></h2>
-      <div id="siteUpdatesList"></div>
-      <a class="panel-go" href="updates.html">看完整更新紀錄 <span aria-hidden="true">→</span></a>
-    </div>
-    <!-- celine：「在我的頁面最下面加一個 BLOCK 當作開發者的介紹」，後來又說
-         「關於做這個網頁的人也是，點進去再看到細節」。所以這裡只剩一個入口，
-         內容全部在 about.html。
-         放在最下面：會捲到這裡的人已經把自己的東西看完了，這時候才適合講「誰做的」。
-         管理員的開關是 show_dev_intro（schema_v97）。 -->
-    <div class="panel" id="devIntroPanel" data-block>
-      <h2>關於做這個網站的人</h2>
-      <p class="sub">壽星日是「小數據所」的其中一個 app。</p>
-      <p class="dev-intro-teaser">為什麼會做這幾個東西、它是怎麼養著的，都寫在裡面。</p>
-      <a class="panel-go" id="devIntroLink" href="about.html">看完整介紹 <span aria-hidden="true">→</span></a>
+    <!-- v154：「加到主畫面」「有時候會慢一點」「更新紀錄」「關於做這個網站的人」
+         本來各佔一個標題列。四塊的共通點是**讀一次就夠的東西**——不是你的資料、
+         也不是你每次來都要操作的功能——合成一塊「關於壽星日」，裡面四段。
+
+         四個 id 都留著，因為各有別的程式在找它們：
+           #a2hsPanel        —— 頂部「怎麼加」那顆的捲動目標；已經裝好的人整段藏起來
+           #siteUpdatesPanel —— NEW 的判定、IntersectionObserver
+           #devIntroPanel    —— 管理員的 show_dev_intro 開關直接 toggle 它
+           #freeTierNote     —— 沒有程式找它，留著是為了好認
+         NEW 搬到外面這一塊的標題上：這一塊收起來的時候，裡面那段的標題是看不到的。
+
+         放在最下面：會捲到這裡的人已經把自己的東西看完了，這時候才適合講「誰做的」。 -->
+    <div class="panel" id="aboutSitePanel" data-block>
+      <h2>關於壽星日 <span class="upd-new hidden" id="updHeadNew">NEW</span></h2>
+      <!-- 不管有沒有登入都看得到——加到主畫面是幫網站觸及更多人的入口，
+           不應該卡在登入門檻後面。 -->
+      <div class="about-row" id="a2hsPanel">
+        <h3>加到主畫面</h3>
+        <p class="sub">像 App 一樣點圖示就打開，不用再找網址。</p>
+        <button type="button" class="btn primary hidden" id="btnA2hsDirect" style="margin-bottom:10px">加到主畫面</button>
+        <div style="font-size:.84rem;color:var(--ink-2);line-height:1.9">
+          <p style="margin:0 0 6px"><b>Android（Chrome）</b>：點右上角「⋮」選單 →「加到主畫面」或「安裝應用程式」。</p>
+          <p style="margin:0"><b>iPhone／iPad（Safari）</b>：點下方工具列的分享圖示 <span aria-hidden="true">⬆️</span> → 往下滑找「加入主畫面」。</p>
+        </div>
+      </div>
+      <!-- 更新紀錄：celine 要「我的」頁面有個小地方記每次更新的日期、簡單說改了哪裡。
+           內容的唯一來源是 updates.json（build.py 注入這裡，也產生整頁的 updates.html）；
+           celine：「更新紀錄不要寫那麼仔細」「不要是收合，是點進去看到新網頁」——
+           這裡只留最新三筆的日期＋標題，細項在那一頁。 -->
+      <div class="about-row" id="siteUpdatesPanel">
+        <h3>🆕 更新紀錄</h3>
+        <div id="siteUpdatesList"></div>
+        <a class="panel-go" href="updates.html">看完整更新紀錄 <span aria-hidden="true">→</span></a>
+      </div>
+      <!-- celine：「在我的頁面最下面加一個 BLOCK 當作開發者的介紹」，後來又說
+           「關於做這個網頁的人也是，點進去再看到細節」。所以這裡只剩一個入口，
+           內容全部在 about.html。管理員的開關是 show_dev_intro（schema_v97）。 -->
+      <div class="about-row" id="devIntroPanel">
+        <h3>關於做這個網站的人</h3>
+        <p class="sub">壽星日是「小數據所」的其中一個 app。</p>
+        <p class="dev-intro-teaser">為什麼會做這幾個東西、它是怎麼養著的，都寫在裡面。</p>
+        <a class="panel-go" id="devIntroLink" href="about.html">看完整介紹 <span aria-hidden="true">→</span></a>
+      </div>
+      <!-- 嵐：「在我的頁面加一個 block，上面寫說因為目前網頁是用免費方案架設的，
+           所以有時候稍有延遲，請見諒」。celine：「有時候會慢一點那個區塊很醜，
+           文字也怪」——那次改成一條安靜的小告示。v154 收進來之後就更安靜了：
+           跟其他三段同一種排法，烏龜留在 CSS 的裝飾位。 -->
+      <div class="about-row slow" id="freeTierNote">
+        <h3>有時候會慢一點</h3>
+        <p>人多的時候壽星日會慢個幾秒，偶爾要重新整理一次才打得開——<b>不是你的網路有問題。</b>
+          它整個跑在免費方案上，正在想辦法讓它快一點、穩一點。</p>
+        <a class="note-slow-go" href="about.html">它是怎麼養著的 <span aria-hidden="true">→</span></a>
+      </div>
     </div>
     <div class="panel hidden" id="myDebug">
       <h2>帳號與權限</h2>
@@ -3343,6 +3386,17 @@ const ICONS={
 const esc = s => String(s ?? '').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const nt  = n => (n==null?'—':'$'+Number(n).toLocaleString('en-US'));
 const note=(el,cls,html)=>{el.innerHTML=`<div class="note ${cls}">${html}</div>`};
+/* celine（2026-10-29）：「其他人不該看到這個」。公開的地方（優惠／排行榜／排行程／我的，
+   還有誰都打得開的對話框）出錯時不講「要跑哪一支 SQL」——is_admin 擋著也不行，那個判斷
+   哪天錯了就是全站都看得到，她自己在那些頁面也不想看到。要跑什麼只寫在審核頁跟 MIGRATIONS.md。
+   re 對到（表／欄位／函式還沒建起來）：只說還沒開放；其他真的錯誤才帶原文。
+   回傳純文字，放進 innerHTML 之前要 esc。 */
+const PUB_NOT_OPEN='這個功能還沒開放，晚點再試試看。';
+const PUB_NOT_READY='暫時讀不到，晚點再試。';
+function pubErrText(error, prefix, re=/relation|does not exist|schema cache/i, missing=PUB_NOT_OPEN){
+  const m=String(error?.message ?? error ?? '');
+  return re.test(m) ? missing : prefix+m;
+}
 // 管理員在審核清單處理完一筆（核可/退回）之後，清單／上方的洞察圖表通常
 // 會整段重建，筆數變少或圖表高度改變，畫面就變矮或變高，瀏覽器常常會把
 // 捲動位置夾回新的頁面範圍內——體感就是「處理完一筆，畫面突然跳回最
@@ -3662,7 +3716,7 @@ async function connectLive(retry=0){
 
   sb = window.supabase.createClient(CFG.url, CFG.anonKey);
   const slowTimer=setTimeout(()=>{
-    note(mb,'alert','<b>資料庫回應比較慢</b>——不是網站壞了，Supabase 免費方案偶爾會延遲幾秒，請再等一下下。');
+    note(mb,'alert','<b>資料庫回應比較慢</b>——不是網站壞了，資料庫偶爾會慢個幾秒，請再等一下下。');
   },3000);
   try{
     sb.auth.onAuthStateChange((_e,s)=>onSession(s));
@@ -3684,9 +3738,8 @@ async function connectLive(retry=0){
     // Supabase 連不上時，畫面已經是種子資料撐著了，不會整頁空白
     note(mb,'alert',
       `<b>連不上資料庫</b>（${esc(e.message||e)}）——現在畫面上是內建的示範資料，
-       <b>回報次數與省下金額都還不是真的</b>，等一下重新整理通常就會回來。<br>
-       <span class="hint">（站方自己看：免費專案閒置 7 天會被自動暫停，到 Supabase Dashboard 按
-       Restore project；流量尖峰被 Disk IO 拖垮的話要重啟專案。）</span>`);
+       <b>回報次數與省下金額都還不是真的</b>，等一下重新整理通常就會回來。`);
+    // 站方自己看的那一行（閒置被暫停要 Restore project、Disk IO 拖垮要重啟）搬去 FIX-LOGIN.md 了
   }
   paintOffers();   // 不管成功或失敗，都用目前最新的 OFFERS 重畫一次
   loadSiteStats(); loadSiteAnnouncement(); loadSiteFlags(); registerSW();
@@ -3893,8 +3946,9 @@ async function onSession(s){
       note($('#modeBanner'),'alert',
         `<b>讀不到你的個人檔案</b>（${esc(error?.message||'查無資料')}）。<br>
          你的帳號 id：<code>${esc(me.id)}</code>　信箱：<code>${esc(me.email||'—')}</code><br>
-         請到 Supabase SQL Editor 執行 <code>schema_v9_admin.sql</code>，
-         它會自動補建缺漏的個人檔案。「我的」分頁下方也有同樣的資訊可以複製。`);
+         重新整理一次試試；還是不行的話，用「回報網站問題」把上面的帳號 id 傳給我們
+         （「我的」分頁下方也有，可以直接複製）。`);
+      // 補建個人檔案要跑哪一支寫在 MIGRATIONS.md，不寫給使用者看（見 pubErrText 上面）
     } else {
       myProfile = data;
     }
@@ -3929,7 +3983,7 @@ function renderMyDebug(){
     <dt>帳號 id</dt><dd style="word-break:break-all">
       <code id="myUid">${esc(me.id)}</code>
       <button class="btn sm" id="btnCopyUid" type="button" style="margin-left:6px;padding:2px 9px">複製</button></dd>
-    <dt>個人檔案</dt><dd>${myProfile?'已建立':'<span style="color:var(--alert)">找不到（需要跑 schema_v9_admin.sql）</span>'}</dd>
+    <dt>個人檔案</dt><dd>${myProfile?'已建立':'<span style="color:var(--alert)">找不到——重新整理一次；還是不行就把上面的帳號 id 回報給我們</span>'}</dd>
     <dt>管理員權限</dt><dd>${admin
       ? '<b style="color:var(--free)">是</b>'
       : '<span style="color:var(--ink-3)">否——如果剛設定過，請登出重新登入一次讓網站重讀權限</span>'}</dd>`;
@@ -4294,8 +4348,7 @@ async function openNotifDialog(){
   box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">載入中…</div>';
   const {data,error}=await sb.from('notifications').select('*').order('created_at',{ascending:false}).limit(30);
   if(error){
-    const hint=/relation|does not exist/i.test(error.message)?'（Supabase 可能還沒跑 schema_v20_notifications.sql）':'';
-    box.innerHTML=`<div class="note alert">讀取失敗：${esc(error.message)}${hint}</div>`; return;
+    box.innerHTML=`<div class="note alert">${esc(pubErrText(error,'讀取失敗：',undefined,PUB_NOT_READY))}</div>`; return;
   }
   const rows=data||[];
   // 三種通知分開寫文案：管理員公告／問題回報的處理回覆／收藏店家留言。
@@ -4421,9 +4474,7 @@ async function toggleWish(id, btn){
         })();
     if(error){ has?WISH.add(String(id)):WISH.delete(String(id));
       syncWishButtons(id, has);
-      const hint=/relation|does not exist|wishlist/i.test(error.message)
-        ? '\n（這通常是 Supabase 資料庫還沒建立「待辦清單」的資料表，請管理員到 SQL Editor 執行 schema_v8.sql。）' : '';
-      alert('收藏失敗：'+error.message+hint); return; }
+      alert(pubErrText(error,'收藏失敗：',/relation|does not exist/i)); return; }
     if(!has){
       hintWishlistLocation();
       const person=wishPersonNow();
@@ -4471,7 +4522,7 @@ function renderAltBdayHint(){
 }
 function altSchemaHint(error){
   return /alt_label|alt_birth|column|schema cache/i.test(error?.message||'')
-    ? '這個功能還沒開通（管理員需要先在 Supabase 執行 schema_v65_alt_birthday_wishlist_tags.sql）。'
+    ? PUB_NOT_OPEN
     : '儲存失敗：'+esc(error?.message||'');
 }
 async function saveAltBday(clear){
@@ -4746,7 +4797,7 @@ function renderWishlistBody(){
     if(error){
       b.disabled=false;
       alert(/person|column|schema cache/i.test(error.message||'')
-        ? '分清單要先在 Supabase 執行 schema_v71_wishlist_person.sql。'
+        ? '分清單還沒開放，晚點再試試看。'
         : '移動失敗：'+error.message);
       return;
     }
@@ -4765,7 +4816,7 @@ function renderWishlistBody(){
       .eq('user_id',me.id).eq('offer_id',sel.dataset.id);
     if(error){
       alert(/tag|column|schema cache/i.test(error.message||'')
-        ? '標籤功能還沒開通（管理員需要先在 Supabase 執行 schema_v65_alt_birthday_wishlist_tags.sql）。'
+        ? '標籤功能還沒開放，晚點再試試看。'
         : '標籤存檔失敗：'+error.message);
       renderWishlistBody(); return;
     }
@@ -4825,8 +4876,7 @@ function renderWishlistBody(){
     b.disabled=true;
     const {error}=await sb.from('wishlist').update({year:newYear}).eq('user_id',me.id).eq('offer_id',b.dataset.id);
     if(error){
-      const hint=/column|does not exist/i.test(error.message)?'（Supabase 可能還沒跑 schema_v50_wishlist_year.sql）':'';
-      alert('切換年度失敗，請稍後再試：'+error.message+hint); b.disabled=false; return;
+      alert(pubErrText(error,'切換年度失敗，請稍後再試：',/column|does not exist/i)); b.disabled=false; return;
     }
     renderMyWishlist();
   });
@@ -4865,8 +4915,7 @@ async function moveWishlistItem(offerId, dir){
     sb.from('wishlist').update({sort_order:w.sort_order}).eq('user_id',me.id).eq('offer_id',w.offer_id)));
   const bad=results.find(r=>r.error);
   if(bad){
-    const hint=/relation|does not exist|column/i.test(bad.error.message)?'（Supabase 可能還沒跑 schema_v47_wishlist_sort_order.sql）':'';
-    alert('排序更新失敗，請稍後再試：'+bad.error.message+hint);
+    alert(pubErrText(bad.error,'排序更新失敗，請稍後再試：',/relation|does not exist|column/i));
     renderMyWishlist(); // 重新拉一次乾淨的資料，避免畫面停在沒存到的結果
   }
 }
@@ -5019,10 +5068,12 @@ $('#btnLogin').onclick = async()=>{
       options:{redirectTo: redirectTarget()}});
     if(error) throw error;
   }catch(e){
-    alert('登入失敗：' + (e.message||e) +
-      '\n\nSupabase → Authentication → URL Configuration 的 Redirect URLs 要包含：\n' +
-      redirectTarget() +
-      '\n\n另外確認 Google provider 已啟用，且你的 Gmail 在 Google Cloud 的測試使用者名單內。');
+    // 設定面的提示只在本機開發時講（IS_DEV 看的是 file:// 跟 localhost，不是帳號）
+    alert('登入失敗：' + (e.message||e) + (IS_DEV
+      ? '\n\nSupabase → Authentication → URL Configuration 的 Redirect URLs 要包含：\n' +
+        redirectTarget() +
+        '\n\n另外確認 Google provider 已啟用，且你的 Gmail 在 Google Cloud 的測試使用者名單內。'
+      : '\n\n晚點再試一次。'));
   }
 };
 // 「我的」分頁頂部的登入卡片按鈕、排行榜的登入提醒按鈕，都直接借用同一顆
@@ -5039,7 +5090,8 @@ function showOAuthError(){
   if(!err) return false;
   const raw = decodeURIComponent(err).replace(/\+/g,' ');
   let hint = '';
-  if(/redirect|url|path|invalid/i.test(raw))
+  if(!IS_DEV) hint = '<br>晚點再試一次。';
+  else if(/redirect|url|path|invalid/i.test(raw))
     hint = `<br>多半是 Redirect URLs 沒設好。到 Supabase → Authentication → URL Configuration，
             把 <code>${esc(redirectTarget())}</code> 加進去。`;
   else if(/access_denied|consent|test/i.test(raw))
@@ -5126,6 +5178,9 @@ $('#btnMineA2hs').onclick=async()=>{
   }
   // iPhone／大部分瀏覽器不能用程式直接安裝，捲到下面的步驟說明並閃一下外框
   const p=$('#a2hsPanel'); if(!p) return;
+  /* v154：它現在住在「關於壽星日」裡面。那一塊被收起來的話，捲過去什麼都看不到 */
+  const outer=p.closest('.panel');
+  if(outer?.classList.contains('collapsed')) outer.querySelector('h2')?.click();
   p.scrollIntoView({behavior:'smooth', block:'center'});
   p.style.transition='box-shadow .3s';
   p.style.boxShadow='0 0 0 3px rgba(166,61,36,.35)';
@@ -5150,7 +5205,7 @@ const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
 /* 更新紀錄的內容在 updates.json，build.py 注入這裡，同一份資料也產生整頁的
    updates.html。「我的」頁面只用到日期跟標題（最新幾筆＋NEW 標記），
    細項（items）留著是給 updates.html 用的。 */
-const SITE_UPDATES = [{"date":"2026-10-29","title":"多了「排行程」；投稿的按鈕跟到每一頁","items":["「排行程」告訴你哪裡一次能用到最多家；可以一鍵加進待辦清單","右下角多一顆「＋投稿」，每一頁都按得到；也可以推薦一個地點","設定記得上次的、清單可切字少版、版面設定搬到「我的」上面"]},{"date":"2026-10-28","title":"地圖上直接就能記「我用過了」","items":["地圖的店家小視窗多一顆「我用過了」，不用再回清單找","優惠詳情視窗下面也加了同一顆","回報用過之後會提醒你順便給星等，排行榜的說明也剪短了"]},{"date":"2026-10-23","title":"手機上比較不會跳出「連不到資料庫」了","items":["連線元件改成從本站載入，不再等外部網站，慢或被擋都不受影響","真的連不上時，多一顆「複製狀況」可以把情況傳給我們"]},{"date":"2026-10-22","title":"地圖好按了、篩選看得見、折扣寫出幾折","items":["地圖上的點變好按了，資訊也不會看到一半就不見","現在篩了哪些條件直接列在清單上面，可以一個一個拿掉","「我的」打開就是待辦清單；折扣會寫出幾折、折多少錢"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
+const SITE_UPDATES = [{"date":"2026-10-29","title":"多了「排行程」；投稿的按鈕跟到每一頁","items":["「排行程」告訴你哪裡一次能用到最多家；可以一鍵加進待辦清單","右下角多一顆「＋投稿」，每一頁都按得到；也可以推薦一個地點","「我的」從 18 塊收成 13 塊；設定會記得、清單可切字少版"]},{"date":"2026-10-28","title":"地圖上直接就能記「我用過了」","items":["地圖的店家小視窗多一顆「我用過了」，不用再回清單找","優惠詳情視窗下面也加了同一顆","回報用過之後會提醒你順便給星等，排行榜的說明也剪短了"]},{"date":"2026-10-23","title":"手機上比較不會跳出「連不到資料庫」了","items":["連線元件改成從本站載入，不再等外部網站，慢或被擋都不受影響","真的連不上時，多一顆「複製狀況」可以把情況傳給我們"]},{"date":"2026-10-22","title":"地圖好按了、篩選看得見、折扣寫出幾折","items":["地圖上的點變好按了，資訊也不會看到一半就不見","現在篩了哪些條件直接列在清單上面，可以一個一個拿掉","「我的」打開就是待辦清單；折扣會寫出幾折、折多少錢"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
 const SITE_UPDATES_SHOW=3;
 
 function updatesSeenDate(){
@@ -5196,7 +5251,11 @@ renderSiteUpdates();
    另外，點進 updates.html 的人當然算看過，那條直接標。 */
 function updatesPanelOpen(){
   const p=$('#siteUpdatesPanel');
-  return !!p && !p.classList.contains('collapsed') && !p.classList.contains('hidden');
+  if(!p || p.classList.contains('hidden')) return false;
+  /* v154：它現在是「關於壽星日」裡的一段，會收合的是外面那一塊。只看自己的話
+     永遠不會是 collapsed——外面收著、裡面根本看不到，也會被算成「看過了」。 */
+  const panel=p.closest('.panel');
+  return !!panel && !panel.classList.contains('collapsed') && !panel.classList.contains('hidden');
 }
 let updSeenTimer=null;
 function armUpdatesSeen(){
@@ -5207,7 +5266,7 @@ function armUpdatesSeen(){
   }, 2500);
 }
 function disarmUpdatesSeen(){ if(updSeenTimer){ clearTimeout(updSeenTimer); updSeenTimer=null; } }
-$('#siteUpdatesPanel h2')?.addEventListener('click',()=>{
+$('#siteUpdatesPanel')?.closest('.panel')?.querySelector('h2')?.addEventListener('click',()=>{
   // 摺疊的切換是另一個 click 監聽器做的，等它跑完再判斷現在是展開還收合
   setTimeout(()=>{ updatesPanelOpen() ? armUpdatesSeen() : disarmUpdatesSeen(); }, 0);
 });
@@ -5253,8 +5312,14 @@ function blkSaved(page){
 }
 function blkName(el){
   const h=el.querySelector('h2');
-  // 「待辦清單」後面常跟著一顆計數小標籤；標題裡的收合箭頭（▾）也不用寫進來
-  return (h?h.textContent:el.id).replace(/[▾▸►▼▲]/g,'').replace(/\s+/g,' ').trim().slice(0,24) || el.id;
+  if(!h) return el.id;
+  /* 標題裡常掛著小標籤：「待辦清單」的筆數、v154 搬到「關於壽星日」標題上的
+     NEW、收合的小箭頭。那些是狀態不是名字——讀成名字的話，「版面設定」那張
+     清單會寫「關於壽星日 NEW」，看過之後又變回「關於壽星日」，同一塊兩個名字。
+     複製一份、把標籤拿掉再讀，不要動到畫面上那一份。 */
+  const c=h.cloneNode(true);
+  c.querySelectorAll('.n,.upd-new,.pctoggle,button').forEach(x=>x.remove());
+  return c.textContent.replace(/[▾▸►▼▲]/g,'').replace(/\s+/g,' ').trim().slice(0,24) || el.id;
 }
 /* 照存下來的順序排。沒存過的 id 接在「前一個有存過的」後面，保持原本的相對位置。 */
 function blkDesired(blocks, saved){
@@ -5367,6 +5432,30 @@ function moveLayoutPanelOnce(){
   }catch{}
 }
 moveLayoutPanelOnce();
+/* v154 把七塊併成兩塊。存檔裡還是舊的 id，那幾個 id 現在已經不是區塊了，
+   blkDesired 會直接略過——新的兩塊就沒有排名，只能照 HTML 的位置插。
+   換一次：新的那塊放在它的成員裡**最先出現**的那個位置，其他成員拿掉。
+   只換一次，理由跟上面那支一樣。 */
+const BLK_MERGED_V154={
+  myRecordsPanel:['myOffersPanel','myReportsPanel','myFeedbackPanel'],
+  aboutSitePanel:['a2hsPanel','freeTierNote','siteUpdatesPanel','devIntroPanel'],
+};
+function mergeSavedBlocksOnce(){
+  try{
+    if(localStorage.getItem('sxr_order_merged_v154')) return;
+    localStorage.setItem('sxr_order_merged_v154','1');
+    let saved=blkSaved('mine');
+    if(!saved.length) return;
+    Object.entries(BLK_MERGED_V154).forEach(([to, from])=>{
+      const at=saved.findIndex(id=>from.includes(id));
+      if(at<0 || saved.includes(to)) return;
+      saved[at]=to;
+      saved=saved.filter((id,i)=>i===at || !from.includes(id));
+    });
+    localStorage.setItem(BLK_PAGES.mine.key, JSON.stringify(saved));
+  }catch{}
+}
+mergeSavedBlocksOnce();
 Object.keys(BLK_PAGES).forEach(applyBlockOrder);
 
 /* ---- 全站顯示開關（schema_v95 的 site_settings）----
@@ -6048,7 +6137,10 @@ $('#btnUpdNudgeGo').onclick=()=>{
   closeUpdatesNudge('go');
   document.querySelector('.tab[data-tab="mine"]')?.click();
   const p=$('#siteUpdatesPanel');
-  if(p && !updatesPanelOpen()) p.querySelector('h2')?.click();
+  /* v154：它現在是「關於壽星日」裡的一段，自己沒有 h2（是 h3），會收合的是
+     外面那一塊。點自己的 h2 等於什麼都沒點——外面收著的話，人被帶過去只看到
+     一個收起來的標題，「看過」的計時也永遠不會開始。 */
+  if(p && !updatesPanelOpen()) p.closest('.panel')?.querySelector('h2')?.click();
   // 切分頁會捲回頂端，等它做完再捲到更新紀錄
   setTimeout(()=>p?.scrollIntoView({behavior:'smooth', block:'start'}), 120);
 };
@@ -6102,7 +6194,9 @@ async function loadVenues(){
     // 表還沒建起來跟「真的壞了」要分開講：前者是管理員的事，不是使用者的錯
     const missing=/venues_public|does not exist|schema cache/i.test(error.message);
     box.innerHTML='<div class="hint">'+(missing
-      ? '這一區還沒開放。'+(myProfile?.is_admin?'（管理員：要先跑 schema_v142_venues.sql，並把場館設成公開）':'')
+      /* celine：「其他人不該看到這個」。站務的事寫在 MIGRATIONS.md 跟審核分頁，
+         公開的區塊不放——連 is_admin 擋著的也不放，判斷式出錯就是全漏。 */
+      ? '這一區還沒開放。'
       : '載入失敗：'+esc(error.message))+'</div>';
     return;
   }
@@ -6397,9 +6491,11 @@ $('#btnVsSend').onclick=async()=>{
   if(error){
     /* 表還沒建起來跟「真的被擋下來」要分開講：前者是管理員的事。
        一天 5 個的上限是 trigger 丟出來的，訊息本身就是中文，直接照抄。 */
+    /* 表還沒建起來：只講「還沒開放」。這張表單所有人都打得開，v153 第一版在這裡
+       寫了「管理員要先跑 schema_v153…」——就是 celine 說「其他人不該看到」的那種字。 */
     const missing=/venue_suggestions|does not exist|schema cache/i.test(error.message||'');
     box.innerHTML='<div class="note alert">'
-      +(missing?'這個功能還沒開放（管理員要先跑 schema_v153_venues_write.sql）。'
+      +(missing?'這個功能還沒開放，晚點再試試看。'
                :esc(error.message))+'</div>';
     return;
   }
@@ -6679,9 +6775,8 @@ async function loadNear(){
   NEAR.loading=false;
   if(error){
     NEAR.byOffer=null; renderNearBar();
-    const hint=/function|does not exist|offer_stores/i.test(error.message)
-      ? '（資料庫還沒建分店資料，請管理員執行 schema_v58_offer_stores.sql 並匯入分店）' : '';
-    $('#nearStatus').innerHTML=`找附近分店失敗：${esc(error.message)}${hint}`;
+    $('#nearStatus').textContent=pubErrText(error,'找附近分店失敗：',
+      /function|does not exist|offer_stores/i,'找附近分店還沒開放，晚點再試試看。');
     render();
     return;
   }
@@ -8006,9 +8101,7 @@ async function openDetail(id, fallback=null, focusRate=false){
     const {error}=await sb.from('offer_ratings')
       .upsert({offer_id:Number(id), user_id:me.id, score},{onConflict:'offer_id,user_id'});
     if(error){
-      const hint=/relation|does not exist|offer_ratings/i.test(error.message)
-        ? '（Supabase 可能還沒跑 schema_v13_ratings.sql）':'';
-      $('#dtlStarMsg').textContent='評分失敗：'+error.message+hint; return;
+      $('#dtlStarMsg').textContent=pubErrText(error,'評分失敗：',/relation|does not exist/i); return;
     }
     [...body.querySelectorAll('.star-btn')].forEach(x=>x.classList.toggle('on',Number(x.dataset.s)<=score));
     $('#dtlStarMsg').textContent=`你給了 ${score} 星`;
@@ -8253,7 +8346,7 @@ $('#btnDtlDup').onclick=()=>{
 };
 $('#btnFbCancel').onclick=()=>$('#dlgFeedback').close();
 $('#btnFbSubmit').onclick=async()=>{
-  if(!LIVE){ note($('#fbMsgBox'),'alert','離線示範模式無法送出，請確認 Supabase 設定。'); return; }
+  if(!LIVE){ note($('#fbMsgBox'),'alert','現在連不上資料庫，沒辦法送出，晚點再試。'); return; }
   const message=$('#fbMsg').value.trim();
   if(!message){ note($('#fbMsgBox'),'alert','請簡單描述一下內容。'); return; }
   const btn=$('#btnFbSubmit'); btn.disabled=true;
@@ -8274,8 +8367,7 @@ $('#btnFbSubmit').onclick=async()=>{
   }
   btn.disabled=false;
   if(error){
-    const hint=/relation|does not exist/i.test(error.message)?'（Supabase 可能還沒跑 schema_v30_feedback_and_edit_preview.sql）':'';
-    note($('#fbMsgBox'),'alert','送出失敗：'+esc(error.message)+hint); return;
+    note($('#fbMsgBox'),'alert',esc(pubErrText(error,'送出失敗：'))); return;
   }
   note($('#fbMsgBox'),'good','✓ 已收到，謝謝提供！');
   setTimeout(()=>$('#dlgFeedback').close(), 900);
@@ -8718,11 +8810,10 @@ $('#submitForm').onsubmit=async e=>{
     ({error}=await sb.from('offers').insert({...row, status:'pending', verified:false, submitted_by:me.id}));
   }
   b.disabled=false;
-  if(error){ const hint=/relation|does not exist|offer_edits/i.test(error.message)
-      ? '（Supabase 可能還沒跑 schema_v11_edits.sql）' : '';
+  if(error){
     note($('#submitMsg'),'alert', error.message.includes('row-level security')
       ?(asSuggestion?'送出被擋下，可能帳號被停用了。':editing?'更新被擋下，這筆可能已經審核過了。':'送出被擋下。可能今天已投滿 10 筆，或帳號被停用。')
-      :'送出失敗：'+esc(error.message)+hint); return; }
+      :esc(pubErrText(error,'送出失敗：',/relation|does not exist|offer_edits/i))); return; }
   resetSubmitForm();
   note($('#submitMsg'),'good', asSuggestion?'已送出修改建議，等待管理員審核，通過才會真的改到頁面上。'
     :editing?(asAdmin?(wasPending?'已更新，這筆還在待審核，回「審核」分頁可以核可了。':'已更新。'):'已更新，等待審核。'):'已送出，等待審核。可到「我的」查看狀態。');
@@ -8774,8 +8865,7 @@ $('#btnSaveBirthday').onclick=async()=>{
   forgetProfile();   // 自己改過了，快取裡那一份已經過期
   btn.disabled=false;
   if(error){
-    const hint=/relation|does not exist|column/i.test(error.message)?'（Supabase 可能還沒跑 schema_v18_misc.sql）':'';
-    note($('#birthdayMsg'),'alert','儲存失敗：'+esc(error.message)+hint); return; }
+    note($('#birthdayMsg'),'alert',esc(pubErrText(error,'儲存失敗：',/relation|does not exist|column/i))); return; }
   myProfile = myProfile ? {...myProfile, birth_month:m, birth_day:d} : myProfile;
   note($('#birthdayMsg'),'good','✓ 生日已更新。');
   renderPlanner();
@@ -9264,8 +9354,7 @@ async function loadMyStuff(pre){
     b.disabled=true;
     const {error}=await sb.from('offers').delete().eq('id',b.dataset.id).eq('submitted_by',me.id).eq('status','pending');
     if(error){ b.disabled=false;
-      const hint=/relation|does not exist|policy/i.test(error.message)?'（Supabase 可能還沒跑 schema_v14_misc.sql）':'';
-      alert('取消失敗：'+error.message+hint); return; }
+      alert(pubErrText(error,'取消失敗：',/relation|does not exist|policy/i)); return; }
     loadMyStuff();
   });
   $$('.mo-delete').forEach(b=>b.onclick=async()=>{
@@ -9273,8 +9362,7 @@ async function loadMyStuff(pre){
     b.disabled=true;
     const {error}=await sb.from('offers').delete().eq('id',b.dataset.id).eq('submitted_by',me.id).eq('status','rejected');
     if(error){ b.disabled=false;
-      const hint=/relation|does not exist|policy/i.test(error.message)?'（Supabase 可能還沒跑 schema_v17_misc.sql）':'';
-      alert('刪除失敗：'+error.message+hint); return; }
+      alert(pubErrText(error,'刪除失敗：',/relation|does not exist|policy/i)); return; }
     loadMyStuff();
   });
   renderMySubmitHistory();
@@ -9308,6 +9396,41 @@ async function loadMyVenueSuggestions(){
       </div>`;
     }).join('')+'</div>';
 }
+
+/* ---- 「我送出過的」的三顆小分頁（v154）------------------------------
+   三份清單在 loadMyTab() 時本來就一起載好了——它們以前是三塊各自收著的面板，
+   載入時機完全沒變——所以切換只動 class，不重新查資料。記住上次看哪一格。 */
+const REC_KEY='sxr_my_record_tab';
+function showMyRecord(which){
+  const tabs=$$('#myRecordsPanel .rec-tab');
+  if(!tabs.length) return;
+  // 要切去的那一格被藏起來了（沒有資料）：改去第一個看得見的
+  if(!tabs.some(b=>b.dataset.rec===which && !b.classList.contains('hidden')))
+    which=(tabs.find(b=>!b.classList.contains('hidden'))||tabs[0]).dataset.rec;
+  tabs.forEach(b=>{
+    const on=b.dataset.rec===which;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-selected', on?'true':'false');
+    $('#rec'+b.dataset.rec)?.classList.toggle('on', on);
+  });
+  try{ localStorage.setItem(REC_KEY, which); }catch{}
+}
+/* 一筆都沒有的那一格，連分頁鈕都不要出現——一顆點下去是空的按鈕，比少一顆還糟。
+   loadMyFeedback() 有三條路會把 #myFeedbackPanel 藏起來（沒登入、v73 沒跑、
+   一筆都沒有），與其三個地方各補一行，不如直接看它的 class 有沒有變：
+   以後加第四條路也不用回來改這裡。 */
+function paintMyRecordTabs(){
+  const fb=$('#myFeedbackPanel');
+  const fbTab=$('#myRecordsPanel .rec-tab[data-rec="Feedback"]');
+  if(fbTab) fbTab.classList.toggle('hidden', !!fb?.classList.contains('hidden'));
+  const cur=$$('#myRecordsPanel .rec-tab').find(b=>b.classList.contains('on'));
+  showMyRecord(cur?.dataset.rec || 'Offers');
+}
+$$('#myRecordsPanel .rec-tab').forEach(b=>b.onclick=()=>showMyRecord(b.dataset.rec));
+if($('#myFeedbackPanel') && typeof MutationObserver==='function')
+  new MutationObserver(paintMyRecordTabs)
+    .observe($('#myFeedbackPanel'), {attributes:true, attributeFilter:['class']});
+(()=>{ let v='Offers'; try{ v=localStorage.getItem(REC_KEY)||'Offers'; }catch{} showMyRecord(v); })();
 
 /* ---- 「我的」→ 我回報過的問題（schema_v73）----
    嵐：「我填寫過的回報問題，要可以出現在我的頁面」。送出之後只有管理員看得到，
@@ -9570,7 +9693,7 @@ async function attachAdminEmails(rows, monthly, weekly, allIdsRpc){
 
 async function loadBoard(){
   if(!LIVE){
-    $('#lbBody').innerHTML='<div style="color:var(--ink-3);font-size:.86rem">排行榜需要連線 Supabase。</div>';
+    $('#lbBody').innerHTML='<div style="color:var(--ink-3);font-size:.86rem">排行榜要連上資料庫之後才看得到。</div>';
     $('#popBody').innerHTML=''; $('#boardStats').innerHTML=''; $('#wishBody').innerHTML='';
     loadContribBoard(); return;
   }
@@ -9674,12 +9797,10 @@ async function loadBoard(){
     bundled(bundle,'wishConv',()=>sb.rpc('site_wish_conversion'))
   ]);
   if(lbErr && monthly){
-    $('#lbBody').innerHTML=`<div class="note alert">讀取本月排行失敗：${esc(lbErr.message)}
-      ${/relation|does not exist/i.test(lbErr.message)?'（Supabase 可能還沒跑 schema_v13_ratings.sql）':''}</div>`;
+    $('#lbBody').innerHTML=`<div class="note alert">${esc(pubErrText(lbErr,'讀取本月排行失敗：',undefined,PUB_NOT_READY))}</div>`;
   }
   if(lbErr && weekly){
-    $('#lbBody').innerHTML=`<div class="note alert">讀取本週排行失敗：${esc(lbErr.message)}
-      ${/relation|does not exist/i.test(lbErr.message)?'（Supabase 可能還沒跑 schema_v45_leaderboard_weekly.sql）':''}</div>`;
+    $('#lbBody').innerHTML=`<div class="note alert">${esc(pubErrText(lbErr,'讀取本週排行失敗：',undefined,PUB_NOT_READY))}</div>`;
   }
   const allTimeSavedRows = monthly ? (allTimeLb||[]) : (lb||[]);
   // 「最多人收藏」跟「7 天前」比名次升降（見 schema_v49 的註解）。用
@@ -9991,7 +10112,7 @@ let CONTRIB_ROWS=[], CONTRIB_MONTHLY=false, CONTRIB_WEEKLY=false, CONTRIB_HAS_PR
 async function loadContribBoard(){
   const box=$('#contribBody');
   if(!box) return;
-  if(!LIVE){ box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">貢獻度排行榜需要連線 Supabase。</div>'; return; }
+  if(!LIVE){ box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">貢獻度排行榜要連上資料庫之後才看得到。</div>'; return; }
   const period=$('#contribPeriod').value;
   const monthly=period==='month', weekly=period==='week';
   const ym=$('#contribMonth').value || ISO(new Date()).slice(0,7);
@@ -10024,8 +10145,7 @@ async function loadContribBoard(){
     bundled(cb,'contribAllPrev',()=>prevQ),
   ]);
   if(error){
-    box.innerHTML=`<div class="note alert">讀取貢獻度排行榜失敗：${esc(error.message)}
-      ${/relation|does not exist/i.test(error.message)?'（Supabase 可能還沒跑 schema_v46_contribution_leaderboard.sql）':''}</div>`;
+    box.innerHTML=`<div class="note alert">${esc(pubErrText(error,'讀取貢獻度排行榜失敗：',undefined,PUB_NOT_READY))}</div>`;
     return;
   }
   if((monthly||weekly) && rows) rows.forEach((r,i)=>r.rank=i+1);
@@ -10145,8 +10265,7 @@ async function loadRecentActivity(){
   const {data,error}=await bundled(await boardBundle(), 'recent',
     ()=>sb.from('recent_activity').select('*').limit(20));
   if(error){
-    const hint=/relation|does not exist/i.test(error.message)?'（Supabase 可能還沒跑 schema_v20_notifications.sql）':'';
-    box.innerHTML=`<div class="note alert">讀取失敗：${esc(error.message)}${hint}</div>`; return;
+    box.innerHTML=`<div class="note alert">${esc(pubErrText(error,'讀取失敗：',undefined,PUB_NOT_READY))}</div>`; return;
   }
   const list=data||[];
   if(!list.length){ box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">還沒有動態，去用一次優惠或留個言吧。</div>'; return; }
@@ -10198,8 +10317,7 @@ async function loadPendingPreview(pre){
     : await sb.from('offers_pending_preview').select('*')
       .order('created_at',{ascending:false}).limit(30);
   if(error){
-    const hint=/relation|does not exist/i.test(error.message)?'（Supabase 可能還沒跑 schema_v13_ratings.sql）':'';
-    box.innerHTML=`<div class="note alert">讀取失敗：${esc(error.message)}${hint}</div>`;
+    box.innerHTML=`<div class="note alert">${esc(pubErrText(error,'讀取失敗：',undefined,PUB_NOT_READY))}</div>`;
     cnt.classList.add('hidden'); return;
   }
   const list=data||[];
@@ -10255,9 +10373,7 @@ async function loadPendingEditsPreview(pre){
     : await sb.from('offer_edits_pending_preview').select('*')
       .order('created_at',{ascending:false}).limit(30);
   if(error){
-    const hint=/relation|does not exist/i.test(error.message)
-      ?'（Supabase 可能還沒跑 schema_v30_feedback_and_edit_preview.sql）':'';
-    box.innerHTML=`<div class="note alert">讀取失敗：${esc(error.message)}${hint}</div>`;
+    box.innerHTML=`<div class="note alert">${esc(pubErrText(error,'讀取失敗：',undefined,PUB_NOT_READY))}</div>`;
     cnt.classList.add('hidden'); return;
   }
   const list=data||[];
@@ -10356,10 +10472,9 @@ function monthRows(rows, countKey){
     .slice(0,50)
     .map((r,i)=>({...r, rank:i+1}));
 }
-function monthErrHtml(rows, sqlFile){
+function monthErrHtml(rows){
   if(!rows || !rows.err) return '';
-  return `<div class="note alert">這個月份的資料讀取失敗：${esc(rows.err)}${
-    /function|does not exist/i.test(rows.err)?`（Supabase 可能還沒跑 ${sqlFile}）`:''}</div>`;
+  return `<div class="note alert">${esc(pubErrText(rows.err,'這個月份的資料讀取失敗：',/function|does not exist/i,PUB_NOT_READY))}</div>`;
 }
 async function refreshPopRecent(){
   const days=Number($('#popRange')?.value||30);
@@ -10378,7 +10493,7 @@ function renderPopBody(){
   const monthMode=!!ym && !climb && !recent;
   $('#popMonthWrap')?.classList.toggle('hidden', climb||recent);
   const days=Number($('#popRange')?.value||30);
-  const err=monthErrHtml(POP_MONTH_ROWS,'schema_v83_board_by_month.sql');
+  const err=monthErrHtml(POP_MONTH_ROWS);
   const rows=monthMode ? monthRows(POP_MONTH_ROWS,'user_count')
     : climb ? rankClimbRows(POP_ROWS) : recent ? popRecentRows(days) : POP_ROWS;
   const entries=rows.map(r=>`<tr class="lb-click" data-oid="${r.offer_id}"><td class="rk ${r.rank<=3?'top':''}">${r.rank}${(POP_HAS_PREV&&!recent&&!monthMode)?`<br>${rankDeltaHtml(true,r.prevRank,r.rank)}`:''}</td>
@@ -10414,7 +10529,7 @@ function renderMostWished(rows, hasPrev){
   const ym=$('#wishMonth')?.value||'';
   const monthMode=!!ym && !climb;
   $('#wishMonthWrap')?.classList.toggle('hidden', climb);
-  const err=monthErrHtml(WISH_MONTH_ROWS,'schema_v83_board_by_month.sql');
+  const err=monthErrHtml(WISH_MONTH_ROWS);
   const list=monthMode ? monthRows(WISH_MONTH_ROWS,'wish_count')
     : climb ? rankClimbRows(WISH_ROWS) : WISH_ROWS;
   const entries=list.map(r=>{
@@ -11532,7 +11647,8 @@ function renderWeekdayBreakdown(rows){
    資料來自 site_events 的 pageview，跟「使用時段」那張圖同一份
    （schema_v150_weekday.sql，形狀照抄 v55 的時段版）。函式還沒跑的話
    這一塊就不出現，不會把錯誤訊息丟給一般使用者看——這是錦上添花的一張圖，
-   不是壞掉。管理員才看得到那一行「要跑哪個 SQL」。 ---- */
+   不是壞掉。v155 起管理員在這裡也看不到「要跑哪個 SQL」（celine：「其他人不該看到這個」，
+   is_admin 判斷錯一次就是全站看得到）；要跑什麼看 MIGRATIONS.md。 ---- */
 let WEEKDAY_VISITS=null, WEEKDAY_VISITS_ERR='';
 async function loadWeekdayVisits(){
   if(!LIVE||!sb) return;
@@ -11546,11 +11662,7 @@ function renderWeekdayVisits(){
   const box=$('#boardWeekdayVisits');
   if(!box) return;
   if(WEEKDAY_VISITS_ERR){
-    box.innerHTML = myProfile?.is_admin
-      ? `<div class="note alert">星期的上站人數讀不到：${esc(WEEKDAY_VISITS_ERR)}`
-        +`${/function|does not exist/i.test(WEEKDAY_VISITS_ERR)
-          ? '（要先跑 schema_v150_weekday.sql）':''}</div>`
-      : '';
+    box.innerHTML='';
     return;
   }
   const rows=WEEKDAY_VISITS;
@@ -11601,12 +11713,11 @@ async function loadMonthlyActivity(force){
 function renderMonthlyActivity(){
   const box=$('#boardMonthlyChart');
   if(!box) return;
-  if(!LIVE){ box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">這份數據需要連線 Supabase。</div>'; return; }
+  if(!LIVE){ box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">連上資料庫之後才看得到。</div>'; return; }
   const rows=MONTHLY_ROWS;
   if(!rows){
     box.innerHTML=`<div class="note${MONTHLY_ERR?' alert':''}">${MONTHLY_ERR
-      ? `每月人數讀取失敗：${esc(MONTHLY_ERR)}${/function|does not exist/i.test(MONTHLY_ERR)
-          ? '（Supabase 可能還沒跑 schema_v81_monthly_and_spend.sql）':''}`
+      ? esc(pubErrText(MONTHLY_ERR,'每月人數讀取失敗：',/function|does not exist/i,PUB_NOT_READY))
       : '載入中…'}</div>`;
     return;
   }
@@ -11711,7 +11822,7 @@ async function uploadAvatar(file){
   }catch(e){
     const t=String(e?.message||e);
     note(msg,'alert', /bucket|not found|policy|row-level|avatar/i.test(t)
-      ? '大頭貼上傳還沒開通（管理員需要先在 Supabase 執行 schema_v70_split_groups_merge_avatars.sql）。'
+      ? '大頭貼上傳還沒開放，晚點再試試看。'
       : '上傳失敗：'+esc(t));
   }
 }
@@ -12927,7 +13038,7 @@ $('#btnSvSubmit').onclick=async()=>{
     const msg = /row-level security|violates row-level|42501/i.test(error.message+(error.code||''))
       ? '你 24 小時內已經填過一份了，謝謝！明天再來分享新的感受吧。'
       : /relation|does not exist/i.test(error.message)
-        ? '問卷功能還沒開通（管理員需要先在 Supabase 執行 schema_v62_survey_and_visits.sql）。'
+        ? '問卷還沒開放，晚點再試試看。'
         : '送出失敗：'+esc(error.message);
     note($('#svMsg'),'alert',msg);
     return;
@@ -14111,7 +14222,7 @@ const PANEL_DEFAULT_CLOSED=new Set([
   'pnlRejected','pnlApproved','pnlUsageReports','pnlAnnounce','pnlMerge',
   'pnlAdminSettings','pnlSiteFlags',
   // 我的：比較像歷史紀錄、不用每次都看到的
-  'altBdayPanel','badgesPanel','myReportsPanel','myOffersPanel','myFeedbackPanel','myDebug',
+  'altBdayPanel','badgesPanel','myRecordsPanel','myDebug',
   // 排行榜：圖表最多、內容最長的那一塊
   'pnlBoardInsights',
 ]);

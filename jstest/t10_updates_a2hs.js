@@ -30,9 +30,11 @@ const { boot, tick, makeAsserts } = require('./harness');
   const panel = doc.querySelector('#siteUpdatesPanel');
   t.ok('「我的」分頁有更新紀錄', !!panel && !!panel.closest('#tab-mine'));
   t.ok('更新紀錄不在會員專屬區塊裡（訪客也看得到）', panel && !panel.closest('#mineAuthedPanels'));
-  // celine：更新紀錄要可以摺疊、預設展開
-  t.ok('更新紀錄可以摺疊', !!panel.querySelector('.panel-cbody'));
-  t.ok('更新紀錄預設展開', !panel.classList.contains('collapsed'));
+  // celine：更新紀錄要可以摺疊、預設展開。
+  // v154 它收進了「關於壽星日」，會摺疊的是外面那一塊——問外面那一塊。
+  const outer = panel.closest('.panel');
+  t.ok('更新紀錄住在一塊可以摺疊的面板裡', !!outer && !!outer.querySelector('.panel-cbody'));
+  t.ok('那一塊預設展開', !outer.classList.contains('collapsed'));
 
   const updates = win.eval('SITE_UPDATES');
   const dates = updates.map((u) => u.date);
@@ -91,16 +93,16 @@ const { boot, tick, makeAsserts } = require('./harness');
 
   // 可以摺疊之後：收合時標題旁要看得到 NEW；收合著不算看過，展開並停留才算
   const headNew = doc.querySelector('#updHeadNew');
-  const h2 = panel.querySelector('h2');
+  const h2 = outer.querySelector('h2');   // v154：收合的是外面那一塊
   ls.setItem('sxr_updates_seen', updates[1].date);
   win.renderSiteUpdates();
-  if (!panel.classList.contains('collapsed')) h2.click();
+  if (!outer.classList.contains('collapsed')) h2.click();
   t.ok('收合時標題旁也看得到 NEW', !headNew.classList.contains('hidden'));
   doc.querySelector('.tab[data-tab="mine"]').click();
   await new Promise((r) => win.setTimeout(r, 4300));
   t.eq('更新紀錄收合著，只打開「我的」分頁不算看過', ls.getItem('sxr_updates_seen'), updates[1].date);
   h2.click();
-  t.ok('點標題展開更新紀錄', !panel.classList.contains('collapsed'));
+  t.ok('點標題展開更新紀錄', !outer.classList.contains('collapsed'));
   await new Promise((r) => win.setTimeout(r, 2800));
   t.eq('展開幾秒後才標成已讀', ls.getItem('sxr_updates_seen'), updates[0].date);
   t.ok('看過之後標題旁的 NEW 消失', headNew.classList.contains('hidden'));
@@ -109,7 +111,7 @@ const { boot, tick, makeAsserts } = require('./harness');
   // 展開著切到「我的」分頁，停留一下也算看過（原本只有「點標題展開」那一條路）
   ls.setItem('sxr_updates_seen', updates[1].date);
   win.renderSiteUpdates();
-  t.ok('展開著', !panel.classList.contains('collapsed'));
+  t.ok('展開著', !outer.classList.contains('collapsed'));
   doc.querySelector('.tab[data-tab="mine"]').click();
   await new Promise((r) => win.setTimeout(r, 2800));
   t.eq('展開著停留幾秒就算看過', ls.getItem('sxr_updates_seen'), updates[0].date);
@@ -130,7 +132,7 @@ const { boot, tick, makeAsserts } = require('./harness');
   entries()[0].click();
   t.eq('點進完整更新紀錄就算看過', ls.getItem('sxr_updates_seen'), updates[0].date);
   h2.click();
-  t.ok('再點標題收合', panel.classList.contains('collapsed'));
+  t.ok('再點標題收合', outer.classList.contains('collapsed'));
   h2.click();
 
   // 更新紀錄文字有跳脫
@@ -188,7 +190,7 @@ const { boot, tick, makeAsserts } = require('./harness');
 
   // 去看看：切到「我的」、展開更新紀錄、捲過去
   resetUpd();
-  if (!panel.classList.contains('collapsed')) h2.click();
+  if (!outer.classList.contains('collapsed')) h2.click();
   doc.querySelector('.tab[data-tab="browse"]').click();
   win.maybeShowUpdatesNudge();
   let scrolledTo = null;
@@ -196,7 +198,7 @@ const { boot, tick, makeAsserts } = require('./harness');
   doc.querySelector('#btnUpdNudgeGo').click();
   t.ok('按「去看看」收起通知', unudge.classList.contains('hidden'));
   t.eq('按「去看看」切到「我的」分頁', doc.querySelector('.tab[data-tab="mine"]').getAttribute('aria-selected'), 'true');
-  t.ok('按「去看看」展開更新紀錄', !panel.classList.contains('collapsed'));
+  t.ok('按「去看看」展開更新紀錄', !outer.classList.contains('collapsed'));
   await new Promise((r) => win.setTimeout(r, 300));
   t.eq('按「去看看」捲到更新紀錄', scrolledTo, 'siteUpdatesPanel');
   await new Promise((r) => win.setTimeout(r, 2700));
