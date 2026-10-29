@@ -1526,6 +1526,44 @@
      窄螢幕讓名字自己佔一行，不要把按鈕擠到看不見。 */
   .va-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
     padding:7px 0;border-top:1px solid var(--line-soft)}
+  /* v156 行程。一趟是一張可以展開的卡片；展開之後裡面是一張有編號的清單，
+     編號就是順序——調順序的時候數字跟著動，一眼看得出「第幾站」。 */
+  .plan{border:1px solid var(--line);border-radius:var(--r-sm);margin-top:10px;background:var(--surface)}
+  .plan-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;width:100%;padding:11px 12px;
+    background:none;border:0;cursor:pointer;text-align:left;color:var(--ink);font:inherit}
+  .plan-date{font-weight:800;font-size:.92rem;white-space:nowrap}
+  .plan-date.none{color:var(--ink-3);font-weight:700}
+  .plan-title{flex:1 1 auto;min-width:0;font-size:.88rem;color:var(--ink-2);overflow-wrap:anywhere}
+  .plan-n{font-size:.78rem;color:var(--ink-3);white-space:nowrap}
+  .plan-body{padding:4px 12px 12px;border-top:1px solid var(--line-soft)}
+  .plan-items{list-style:none;margin:10px 0;padding:0}
+  .pi{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line-soft)}
+  .pi:first-child{border-top:0}
+  .pi-no{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;
+    font-size:.76rem;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:2px}
+  .pi.done .pi-no{background:var(--line);color:var(--ink-3)}
+  .pi.done .pi-brand,.pi.done .pi-offer{text-decoration:line-through;color:var(--ink-3)}
+  .pi-main{flex:1 1 auto;min-width:0}
+  .pi-brand{background:none;border:0;padding:0;font:inherit;font-weight:800;font-size:.92rem;
+    color:var(--ink);cursor:pointer;text-align:left;overflow-wrap:anywhere}
+  /* 優惠內容只留兩行：這裡是在排「去哪幾家」，不是在讀條件——要看全文點品牌名 */
+  .pi-offer{font-size:.8rem;color:var(--ink-3);margin:2px 0 6px;overflow-wrap:anywhere;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .pi-note{width:100%;font-size:.82rem;padding:5px 8px;border:1px solid var(--line);
+    border-radius:var(--r-sm);background:var(--surface);color:var(--ink)}
+  /* 動作（完成、↑↓✕）放在內容底下一整列，不放右邊一欄：手機上右邊那一欄會吃掉
+     一半寬度，優惠內容被擠成六行、備註欄只看得到四個字。 */
+  .pi-act{display:flex;align-items:center;gap:6px;margin-top:6px}
+  .pi-act .pi-move{display:flex;gap:4px;margin-left:auto}
+  .pi-done{font-size:.76rem;display:flex;align-items:center;gap:4px;color:var(--ink-2);cursor:pointer;white-space:nowrap}
+  .plan-past summary{cursor:pointer;font-size:.84rem;color:var(--ink-3);margin-top:14px}
+  .pa-list{max-height:50vh;overflow:auto;margin:8px 0;border:1px solid var(--line);border-radius:var(--r-sm)}
+  .pa-row{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;padding:9px 10px;
+    border-top:1px solid var(--line-soft);cursor:pointer}
+  .pa-row:first-child{border-top:0}
+  .pa-brand{font-weight:800;font-size:.88rem}
+  .pa-offer{flex:1 1 auto;min-width:0;font-size:.8rem;color:var(--ink-3);overflow-wrap:anywhere}
+  .va-row .va-stores{flex:1 1 100%;margin:0;font-size:.76rem;color:var(--ink-3);overflow-wrap:anywhere}
   .va-row .va-name{flex:1 1 180px;min-width:0;font-size:.86rem;padding:5px 8px;
     border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);color:var(--ink)}
   /* celine：「投稿按鈕多一點，要一按進去首頁就能投稿，例如懸浮圓點」。
@@ -2121,6 +2159,15 @@
      名字上，那本來就是對的。 -->
 <section id="tab-trip" class="hidden">
   <div class="wrap">
+    <!-- celine：「行程那邊，我的理想狀態是可以寫日期、跟排當天要去哪間店、
+         跟可以寫備註、跟調順序」。PLAN-行程分頁.md 裡排在 v146、一直沒做的那一塊。
+         放在「一趟用最多」上面：那一塊是「去哪裡」的靈感，這一塊是你自己的計畫——
+         打開這一頁的人多半是回來看自己排好的那一趟。 -->
+    <div class="panel" id="pnlPlans">
+      <h2>我的行程</h2>
+      <p class="sub">哪一天、要去哪幾間店、照什麼順序。只有你自己看得到。</p>
+      <div id="planBody"><div class="hint">載入中…</div></div>
+    </div>
     <div class="panel" id="pnlVenues">
       <h2>一趟用最多</h2>
       <p class="sub">哪些地方一次就能用到最多家生日優惠。點開看裡面有哪幾家。</p>
@@ -2769,6 +2816,14 @@
        target="_blank" rel="noopener">去 Buy Me a Coffee ↗</a>
   </div>
 </form></dialog>
+<dialog id="dlgPlanAdd"><form method="dialog" class="dlg">
+  <h2>加店家</h2>
+  <div id="paPicker"></div>
+  <div class="foot">
+    <button type="button" class="btn" id="btnPaCancel">取消</button>
+    <button type="button" class="btn primary" id="btnPaAdd" disabled>加入</button>
+  </div>
+</form></dialog>
 <dialog id="dlgVenueSuggest"><form method="dialog" class="dlg">
   <h2>推薦一個地點</h2>
   <p class="sub">哪裡一趟就能用到好幾家生日優惠？告訴我們名字就好，座標我們自己對。</p>
@@ -2777,10 +2832,14 @@
       placeholder="例如：新光三越南西店、新竹巨城"></div>
   <div class="field"><label>在哪個縣市</label>
     <select id="vsCounty"><option value="">不確定／跨縣市</option></select></div>
+  <!-- celine：「幾家店建議有搜尋功能跟核可打勾，可以直接搜尋系統有的然後添加」。
+       本來是一格空白讓人自己打；收回來的常常是「星巴克 康是美 那幾家」，
+       品牌名寫法跟站上的對不起來。改成搜站上已經有的、勾起來——跟行程的
+       「加店家」同一個元件。站上找不到的才寫在下面那一格。 -->
   <div class="field"><label>裡面有哪幾家？</label>
-    <textarea id="vsNote" maxlength="300"
-      placeholder="記得幾家寫幾家就好，例如：星巴克、康是美、屈臣氏、無印良品"></textarea>
-    <div class="hint">不填也可以送出。</div></div>
+    <div id="vsPicker"></div>
+    <input id="vsNote" maxlength="120" style="margin-top:8px"
+      placeholder="站上找不到的店寫在這裡（不填也可以）" aria-label="站上找不到的店"></div>
   <div id="vsMsg"></div>
   <div class="foot">
     <button type="button" class="btn" id="btnVsCancel">取消</button>
@@ -3968,6 +4027,9 @@ async function onSession(s){
      而且大部分時候根本沒點進「審核」。改成切到那個分頁才載，只留徽章那一支
      （不載的話就看不到「有幾筆待審」，那顆紅點是整個審核流程的入口）。 */
   if(myProfile?.is_admin) loadPendingBadge();
+  /* v156：人正站在「排行程」上的時候登入／登出，那一頁要跟著換——不然登入完
+     還看到「登入之後就能排行程」，或登出了還留著上一個人的行程。 */
+  if(ACTIVE_TAB==='trip'){ loadPlans(); loadMyVenueSuggestions(); }
 }
 
 /* ---- P0：管理員權限診斷區。永遠顯示（登入後），出問題時使用者能直接複製這裡的資訊。 ---- */
@@ -5205,7 +5267,7 @@ const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
 /* 更新紀錄的內容在 updates.json，build.py 注入這裡，同一份資料也產生整頁的
    updates.html。「我的」頁面只用到日期跟標題（最新幾筆＋NEW 標記），
    細項（items）留著是給 updates.html 用的。 */
-const SITE_UPDATES = [{"date":"2026-10-29","title":"多了「排行程」；投稿的按鈕跟到每一頁","items":["「排行程」告訴你哪裡一次能用到最多家；可以一鍵加進待辦清單","右下角多一顆「＋投稿」，每一頁都按得到；也可以推薦一個地點","「我的」從 18 塊收成 13 塊；設定會記得、清單可切字少版"]},{"date":"2026-10-28","title":"地圖上直接就能記「我用過了」","items":["地圖的店家小視窗多一顆「我用過了」，不用再回清單找","優惠詳情視窗下面也加了同一顆","回報用過之後會提醒你順便給星等，排行榜的說明也剪短了"]},{"date":"2026-10-23","title":"手機上比較不會跳出「連不到資料庫」了","items":["連線元件改成從本站載入，不再等外部網站，慢或被擋都不受影響","真的連不上時，多一顆「複製狀況」可以把情況傳給我們"]},{"date":"2026-10-22","title":"地圖好按了、篩選看得見、折扣寫出幾折","items":["地圖上的點變好按了，資訊也不會看到一半就不見","現在篩了哪些條件直接列在清單上面，可以一個一個拿掉","「我的」打開就是待辦清單；折扣會寫出幾折、折多少錢"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
+const SITE_UPDATES = [{"date":"2026-10-29","title":"可以排行程了；投稿的按鈕跟到每一頁","items":["「排行程」可以排一趟：哪天、去哪幾家、照什麼順序，每家都能寫備註","還看得到哪裡一次能用到最多家；右下角「＋投稿」每一頁都按得到","「我的」從 18 塊收成 13 塊；設定會記得、清單可切字少版"]},{"date":"2026-10-28","title":"地圖上直接就能記「我用過了」","items":["地圖的店家小視窗多一顆「我用過了」，不用再回清單找","優惠詳情視窗下面也加了同一顆","回報用過之後會提醒你順便給星等，排行榜的說明也剪短了"]},{"date":"2026-10-23","title":"手機上比較不會跳出「連不到資料庫」了","items":["連線元件改成從本站載入，不再等外部網站，慢或被擋都不受影響","真的連不上時，多一顆「複製狀況」可以把情況傳給我們"]},{"date":"2026-10-22","title":"地圖好按了、篩選看得見、折扣寫出幾折","items":["地圖上的點變好按了，資訊也不會看到一半就不見","現在篩了哪些條件直接列在清單上面，可以一個一個拿掉","「我的」打開就是待辦清單；折扣會寫出幾折、折多少錢"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
 const SITE_UPDATES_SHOW=3;
 
 function updatesSeenDate(){
@@ -5649,6 +5711,7 @@ const EVENT_LABEL={
   wishlist_to_map:'待辦清單 →「看地圖、由近到遠」', near_wish_only:'附近「只看收藏」',
   geo_ask:'問定位權限', go_submit:'開始投稿',
   venue_suggest:'打開「推薦一個地點」',
+  plan_create:'排一趟新的行程', plan_add:'把店家加進行程',
   rate_cta:'從提示去評分', rate_nudge:'「還沒評分」的提示出現',
   rate_all_open:'一次評很多筆', rate_submit:'送出評分',
   survey_nudge:'問卷提示出現', survey_open:'打開問卷', survey_submit:'送出問卷',
@@ -5734,6 +5797,29 @@ async function loadVenueAdmin(){
                cand:cand.error?[]:(cand.data||[]), candErr:cand.error?cand.error.message:''};
   renderVenueAdmin();
 }
+/* 熱點的預設名字。
+   admin_venue_candidates() 的 sample_names 是那一格裡**所有分店名**串起來的
+   （「31冰淇淋 誠品南西店、DONQ東客麵包 新光三越南西店、…」）。v153 直接拿它
+   當預設名字——等於叫你一格一格刪掉重打（celine：「還是跑不出來」）。
+   改成從那串裡挑最常出現的「館名＋分店」當草稿（新光三越南西店），那一串移到
+   下面當參考，看了就知道該不該改。猜不到就留空：那多半是「車站周邊」「某條街」，
+   本來就要自己取。 */
+const VENUE_NAME_RE=/(新光三越|遠東百貨|大遠百|遠百|SOGO|微風|誠品|京站|巨城|環球|夢時代|漢神巨蛋|漢神|統一時代|中友|台茂|美麗華|裕隆城|三井|LaLaport|比漾|廣三|新月|南紡|義享|大魯閣|德安|ATT ?4 ?FUN|Dream Plaza|大江|華泰|秀泰)[^\s、，,()（）]{0,8}/gi;
+function guessVenueName(sample){
+  const count=new Map();
+  String(sample||'').split('、').forEach(n=>{
+    (n.match(VENUE_NAME_RE)||[]).forEach(m=>{ const k=m.trim(); count.set(k,(count.get(k)||0)+1); });
+  });
+  // 出現最多次的那個；一樣多就取長的（「新光三越南西店」比「新光三越」好認）
+  let best='', bn=0;
+  count.forEach((n,k)=>{ if(n>bn || (n===bn && k.length>best.length)){ best=k; bn=n; } });
+  return best.slice(0,40);
+}
+function venueStoresHint(sample){
+  const list=String(sample||'').split('、').filter(Boolean);
+  const head=list.slice(0,5).join('、');
+  return list.length>5 ? `${head}…等 ${list.length} 家` : head;
+}
 function renderVenueAdmin(){
   const box=$('#venueAdminBody'); if(!box||!VENUE_ADMIN) return;
   const {sug, mine, cand, candErr}=VENUE_ADMIN;
@@ -5771,11 +5857,12 @@ function renderVenueAdmin(){
 
   const candHtml = candErr ? `<div class="note alert">熱點算不出來：${esc(candErr)}</div>`
     : (fresh.length ? fresh.slice(0,60).map((c,i)=>`<div class="va-row">
-        <input class="va-name" data-cname="${i}" value="${esc(c.sample_names||'')}"
+        <input class="va-name" data-cname="${i}" value="${esc(guessVenueName(c.sample_names))}"
           maxlength="40" placeholder="取個名字（系統猜不到）">
         <span style="color:var(--ink-3);font-size:.8rem;white-space:nowrap">
           ${esc(c.county||'')} · ${c.offers} 家</span>
         <button type="button" class="btn sm primary" data-cnew="${i}">建立並公開</button>
+        <div class="hint va-stores">${esc(venueStoresHint(c.sample_names))}</div>
       </div>`).join('') : none('系統找到的熱點都建過了。'));
 
   box.innerHTML = sec(`使用者推薦的（${sug.length}）`, sugHtml)
@@ -6408,7 +6495,12 @@ function paintFabSubmit(){
 }
 
 function ensureTabData(tab){
-  if(tab==='trip'){ if(!VENUES) loadVenues(); return; }
+  if(tab==='trip'){
+    if(!VENUES) loadVenues();
+    // 只認「載的時候是誰」：同一個分頁換了帳號，手上那份是上一個人的
+    if(!plansReady()) loadPlans();
+    return;
+  }
   if(tab==='board'){ loadBoard(); return; }        // 它自己有快取，每次切過去都問沒關係
   if(TAB_LOADED.has(tab)) return;
   if(tab==='mine'){
@@ -6471,16 +6563,25 @@ function openVenueSuggest(){
     sel.innerHTML='<option value="">不確定／跨縣市</option>'
       +COUNTIES.filter(c=>c!=='全台').map(c=>`<option>${esc(c)}</option>`).join('');
   $('#vsName').value=''; $('#vsNote').value=''; $('#vsMsg').innerHTML='';
+  VS_PICKER=mountOfferPicker($('#vsPicker'), {
+    emptyLabel:'打字搜尋站上已經有的優惠，勾起來就好。一家都不勾也可以送出。'});
   // 正在看哪個縣市就先選哪個，多數人就是在幫自己看的那一區補
   if(sel) sel.value=$('#venueCounty')?.value||'';
   $('#dlgVenueSuggest').showModal(); pushDlgHistory();
   $('#vsName').focus();
   logEvent('venue_suggest',{});
 }
+let VS_PICKER=null;
 $('#btnVenueSuggest').onclick=openVenueSuggest;
 $('#btnVsCancel').onclick=()=>$('#dlgVenueSuggest').close();
 $('#btnVsSend').onclick=async()=>{
-  const name=$('#vsName').value.trim(), note=$('#vsNote').value.trim();
+  const name=$('#vsName').value.trim();
+  /* 勾的寫成品牌名、站上找不到的接在後面。存進原本那一格 note（≤300 字），
+     不另外開欄位：管理員要的是「看得懂是哪幾家」，對座標用的是熱點清單，
+     用不到優惠的 id——多一欄就多一支 SQL 要你跑。 */
+  const brands=(VS_PICKER?VS_PICKER.offers():[]).map(o=>o.brand);
+  const extra=$('#vsNote').value.trim();
+  const note=[brands.join('、'), extra].filter(Boolean).join('；');
   const box=$('#vsMsg');
   if(name.length<2){ box.innerHTML='<div class="note alert">地點名稱至少要兩個字。</div>'; return; }
   const btn=$('#btnVsSend'); btn.disabled=true; btn.textContent='送出中…';
@@ -6489,10 +6590,9 @@ $('#btnVsSend').onclick=async()=>{
     note: note ? note.slice(0,300) : null, user_id: me.id });
   btn.disabled=false; btn.textContent='送出';
   if(error){
-    /* 表還沒建起來跟「真的被擋下來」要分開講：前者是管理員的事。
-       一天 5 個的上限是 trigger 丟出來的，訊息本身就是中文，直接照抄。 */
     /* 表還沒建起來：只講「還沒開放」。這張表單所有人都打得開，v153 第一版在這裡
-       寫了「管理員要先跑 schema_v153…」——就是 celine 說「其他人不該看到」的那種字。 */
+       寫了「管理員要先跑 schema_v153…」——就是 celine 說「其他人不該看到」的那種字。
+       其他錯誤照抄：一天 5 個的上限是 trigger 丟出來的，訊息本身就是中文。 */
     const missing=/venue_suggestions|does not exist|schema cache/i.test(error.message||'');
     box.innerHTML='<div class="note alert">'
       +(missing?'這個功能還沒開放，晚點再試試看。'
@@ -6501,6 +6601,7 @@ $('#btnVsSend').onclick=async()=>{
   }
   box.innerHTML='<div class="note">收到了，謝謝！我們會去對座標，確認之後就會出現在這一頁。</div>';
   $('#vsName').value=''; $('#vsNote').value='';
+  VS_PICKER=null;
   loadMyVenueSuggestions();
   setTimeout(()=>$('#dlgVenueSuggest').close(), 1200);
 };
@@ -8191,8 +8292,17 @@ let DLG_HISTORY_PUSHED=false;
 function pushDlgHistory(){
   if(!DLG_HISTORY_PUSHED){ history.pushState({sxrDialog:true},''); DLG_HISTORY_PUSHED=true; }
 }
+/* 用按鈕關掉視窗時，這裡自己呼叫 history.back() 把那筆紀錄吐掉——那一次
+   popstate 是我們自己造成的，不是使用者按了返回鍵。
+
+   本來沒有分開：旗標先清成 false 再 back()，popstate 進來時看到「沒有視窗開著」，
+   就當成使用者在最上層按返回，跳出「再按一次返回鍵可以離開」**而且把離開的開關
+   打開兩秒**。所以從 v49 起，用按鈕關掉**任何一個**視窗（最常用的優惠詳情也是）
+   都會閃那一行；手機上「關掉、再按一下返回」這個再自然不過的動作，就直接把
+   網站／App 關掉了。v157 寫行程的「加店家」時在瀏覽器裡看到才發現。 */
+let DLG_SELF_BACK=false;
 function consumeDlgHistory(){
-  if(DLG_HISTORY_PUSHED){ DLG_HISTORY_PUSHED=false; history.back(); }
+  if(DLG_HISTORY_PUSHED){ DLG_HISTORY_PUSHED=false; DLG_SELF_BACK=true; history.back(); }
 }
 /* ---- 彈出視窗打開時鎖住背景的捲動位置 ----
    嵐：「用 iPad 瀏覽時，點開其中一筆關掉後又會跑到最上面」。iOS／iPadOS Safari 開 <dialog>
@@ -8275,10 +8385,14 @@ function showToast(msg, ms=2600){
   setTimeout(()=>t.remove(),ms);
 }
 window.addEventListener('popstate', ()=>{
+  // 自己 back() 造成的那一次：什麼都不做（見 consumeDlgHistory）
+  if(DLG_SELF_BACK){ DLG_SELF_BACK=false; return; }
   if(DLG_HISTORY_PUSHED){
     DLG_HISTORY_PUSHED=false;
     [$('#dlgDetail'),$('#dlgReport'),$('#dlgFeedback'),$('#dlgNotif'),$('#dlgSharePreview'),
-     $('#dlgCoffee'),$('#dlgBulkAdd'),$('#dlgBadgeUnlock')].forEach(d=>{ if(d.open) d.close(); });
+     $('#dlgCoffee'),$('#dlgBulkAdd'),$('#dlgBadgeUnlock'),
+     // v153「推薦一個地點」、v156「加店家」當初沒列進來：手機按返回鍵關不掉它們
+     $('#dlgVenueSuggest'),$('#dlgPlanAdd')].forEach(d=>{ if(d?.open) d.close(); });
     // 手機篩選／排序底部彈出視窗不是 <dialog>，沒有原生 close 事件，
     // 這裡直接呼叫對應的關閉函式（DLG_HISTORY_PUSHED 已經是 false，
     // 函式裡再呼叫一次 consumeDlgHistory() 會被自己的保護擋掉，不會重複觸發）。
@@ -8308,6 +8422,7 @@ $('#dlgCoffee').addEventListener('close', consumeDlgHistory);
 $('#dlgBulkAdd').addEventListener('close', consumeDlgHistory);
 $('#dlgBadgeUnlock').addEventListener('close', consumeDlgHistory);
 $('#dlgVenueSuggest').addEventListener('close', consumeDlgHistory);
+$('#dlgPlanAdd').addEventListener('close', consumeDlgHistory);
 
 /* ---- 問題回報／建議：訪客也能填，不用登入。不收信箱了——處理完成後改用
    站內通知（notifications 表）回覆登入的送出者，見 admin_resolve_feedback()
@@ -9369,6 +9484,332 @@ async function loadMyStuff(pre){
   loadMyFeedback();
 }
 let MY_OFFERS=[];
+
+/* ---- 行程（v156）---------------------------------------------------
+   celine：「可以寫日期、跟排當天要去哪間店、跟可以寫備註、跟調順序」。
+
+   一趟（plans）底下掛幾家店（plan_items），只有本人看得到。
+   跟待辦清單是兩件事：待辦清單是「想用的優惠」整年累積；行程是「某一天要去
+   哪幾家、照什麼順序」，用完就過去了。店從待辦清單挑，也可以搜全部的。
+
+   「哪一間分店」寫在那一家的備註裡，不做選單：同一個品牌在台北有十幾家，
+   選單會是一條很長的清單，而人心裡想的通常是「那棟的那一家」，打字比挑快。
+
+   寫入都是「先改畫面、再送資料庫」：改日期、打備註不該要等一個來回才看得到。
+   送失敗才退回去，並且講出來。 */
+let PLANS=null, PLANS_ERR='', PLANS_OWNER=null, PLAN_OPEN=null;
+const PLAN_WD='日一二三四五六';
+function planToday(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function planDateLabel(s){
+  if(!s) return '還沒定日期';
+  const [y,m,d]=String(s).split('-').map(Number);
+  return `${m}/${d}（${PLAN_WD[new Date(y,m-1,d).getDay()]}）`;
+}
+async function loadPlans(){
+  const box=$('#planBody'); if(!box) return;
+  if(!LIVE){ box.innerHTML='<div class="hint">'+esc(offlineMsg('看不到行程'))+'</div>'; return; }
+  if(!me){ PLANS=null; PLANS_OWNER=null; renderPlans(); return; }
+  const owner=me.id;
+  const {data,error}=await sb.from('plans')
+    .select('id,plan_date,title,note,created_at,plan_items(id,offer_id,note,sort_order,done)')
+    .order('plan_date',{ascending:true}).limit(100);
+  // 載到一半換了帳號：這份是上一個人的，丟掉
+  if(me?.id!==owner) return;
+  if(error){
+    PLANS=null; PLANS_OWNER=null;
+    PLANS_ERR=/plans|plan_items|does not exist|schema cache|relationship/i.test(error.message||'')
+      ? 'missing' : (error.message||'連不上');
+    renderPlans(); return;
+  }
+  PLANS_ERR=''; PLANS_OWNER=owner;
+  PLANS=(data||[]).map(p=>{
+    const {plan_items, ...rest}=p;
+    return {...rest, items:(plan_items||[]).slice().sort((a,b)=>a.sort_order-b.sort_order||a.id-b.id)};
+  });
+  renderPlans();
+}
+/* 換帳號（同一個分頁登出再登入另一個人）的時候，手上那份是上一個人的行程——
+   只認「載的時候是誰」，不是「現在有沒有一份」。 */
+function plansReady(){ return !!PLANS && !!me && PLANS_OWNER===me.id; }
+function planItemsDone(p){ return p.items.filter(i=>i.done).length; }
+function renderPlans(){
+  const box=$('#planBody'); if(!box || !LIVE) return;
+  if(!me){
+    box.innerHTML='<div class="hint">登入之後就能排行程：哪一天、去哪幾間店、照什麼順序。'
+      +'右上角可以用 Google 登入。</div>';
+    return;
+  }
+  // 站務的事不寫在這裡（celine：「其他人不該看到這個」）——要跑哪一支寫在 MIGRATIONS.md
+  if(PLANS_ERR==='missing'){ box.innerHTML='<div class="hint">這個功能還沒開放，晚點再試試看。</div>'; return; }
+  if(PLANS_ERR){ box.innerHTML='<div class="note alert">讀不到行程：'+esc(PLANS_ERR)+'</div>'; return; }
+  if(!plansReady()){ box.innerHTML='<div class="hint">載入中…</div>'; return; }
+
+  /* 排法：還沒到的照日期（最近的在最上面）→ 還沒定日期的 → 過去的收進最下面。
+     打開這一頁的人要找的幾乎都是「下一趟」，不是去年那一趟。 */
+  const today=planToday();
+  const upcoming=PLANS.filter(p=>p.plan_date && p.plan_date>=today)
+    .sort((a,b)=>a.plan_date.localeCompare(b.plan_date)||a.id-b.id);
+  const undated=PLANS.filter(p=>!p.plan_date).sort((a,b)=>b.id-a.id);
+  const past=PLANS.filter(p=>p.plan_date && p.plan_date<today)
+    .sort((a,b)=>b.plan_date.localeCompare(a.plan_date)||b.id-a.id);
+
+  box.innerHTML='<button type="button" class="btn primary" id="btnPlanNew">＋ 排一趟</button>'
+    +(PLANS.length ? '' : '<div class="hint" style="margin-top:10px">還沒有任何一趟。'
+      +'按上面那顆開始排：先定日期，再從待辦清單挑要去的店。</div>')
+    +upcoming.map(planCardHtml).join('')
+    +undated.map(planCardHtml).join('')
+    +(past.length ? `<details class="plan-past"${past.some(p=>p.id===PLAN_OPEN)?' open':''}>`
+        +`<summary>過去的（${past.length}）</summary>${past.map(planCardHtml).join('')}</details>` : '');
+  wirePlans(box);
+}
+function planCardHtml(p){
+  const open=PLAN_OPEN===p.id, n=p.items.length, d=planItemsDone(p);
+  return `<div class="plan" data-plan="${p.id}">
+    <button type="button" class="plan-head" data-popen="${p.id}" aria-expanded="${open}">
+      <span class="plan-date${p.plan_date?'':' none'}">${esc(planDateLabel(p.plan_date))}</span>
+      <span class="plan-title">${esc(p.title||'')}</span>
+      <span class="plan-n">${n} 家${d?` · ${d} 完成`:''}</span>
+    </button>
+    ${open?planBodyHtml(p):''}
+  </div>`;
+}
+function planBodyHtml(p){
+  const offer=id=>OFFERS.find(o=>String(o.id)===String(id));
+  const items=p.items.map((it,i)=>{
+    const o=offer(it.offer_id);
+    return `<li class="pi${it.done?' done':''}" data-item="${it.id}">
+      <span class="pi-no">${i+1}</span>
+      <div class="pi-main">
+        ${o ? `<button type="button" class="pi-brand" data-odetail="${esc(String(o.id))}">${esc(o.brand)}</button>
+               <div class="pi-offer">${esc(String(o.offer||'').slice(0,60))}</div>`
+            : '<div class="pi-brand">（這筆優惠已經下架）</div><div class="pi-offer"></div>'}
+        <input class="pi-note" data-inote="${it.id}" maxlength="200" value="${esc(it.note||'')}"
+          placeholder="哪一間、幾點、要注意什麼" aria-label="這一家的備註">
+        <div class="pi-act">
+          <label class="pi-done"><input type="checkbox" data-idone="${it.id}"${it.done?' checked':''}>完成</label>
+          <div class="pi-move">
+            <button type="button" class="btn sm" data-iup="${it.id}"${i===0?' disabled':''} aria-label="往前">↑</button>
+            <button type="button" class="btn sm" data-idown="${it.id}"${i===p.items.length-1?' disabled':''} aria-label="往後">↓</button>
+            <button type="button" class="btn sm" data-idel="${it.id}" aria-label="從這一趟拿掉">✕</button>
+          </div>
+        </div>
+      </div>
+    </li>`;
+  }).join('');
+  return `<div class="plan-body">
+    <div class="two">
+      <div class="field"><label>日期</label>
+        <input type="date" data-pdate="${p.id}" value="${esc(p.plan_date||'')}"></div>
+      <div class="field"><label>名稱</label>
+        <input data-ptitle="${p.id}" maxlength="40" value="${esc(p.title||'')}" placeholder="例如：南西一日"></div>
+    </div>
+    <div class="field"><label>整趟的備註</label>
+      <textarea data-pnote="${p.id}" maxlength="500"
+        placeholder="幾點出門、跟誰去、要帶什麼證件…">${esc(p.note||'')}</textarea></div>
+    ${p.items.length ? `<ol class="plan-items">${items}</ol>`
+      : '<div class="hint" style="margin:10px 0">還沒有店。按「加店家」從待辦清單挑。</div>'}
+    <div class="row" style="gap:8px;flex-wrap:wrap">
+      <button type="button" class="btn sm primary" data-padd="${p.id}">＋ 加店家</button>
+      <button type="button" class="btn sm" data-pdel="${p.id}" style="margin-left:auto">刪掉這一趟</button>
+    </div>
+  </div>`;
+}
+function planErrMsg(e){
+  // 上限是資料庫的 trigger 丟的，訊息本身就是中文（100 趟、40 家），照抄
+  return /最多/.test(e?.message||'') ? e.message : '沒存到：'+(e?.message||'連不上');
+}
+/* 先改畫面再送；失敗就把畫面改回去。undo 是「改回去」那一步。 */
+async function planSave(q, undo){
+  const {error}=await q;
+  if(error){ undo&&undo(); renderPlans(); showToast(planErrMsg(error)); return false; }
+  return true;
+}
+const findPlan=id=>PLANS?.find(p=>p.id===Number(id));
+const findItem=id=>{
+  for(const p of PLANS||[]){ const it=p.items.find(i=>i.id===Number(id)); if(it) return [p,it]; }
+  return [null,null];
+};
+function wirePlans(box){
+  $('#btnPlanNew').onclick=newPlan;
+  box.querySelectorAll('[data-popen]').forEach(b=>b.onclick=()=>{
+    const id=Number(b.dataset.popen);
+    PLAN_OPEN = PLAN_OPEN===id ? null : id;
+    renderPlans();
+  });
+  box.querySelectorAll('[data-pdate]').forEach(el=>el.onchange=()=>{
+    const p=findPlan(el.dataset.pdate); if(!p) return;
+    const old=p.plan_date; p.plan_date=el.value||null;
+    renderPlans();                 // 日期一變，排的位置也會變
+    planSave(sb.from('plans').update({plan_date:p.plan_date}).eq('id',p.id), ()=>{ p.plan_date=old; });
+  });
+  box.querySelectorAll('[data-ptitle]').forEach(el=>el.onchange=()=>{
+    const p=findPlan(el.dataset.ptitle); if(!p) return;
+    const old=p.title; p.title=el.value.trim().slice(0,40)||null;
+    const head=box.querySelector(`[data-popen="${p.id}"] .plan-title`);
+    if(head) head.textContent=p.title||'';
+    planSave(sb.from('plans').update({title:p.title}).eq('id',p.id), ()=>{ p.title=old; });
+  });
+  box.querySelectorAll('[data-pnote]').forEach(el=>el.onchange=()=>{
+    const p=findPlan(el.dataset.pnote); if(!p) return;
+    const old=p.note; p.note=el.value.slice(0,500)||null;
+    planSave(sb.from('plans').update({note:p.note}).eq('id',p.id), ()=>{ p.note=old; });
+  });
+  box.querySelectorAll('[data-inote]').forEach(el=>el.onchange=()=>{
+    const [,it]=findItem(el.dataset.inote); if(!it) return;
+    const old=it.note; it.note=el.value.slice(0,200)||null;
+    planSave(sb.from('plan_items').update({note:it.note}).eq('id',it.id), ()=>{ it.note=old; });
+  });
+  box.querySelectorAll('[data-idone]').forEach(el=>el.onchange=()=>{
+    const [,it]=findItem(el.dataset.idone); if(!it) return;
+    it.done=el.checked; renderPlans();
+    planSave(sb.from('plan_items').update({done:it.done}).eq('id',it.id), ()=>{ it.done=!el.checked; });
+  });
+  box.querySelectorAll('[data-iup]').forEach(b=>b.onclick=()=>movePlanItem(b.dataset.iup,-1));
+  box.querySelectorAll('[data-idown]').forEach(b=>b.onclick=()=>movePlanItem(b.dataset.idown,1));
+  box.querySelectorAll('[data-idel]').forEach(b=>b.onclick=()=>{
+    const [p,it]=findItem(b.dataset.idel); if(!it) return;
+    const at=p.items.indexOf(it);
+    p.items.splice(at,1); renderPlans();
+    planSave(sb.from('plan_items').delete().eq('id',it.id), ()=>{ p.items.splice(at,0,it); });
+  });
+  box.querySelectorAll('[data-odetail]').forEach(b=>b.onclick=()=>openDetail(b.dataset.odetail));
+  box.querySelectorAll('[data-padd]').forEach(b=>b.onclick=()=>openPlanAdd(Number(b.dataset.padd)));
+  box.querySelectorAll('[data-pdel]').forEach(b=>b.onclick=async()=>{
+    const p=findPlan(b.dataset.pdel); if(!p) return;
+    if(!confirm(`刪掉「${planDateLabel(p.plan_date)}${p.title?' '+p.title:''}」這一趟嗎？裡面的 ${p.items.length} 家會一起刪掉。`)) return;
+    const at=PLANS.indexOf(p);
+    PLANS.splice(at,1); PLAN_OPEN=null; renderPlans();
+    planSave(sb.from('plans').delete().eq('id',p.id), ()=>{ PLANS.splice(at,0,p); });
+  });
+}
+async function newPlan(){
+  const btn=$('#btnPlanNew'); if(btn) btn.disabled=true;
+  const {data,error}=await sb.from('plans').insert({user_id:me.id})
+    .select('id,plan_date,title,note,created_at').single();
+  if(btn) btn.disabled=false;
+  if(error){ showToast(planErrMsg(error)); return; }
+  PLANS.push({...data, items:[]});
+  PLAN_OPEN=data.id;
+  renderPlans();
+  // 新的一趟第一件事是定日期
+  $(`[data-pdate="${data.id}"]`)?.focus();
+  logEvent('plan_create',{});
+}
+/* 調順序：跟「版面設定」同一種上下箭頭。換完之後整份重新編號（0,1,2…），
+   只送真的變了的那幾筆——通常就是對調的那兩筆。重新編號是為了不要累積出
+   兩筆同樣的 sort_order（加店家時是接在最大值後面，刪掉中間的會留洞）。 */
+function movePlanItem(itemId, dir){
+  const [p,it]=findItem(itemId); if(!it) return;
+  const i=p.items.indexOf(it), j=i+dir;
+  if(j<0 || j>=p.items.length) return;
+  const before=p.items.map(x=>[x, x.sort_order]);
+  [p.items[i], p.items[j]]=[p.items[j], p.items[i]];
+  const changed=[];
+  p.items.forEach((x,k)=>{ if(x.sort_order!==k){ x.sort_order=k; changed.push(x); } });
+  renderPlans();
+  if(!changed.length) return;
+  const undo=()=>{
+    before.forEach(([x,so])=>{ x.sort_order=so; });
+    p.items.sort((a,b)=>a.sort_order-b.sort_order||a.id-b.id);
+  };
+  Promise.all(changed.map(x=>sb.from('plan_items').update({sort_order:x.sort_order}).eq('id',x.id)))
+    .then(rs=>{
+      const bad=rs.find(r=>r.error);
+      if(bad){ undo(); renderPlans(); showToast(planErrMsg(bad.error)); }
+    });
+}
+
+/* ---- 挑優惠：可以搜尋、可以打勾 ---------------------------------
+   行程的「加店家」跟推薦地點的「裡面有哪幾家」共用這一個（celine：「建議有
+   搜尋功能跟核可打勾，可以直接搜尋系統有的然後添加」）。
+
+   沒打字的時候列「預設的那一份」（行程用待辦清單——排行程就是從想用的裡面挑；
+   推薦地點沒有合理的預設，就空著叫人打字），打字搜全部的優惠。
+   勾過的會留著：搜一個、勾、再搜下一個再勾，**下一次換搜尋字時勾過的浮到最上面**，
+   不用記自己勾了哪幾家。不在勾的當下就重排——手指底下那一格突然跑掉很煩。
+   勾的順序就是交出去的順序：排行程的人多半是照要去的順序勾。 */
+function mountOfferPicker(box, opts={}){
+  const st={picks:new Set(), exclude:new Set((opts.exclude||[]).map(String))};
+  const LIMIT=40;
+  box.innerHTML='<input type="search" class="op-search" placeholder="搜尋品牌或優惠"'
+    +' autocomplete="off" aria-label="搜尋品牌或優惠">'
+    +'<p class="hint op-sub" style="margin:6px 0 0"></p><div class="pa-list op-list"></div>';
+  const inp=box.querySelector('.op-search'), sub=box.querySelector('.op-sub'),
+        list=box.querySelector('.op-list');
+  const byId=id=>OFFERS.find(o=>String(o.id)===id);
+  const changed=()=>opts.onChange&&opts.onChange(st.picks.size);
+  function paint(){
+    const raw=inp.value.trim(), q=raw.toLowerCase();
+    const found = q
+      ? OFFERS.filter(o=>!st.exclude.has(String(o.id))
+          && `${o.brand||''} ${o.offer||''}`.toLowerCase().includes(q)).slice(0,LIMIT)
+      : (opts.base?opts.base():[]).filter(o=>!st.exclude.has(String(o.id)));
+    const picked=[...st.picks].map(byId).filter(Boolean);
+    const rows=picked.concat(found.filter(o=>!st.picks.has(String(o.id))));
+    sub.textContent = q
+      ? `搜尋「${raw}」：${found.length} 筆${found.length>=LIMIT?`（只列前 ${LIMIT} 筆，打多一點字縮小範圍）`:''}`
+      : (found.length ? (opts.baseLabel?opts.baseLabel(found.length):'')
+                      : (opts.emptyLabel||'打字搜尋站上已經有的優惠，勾起來就好。'));
+    list.innerHTML = rows.map(o=>{
+      const id=String(o.id);
+      return `<label class="pa-row"><input type="checkbox" data-pa="${esc(id)}"${st.picks.has(id)?' checked':''}>
+        <span class="pa-brand">${esc(o.brand)}</span>
+        <span class="pa-offer">${esc(String(o.offer||'').slice(0,40))}</span>
+        ${MY_USED_OFFER_IDS.has(id)?'<span class="flag">用過了</span>':''}</label>`;
+    }).join('') || (q ? '<div class="hint" style="padding:10px">找不到。</div>' : '');
+    list.classList.toggle('hidden', !list.innerHTML);
+    list.querySelectorAll('[data-pa]').forEach(cb=>cb.onchange=()=>{
+      cb.checked ? st.picks.add(cb.dataset.pa) : st.picks.delete(cb.dataset.pa);
+      changed();
+    });
+  }
+  inp.oninput=paint;
+  paint(); changed();
+  return {
+    picks:()=>[...st.picks],
+    offers:()=>[...st.picks].map(byId).filter(Boolean),
+    focus:()=>inp.focus(),
+  };
+}
+
+/* ---- 加店家 ---- */
+let PA=null;   // {planId, picker}
+function openPlanAdd(planId){
+  const plan=findPlan(planId); if(!plan) return;
+  PA={planId, picker:null};
+  PA.picker=mountOfferPicker($('#paPicker'), {
+    exclude:plan.items.map(i=>i.offer_id),
+    base:()=>OFFERS.filter(o=>WISH.has(String(o.id))),
+    baseLabel:n=>`你的待辦清單裡、還沒排進這一趟的（${n}）。要找別的就打字搜尋。`,
+    emptyLabel:'待辦清單裡沒有可以加的了。打字搜尋全部的優惠。',
+    onChange:paintPlanAddBtn,
+  });
+  $('#dlgPlanAdd').showModal(); pushDlgHistory();
+}
+function paintPlanAddBtn(n){
+  const b=$('#btnPaAdd'); if(!b) return;
+  b.disabled=!n; b.textContent = n ? `加入（${n} 家）` : '加入';
+}
+$('#btnPaCancel').onclick=()=>$('#dlgPlanAdd').close();
+$('#btnPaAdd').onclick=async()=>{
+  const plan=PA && findPlan(PA.planId), ids=PA?.picker?.picks()||[];
+  if(!plan || !ids.length) return;
+  const base=plan.items.reduce((m,i)=>Math.max(m,i.sort_order),-1)+1;
+  const rows=ids.map((oid,k)=>({plan_id:plan.id, offer_id:Number(oid), sort_order:base+k}));
+  const b=$('#btnPaAdd'); b.disabled=true;
+  const {data,error}=await sb.from('plan_items').insert(rows)
+    .select('id,offer_id,note,sort_order,done');
+  if(error){ paintPlanAddBtn(ids.length); showToast(planErrMsg(error)); return; }
+  plan.items.push(...(data||[]));
+  plan.items.sort((a,c)=>a.sort_order-c.sort_order||a.id-c.id);
+  PLAN_OPEN=plan.id;
+  $('#dlgPlanAdd').close();
+  renderPlans();
+  logEvent('plan_add',{n:rows.length});
+};
 
 /* 自己推薦過的地點：就列在「一趟用最多」那一塊下面，不另外開一塊——
    你是在這裡送出的，當然也在這裡看它後來怎麼了。 */

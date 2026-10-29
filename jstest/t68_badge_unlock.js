@@ -137,7 +137,16 @@ const SV = (o = {}) => ({
      開場有 pushDlgHistory() 卻沒掛 consumeDlgHistory 的話，返回鍵第一下會被
      那筆幽靈紀錄吃掉、畫面沒反應（dlgNotif／dlgCoffee 都犯過這個）。
      v145 的 dlgBulkAdd 當初也漏掛，這裡一起守住。 */
-  t.ok('返回鍵的關閉清單裡有它', /dlgBadgeUnlock'\)\]\.forEach/.test(index.replace(/\$\('#/g, "('#")));
+  /* 本來比對原始碼「dlgBadgeUnlock 是那份清單的最後一個」——v157 在後面再補兩個視窗
+     就紅了，程式其實是對的。改成直接驗它要守的那件事：開著的時候按返回鍵，它會關掉。 */
+  {
+    const d = win.document.querySelector('#dlgBadgeUnlock');
+    win.eval("document.querySelectorAll('dialog[open]').forEach(x=>x.close()); EXIT_ARMED=false;"
+      + "document.querySelector('#dlgBadgeUnlock').showModal(); pushDlgHistory();");
+    win.history.back();
+    await new Promise((r) => setTimeout(r, 400));   // jsdom 的 back() 要經過三層 setTimeout
+    t.ok('返回鍵的關閉清單裡有它（按返回鍵關得掉）', !d.open);
+  }
   ['dlgBadgeUnlock', 'dlgBulkAdd'].forEach((id) => {
     t.ok(`${id} 關掉會把歷史紀錄吐掉`,
       index.includes(`$('#${id}').addEventListener('close', consumeDlgHistory)`));
