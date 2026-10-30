@@ -403,6 +403,18 @@
   .vo-offer{flex:1 1 auto;min-width:0;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;
     white-space:nowrap}
   /* 一鍵加入待辦清單：場館裡那顆按鈕 ＋ 彈出來的勾選清單 */
+  /* v159 商圈的地圖。position＋z-index 開一個自己的疊層：Leaflet 的圖層 z-index 是 400 起跳，
+     不關在自己的疊層裡會蓋過頁首跟右下角的「＋投稿」。 */
+  .venue-map{height:200px;border-radius:var(--r-sm);border:1px solid var(--line);
+    margin:8px 0;overflow:hidden;position:relative;z-index:0;background:var(--line-soft)}
+  .venue-map-all{height:min(260px,45vh);margin:10px 0 4px}
+  /* 管理員才看得到的那一條：虛線框，一眼看得出「這是後台的東西，不是給使用者的」 */
+  .venue-admin{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px;margin:4px 0 8px;
+    border:1px dashed var(--line);border-radius:var(--r-sm);background:var(--surface)}
+  .venue-admin .va-name{flex:1 1 160px;min-width:0;font-size:.86rem;padding:5px 8px;
+    border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);color:var(--ink)}
+  .venue-admin select{font-size:.82rem}
+  .venue-admin .hint{flex:1 1 100%;margin:0;font-size:.76rem}
   .venue-bulk-bar{display:flex;align-items:center;gap:8px;padding:8px 2px 4px}
   .bulk-list{max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm)}
   .bulk-row{display:flex;align-items:center;gap:8px;padding:10px;min-height:44px;
@@ -2174,6 +2186,10 @@
       <div class="row" style="margin:10px 0 2px">
         <select id="venueCounty" aria-label="縣市"><option value="">全部縣市</option></select>
       </div>
+      <!-- 嵐：「一趟用最多也可以一開始先看到台灣地圖看大分佈，切縣市也可以看到該縣市概要的圖」。
+           一顆圈是一個商圈，越大代表裡面越多家。點了跳出名字，再按一下就展開下面那一格。 -->
+      <div class="venue-map venue-map-all hidden" id="venuesMap" role="img"
+        aria-label="商圈分佈地圖"></div>
       <div id="myVenueSuggests"></div>
       <div id="venueList"><div class="hint">載入中…</div></div>
       <!-- celine：「一趟最多目前沒顯示，也沒投稿」。投稿一個地點要的是座標
@@ -5267,7 +5283,7 @@ const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
 /* 更新紀錄的內容在 updates.json，build.py 注入這裡，同一份資料也產生整頁的
    updates.html。「我的」頁面只用到日期跟標題（最新幾筆＋NEW 標記），
    細項（items）留著是給 updates.html 用的。 */
-const SITE_UPDATES = [{"date":"2026-10-29","title":"可以排行程了；投稿的按鈕跟到每一頁","items":["「排行程」可以排一趟：哪天、去哪幾家、照什麼順序，每家都能寫備註","還看得到哪裡一次能用到最多家；右下角「＋投稿」每一頁都按得到","「我的」從 18 塊收成 13 塊；設定會記得、清單可切字少版"]},{"date":"2026-10-28","title":"地圖上直接就能記「我用過了」","items":["地圖的店家小視窗多一顆「我用過了」，不用再回清單找","優惠詳情視窗下面也加了同一顆","回報用過之後會提醒你順便給星等，排行榜的說明也剪短了"]},{"date":"2026-10-23","title":"手機上比較不會跳出「連不到資料庫」了","items":["連線元件改成從本站載入，不再等外部網站，慢或被擋都不受影響","真的連不上時，多一顆「複製狀況」可以把情況傳給我們"]},{"date":"2026-10-22","title":"地圖好按了、篩選看得見、折扣寫出幾折","items":["地圖上的點變好按了，資訊也不會看到一半就不見","現在篩了哪些條件直接列在清單上面，可以一個一個拿掉","「我的」打開就是待辦清單；折扣會寫出幾折、折多少錢"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
+const SITE_UPDATES = [{"date":"2026-10-30","title":"「一趟用最多」有地圖了","items":["一開始先看全台的商圈分佈，切縣市就跳到那個縣市","點開一個商圈，看得到範圍跟裡面每一家分店的位置","用按鈕關掉視窗，不會再跳出「再按一次返回鍵可以離開」"]},{"date":"2026-10-29","title":"可以排行程了；投稿的按鈕跟到每一頁","items":["「排行程」可以排一趟：哪天、去哪幾家、照什麼順序，每家都能寫備註","還看得到哪裡一次能用到最多家；右下角「＋投稿」每一頁都按得到","「我的」從 18 塊收成 13 塊；設定會記得、清單可切字少版"]},{"date":"2026-10-28","title":"地圖上直接就能記「我用過了」","items":["地圖的店家小視窗多一顆「我用過了」，不用再回清單找","優惠詳情視窗下面也加了同一顆","回報用過之後會提醒你順便給星等，排行榜的說明也剪短了"]},{"date":"2026-10-23","title":"手機上比較不會跳出「連不到資料庫」了","items":["連線元件改成從本站載入，不再等外部網站，慢或被擋都不受影響","真的連不上時，多一顆「複製狀況」可以把情況傳給我們"]},{"date":"2026-10-22","title":"地圖好按了、篩選看得見、折扣寫出幾折","items":["地圖上的點變好按了，資訊也不會看到一半就不見","現在篩了哪些條件直接列在清單上面，可以一個一個拿掉","「我的」打開就是待辦清單；折扣會寫出幾折、折多少錢"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
 const SITE_UPDATES_SHOW=3;
 
 function updatesSeenDate(){
@@ -5721,6 +5737,32 @@ const EVENT_LABEL={
   bday_cheer:'生日卡片跳出來', badge_unlock:'解鎖新徽章',
   lean_home:'切換清單的簡易版', public_preview:'你自己切成民眾模式',
 };
+/* 嵐：「功能被用了幾次可以分區塊寫嗎」。本來只分「功能」跟「區塊」兩大坨，
+   幾十行混在一起看不出是哪一頁的事。改成照**頁面**分：優惠、排行榜、排行程、
+   我的……每一頁底下是那一頁的功能，再接那一頁被點開的區塊。
+   區塊屬於哪一頁直接看它在哪個 section 裡，不用另外記；功能才需要這張表。 */
+const EVENT_SECTION={
+  wish:'優惠', near_wish_only:'優惠', geo_ask:'優惠', lean_home:'優惠',
+  rate_cta:'優惠', rate_nudge:'優惠', rate_all_open:'優惠', rate_submit:'優惠',
+  venue_open:'排行程', bulk_open:'排行程', bulk_wish:'排行程', venue_suggest:'排行程',
+  plan_create:'排行程', plan_add:'排行程',
+  wishlist_to_map:'我的', badge_unlock:'我的', updates_nudge:'我的', updates_page_open:'我的',
+  survey_nudge:'我的', survey_open:'我的', survey_submit:'我的',
+  go_submit:'全站', coffee_open:'全站', coffee_go:'全站', studio_click:'全站',
+  static_view:'全站', bday_cheer:'全站',
+  public_preview:'管理員',
+};
+const SECTION_ORDER=['優惠','排行榜','排行程','我的','全站','管理員','其他'];
+const TAB_SECTION={'tab-browse':'優惠','tab-board':'排行榜','tab-trip':'排行程',
+                   'tab-mine':'我的','tab-admin':'管理員'};
+function eventSection(target){
+  const t=String(target||'');
+  if(t.startsWith('panel:')){
+    const tab=document.getElementById(t.slice(6))?.closest('section[id^="tab-"]')?.id;
+    return TAB_SECTION[tab]||'其他';
+  }
+  return EVENT_SECTION[t]||'其他';
+}
 /* 區塊的中文名直接從畫面上那顆 h2 讀——另外維護一張對照表的話，
    改了標題就會對不起來，而且每加一塊新的就要記得回來補。 */
 function panelLabel(id){
@@ -5755,16 +5797,25 @@ async function loadEventStats(){
       <span class="lr-n"><b>${nt2(r.events)}</b> 次 · ${nt2(r.people)} 人</span>
       <span class="lr-when">${r.last_at?esc(String(r.last_at).slice(5,10)):'—'}</span>
     </div>`;
-  const feats=rows.filter(r=>!isPanel(r)), panels=rows.filter(isPanel);
-  const group=(title, list, empty)=>`<div style="margin-bottom:12px">
-      <div style="font-size:.78rem;color:var(--ink-3);font-weight:700;margin:0 0 5px">${esc(title)}</div>
-      ${list.length?`<div class="sub-list">${list.map(row).join('')}</div>`
-        : `<div style="color:var(--ink-3);font-size:.8rem">${empty}</div>`}
+  /* 每一頁一段：先列功能（按次數多到少），再列那一頁被點開的區塊。
+     沒有紀錄的頁面整段不出現，不要留一堆「還沒有紀錄」。 */
+  const bySection=new Map(SECTION_ORDER.map(k=>[k,[]]));
+  rows.forEach(r=>bySection.get(eventSection(r.target))?.push(r));
+  const byCount=(a,b)=>Number(b.events)-Number(a.events);
+  const group=(title, list)=>{
+    const feats=list.filter(r=>!isPanel(r)).sort(byCount);
+    const panels=list.filter(isPanel).sort(byCount);
+    const total=list.reduce((n,r)=>n+Number(r.events||0),0);
+    return `<div class="ev-sec" data-sec="${esc(title)}" style="margin-bottom:14px">
+      <div style="font-size:.82rem;color:var(--ink);font-weight:800;margin:0 0 5px">
+        ${esc(title)} <span style="color:var(--ink-3);font-weight:600">· ${nt2(total)} 次</span></div>
+      <div class="sub-list">${feats.map(row).join('')}${panels.map(row).join('')}</div>
     </div>`;
+  };
   box.innerHTML =
-    group('功能', feats, `${esc(label)}還沒有紀錄。`)
-    + group('區塊（被展開幾次）', panels,
-        '還沒有紀錄。預設就展開著的區塊不會算——只有「本來收著、你把它點開」才算一次。')
+    SECTION_ORDER.filter(k=>bySection.get(k).length).map(k=>group(k, bySection.get(k))).join('')
+    + `<p class="hint" style="margin:6px 0 0">「區塊：」開頭的是那一頁被點開的區塊——預設就展開著的區塊
+      不會算，只有「本來收著、你把它點開」才算一次。</p>`
     + `<p class="hint" style="margin:6px 0 0">${esc(label)}。不含瀏覽頁面本身
       （那個是排行榜上的「總瀏覽人次」）。「人」算的是瀏覽器，同一個人換裝置會算兩個。</p>`;
 }
@@ -5782,7 +5833,9 @@ async function loadVenueAdmin(){
   const [sug, mine, cand]=await Promise.all([
     sb.from('venue_suggestions').select('id,name,county,note,status,created_at')
       .eq('status','pending').order('created_at',{ascending:false}).limit(50),
-    sb.from('venues').select('id,name,county,is_public').order('name').limit(300),
+    /* lat／lng 是給下面「這個熱點建過了沒」比對用的。v153 漏選了這兩欄，於是比對
+       永遠不成立——已經建好的 53 個，在「還沒建的」那一段又全部列了一次。 */
+    sb.from('venues').select('id,name,county,is_public,lat,lng').order('name').limit(300),
     sb.rpc('admin_venue_candidates',{p_min_offers:8}),
   ]);
   // venues 讀不到就整塊停下來——後面兩段都要靠它比對「這個熱點建過了沒」
@@ -5847,13 +5900,17 @@ function renderVenueAdmin(){
       <button type="button" class="btn sm" data-vs-no="${r.id}">退回</button>
     </div>`).join('') : none('沒有待審的推薦。');
 
-  const mineHtml = mine.length ? mine.map(v=>`<div class="va-row">
+  /* 嵐：「已經公開的就不用繼續寫在管理員這邊了，管理員可以去行程那邊按刪除，
+     也可以改名跟編輯」。公開的改到「排行程」那一頁就地改（v159），這裡只留
+     還沒公開的——那些在公開頁面上看不到，只能在這裡處理。 */
+  const hidden=mine.filter(v=>!v.is_public), shown=mine.length-hidden.length;
+  const mineHtml = hidden.length ? hidden.map(v=>`<div class="va-row">
       <input class="va-name" data-vname="${v.id}" value="${esc(v.name)}" maxlength="40">
       <span style="color:var(--ink-3);font-size:.8rem">${esc(v.county||'')}</span>
       <label class="toggle" style="margin:0;font-size:.8rem">
         <input type="checkbox" data-vpub="${v.id}"${v.is_public?' checked':''}>公開</label>
       <button type="button" class="btn sm" data-vdel="${v.id}">刪除</button>
-    </div>`).join('') : none('還沒有任何地點——下面那一段就是用來建立的。');
+    </div>`).join('') : none(shown ? '沒有還沒公開的。' : '還沒有任何地點——下面那一段就是用來建立的。');
 
   const candHtml = candErr ? `<div class="note alert">熱點算不出來：${esc(candErr)}</div>`
     : (fresh.length ? fresh.slice(0,60).map((c,i)=>`<div class="va-row">
@@ -5866,7 +5923,9 @@ function renderVenueAdmin(){
       </div>`).join('') : none('系統找到的熱點都建過了。'));
 
   box.innerHTML = sec(`使用者推薦的（${sug.length}）`, sugHtml)
-    + sec(`已經建好的（${mine.length}）`, mineHtml)
+    + sec(`還沒公開的（${hidden.length}）`, mineHtml
+        + (shown ? `<p class="hint" style="margin:6px 0 0">已經公開的 ${shown} 個不列在這裡——`
+          + '到「排行程」點開那一格，最上面有改名、範圍、取消公開、刪除。</p>' : ''))
     + sec(`系統找到、還沒建的（${fresh.length}）`, candHtml)
     + '<p class="hint" style="margin:10px 0 0">名字就是使用者會看到的那一個，'
     + '所以「新光三越」要寫成「新光三越南西店」這種分得出來的寫法。</p>';
@@ -6296,8 +6355,162 @@ async function loadVenues(){
   if(prevCty && counties.includes(prevCty)) sel.value=prevCty;
   else applyPref('venueCounty');
   renderVenues();
+  paintVenuesMap();
+}
+
+/* ---- 商圈的地圖（v159）----------------------------------------------
+   嵐：「每個商圈點進去可以直接看到他在地圖的大概哪裡，還有店家點點」
+       「一開始先看到台灣地圖看大分佈，切縣市也可以看到該縣市概要的圖」
+
+   兩張圖：上面一張總覽（一顆圈一個商圈），點開某一格時那一格裡面再一張
+   （商圈的範圍＋裡面每一家分店）。都不需要新的資料：venues_public 本來就有
+   座標跟半徑，分店用「附近」那邊現成的 offer_stores_in_bounds。
+
+   Leaflet 載不到（沒網路、CDN 被擋）就安靜地不顯示地圖，清單照常——
+   地圖是幫你看得更清楚，不是看清單的前提。 */
+const TW_BOUNDS=[[21.85,119.95],[25.35,122.05]];
+let VENUES_MAP=null, VENUES_LAYER=null, VENUE_MAP=null;
+function venueMapTiles(map){
+  const t=mapTileConfig();
+  L.tileLayer(t.url,{maxZoom:t.maxZoom||20, subdomains:t.subdomains||'abc', attribution:t.attribution}).addTo(map);
+}
+function venuesInCounty(){
+  const cty=$('#venueCounty')?.value||'';
+  return (VENUES||[]).filter(v=>(!cty||v.county===cty) && v.lat!=null && v.lng!=null);
+}
+async function paintVenuesMap(){
+  const el=$('#venuesMap'); if(!el) return;
+  const list=venuesInCounty();
+  if(!(VENUES||[]).length || !await loadLeaflet()){ el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  if(!VENUES_MAP){
+    VENUES_MAP=L.map(el,{scrollWheelZoom:false});
+    venueMapTiles(VENUES_MAP);
+    VENUES_LAYER=L.layerGroup().addTo(VENUES_MAP);
+    VENUES_MAP.on('popupopen', e=>{
+      const b=e.popup.getElement()?.querySelector('.venue-go');
+      if(b) b.onclick=()=>{ VENUES_MAP.closePopup(); openVenueFromMap(Number(b.dataset.id)); };
+    });
+  }
+  VENUES_LAYER.clearLayers();
+  /* 圈的大小照「裡面有幾家」，用平方根：面積跟家數成正比，36 家的不會大到蓋住整個城市 */
+  const max=Math.max(1, ...list.map(v=>v.offer_count||0));
+  list.forEach(v=>{
+    L.circleMarker([v.lat,v.lng],{radius:6+10*Math.sqrt((v.offer_count||0)/max),
+        color:'#fff', weight:1.5, fillColor:'#e8483c', fillOpacity:.72, bubblingMouseEvents:false})
+      .bindPopup(`<b>${esc(v.name)}</b><br><span style="font-size:.8rem">${esc(v.county||'')} · ${v.offer_count} 家</span><br>`
+        +`<button type="button" class="btn sm venue-go" data-id="${v.id}" style="margin-top:6px">看裡面有哪幾家</button>`)
+      .addTo(VENUES_LAYER);
+  });
+  // 地圖剛從隱藏變成看得見時量不到大小，等這一輪排版完再算一次範圍
+  setTimeout(()=>{
+    if(!VENUES_MAP) return;
+    VENUES_MAP.invalidateSize();
+    if(($('#venueCounty')?.value||'') && list.length)
+      VENUES_MAP.fitBounds(L.latLngBounds(list.map(v=>[v.lat,v.lng])).pad(0.25), {maxZoom:14});
+    else VENUES_MAP.fitBounds(TW_BOUNDS);
+  },0);
+}
+function openVenueFromMap(id){
+  VENUE_OPEN=id;
+  renderVenues();
+  $(`#venueList .venue[data-id="${id}"]`)?.scrollIntoView({behavior:'smooth', block:'start'});
+  logEvent('venue_open',{id, from:'map'});
+}
+/* 商圈裡的分店：用商圈的中心跟半徑框一個方塊去查，再用真正的距離篩一次——
+   跟資料庫裡算「這個商圈有幾家」（venue_offer_ids）用的是同一個判斷，
+   地圖上的點跟清單上的家數才會對得起來。 */
+function venueDistM(v, s){
+  return 111000*Math.sqrt(Math.pow(s.lat-v.lat,2)+Math.pow((s.lng-v.lng)*Math.cos(v.lat*Math.PI/180),2));
+}
+function venueBox(v){
+  const r=v.radius_m||180, dLat=r/111000, dLng=r/(111000*Math.cos(v.lat*Math.PI/180));
+  return {p_south:v.lat-dLat, p_west:v.lng-dLng, p_north:v.lat+dLat, p_east:v.lng+dLng};
+}
+async function paintVenueMap(v){
+  const el=$('#venueMap'+v.id); if(!el) return;
+  if(v.lat==null || !await loadLeaflet()){ el.remove(); return; }
+  if(VENUE_MAP){ VENUE_MAP.remove(); VENUE_MAP=null; }
+  if(!document.body.contains(el)) return;     // 等 Leaflet 的時候使用者已經關掉這一格了
+  const m=L.map(el,{scrollWheelZoom:false}).setView([v.lat,v.lng],17);
+  VENUE_MAP=m;
+  venueMapTiles(m);
+  L.circle([v.lat,v.lng],{radius:v.radius_m||180, color:'#e8483c', weight:1, fillOpacity:.05}).addTo(m);
+  /* 管理員：中心點可以拖。嵐說的「編輯」——名字在上面那一條改，位置在這裡拖。
+     放開就存，存完重新整理清單（範圍一動，裡面有幾家就會變）。 */
+  if(myProfile?.is_admin){
+    L.marker([v.lat,v.lng],{draggable:true, title:'拖這顆可以移動商圈的中心'})
+      .on('dragend', e=>{
+        const p=e.target.getLatLng();
+        saveVenueEdit(v.id, {lat:Math.round(p.lat*1e5)/1e5, lng:Math.round(p.lng*1e5)/1e5}, '位置存好了');
+      }).addTo(m);
+  }
+  const {data,error}=await sb.rpc('offer_stores_in_bounds',{...venueBox(v), p_limit:300});
+  if(error || VENUE_MAP!==m) return;          // 查回來之前這一格已經關掉／換了一格
+  (data||[]).filter(st=>venueDistM(v,st)<=(v.radius_m||180)).forEach(st=>{
+    const o=OFFERS.find(x=>String(x.id)===String(st.offer_id)); if(!o) return;
+    const c=WISH.has(String(o.id)) ? PIN_STYLE.wished : PIN_STYLE.normal;
+    L.circleMarker([st.lat,st.lng],{radius:c.r, weight:2, color:c.color, fillColor:c.fill,
+        fillOpacity:.85, bubblingMouseEvents:false})
+      .bindPopup(`<b>${esc(o.brand)}</b><br><span style="font-size:.8rem">${esc(st.name)}</span><br>`
+        +`<button type="button" class="btn sm map-open-offer" data-id="${esc(String(o.id))}" style="margin-top:6px">看優惠</button>`)
+      .addTo(m);
+  });
+  m.on('popupopen', e=>{
+    const b=e.popup.getElement()?.querySelector('.map-open-offer');
+    if(b) b.onclick=()=>openDetail(b.dataset.id);
+  });
+}
+/* 管理員就地編輯（嵐：「已經公開的就不用繼續寫在管理員這邊了，管理員可以去行程
+   那邊按刪除，也可以改名跟編輯」）。只有 is_admin 看得到；民眾模式下也看不到
+   （那個模式會把 is_admin 換成 false）。 */
+function venueAdminHtml(v){
+  if(!myProfile?.is_admin) return '';
+  const r=v.radius_m||180;
+  const radii=[100,180,300,500].includes(r)?[100,180,300,500]:[100,180,300,500,r].sort((a,b)=>a-b);
+  return `<div class="venue-admin">
+    <span class="flag">管理</span>
+    <input class="va-name" id="vaName${v.id}" maxlength="40" value="${esc(v.name)}" aria-label="商圈名稱">
+    <select id="vaCty${v.id}" aria-label="縣市">${COUNTIES.filter(c=>c!=='全台')
+      .map(c=>`<option${c===v.county?' selected':''}>${esc(c)}</option>`).join('')}</select>
+    <select id="vaRadius${v.id}" aria-label="範圍">${radii
+      .map(x=>`<option value="${x}"${x===r?' selected':''}>方圓 ${x} 公尺</option>`).join('')}</select>
+    <button type="button" class="btn sm primary" id="vaSave${v.id}">存</button>
+    <button type="button" class="btn sm" id="vaHide${v.id}">取消公開</button>
+    <button type="button" class="btn sm" id="vaDel${v.id}">刪除</button>
+    <p class="hint">地圖上那顆藍色的針可以拖，放開就存成新的中心。範圍改大，裡面算到的店會變多。</p>
+  </div>`;
+}
+function wireVenueAdmin(v){
+  if(!myProfile?.is_admin) return;
+  const b=$('#vaSave'+v.id); if(!b) return;
+  b.onclick=()=>{
+    const name=$('#vaName'+v.id).value.trim();
+    if(name.length<2){ showToast('名字至少要兩個字'); return; }
+    saveVenueEdit(v.id, {name:name.slice(0,40), county:$('#vaCty'+v.id).value,
+      radius_m:Number($('#vaRadius'+v.id).value)||180}, '存好了');
+  };
+  $('#vaHide'+v.id).onclick=()=>{
+    if(!confirm(`「${v.name}」先不公開嗎？之後可以在「審核」→「一趟用最多：地點」再打開。`)) return;
+    saveVenueEdit(v.id, {is_public:false}, '收起來了');
+  };
+  $('#vaDel'+v.id).onclick=async()=>{
+    if(!confirm(`刪掉「${v.name}」嗎？裡面的留言跟愛心會一起沒有。`)) return;
+    const {error}=await sb.from('venues').delete().eq('id',v.id);
+    if(error){ showToast(venueWriteHint(error)); return; }
+    VENUE_OPEN=null; showToast('刪掉了'); loadVenues();
+  };
+}
+async function saveVenueEdit(id, patch, okMsg){
+  const {error}=await sb.from('venues').update(patch).eq('id',id);
+  if(error){ showToast(venueWriteHint(error)); return; }
+  showToast(okMsg);
+  VENUE_ADMIN=null;                 // 審核那一塊下次打開要重抓
+  loadVenues();                     // 名字、範圍、位置、公開與否都會改到清單
 }
 function renderVenues(){
+  // 這一格的小地圖要被整個換掉了，先收乾淨（Leaflet 不收會留下事件跟計時器）
+  if(VENUE_MAP){ VENUE_MAP.remove(); VENUE_MAP=null; }
   const box=$('#venueList'), cty=$('#venueCounty').value;
   const all=VENUES||[];
   const list=all.filter(v=>!cty||v.county===cty);
@@ -6318,7 +6531,7 @@ function renderVenues(){
         + '<button type="button" class="btn sm" id="btnVenueAll" style="margin-left:8px">看全部縣市</button></div>'
       : '<div class="hint">這一區還在整理中，整理好就會出現。</div>';
     const b=$('#btnVenueAll');
-    if(b) b.onclick=()=>{ $('#venueCounty').value=''; savePref('venueCounty',''); renderVenues(); };
+    if(b) b.onclick=()=>{ $('#venueCounty').value=''; savePref('venueCounty',''); renderVenues(); paintVenuesMap(); };
     return;
   }
   box.innerHTML=list.map(v=>`<div class="venue" data-id="${esc(String(v.id))}">
@@ -6347,11 +6560,17 @@ async function fillVenue(id){
   if(error){ body.innerHTML='<div class="hint">載入失敗：'+esc(error.message)+'</div>'; return; }
   const ids=new Set((data||[]).map(x=>String(x.venue_offer_ids ?? x)));
   const list=OFFERS.filter(o=>ids.has(String(o.id)));
-  if(!list.length){ body.innerHTML='<div class="hint">這裡的優惠暫時查不到。</div>'; return; }
+  const v=(VENUES||[]).find(x=>x.id===id);
+  const top=(v?venueAdminHtml(v):'')+(v&&v.lat!=null?`<div class="venue-map" id="venueMap${id}"></div>`:'');
+  if(!list.length){
+    body.innerHTML=top+'<div class="hint">這裡的優惠暫時查不到。</div>';
+    if(v){ wireVenueAdmin(v); paintVenueMap(v); }
+    return;
+  }
   /* 記下這一格裡有哪幾筆，「一鍵加入」就不用再向資料庫要一次。 */
   VENUE_OFFERS.set(id, list.map(o=>String(o.id)));
   const left=list.filter(o=>!WISH.has(String(o.id))).length;
-  body.innerHTML='<div class="venue-bulk-bar">'
+  body.innerHTML=top+'<div class="venue-bulk-bar">'
     +`<button type="button" class="btn sm primary" id="venueBulk${id}"${left?'':' disabled'}>`
     +(left?`一鍵加入待辦清單（${left} 筆）`:'這裡的都收藏了')
     +'</button></div>'
@@ -6362,6 +6581,7 @@ async function fillVenue(id){
     </button>`).join('');
   const bulkBtn=$('#venueBulk'+id);
   if(bulkBtn) bulkBtn.onclick=()=>openBulkAdd(id);
+  if(v){ wireVenueAdmin(v); paintVenueMap(v); }
   $$('#venueBody'+id+' .venue-offer').forEach(b=>b.onclick=()=>openDetail(b.dataset.id));
 }
 
@@ -6543,7 +6763,7 @@ $$('.tab').forEach(t=>t.onclick=()=>{
   ACTIVE_TAB=t.dataset.tab;
 });
 
-$('#venueCounty').onchange=()=>{ VENUE_OPEN=null; renderVenues(); };
+$('#venueCounty').onchange=()=>{ VENUE_OPEN=null; renderVenues(); paintVenuesMap(); };
 /* ---- 推薦一個地點（celine：「這個區塊也要能投稿」）-------------------
 
    v152 是借「功能建議」那張表單送的，當時的理由是「投稿一個地點要的是座標，
@@ -6798,6 +7018,10 @@ const NEAR={active:false, lat:null, lng:null, label:'', km:3, byOffer:null, load
   reqSeq:0, sortTouched:false, wishOnly:false};
 try{ const k=Number(localStorage.getItem('sxr_near_km')); if([1,3,5,10,30].includes(k)) NEAR.km=k; }catch{}
 let NEAR_MAP=null, NEAR_MAP_CENTER=null, NEAR_MAP_CIRCLE=null, NEAR_MAP_PINS=null, NEAR_PIN_TIMER=null;
+/* 地圖上「有優惠的分店」那顆點。附近的地圖跟商圈的地圖（v159）共用，兩邊才不會
+   一個橘一個紅、使用者以為是兩種東西。Leaflet 的顏色要寫死成色碼：它畫的是 SVG
+   屬性，吃不到 CSS 變數。 */
+const PIN_STYLE={wished:{color:'#7c2d12', fill:'#f59e0b', r:10}, normal:{color:'#c2410c', fill:'#fb923c', r:8}};
 /* 現在打開的是哪一家的資訊。paintNearPins() 會把整個圖層清掉重畫，popup 當然
    跟著不見——重畫完照這個 key 把它開回來，使用者才不會「看到一半就沒了」。 */
 let NEAR_POPUP_KEY='';
@@ -6994,7 +7218,7 @@ function paintNearPins(){
     const wished=WISH.has(String(o.id));
     if(NEAR.wishOnly && !wished){ hidden++; return; }
     // 收藏的用強調色畫大一點：沒開「只看收藏」時，一眼就看得出哪幾家是自己收的
-    const c = wished ? {color:'#7c2d12', fill:'#f59e0b', r:10} : {color:'#c2410c', fill:'#fb923c', r:8};
+    const c = wished ? PIN_STYLE.wished : PIN_STYLE.normal;
     const html=`<b>${esc(o.brand)}</b>${wished?' <span style="font-size:.75rem">· 已收藏</span>':''}<br>
         <span style="font-size:.8rem">${esc(st.name)}</span><br>
         <span style="font-size:.8rem">${esc(String(o.offer||'').slice(0,60))}</span><br>
