@@ -236,7 +236,7 @@ function fakeSb(win, state) {
   t.ok('換了帳號：不會畫出上一個人的行程', !/還沒定/.test($('#planBody').textContent));
   t.ok('切到排行程會重新載', /if\(!plansReady\(\)\) loadPlans\(\)/.test(index));
   t.ok('人站在排行程上登入／登出，也會重新載',
-    /if\(ACTIVE_TAB==='trip'\)\{ loadPlans\(\); loadMyVenueSuggestions\(\); \}/.test(index));
+    /if\(ACTIVE_TAB==='trip'\)\{ loadPlans\(\); loadMyVenueSuggestions\(\);/.test(index));
 
   /* ================= SQL ================= */
   t.ok('可以重複執行', /create table if not exists public\.plans/.test(sql)
