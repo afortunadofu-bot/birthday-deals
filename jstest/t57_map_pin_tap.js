@@ -25,9 +25,10 @@ const { makeAsserts } = require('./harness');
   t.ok('判定圈有 fillColor（SVG 要有 fill 才吃得到點擊）',
     /fillOpacity:0,\s*[\r\n ]*fillColor/.test(paint));
   /* v159 把點的顏色跟大小抽成 PIN_STYLE（附近的地圖跟商圈的地圖共用），
-     原始碼裡就找不到「r:10}」了——問那個常數本身。 */
-  const m = src.match(/const PIN_STYLE=\{wished:\{[^}]*r:(\d+)\}, normal:\{[^}]*r:(\d+)\}\}/);
-  const pin = m ? { wished: { r: Number(m[1]) }, normal: { r: Number(m[2]) } } : { wished: {}, normal: {} };
+     原始碼裡就找不到「r:10}」了——問那個常數本身。v163 在後面多了一種 used，
+     所以每一種各自找，不要求整個物件剛好長那樣。 */
+  const r = (k) => { const m = src.match(new RegExp(k + ':\\{[^}]*r:(\\d+)\\}')); return m ? Number(m[1]) : undefined; };
+  const pin = { wished: { r: r('wished') }, normal: { r: r('normal') } };
   t.ok('看得見的點也變大了（7/9 → 8/10）', pin.wished.r === 10 && pin.normal.r === 8, JSON.stringify(pin));
   t.ok('附近的地圖用的是那個共用的常數', /PIN_STYLE\.wished : PIN_STYLE\.normal/.test(paint));
   t.ok('判定圈先畫、在看得見的點下面',

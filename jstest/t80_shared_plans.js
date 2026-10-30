@@ -34,6 +34,7 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v161_shared_plans
   const asked = [];
   win.__asked = asked;
   win.eval(`sb={ from:(tb)=>{ const o={}; o.select=(cols)=>{ window.__asked.push(cols); return o; };
+      o.eq=()=>o;   // v162：排除範例行程（is_example）
       o.order=()=>o; o.limit=()=>Promise.resolve(/is_public/.test(window.__asked.slice(-1)[0])
         ? {data:null, error:{message:'column plans.is_public does not exist'}}
         : {data:[{id:1,plan_date:null,title:'舊的',note:null,plan_items:[{id:9,offer_id:1,note:null,sort_order:0,done:false}]}], error:null});

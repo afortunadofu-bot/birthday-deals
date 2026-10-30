@@ -399,6 +399,17 @@
     min-height:40px;background:transparent;border:0;border-top:1px solid var(--line);
     cursor:pointer;text-align:left;font-size:.85rem;color:var(--ink)}
   .venue-offer:hover{background:var(--surface)}
+  /* v162 勾選：勾勾在前面、店名那一段點了看詳情 */
+  /* 同一個位置疊了好幾家：一顆有數字的點 */
+  .venue-stack{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;
+    border:2px solid;color:#fff;font-weight:800;font-size:12px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+  /* 手機上這一排擠不下：按鈕不准斷行，說明文字自己換到下一行 */
+  .venue-bulk-bar{flex-wrap:wrap}
+  .venue-bulk-bar .btn{white-space:nowrap;flex:0 0 auto}
+  .venue-bulk-bar .hint{flex:1 1 140px;min-width:0}
+  .venue-offer .vo-pick{flex:0 0 auto;width:auto;margin:0 2px 0 0;accent-color:var(--accent)}
+  .venue-offer .vo-open{display:flex;align-items:baseline;gap:8px;flex:1 1 auto;min-width:0;
+    background:none;border:0;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
   .vo-brand{font-weight:700;white-space:nowrap}
   .vo-offer{flex:1 1 auto;min-width:0;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;
     white-space:nowrap}
@@ -424,9 +435,14 @@
     padding:10px 12px;margin:10px 0 4px}
   .venue-recs .vr-title{font-weight:800;font-size:.9rem;margin:0 0 2px}
   .venue-recs .sub{margin:0 0 6px}
-  .vr-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;width:100%;padding:8px 6px;
-    background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);margin-top:6px;
+  /* v163：一格＝一張卡，裡面兩顆按鈕（點開商圈／存成行程）——按鈕不能包按鈕，所以卡片是外面這層 */
+  .vr-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);margin-top:6px}
+  .vr-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;width:100%;padding:8px 6px 4px;
+    background:none;border:0;border-radius:var(--r-sm);
     cursor:pointer;text-align:left;font:inherit;color:var(--ink)}
+  .vr-acts{display:flex;justify-content:flex-end;padding:0 6px 8px}
+  #evCustom.hidden{display:none!important}
+  .ev-visit{color:var(--accent-dark);font-weight:800}
   .vr-row b{flex:1 1 auto;min-width:0}
   .vr-row .vr-n{font-weight:800;color:var(--accent-dark);white-space:nowrap}
   .vr-row .vr-brands{flex:1 1 100%;font-size:.78rem;color:var(--ink-3);overflow-wrap:anywhere}
@@ -648,6 +664,7 @@
   #btnNearWish.active{border-color:var(--accent);color:var(--accent-dark);
     background:var(--accent-soft);font-weight:700}
   #btnNearWish.active svg{fill:var(--accent)}
+  #btnNearUsed.active{border-color:#22c55e;color:#14532d;background:#dcfce7;font-weight:700}
   .line.near-line{color:var(--ink-2)}
   .near-line a{margin-left:6px;font-size:.78rem}
   .flag.free{background:var(--free-bg);border-color:var(--free-line);color:var(--free)}
@@ -1611,6 +1628,36 @@
   .pa-row{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;padding:9px 10px;
     border-top:1px solid var(--line-soft);cursor:pointer}
   .pa-row:first-child{border-top:0}
+  /* v162 更新動畫：像限時動態——上面一排小進度條，點右半邊下一張、左半邊上一張 */
+  #dlgWhatsNew{width:min(420px,calc(100vw - 24px))}
+  .wn{display:grid;gap:8px}
+  .wn-top{display:flex;align-items:center;gap:8px}
+  .wn-top b{flex:1 1 auto;min-width:0;font-size:1rem}
+  .wn-count{font-size:.78rem;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  .wn-bars{display:flex;gap:3px}
+  .wn-bars i{flex:1 1 0;height:3px;border-radius:2px;background:var(--line);overflow:hidden;position:relative}
+  .wn-bars i.done{background:var(--accent)}
+  .wn-bars i.on::after{content:"";position:absolute;inset:0;background:var(--accent);transform-origin:left;
+    animation:wnfill var(--wn-dur,5200ms) linear forwards}
+  .wn-bars.paused i.on::after{animation-play-state:paused}
+  @keyframes wnfill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  .wn-stage{position:relative;height:min(58vh,520px);border-radius:var(--r-sm);overflow:hidden;
+    background:var(--line-soft);border:1px solid var(--line)}
+  .wn-stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+    animation:wnin .45s ease}
+  @keyframes wnin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .wn-tap{position:absolute;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;pointer-events:none;
+    border:3px solid #1f1a1b;box-shadow:0 0 0 2.5px #fff;animation:wnring 1.5s ease-out infinite;opacity:0}
+  .wn-tap.on{opacity:1}
+  @keyframes wnring{from{transform:scale(.7)}to{transform:scale(1.35);opacity:.15}}
+  .wn-hit{position:absolute;top:0;bottom:0;width:50%;background:none;border:0;cursor:pointer;padding:0}
+  .wn-hit-l{left:0}.wn-hit-r{right:0}
+  .wn-cap b{font-size:1rem}
+  .wn-cap p{margin:2px 0 0;font-size:.86rem;color:var(--ink-2);line-height:1.6}
+  .wn-foot{display:flex;justify-content:space-between;gap:8px}
+  @media (prefers-reduced-motion: reduce){
+    .wn-stage img{animation:none} .wn-tap{animation:none} .wn-bars i.on::after{animation:none;transform:none}
+  }
   /* 「推薦一個地點」的挑店清單住在 .field 裡，而 .field input 是 width:100%——勾勾會自己
      佔一整行、置中在品牌名上面。勾勾要回到行首、只佔自己的寬度。 */
   .pa-row input[type="checkbox"]{width:auto;flex:0 0 auto;margin:0}
@@ -1800,6 +1847,10 @@
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
             stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:2px"
             aria-hidden="true"><path d="M19 21 12 16l-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"/></svg>只看收藏</button>
+        <!-- celine：「使用過了也可以出現在地圖上」。用過的一直都畫在上面，只是長得跟
+             沒用過的一樣、分不出來。現在畫成綠色，這顆只留下用過的。 -->
+        <button class="btn sm" id="btnNearUsed" type="button" aria-pressed="false"
+          title="只看你回報過用過了的店">✓ 我用過的</button>
         <button class="btn sm" id="btnNearLocate" type="button">重新定位</button>
         <button class="btn sm" id="btnNearPlace" type="button">換地點</button>
         <button class="btn sm" id="btnNearMap" type="button">地圖</button>
@@ -2326,6 +2377,37 @@
       <p id="plannerSub"></p>
       <div id="deadlines"></div>
     </section>
+    <!-- celine：「「我的」頁面 block 過多，看能不能整合」（v154：18 塊 → 13 塊）。
+
+         「我的投稿」「我的使用回報」「我回報過的問題」本來各佔一個標題列。
+         它們其實是同一件事的三種——**你送出去的東西，以及它後來怎麼了**——
+         而且三塊都是登入才有、三塊本來就都預設收著。合成一塊，裡面三顆小分頁。
+
+         裡面三個容器的 id（#myOffers／#myReports／#myFeedback）一個都沒動，
+         畫清單的那三支完全不用改。#myFeedbackPanel 留著當「問題回報」那一格的
+         外殼：loadMyFeedback() 查不到自己那幾筆時會把它藏起來，分頁鈕跟著它走。 -->
+    <div class="panel authed-only" id="myRecordsPanel" data-block>
+      <h2 style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span>我送出過的</span>
+        <!-- 「新增」的第二個入口（見 showSection） -->
+        <button type="button" class="btn sm primary" id="btnGoSubmitMine"
+          style="font-size:.78rem;font-weight:600">＋ 投稿</button>
+      </h2>
+      <div class="rec-tabs" role="tablist" aria-label="我送出過的">
+        <!-- celine：「使用回報要往上移，而且要比投稿左邊」 -->
+        <button type="button" class="rec-tab on" role="tab" data-rec="Reports" aria-selected="true">使用回報</button>
+        <button type="button" class="rec-tab" role="tab" data-rec="Offers" aria-selected="false">投稿</button>
+        <button type="button" class="rec-tab" role="tab" data-rec="Feedback" aria-selected="false">問題回報<span class="n hidden" id="myFbCount"></span></button>
+      </div>
+      <div class="rec-pane on" id="recReports" role="tabpanel">
+        <button type="button" class="btn sm hidden" id="btnReportsMap" style="margin:0 0 8px">🗺 用過的店在地圖上看</button>
+        <div id="myReports"></div></div>
+      <div class="rec-pane" id="recOffers" role="tabpanel"><div id="myOffers"></div></div>
+      <!-- 嵐：「我填寫過的回報問題，要可以出現在我的頁面」（schema_v73 開的讀自己那幾筆的權限） -->
+      <div class="rec-pane" id="recFeedback" role="tabpanel"><div id="myFeedbackPanel">
+        <p class="sub">你用「回報網站問題」送出的內容，還有管理員的回覆。</p>
+        <div id="myFeedback"></div></div></div>
+    </div>
     <!-- 原本這五塊包在 <div id="mineAuthedPanels"> 裡面一起顯示／隱藏。為了讓
          「自訂區塊順序」能把它們跟其他區塊一起排（外層 div 會讓它們永遠黏在一起），
          拆掉外層，改成每一塊自己掛 .authed-only，登入狀態變了就一起切。
@@ -2420,6 +2502,25 @@
       <h2>提醒</h2>
       <div id="remindersBody"></div>
     </div>
+    <div class="panel authed-only" id="mySavingsPanel" data-block>
+      <h2>我省下多少</h2>
+      <p class="sub">只計算回報「成功」的紀錄。</p>
+      <div id="savingsSinceVisit" class="hidden"></div>
+      <div class="bigstat" id="mySavings"></div>
+      <button type="button" class="btn sm hidden" id="btnShareSavings" style="margin-top:8px">📤 分享我的省錢成果</button>
+      <label class="toggle"><input type="checkbox" id="optLeaderboard"> 在排行榜顯示我的暱稱與頭像</label>
+      <p class="sub" style="margin-top:4px">關掉還是會上榜，只是顯示成「匿名使用者」。</p>
+    </div>
+    <!-- 嵐：「回報網站問題移到『我的』」。原本只掛在頁尾的一行小字裡，幾乎沒人看得到。
+         v154 把它旁邊那幾塊「讀一次就夠」的收進「關於壽星日」之後，它留著自己一塊：
+         它是一個動作，不是一段說明，不該被收進別人的標題底下。 -->
+    <div class="panel" id="feedbackPanel" data-block>
+      <h2>🛠 回報網站問題</h2>
+      <p class="sub">網站哪裡不好用都可以告訴我。
+        優惠內容有誤請用卡片上的「建議修改」。</p>
+      <button type="button" class="btn primary" id="btnFeedback">回報問題或建議</button>
+    </div>
+    <!-- celine（v162）：「幫別人記生日跟成就徽章往下移」——這兩塊搬到「關於壽星日」前面 -->
     <!-- 第二組生日（嵐許願）：幫家人／另一半也記一個生日。預設收著，不想用的人不會被打擾。 -->
     <div class="panel" id="altBdayPanel" data-block>
       <h2>🎁 幫家人／另一半也記一個生日</h2>
@@ -2436,55 +2537,9 @@
       <div id="altBdayMsg"></div>
       <p class="hint" id="altBdayHint" style="margin-top:6px"></p>
     </div>
-    <div class="panel authed-only" id="mySavingsPanel" data-block>
-      <h2>我省下多少</h2>
-      <p class="sub">只計算回報「成功」的紀錄。</p>
-      <div id="savingsSinceVisit" class="hidden"></div>
-      <div class="bigstat" id="mySavings"></div>
-      <button type="button" class="btn sm hidden" id="btnShareSavings" style="margin-top:8px">📤 分享我的省錢成果</button>
-      <label class="toggle"><input type="checkbox" id="optLeaderboard"> 在排行榜顯示我的暱稱與頭像</label>
-      <p class="sub" style="margin-top:4px">關掉還是會上榜，只是顯示成「匿名使用者」。</p>
-    </div>
     <div class="panel hidden authed-only" id="badgesPanel" data-block>
       <h2>成就徽章</h2>
       <div id="badgesBody" class="badge-grid"></div>
-    </div>
-    <!-- celine：「「我的」頁面 block 過多，看能不能整合」（v154：18 塊 → 13 塊）。
-
-         「我的投稿」「我的使用回報」「我回報過的問題」本來各佔一個標題列。
-         它們其實是同一件事的三種——**你送出去的東西，以及它後來怎麼了**——
-         而且三塊都是登入才有、三塊本來就都預設收著。合成一塊，裡面三顆小分頁。
-
-         裡面三個容器的 id（#myOffers／#myReports／#myFeedback）一個都沒動，
-         畫清單的那三支完全不用改。#myFeedbackPanel 留著當「問題回報」那一格的
-         外殼：loadMyFeedback() 查不到自己那幾筆時會把它藏起來，分頁鈕跟著它走。 -->
-    <div class="panel authed-only" id="myRecordsPanel" data-block>
-      <h2 style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-        <span>我送出過的</span>
-        <!-- 「新增」的第二個入口（見 showSection） -->
-        <button type="button" class="btn sm primary" id="btnGoSubmitMine"
-          style="font-size:.78rem;font-weight:600">＋ 投稿</button>
-      </h2>
-      <div class="rec-tabs" role="tablist" aria-label="我送出過的">
-        <button type="button" class="rec-tab on" role="tab" data-rec="Offers" aria-selected="true">投稿</button>
-        <button type="button" class="rec-tab" role="tab" data-rec="Reports" aria-selected="false">使用回報</button>
-        <button type="button" class="rec-tab" role="tab" data-rec="Feedback" aria-selected="false">問題回報<span class="n hidden" id="myFbCount"></span></button>
-      </div>
-      <div class="rec-pane on" id="recOffers" role="tabpanel"><div id="myOffers"></div></div>
-      <div class="rec-pane" id="recReports" role="tabpanel"><div id="myReports"></div></div>
-      <!-- 嵐：「我填寫過的回報問題，要可以出現在我的頁面」（schema_v73 開的讀自己那幾筆的權限） -->
-      <div class="rec-pane" id="recFeedback" role="tabpanel"><div id="myFeedbackPanel">
-        <p class="sub">你用「回報網站問題」送出的內容，還有管理員的回覆。</p>
-        <div id="myFeedback"></div></div></div>
-    </div>
-    <!-- 嵐：「回報網站問題移到『我的』」。原本只掛在頁尾的一行小字裡，幾乎沒人看得到。
-         v154 把它旁邊那幾塊「讀一次就夠」的收進「關於壽星日」之後，它留著自己一塊：
-         它是一個動作，不是一段說明，不該被收進別人的標題底下。 -->
-    <div class="panel" id="feedbackPanel" data-block>
-      <h2>🛠 回報網站問題</h2>
-      <p class="sub">網站哪裡不好用都可以告訴我。
-        優惠內容有誤請用卡片上的「建議修改」。</p>
-      <button type="button" class="btn primary" id="btnFeedback">回報問題或建議</button>
     </div>
     <!-- v154：「加到主畫面」「有時候會慢一點」「更新紀錄」「關於做這個網站的人」
          本來各佔一個標題列。四塊的共通點是**讀一次就夠的東西**——不是你的資料、
@@ -2517,6 +2572,7 @@
            這裡只留最新三筆的日期＋標題，細項在那一頁。 -->
       <div class="about-row" id="siteUpdatesPanel">
         <h3>🆕 更新紀錄</h3>
+        <button type="button" class="btn sm hidden" id="btnWnReplay" style="margin:0 0 8px">▶ 看這一波更新的動畫</button>
         <div id="siteUpdatesList"></div>
         <a class="panel-go" href="updates.html">看完整更新紀錄 <span aria-hidden="true">→</span></a>
       </div>
@@ -2772,7 +2828,23 @@
   <!-- celine：「管理者要可以看到每個 block 及 app 內每個功能被點擊的次數」 -->
   <div class="panel" id="pnlEventStats">
     <h2>功能被用了幾次</h2>
-    <p class="sub">站上每個功能被按了幾次、幾個人按過。跟上面同一個區間。</p>
+    <p class="sub">站上每個功能被按了幾次、幾個人按過，每一頁最上面是「點進這一頁」幾個人。</p>
+    <!-- celine：「功能被用了幾次要可以選時間區間」。本來跟上面咖啡那塊共用區間，
+         選單在別塊裡面，從這裡看不到也改不到。 -->
+    <div class="row ev-range" style="margin:0 0 10px;align-items:center;gap:8px;flex-wrap:wrap">
+      <label class="lbl">區間<select id="evRange">
+        <option value="1">今天</option>
+        <option value="7">近 7 天</option>
+        <option value="30" selected>近 30 天</option>
+        <option value="90">近 90 天</option>
+        <option value="0">全部時間</option>
+        <option value="custom">自己選日期…</option>
+      </select></label>
+      <span class="hidden" id="evCustom" style="display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <input type="date" id="evFrom" aria-label="從哪一天"> 到 <input type="date" id="evTo" aria-label="到哪一天">
+        <button type="button" class="btn sm" id="btnEvApply">套用</button>
+      </span>
+    </div>
     <div id="eventStatsBody"></div>
   </div>
   <!-- celine：「管理員可以加一個按鈕，是可以關掉品牌頁跟捐款頁的，跟個別可以選要加甚麼展示」 -->
@@ -2780,8 +2852,10 @@
        幾百筆已核可裡面，出事了連「要檢查哪幾筆」都不知道。 -->
   <div class="panel" id="pnlAutoApproved">
     <h2>自動上架的</h2>
-    <p class="sub">「老手的新投稿自動上架」打開之後，這裡列出最近 14 天直接上架、沒有經過你的那幾筆。覺得不對就退回。</p>
+    <p class="sub">「老手的投稿跟修改建議自動通過」打開之後，這裡列出最近 14 天沒有經過你、直接生效的那幾筆。覺得不對就退回或還原。</p>
     <div id="autoApprovedBody"></div>
+    <!-- v162 celine：「自動上架包含修改建議也能自動改」 -->
+    <div id="autoEditsBody" style="margin-top:12px"></div>
   </div>
   <div class="panel" id="pnlSiteFlags">
     <h2>網站顯示設定</h2>
@@ -2889,6 +2963,27 @@
        target="_blank" rel="noopener">去 Buy Me a Coffee ↗</a>
   </div>
 </form></dialog>
+<!-- celine：「把這幾版更新統一做個動畫展示」「要可以按快轉或跳過，至少維持一周都會跳出來，
+     然後最後要引導說對更新內容細節有興趣可以看更新紀錄（顯示更新紀錄的位置）」 -->
+<dialog id="dlgWhatsNew" aria-labelledby="wnTitle"><div class="dlg wn">
+  <div class="wn-top">
+    <b id="wnTitle">這兩天更新了什麼</b>
+    <span class="wn-count" id="wnCount" aria-live="polite"></span>
+    <button type="button" class="btn sm" id="btnWnSkip">跳過</button>
+  </div>
+  <div class="wn-bars" id="wnBars" aria-hidden="true"></div>
+  <div class="wn-stage" id="wnStage">
+    <img id="wnShot" alt="" decoding="async">
+    <span class="wn-tap" id="wnTap" aria-hidden="true"></span>
+    <button type="button" class="wn-hit wn-hit-l" id="btnWnHitPrev" aria-label="上一張"></button>
+    <button type="button" class="wn-hit wn-hit-r" id="btnWnHitNext" aria-label="下一張"></button>
+  </div>
+  <div class="wn-cap"><b id="wnT"></b><p id="wnD"></p></div>
+  <div class="wn-foot">
+    <button type="button" class="btn sm" id="btnWnPrev">‹ 上一張</button>
+    <button type="button" class="btn sm primary" id="btnWnNext">下一張 ›</button>
+  </div>
+</div></dialog>
 <dialog id="dlgPlanAdd"><form method="dialog" class="dlg">
   <h2>加店家</h2>
   <div id="paPicker"></div>
@@ -3443,7 +3538,7 @@ const REMEMBER=[
   // 首頁的簡易版
   'optLeanHome',
   // 管理員看的那幾個區間
-  'dashRange','svRange','coffeeRange',
+  'dashRange','svRange','coffeeRange','evRange',
 ];
 function loadPrefs(){
   try{ const o=JSON.parse(localStorage.getItem(PREF_KEY)||'{}'); return (o&&typeof o==='object')?o:{}; }
@@ -3882,6 +3977,8 @@ async function connectLive(retry=0){
   // 更新紀錄的通知排最後，前面兩個有在跳就讓它下次再說。
   setTimeout(async()=>{
     maybeShowBirthdayCheer();
+    // 跳了更新動畫，這一次就不再問定位、不跳更新通知——不要一打開連跳三個視窗
+    if(maybeShowWhatsNew()) return;
     await maybeAskLocation();
     maybeShowUpdatesNudge();
   }, 1200);
@@ -4439,7 +4536,12 @@ async function loadMyUsedOffers(){
   MY_USED_OFFER_IDS=new Set((data||[]).map(r=>String(r.offer_id)));
   render();
   if(!$('#tab-mine').classList.contains('hidden')) renderMyWishlist();
+  // v163 用過的在地圖上是綠色：回報完要重畫，「我用過的」那兩顆也看有沒有東西才出現
+  $('#btnReportsMap')?.classList.toggle('hidden', !MY_USED_OFFER_IDS.size);
+  if(NEAR.active) renderNearBar();
+  if(NEAR_MAP) paintNearPins();
 }
+$('#btnReportsMap').onclick=reportsToMap;
 /* ---- 未登入時填好的使用回報，登入回來後自動補送 ---- */
 async function flushPendingReport(){
   if(!LIVE||!me) return;
@@ -5592,6 +5694,30 @@ function mergeSavedBlocksOnce(){
   }catch{}
 }
 mergeSavedBlocksOnce();
+/* v162（celine：「幫別人記生日跟成就徽章往下移，使用回報要往上移」）。HTML 已經換好位置，
+   但自己排過順序的人看的是存檔——跟 v152、v154 一樣，存檔也搬一次，只搬一次：
+     我送出過的 → 接在「註冊死線」後面（沒有的話接在待辦清單後面）
+     幫家人記生日、成就徽章 → 搬到「關於壽星日」前面 */
+function moveBlocksV162Once(){
+  try{
+    if(localStorage.getItem('sxr_order_moved_v162')) return;
+    localStorage.setItem('sxr_order_moved_v162','1');
+    let saved=blkSaved('mine');
+    if(!saved.length) return;
+    const take=id=>{ const i=saved.indexOf(id); if(i<0) return false; saved.splice(i,1); return true; };
+    if(take('myRecordsPanel')){
+      let at=saved.indexOf('planner'); if(at<0) at=saved.indexOf('wishlistPanel');
+      saved.splice(at+1, 0, 'myRecordsPanel');
+    }
+    const down=['altBdayPanel','badgesPanel'].filter(take);
+    if(down.length){
+      const at=saved.indexOf('aboutSitePanel');
+      saved.splice(at<0?saved.length:at, 0, ...down);
+    }
+    localStorage.setItem(BLK_PAGES.mine.key, JSON.stringify(saved));
+  }catch{}
+}
+moveBlocksV162Once();
 Object.keys(BLK_PAGES).forEach(applyBlockOrder);
 
 /* ---- 全站顯示開關（schema_v95 的 site_settings）----
@@ -5611,7 +5737,7 @@ Object.keys(BLK_PAGES).forEach(applyBlockOrder);
 const FLAG_KEYS=['auto_approve','show_dev_intro','show_studio_footer','show_studio_brandpage',
                  'show_studio_bandary','show_studio_relatestats','show_coffee'];
 const FLAG_LABEL={
-  auto_approve:'老手的新投稿自動上架',
+  auto_approve:'老手的投稿跟修改建議自動通過',
   show_dev_intro:'「我的」底部的「關於」入口',
   show_studio_footer:'頁尾「小數據所」整塊',
   show_studio_brandpage:'連回品牌頁',
@@ -5622,7 +5748,8 @@ const FLAG_LABEL={
 const FLAG_NOTE={
   /* celine：「管理員可以開啟自動按鈕，可以自動通過修改跟新增的優惠，打開按鈕才會啟動」。
      說明要講清楚「誰」會被自動通過——這顆開下去等於那些人不用再經過你。 */
-  auto_approve:'打開之後，**已經有 2 筆投稿被核可過**的人再投新的，會直接上架、不用等審核。'
+  auto_approve:'打開之後，**已經有 2 筆被核可過**（投稿或修改建議都算）的人，再投新的會直接上架、'
+    +'送修改建議會直接改上去，不用等審核。'
     +'新帳號、被停權的人照舊進待審佇列。自動上架的會列在下面「自動上架的」那一塊，隨時可以退回。',
   show_dev_intro:'「我的」最底部進「關於」那一頁的入口。關掉整塊不見（about.html 本身還在）。',
   show_studio_footer:'關掉整塊不見。',
@@ -5787,9 +5914,14 @@ const EVENT_LABEL={
   venue_suggest:'打開「推薦一個地點」',
   plan_create:'排一趟新的行程', plan_add:'把店家加進行程', plan_map:'行程的地圖（打開／收起）',
   plan_section:'行程裡加一個段落', plan_share:'公開／收回自己的行程',
+  whatsnew_open:'更新動畫跳出來／重看', whatsnew_skip:'更新動畫按跳過', whatsnew_done:'更新動畫看到最後',
+  whatsnew_go:'從更新動畫去看更新紀錄',
   shared_open:'打開「大家的行程」的一趟', shared_save:'收藏別人的行程',
   shared_copy:'把別人的行程加進我的行程',
-  venue_rec_open:'從「照你的待辦清單」點進商圈', wish_to_venues:'待辦清單 →「去哪裡一次用最多」',
+  venue_rec_open:'從「照你的待辦清單」點進商圈', venue_rec_plan:'從「照你的待辦清單」存成行程',
+  near_used_only:'附近「我用過的」', reports_to_map:'使用回報 →「在地圖上看」',
+  tab_open:'換頁（要跑 v163 才分得出是哪一頁）',
+  wish_to_venues:'待辦清單 →「去哪裡一次用最多」',
   rate_cta:'從提示去評分', rate_nudge:'「還沒評分」的提示出現',
   rate_all_open:'一次評很多筆', rate_submit:'送出評分',
   survey_nudge:'問卷提示出現', survey_open:'打開問卷', survey_submit:'送出問卷',
@@ -5808,7 +5940,9 @@ const EVENT_SECTION={
   rate_cta:'優惠', rate_nudge:'優惠', rate_all_open:'優惠', rate_submit:'優惠',
   venue_open:'排行程', bulk_open:'排行程', bulk_wish:'排行程', venue_suggest:'排行程',
   plan_create:'排行程', plan_add:'排行程', plan_map:'排行程', venue_rec_open:'排行程',
+  venue_rec_plan:'排行程', near_used_only:'優惠', reports_to_map:'我的', tab_open:'全站',
   plan_section:'排行程', plan_share:'排行程', shared_open:'排行程', shared_save:'排行程',
+  whatsnew_open:'全站', whatsnew_skip:'全站', whatsnew_done:'全站', whatsnew_go:'全站',
   shared_copy:'排行程',
   wish_to_venues:'我的',
   wishlist_to_map:'我的', badge_unlock:'我的', updates_nudge:'我的', updates_page_open:'我的',
@@ -5820,8 +5954,10 @@ const EVENT_SECTION={
 const SECTION_ORDER=['優惠','排行榜','排行程','我的','全站','管理員','其他'];
 const TAB_SECTION={'tab-browse':'優惠','tab-board':'排行榜','tab-trip':'排行程',
                    'tab-mine':'我的','tab-admin':'管理員'};
+const TAB_NAME={browse:'優惠',board:'排行榜',trip:'排行程',mine:'我的',admin:'管理員',submit:'投稿'};
 function eventSection(target){
   const t=String(target||'');
+  if(t.startsWith('tab:')) return TAB_SECTION['tab-'+t.slice(4)]||'全站';
   if(t.startsWith('panel:')){
     const tab=document.getElementById(t.slice(6))?.closest('section[id^="tab-"]')?.id;
     return TAB_SECTION[tab]||'其他';
@@ -5835,12 +5971,47 @@ function panelLabel(id){
   const txt=h2?h2.textContent.replace(/[▾▸收起展開]/g,'').trim():'';
   return txt?`區塊：${txt}`:`區塊：${id}`;
 }
+/* 區間 → [從, 到)。「今天」從今天 0 點（台灣時間，就是這台裝置的時間）算起，
+   不是「近 24 小時」；自己選的日期兩頭都算進去，所以「到」要加一天。 */
+function evRangeSpan(){
+  const v=$('#evRange')?.value||'30';
+  const day=s=>{ const [y,m,d]=String(s||'').split('-').map(Number); return y?new Date(y,m-1,d):null; };
+  if(v==='custom'){
+    let a=day($('#evFrom')?.value), b=day($('#evTo')?.value);
+    if(!a && !b) return null;
+    if(a && b && a>b) [a,b]=[b,a];
+    if(b) b=new Date(b.getFullYear(), b.getMonth(), b.getDate()+1);
+    const f=x=>`${x.getMonth()+1}/${x.getDate()}`;
+    const last=b?new Date(b-864e5):null;
+    return {from:a, to:b, days:null,
+      label: a&&last ? (+a===+last ? f(a) : `${f(a)}～${f(last)}`) : a ? `${f(a)} 之後` : `${f(last)} 以前`};
+  }
+  const n=Number(v);
+  if(n===1){ const t=new Date(); return {from:new Date(t.getFullYear(),t.getMonth(),t.getDate()), to:null, days:1, label:'今天'}; }
+  if(n>0) return {from:new Date(Date.now()-n*864e5), to:null, days:n, label:`近 ${n} 天`};
+  return {from:null, to:null, days:0, label:'全部時間'};
+}
+let EV_RANGE_V163=true;
 async function loadEventStats(){
   const box=$('#eventStatsBody');
   if(!box || !myProfile?.is_admin || !LIVE) return;
-  const days=Number($('#coffeeRange')?.value||30);
+  const span=evRangeSpan();
+  if(!span){ box.innerHTML='<div class="hint">選一下從哪天到哪天。</div>'; return; }
   box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">載入中…</div>';
-  const {data,error}=await sb.rpc('admin_event_stats',{p_days:days});
+  /* v163 那支吃「從、到」，也把換頁拆成每一頁。還沒跑的話退回 v151 那支——
+     它只吃「近幾天」，所以自己選的日期在那之前沒辦法用。 */
+  let {data,error}= EV_RANGE_V163
+    ? await sb.rpc('admin_event_stats_range',{p_from:span.from?span.from.toISOString():null,
+                                              p_to:span.to?span.to.toISOString():null})
+    : {data:null,error:{message:'function admin_event_stats_range does not exist'}};
+  if(error && /admin_event_stats_range|function|schema cache/i.test(error.message||'')){
+    EV_RANGE_V163=false;
+    if(span.days==null){
+      box.innerHTML='<div class="note">自己選日期要先在 Supabase 執行 schema_v163_event_range.sql。上面的「今天／近幾天」現在就能用。</div>';
+      return;
+    }
+    ({data,error}=await sb.rpc('admin_event_stats',{p_days:span.days}));
+  }
   if(error){
     const missing=/function|does not exist|schema cache/i.test(error.message||'');
     box.innerHTML=`<div class="note${missing?'':' alert'}">${missing
@@ -5853,10 +6024,12 @@ async function loadEventStats(){
     box.innerHTML='<div style="color:var(--ink-3);font-size:.86rem">這個區間還沒有紀錄。</div>';
     return;
   }
-  const label = days>0 ? `近 ${days} 天` : '全部時間';
+  const label = span.label;
   const isPanel=r=>String(r.target||'').startsWith('panel:');
+  const isTab=r=>String(r.target||'').startsWith('tab:');
   const name=r=>isPanel(r) ? panelLabel(String(r.target).slice(6))
-                           : (EVENT_LABEL[r.target]||r.target);
+              : isTab(r) ? `點進「${TAB_NAME[String(r.target).slice(4)]||String(r.target).slice(4)}」這一頁`
+                         : (EVENT_LABEL[r.target]||r.target);
   const row=r=>`<div class="linkrow">
       <span class="lr-name">${esc(name(r))}</span>
       <span class="lr-n"><b>${nt2(r.events)}</b> 次 · ${nt2(r.people)} 人</span>
@@ -5868,13 +6041,17 @@ async function loadEventStats(){
   rows.forEach(r=>bySection.get(eventSection(r.target))?.push(r));
   const byCount=(a,b)=>Number(b.events)-Number(a.events);
   const group=(title, list)=>{
-    const feats=list.filter(r=>!isPanel(r)).sort(byCount);
+    // 點進這一頁的那一行放最上面：先看有幾個人進來，再看進來的人按了什麼
+    const tabs=list.filter(isTab).sort(byCount);
+    const feats=list.filter(r=>!isPanel(r)&&!isTab(r)).sort(byCount);
     const panels=list.filter(isPanel).sort(byCount);
-    const total=list.reduce((n,r)=>n+Number(r.events||0),0);
+    const total=list.filter(r=>!isTab(r)).reduce((n,r)=>n+Number(r.events||0),0);
+    const visit=tabs.find(r=>TAB_SECTION['tab-'+String(r.target).slice(4)]===title);
     return `<div class="ev-sec" data-sec="${esc(title)}" style="margin-bottom:14px">
       <div style="font-size:.82rem;color:var(--ink);font-weight:800;margin:0 0 5px">
-        ${esc(title)} <span style="color:var(--ink-3);font-weight:600">· ${nt2(total)} 次</span></div>
-      <div class="sub-list">${feats.map(row).join('')}${panels.map(row).join('')}</div>
+        ${esc(title)} <span style="color:var(--ink-3);font-weight:600">· ${nt2(total)} 次${
+          visit?` · <span class="ev-visit">${nt2(visit.people)} 人點進來</span>`:''}</span></div>
+      <div class="sub-list">${tabs.map(row).join('')}${feats.map(row).join('')}${panels.map(row).join('')}</div>
     </div>`;
   };
   box.innerHTML =
@@ -5882,8 +6059,21 @@ async function loadEventStats(){
     + `<p class="hint" style="margin:6px 0 0">「區塊：」開頭的是那一頁被點開的區塊——預設就展開著的區塊
       不會算，只有「本來收著、你把它點開」才算一次。</p>`
     + `<p class="hint" style="margin:6px 0 0">${esc(label)}。不含瀏覽頁面本身
-      （那個是排行榜上的「總瀏覽人次」）。「人」算的是瀏覽器，同一個人換裝置會算兩個。</p>`;
+      （那個是排行榜上的「總瀏覽人次」）。「人」算的是瀏覽器，同一個人換裝置會算兩個。
+      「點進這一頁」從 v163 才開始記，開站時直接落在的那一頁不算。</p>`;
 }
+$('#evRange').onchange=()=>{
+  const custom=$('#evRange').value==='custom';
+  $('#evCustom').classList.toggle('hidden', !custom);
+  if(custom){
+    // 第一次選「自己選日期」：先帶近 7 天，改一頭就好
+    const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if(!$('#evTo').value) $('#evTo').value=iso(new Date());
+    if(!$('#evFrom').value) $('#evFrom').value=iso(new Date(Date.now()-6*864e5));
+  }
+  loadEventStats();
+};
+$('#btnEvApply').onclick=loadEventStats;
 /* ---- 審核：一趟用最多的地點 -------------------------------------
    三段同一塊（celine 的「block 過多」是整站的問題，不要在這裡又開三塊）：
      1. 待審的推薦 —— 使用者送來的名字，收下／退回
@@ -6103,8 +6293,8 @@ async function loadLinkStats(){
       「人」跟上面一樣算的是瀏覽器。「關於」「隱私權」「服務條款」「更新紀錄」這幾頁沒有載主程式，
       是各自記一筆（見 track.js），所以它們不會算進排行榜上公開的「總瀏覽人次」。</p>`;
 }
-$('#coffeeRange').onchange=()=>{ loadCoffeeStats(); loadLinkStats(); loadEventStats(); };
-$('#btnCoffeeStatsReload').onclick=()=>{ loadCoffeeStats(); loadLinkStats(); loadEventStats(); };
+$('#coffeeRange').onchange=()=>{ loadCoffeeStats(); loadLinkStats(); };
+$('#btnCoffeeStatsReload').onclick=()=>{ loadCoffeeStats(); loadLinkStats(); };
 
 function renderSiteFlagsPanel(){
   const box=$('#siteFlagsBody');
@@ -6433,7 +6623,9 @@ async function loadVenues(){
   }
   VENUES=data||[];
   const sel=$('#venueCounty');
-  const counties=[...new Set(VENUES.map(v=>v.county).filter(Boolean))];
+  /* celine：「一趟用最多的縣市由北排到南」。COUNTIES 本來就是由北到南、再東部、再離島的順序 */
+  const ord=c=>{ const i=COUNTIES.indexOf(c); return i<0?999:i; };
+  const counties=[...new Set(VENUES.map(v=>v.county).filter(Boolean))].sort((a,b)=>ord(a)-ord(b));
   const prevCty=sel.value;
   sel.innerHTML='<option value="">全部縣市</option>'
     +counties.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
@@ -6489,14 +6681,41 @@ function renderVenueRecs(){
   const brand=id=>OFFERS.find(o=>String(o.id)===id)?.brand;
   box.innerHTML=`<div class="venue-recs"><div class="vr-title">照你的待辦清單</div>
     <p class="sub">你收藏了 ${WISH.size} 筆。去這${ranked.length>1?'幾':'一'}個地方，一趟用得最多：</p>
-    ${ranked.map(({v,hit})=>`<button type="button" class="vr-row" data-vr="${v.id}">
+    ${ranked.map(({v,hit})=>`<div class="vr-item"><button type="button" class="vr-row" data-vr="${v.id}">
       <b>${esc(v.name)}</b><span class="vr-n">${hit.length} 筆</span>
       <span class="vr-brands">${esc(hit.map(brand).filter(Boolean).slice(0,6).join('、'))}${hit.length>6?'…':''}</span>
-    </button>`).join('')}</div>`;
+    </button><div class="vr-acts"><button type="button" class="btn sm primary" data-vrplan="${v.id}">＋ 存成我的行程</button></div></div>`).join('')}</div>`;
   box.querySelectorAll('[data-vr]').forEach(b=>b.onclick=()=>{
     logEvent('venue_rec_open',{id:Number(b.dataset.vr)});
     openVenueFromMap(Number(b.dataset.vr));
   });
+  box.querySelectorAll('[data-vrplan]').forEach(b=>b.onclick=()=>venueRecToPlan(Number(b.dataset.vrplan), b));
+}
+/* celine：「這個要有辦法點下去一鍵收藏成我的行程」。
+   一趟＝這個商圈，名字就是商圈的名字，店家＝你收藏的、在這個商圈裡的那幾筆。
+   回報過用過了的先拿掉（已經用掉了，排進去也是多走一趟）；全部都用過的話就照樣全放，
+   不要建出一趟空的。一趟最多 40 家（資料庫的上限）。日期、順序之後自己改。 */
+async function venueRecToPlan(vid, btn){
+  if(!me){ showToast('排行程要先登入，右上角可以用 Google 登入'); return; }
+  const v=(VENUES||[]).find(x=>x.id===vid); if(!v) return;
+  const hit=venueWishHits(v);
+  const fresh=hit.filter(id=>!MY_USED_OFFER_IDS.has(id));
+  const ids=(fresh.length?fresh:hit).slice(0,40);
+  if(!ids.length) return;
+  if(btn) btn.disabled=true;
+  const {data:np,error}=await sb.from('plans')
+    .insert({user_id:me.id, title:String(v.name||'').slice(0,40)||null})
+    .select('id').single();
+  if(error){ if(btn) btn.disabled=false; showToast(planErrMsg(error)); return; }
+  const r=await sb.from('plan_items')
+    .insert(ids.map((id,k)=>({plan_id:np.id, offer_id:Number(id), sort_order:k})));
+  if(r.error) showToast(planErrMsg(r.error));
+  PLAN_OPEN=np.id;
+  await loadPlans();
+  if(btn) btn.disabled=false;
+  $('#pnlPlans')?.scrollIntoView({behavior:'smooth', block:'start'});
+  if(!r.error) showToast(`「${v.name}」存成一趟了，${ids.length} 家都排進去——定個日期吧`);
+  logEvent('venue_rec_plan',{id:vid, n:ids.length});
 }
 $('#btnWishToVenues').onclick=()=>{
   showSection('trip');
@@ -6606,7 +6825,11 @@ async function paintVenueMap(v){
   const m=L.map(el,{scrollWheelZoom:false}).setView([v.lat,v.lng],17);
   VENUE_MAP=m;
   venueMapTiles(m);
-  L.circle([v.lat,v.lng],{radius:v.radius_m||180, color:'#e8483c', weight:1, fillOpacity:.05}).addTo(m);
+  const ring=L.circle([v.lat,v.lng],{radius:v.radius_m||180, color:'#e8483c', weight:1, fillOpacity:.05}).addTo(m);
+  /* celine：「有些店家不在地圖裡」。固定縮放 17 的時候，200px 高的小地圖裝不下 180 公尺的
+     圈——圈的上下兩截在畫面外，那裡的店就看不到。改成縮放到整個圈剛好放得進去。 */
+  const fit=()=>{ if(VENUE_MAP===m){ m.invalidateSize(); m.fitBounds(ring.getBounds(), {padding:[6,6]}); } };
+  fit(); setTimeout(fit, 0);
   /* 管理員：中心點可以拖。嵐說的「編輯」——名字在上面那一條改，位置在這裡拖。
      放開就存，存完重新整理清單（範圍一動，裡面有幾家就會變）。 */
   if(myProfile?.is_admin){
@@ -6618,18 +6841,38 @@ async function paintVenueMap(v){
   }
   const {data,error}=await sb.rpc('offer_stores_in_bounds',{...venueBox(v), p_limit:300});
   if(error || VENUE_MAP!==m) return;          // 查回來之前這一格已經關掉／換了一格
+  /* celine：「有些店家不在地圖裡」。不是不在，是疊在一起：百貨裡的店，分店資料的座標
+     常常都是同一棟的地址——23 家店畫出來只看得到 4 顆點，其他十幾顆一模一樣地壓在底下。
+     所以同一個位置（約 10 公尺內）的併成一顆，上面寫幾家，點開列出每一家。 */
+  const groups=new Map();
   (data||[]).filter(st=>venueDistM(v,st)<=(v.radius_m||180)).forEach(st=>{
     const o=OFFERS.find(x=>String(x.id)===String(st.offer_id)); if(!o) return;
-    const c=WISH.has(String(o.id)) ? PIN_STYLE.wished : PIN_STYLE.normal;
-    L.circleMarker([st.lat,st.lng],{radius:c.r, weight:2, color:c.color, fillColor:c.fill,
-        fillOpacity:.85, bubblingMouseEvents:false})
-      .bindPopup(`<b>${esc(o.brand)}</b><br><span style="font-size:.8rem">${esc(st.name)}</span><br>`
-        +`<button type="button" class="btn sm map-open-offer" data-id="${esc(String(o.id))}" style="margin-top:6px">看優惠</button>`)
-      .addTo(m);
+    const key=st.lat.toFixed(4)+','+st.lng.toFixed(4);
+    if(!groups.has(key)) groups.set(key, {lat:st.lat, lng:st.lng, rows:[]});
+    const g=groups.get(key);
+    if(!g.rows.some(r=>r.o.id===o.id)) g.rows.push({o, st});
+  });
+  const row=({o,st})=>`<div style="margin:2px 0"><b>${esc(o.brand)}</b>`
+    +` <span style="font-size:.78rem;color:#6b6b6b">${esc(st.name)}</span>`
+    +` <button type="button" class="btn sm map-open-offer" data-id="${esc(String(o.id))}"`
+    +` style="padding:1px 8px;font-size:.74rem">看優惠</button></div>`;
+  groups.forEach(g=>{
+    const wished=g.rows.some(r=>WISH.has(String(r.o.id)));
+    const c=wished ? PIN_STYLE.wished : PIN_STYLE.normal;
+    const popup=g.rows.length>1
+      ? `<div style="max-height:180px;overflow:auto"><div style="font-size:.78rem;color:#6b6b6b;margin-bottom:2px">`
+        +`這裡有 ${g.rows.length} 家</div>${g.rows.map(row).join('')}</div>`
+      : row(g.rows[0]);
+    const mk = g.rows.length>1
+      ? L.marker([g.lat,g.lng],{icon:L.divIcon({className:'', iconSize:[26,26], iconAnchor:[13,13],
+          html:`<span class="venue-stack" style="background:${c.fill};border-color:${c.color}">${g.rows.length}</span>`})})
+      : L.circleMarker([g.lat,g.lng],{radius:c.r, weight:2, color:c.color, fillColor:c.fill,
+          fillOpacity:.85, bubblingMouseEvents:false});
+    mk.bindPopup(popup).addTo(m);
   });
   m.on('popupopen', e=>{
-    const b=e.popup.getElement()?.querySelector('.map-open-offer');
-    if(b) b.onclick=()=>openDetail(b.dataset.id);
+    e.popup.getElement()?.querySelectorAll('.map-open-offer')
+      .forEach(b=>b.onclick=()=>openDetail(b.dataset.id));
   });
 }
 /* 管理員就地編輯（嵐：「已經公開的就不用繼續寫在管理員這邊了，管理員可以去行程
@@ -6745,18 +6988,55 @@ async function fillVenue(id){
   }
   /* 記下這一格裡有哪幾筆，「一鍵加入」就不用再向資料庫要一次。 */
   VENUE_OFFERS.set(id, list.map(o=>String(o.id)));
-  const left=list.filter(o=>!WISH.has(String(o.id))).length;
-  body.innerHTML=top+'<div class="venue-bulk-bar">'
-    +`<button type="button" class="btn sm primary" id="venueBulk${id}"${left?'':' disabled'}>`
-    +(left?`一鍵加入待辦清單（${left} 筆）`:'這裡的都收藏了')
-    +'</button></div>'
-    +list.map(o=>`<button type="button" class="venue-offer" data-id="${esc(String(o.id))}">
-      <span class="vo-brand">${esc(o.brand)}</span>
-      <span class="vo-offer">${esc(String(o.offer||'').slice(0,40))}</span>
-      ${WISH.has(String(o.id))?'<span class="flag">已收藏</span>':''}
-    </button>`).join('');
+  /* celine：「不要直接一件全部加入，是可以勾選那種」。本來那顆「一鍵加入待辦清單（14 筆）」
+     按下去是另外跳一張勾選清單，但字面上看起來就是「14 筆全部加進去」——所以直接在這一張
+     清單上打勾，勾完按「加入勾選的」。點店名一樣是看詳情。已經收藏的那幾筆勾著、不能取消。 */
+  if(VENUE_PICKS.id!==id){ VENUE_PICKS.id=id; VENUE_PICKS.set.clear(); }
+  const left=list.filter(o=>!WISH.has(String(o.id)));
+  body.innerHTML=top+`<div class="venue-bulk-bar">
+      <button type="button" class="btn sm primary" id="venueBulk${id}" disabled>加入勾選的</button>
+      ${left.length?`<button type="button" class="btn sm" id="venueAll${id}">全選</button>`:''}
+      <span class="hint" style="margin:0">${left.length?'勾起來再按「加入」':'這裡的都收藏了'}</span>
+    </div>`
+    +list.map(o=>{
+      const oid=String(o.id), wished=WISH.has(oid);
+      return `<div class="venue-offer">
+        <input type="checkbox" class="vo-pick" data-vpick="${esc(oid)}" aria-label="勾選 ${esc(o.brand)}"
+          ${wished?'checked disabled':(VENUE_PICKS.set.has(oid)?'checked':'')}>
+        <button type="button" class="vo-open" data-id="${esc(oid)}">
+          <span class="vo-brand">${esc(o.brand)}</span>
+          <span class="vo-offer">${esc(String(o.offer||'').slice(0,40))}</span>
+        </button>
+        ${wished?'<span class="flag">已收藏</span>':''}
+      </div>`;
+    }).join('');
   const bulkBtn=$('#venueBulk'+id);
-  if(bulkBtn) bulkBtn.onclick=()=>openBulkAdd(id);
+  const paintPick=()=>{
+    const n=VENUE_PICKS.set.size;
+    if(bulkBtn){ bulkBtn.disabled=!n; bulkBtn.textContent=n?`加入勾選的（${n} 筆）`:'加入勾選的'; }
+    const all=$('#venueAll'+id);
+    if(all) all.textContent = n && n===left.length ? '全部取消' : '全選';
+  };
+  body.querySelectorAll('[data-vpick]').forEach(cb=>cb.onchange=()=>{
+    cb.checked ? VENUE_PICKS.set.add(cb.dataset.vpick) : VENUE_PICKS.set.delete(cb.dataset.vpick);
+    paintPick();
+  });
+  const allBtn=$('#venueAll'+id);
+  if(allBtn) allBtn.onclick=()=>{
+    const on=VENUE_PICKS.set.size!==left.length;
+    VENUE_PICKS.set.clear();
+    if(on) left.forEach(o=>VENUE_PICKS.set.add(String(o.id)));
+    body.querySelectorAll('[data-vpick]:not(:disabled)').forEach(cb=>cb.checked=on);
+    paintPick();
+  };
+  if(bulkBtn) bulkBtn.onclick=async()=>{
+    const ids=[...VENUE_PICKS.set]; if(!ids.length) return;
+    bulkBtn.disabled=true; bulkBtn.textContent='加入中…';
+    if(!await wishAddMany(ids, id)){ paintPick(); return; }
+    VENUE_PICKS.set.clear();
+    fillVenue(id);
+  };
+  paintPick();
   /* 嵐：「使用者也可以投稿編輯」。管理員自己就地改就好，不用投稿給自己 */
   if(v && !myProfile?.is_admin){
     body.insertAdjacentHTML('beforeend', `<p class="venue-fix">名字不對、範圍不對、少了哪幾家？
@@ -6764,7 +7044,7 @@ async function fillVenue(id){
     $('#venueFix'+id).onclick=()=>openVenueSuggest(v);
   }
   if(v){ wireVenueAdmin(v); paintVenueMap(v); }
-  $$('#venueBody'+id+' .venue-offer').forEach(b=>b.onclick=()=>openDetail(b.dataset.id));
+  $$('#venueBody'+id+' .vo-open').forEach(b=>b.onclick=()=>openDetail(b.dataset.id));
 }
 
 /* ---- 一鍵加入待辦清單（勾選清單）----
@@ -6777,6 +7057,7 @@ async function fillVenue(id){
      · 沒有「加入行程」那顆——行程本體還沒做，現在加了根本沒地方看。
        排行程是下一版，這張清單到時候再多一顆。 ---- */
 const VENUE_OFFERS=new Map();
+const VENUE_PICKS={id:null, set:new Set()};   // 商圈清單上勾了哪幾筆（一次只開一格）
 let BULK=null;   // {venueId, ids:[字串 id], picks:Set}
 /* key 本來只會是商圈的 id；v161 起也可以是「plan:行程id」（大家的行程那邊的一鍵加入），
    這時候 label 是那一趟的名字。 */
@@ -6827,10 +7108,9 @@ function updateBulkCount(){
    （一筆，失敗就改回來，使用者最多看到一個圖示閃一下）；整批不能這樣做
    ——十八筆一起失敗的話，畫面上十八個「已收藏」全是假的，而使用者會
    以為收好了、不會再加一次。 */
-async function doBulkAdd(){
-  if(!BULK||!BULK.picks.size) return;
-  const ids=[...BULK.picks], venueId=BULK.venueId, btn=$('#btnBulkAdd');
-  btn.disabled=true; btn.textContent='加入中…';
+/* 一次把好幾筆加進待辦清單。商圈清單上的「加入勾選的」跟勾選視窗（大家的行程那邊）共用。
+   成功回 true；失敗已經講過了，回 false。 */
+async function wishAddMany(ids, venueId){
   if(LIVE&&me){
     const person=wishPersonNow();
     const rows=ids.map(id=>({user_id:me.id, offer_id:Number(id)}));
@@ -6839,14 +7119,12 @@ async function doBulkAdd(){
     // v71 還沒跑（沒有 person 欄位）：跟 toggleWish 一樣退回不帶清單
     if(r.error && person && /person|column|schema cache/i.test(r.error.message||''))
       r=await sb.from('wishlist').upsert(rows,{onConflict:'user_id,offer_id'});
-    if(r.error){ updateBulkCount(); alert('加入失敗：'+r.error.message); return; }
+    if(r.error){ alert('加入失敗：'+r.error.message); return false; }
   } else {
     ids.forEach(id=>WISH.add(String(id)));
-    localStorage.setItem('sxr_wishlist', JSON.stringify([...WISH]));
+    try{ localStorage.setItem('sxr_wishlist', JSON.stringify([...WISH])); }catch{}
   }
   ids.forEach(id=>{ WISH.add(String(id)); syncWishButtons(id, true); });
-  BULK=null;
-  $('#dlgBulkAdd').close();
   showToast(`已加入 ${ids.length} 筆`);
   hintWishlistLocation();
   logEvent('bulk_wish', {venue_id:venueId, n:ids.length});
@@ -6854,6 +7132,16 @@ async function doBulkAdd(){
   render();
   if(!$('#tab-mine').classList.contains('hidden')) renderMyWishlist();
   renderReminders();
+  renderVenueRecs();
+  return true;
+}
+async function doBulkAdd(){
+  if(!BULK||!BULK.picks.size) return;
+  const ids=[...BULK.picks], venueId=BULK.venueId, btn=$('#btnBulkAdd');
+  btn.disabled=true; btn.textContent='加入中…';
+  if(!await wishAddMany(ids, venueId)){ updateBulkCount(); return; }
+  BULK=null;
+  $('#dlgBulkAdd').close();
   // 場館清單上的「已收藏」跟那顆按鈕要跟著更新；從「大家的行程」來的就重畫那一塊
   if(typeof venueId==='number') fillVenue(venueId); else renderShared();
 }
@@ -6861,6 +7149,9 @@ async function doBulkAdd(){
 /* 「新增」不再是底部的分頁，但那一整段還在。這支負責「只顯示某一段」，
    給那兩顆新增按鈕用。 */
 function showSection(name){
+  /* celine：「排行程也要可以看的到點擊人數」。換頁本來不記，所以「功能被用了幾次」
+     只看得到頁面裡的按鈕、看不到有多少人點進這一頁。同一頁再點一次不算。 */
+  if(name!==ACTIVE_TAB) logEvent('tab_open',{tab:name});
   $$('.tab').forEach(x=>x.setAttribute('aria-selected', x.dataset.tab===name));
   ['browse','board','trip','submit','mine','admin'].forEach(n=>
     $('#tab-'+n).classList.toggle('hidden', n!==name));
@@ -7217,13 +7508,15 @@ function mapTileConfig(){
   return MAP_TILE_DEFAULT;
 }
 const NEAR={active:false, lat:null, lng:null, label:'', km:3, byOffer:null, loading:false,
-  reqSeq:0, sortTouched:false, wishOnly:false};
+  reqSeq:0, sortTouched:false, wishOnly:false, usedOnly:false};
 try{ const k=Number(localStorage.getItem('sxr_near_km')); if([1,3,5,10,30].includes(k)) NEAR.km=k; }catch{}
 let NEAR_MAP=null, NEAR_MAP_CENTER=null, NEAR_MAP_CIRCLE=null, NEAR_MAP_PINS=null, NEAR_PIN_TIMER=null;
 /* 地圖上「有優惠的分店」那顆點。附近的地圖跟商圈的地圖（v159）共用，兩邊才不會
    一個橘一個紅、使用者以為是兩種東西。Leaflet 的顏色要寫死成色碼：它畫的是 SVG
    屬性，吃不到 CSS 變數。 */
-const PIN_STYLE={wished:{color:'#7c2d12', fill:'#f59e0b', r:10}, normal:{color:'#c2410c', fill:'#fb923c', r:8}};
+const PIN_STYLE={wished:{color:'#7c2d12', fill:'#f59e0b', r:10}, normal:{color:'#c2410c', fill:'#fb923c', r:8},
+  /* v163 你回報過用過了的：綠色，跟「還沒用」的橘色分得開 */
+  used:{color:'#14532d', fill:'#22c55e', r:9}};
 /* 現在打開的是哪一家的資訊。paintNearPins() 會把整個圖層清掉重畫，popup 當然
    跟著不見——重畫完照這個 key 把它開回來，使用者才不會「看到一半就沒了」。 */
 let NEAR_POPUP_KEY='';
@@ -7249,12 +7542,20 @@ function renderNearBar(){
     wb.setAttribute('aria-pressed', String(NEAR.active && NEAR.wishOnly));
     wb.classList.toggle('active', NEAR.active && NEAR.wishOnly);
   }
+  const ub=$('#btnNearUsed');
+  if(ub){
+    ub.setAttribute('aria-pressed', String(NEAR.active && NEAR.usedOnly));
+    ub.classList.toggle('active', NEAR.active && NEAR.usedOnly);
+    // 沒登入、或一筆都沒回報過：這顆按下去只會是空的
+    ub.classList.toggle('hidden', !me || !MY_USED_OFFER_IDS.size);
+  }
   if(!NEAR.active) return;
   $('#nearKm').value=String(NEAR.km);
   // 只看收藏時要數「收藏的有幾筆」，不是全部幾筆——不然數字跟列表對不起來
   const ids=NEAR.byOffer?[...NEAR.byOffer.keys()]:[];
-  const n=NEAR.wishOnly ? ids.filter(id=>WISH.has(id)).length : ids.length;
-  const what=NEAR.wishOnly?'收藏的優惠有分店':'筆優惠有分店';
+  const n=NEAR.wishOnly ? ids.filter(id=>WISH.has(id)).length
+        : NEAR.usedOnly ? ids.filter(id=>MY_USED_OFFER_IDS.has(id)).length : ids.length;
+  const what=NEAR.wishOnly?'收藏的優惠有分店':NEAR.usedOnly?'筆你用過的優惠有分店':'筆優惠有分店';
   $('#nearStatus').innerHTML = NEAR.loading ? '找附近的分店中…'
     : NEAR.lat==null ? '還沒有位置——允許定位，或打開地圖點一下你要查的地方。'
     : `📍 <b>${esc(NEAR.label)}</b>附近 ${NEAR.km} 公里內，有 ${n} ${what}`
@@ -7282,7 +7583,7 @@ function startNear(){
 }
 function stopNear(){
   NEAR.active=false; NEAR.byOffer=null; NEAR.lat=NEAR.lng=null; NEAR.loading=false;
-  NEAR.reqSeq++; NEAR.sortTouched=false; NEAR.wishOnly=false;
+  NEAR.reqSeq++; NEAR.sortTouched=false; NEAR.wishOnly=false; NEAR.usedOnly=false;
   if($('#sort').value==='distance') $('#sort').value='value';
   closeNearMap();
   $('#nearMapHint').textContent='';
@@ -7410,7 +7711,7 @@ function paintNearPins(){
   const hint=$('#nearMapHint');
   const reopen=NEAR_POPUP_KEY;        // clearLayers() 會把它清掉，先記下來
   NEAR_MAP_PINS.clearLayers();
-  let hidden=0, filtered=0;
+  let hidden=0, filtered=0, n=0;
   const pass=filterPredicate();
   NEAR_PIN_ROWS.forEach(st=>{
     const o=OFFERS.find(x=>String(x.id)===String(st.offer_id));
@@ -7418,10 +7719,14 @@ function paintNearPins(){
     // 上面篩了什麼，地圖就只畫那些
     if(!pass(o)){ filtered++; return; }
     const wished=WISH.has(String(o.id));
+    const used=MY_USED_OFFER_IDS.has(String(o.id));
     if(NEAR.wishOnly && !wished){ hidden++; return; }
+    if(NEAR.usedOnly && !used){ hidden++; return; }
     // 收藏的用強調色畫大一點：沒開「只看收藏」時，一眼就看得出哪幾家是自己收的
-    const c = wished ? PIN_STYLE.wished : PIN_STYLE.normal;
-    const html=`<b>${esc(o.brand)}</b>${wished?' <span style="font-size:.75rem">· 已收藏</span>':''}<br>
+    // 用過的畫綠色（v163）：收藏又用過的也是綠——用掉了就不是「還要去」的那一種
+    const c = used ? PIN_STYLE.used : wished ? PIN_STYLE.wished : PIN_STYLE.normal;
+    const html=`<b>${esc(o.brand)}</b>${used?' <span style="font-size:.75rem;color:#15803d">· ✓ 你用過了</span>'
+        :wished?' <span style="font-size:.75rem">· 已收藏</span>':''}<br>
         <span style="font-size:.8rem">${esc(st.name)}</span><br>
         <span style="font-size:.8rem">${esc(String(o.offer||'').slice(0,60))}</span><br>
         <button type="button" class="btn sm map-open-offer" data-id="${esc(o.id)}" style="margin-top:6px">看優惠</button>
@@ -7440,16 +7745,24 @@ function paintNearPins(){
       fillColor:c.fill, fillOpacity:.85, bubblingMouseEvents:false})
       .bindPopup(html, popup).addTo(NEAR_MAP_PINS);
     dot._sxKey=`${o.id}@${st.lat},${st.lng}`;
+    n++;
     if(dot._sxKey===reopen) dot.openPopup();
   });
-  const n=NEAR_MAP_PINS.getLayers().length;
+  /* 一家店畫兩層（看得見的點＋看不見的判定圈），數圖層會變成兩倍——v134 起「這個畫面裡有
+     N 家」一直多算一倍。直接數畫了幾家。 */
   hint.textContent = NEAR.wishOnly
     ? (n ? `這個畫面裡有 ${n} 家是你收藏的（另外 ${hidden} 家先藏起來了）。`
          : (hidden ? `這個畫面裡的 ${hidden} 家都不在你的待辦清單裡。`
                    : '這個畫面裡還沒有分店資料。'))
       + '再按一次「只看收藏」就看得到全部。'
+    : NEAR.usedOnly
+    ? (n ? `這個畫面裡有 ${n} 家是你用過的（另外 ${hidden} 家先藏起來了）。`
+         : (hidden ? `這個畫面裡的 ${hidden} 家你都還沒回報過用過了。`
+                   : '這個畫面裡還沒有分店資料。'))
+      + '再按一次「我用過的」就看得到全部。'
     : (n ? `這個畫面裡有 ${n} 家分店有優惠。` : '這個畫面裡還沒有分店資料。')
-      + '點地圖任一處可以改查那裡附近。';
+      + '點地圖任一處可以改查那裡附近。'
+      + (me && MY_USED_OFFER_IDS.size ? '綠色的是你用過的。' : '');
   /* 一定要講出來被篩掉幾家。不講的話，上面篩了「台北市＋餐飲」的人只會看到
      地圖上的點變少，以為是這一區真的沒有店——而篩選條件在另一個分頁上面，
      當下根本不在視線裡。 */
@@ -7463,8 +7776,25 @@ $('#btnNearInfo').onclick=()=>{
   box.classList.toggle('hidden', !open);
   $('#btnNearInfo').setAttribute('aria-expanded', String(open));
 };
+$('#btnNearUsed').onclick=()=>{
+  NEAR.usedOnly=!NEAR.usedOnly;
+  if(NEAR.usedOnly) NEAR.wishOnly=false;     // 兩顆一次只開一顆，不然「收藏又用過」的交集很難懂
+  renderNearBar();
+  paintNearPins();
+  render();
+  logEvent('near_used_only', {on:NEAR.usedOnly});
+};
+/* 使用回報 →「在地圖上看」：跟待辦清單那顆同一個做法，先把條件設好再開「附近」 */
+function reportsToMap(){
+  if(!MY_USED_OFFER_IDS.size){ showToast('還沒有回報過用過了的店'); return; }
+  NEAR.usedOnly=true; NEAR.wishOnly=false;
+  document.querySelector('.tab[data-tab="browse"]')?.click();
+  startNear();
+  logEvent('reports_to_map', {n:MY_USED_OFFER_IDS.size});
+}
 $('#btnNearWish').onclick=()=>{
   NEAR.wishOnly=!NEAR.wishOnly;
+  if(NEAR.wishOnly) NEAR.usedOnly=false;
   renderNearBar();
   paintNearPins();     // 地圖不用重查，直接重畫
   render();
@@ -7673,6 +8003,7 @@ function render(){
     if(onlyNewActive&&!NEW_OFFER_IDS.has(o.id)) return false;
     if(NEAR.active&&NEAR.byOffer&&!NEAR.byOffer.has(String(o.id))) return false;
     if(NEAR.active&&NEAR.wishOnly&&!WISH.has(String(o.id))) return false;
+    if(NEAR.active&&NEAR.usedOnly&&!MY_USED_OFFER_IDS.has(String(o.id))) return false;
     return pass(o);
   });
 
@@ -8818,7 +9149,7 @@ window.addEventListener('popstate', ()=>{
     [$('#dlgDetail'),$('#dlgReport'),$('#dlgFeedback'),$('#dlgNotif'),$('#dlgSharePreview'),
      $('#dlgCoffee'),$('#dlgBulkAdd'),$('#dlgBadgeUnlock'),
      // v153「推薦一個地點」、v156「加店家」當初沒列進來：手機按返回鍵關不掉它們
-     $('#dlgVenueSuggest'),$('#dlgPlanAdd')].forEach(d=>{ if(d?.open) d.close(); });
+     $('#dlgVenueSuggest'),$('#dlgPlanAdd'),$('#dlgWhatsNew')].forEach(d=>{ if(d?.open) d.close(); });
     // 手機篩選／排序底部彈出視窗不是 <dialog>，沒有原生 close 事件，
     // 這裡直接呼叫對應的關閉函式（DLG_HISTORY_PUSHED 已經是 false，
     // 函式裡再呼叫一次 consumeDlgHistory() 會被自己的保護擋掉，不會重複觸發）。
@@ -9728,8 +10059,9 @@ async function loadAutoApproved(){
       : '載入失敗：'+esc(error.message))+'</div>';
     return;
   }
+  loadAutoAppliedEdits();
   if(!data||!data.length){
-    box.innerHTML='<div class="hint">最近 14 天沒有自動上架的。</div>'; return;
+    box.innerHTML='<div class="hint">最近 14 天沒有自動上架的新投稿。</div>'; return;
   }
   box.innerHTML=data.map(r=>`<div class="rep rep-full">
     <span>${esc(fmtD(r.reviewed_at))}</span>
@@ -9748,6 +10080,33 @@ async function loadAutoApproved(){
       {p_offer_id:Number(b2.dataset.id), p_status:'pending', p_verified:false, p_note:'自動上架後由管理員退回'});
     if(error){ alert('退回失敗：'+error.message); return; }
     loadAutoApproved(); loadOffers(true).then(render); loadPending();
+  });
+}
+
+/* 自動套用的修改建議。v162 還沒跑就沒有這支，安靜地不出現。
+   還原＝把那筆建議改之前的那幾欄原樣套回去（資料庫在自動套用時就記下來了）。 */
+async function loadAutoAppliedEdits(){
+  const box=$('#autoEditsBody'); if(!box || !LIVE || !sb) return;
+  const {data,error}=await sb.rpc('admin_auto_applied_edits',{p_days:14});
+  if(error){ box.innerHTML=''; return; }
+  const rows=data||[];
+  box.innerHTML='<div style="font-size:.8rem;font-weight:700;color:var(--ink-3);margin-bottom:4px">修改建議（自動套用）</div>'
+    +(rows.length ? rows.map(r=>`<div class="rep rep-full">
+      <span>${esc(fmtD(r.reviewed_at))}</span>
+      <b style="flex:1 1 auto;min-width:0">${esc(r.brand)}</b>
+      <span style="color:var(--ink-3);font-size:.78rem">${esc(r.proposer)}</span>
+      <button type="button" class="btn sm ae-detail" data-id="${esc(String(r.offer_id))}">細節</button>
+      ${r.reverted ? '<span class="flag">已還原</span>'
+        : `<button type="button" class="btn sm ae-undo" data-id="${esc(String(r.id))}"
+          style="border-color:var(--alert-line);color:var(--alert)">還原</button>`}
+      <div class="rep-note">改了：${esc(r.fields||'')}</div>
+    </div>`).join('') : '<div class="hint">最近 14 天沒有自動套用的修改建議。</div>');
+  box.querySelectorAll('.ae-detail').forEach(b=>b.onclick=()=>openDetail(b.dataset.id));
+  box.querySelectorAll('.ae-undo').forEach(b=>b.onclick=async()=>{
+    if(!confirm('把這筆修改還原成改之前的樣子？')) return;
+    const {error}=await sb.rpc('admin_revert_auto_edit',{p_edit_id:Number(b.dataset.id)});
+    if(error){ alert('還原失敗：'+error.message); return; }
+    loadAutoAppliedEdits(); loadOffers(true).then(render);
   });
 }
 
@@ -9929,7 +10288,7 @@ let PLANS=null, PLANS_ERR='', PLANS_OWNER=null, PLAN_OPEN=null;
 const PLAN_COLS_V156='id,plan_date,title,note,created_at,plan_items(id,offer_id,note,sort_order,done)';
 let PLAN_COLS='id,plan_date,title,note,created_at,is_public,shared_at,'
   +'plan_items(id,offer_id,heading,note,sort_order,done)';
-let PLAN_V161=true;
+let PLAN_V161=true, PLAN_EXAMPLE_FILTER=true;
 const PLAN_WD='日一二三四五六';
 function planToday(){
   const d=new Date();
@@ -9945,8 +10304,14 @@ async function loadPlans(){
   if(!LIVE){ box.innerHTML='<div class="hint">'+esc(offlineMsg('看不到行程'))+'</div>'; return; }
   if(!me){ PLANS=null; PLANS_OWNER=null; renderPlans(); return; }
   const owner=me.id;
-  const {data,error}=await sb.from('plans')
-    .select(PLAN_COLS).order('plan_date',{ascending:true}).limit(100);
+  /* v162 的範例行程掛在第一個管理員帳號底下——那個人自己的「我的行程」不該看到它們。
+     v162 還沒跑就沒有 is_example 這一欄，那時候也還沒有範例，不篩就好。 */
+  let q=sb.from('plans').select(PLAN_COLS);
+  if(PLAN_EXAMPLE_FILTER) q=q.eq('is_example', false);
+  const {data,error}=await q.order('plan_date',{ascending:true}).limit(100);
+  if(error && PLAN_EXAMPLE_FILTER && /is_example/i.test(error.message||'')){
+    PLAN_EXAMPLE_FILTER=false; return loadPlans();
+  }
   // 載到一半換了帳號：這份是上一個人的，丟掉
   if(me?.id!==owner) return;
   if(error && PLAN_V161 && /is_public|shared_at|heading|column/i.test(error.message||'')){
@@ -10270,6 +10635,7 @@ function renderShared(){
   if(!list.length){ box.innerHTML='<div class="hint">你還沒收藏任何一趟。</div>'; return; }
   box.innerHTML=list.map(p=>`<div class="plan" data-shared="${p.id}">
     <button type="button" class="plan-head" data-sopen="${p.id}" aria-expanded="${SHARED_OPEN===p.id}">
+      ${p.is_example?'<span class="plan-pub">範例</span>':''}
       <span class="plan-title" style="font-weight:800;color:var(--ink)">${esc(p.title||'（沒有名稱）')}</span>
       <span class="plan-n">${p.n_stops} 家 · ♡ ${p.n_saves}</span>
       <span class="shared-by">${p.mine?'你的':esc(p.author||'')}</span>
@@ -10329,7 +10695,7 @@ function sharedBodyHtml(p){
       <button type="button" class="btn sm" data-scopy="${p.id}">加進我的行程</button>
       <button type="button" class="btn sm" data-swish="${p.id}"${left?'':' disabled'}>${left
         ? `店家加進待辦清單（${left}）` : '店家都在待辦清單裡了'}</button>
-      ${myProfile?.is_admin && !p.mine ? `<button type="button" class="btn sm" data-sunpub="${p.id}"
+      ${myProfile?.is_admin && !p.mine && !p.is_example ? `<button type="button" class="btn sm" data-sunpub="${p.id}"
         style="margin-left:auto">取消公開</button>
         <button type="button" class="btn sm" data-sdel="${p.id}">刪除</button>` : ''}
     </div></div>`;
@@ -10481,6 +10847,127 @@ async function paintPlanMap(p){
     : '每一家取離中心最近的那間分店。點編號看是哪一間、可以導航。';
 }
 
+/* ---- 更新動畫（v162）------------------------------------------------
+   celine：「把這幾版更新統一做個動畫展示」「要可以按快轉或跳過，至少維持一周都會跳出來，
+   然後最後要引導說對更新內容細節有興趣可以看更新紀錄（顯示更新紀錄的位置）」
+
+   · 什麼時候跳：WHATSNEW 的那一週內，一打開網站就跳；**看完或按「跳過」之後就不再跳**
+     （每次打開都跳的話，看過的人會很煩）。錯過的人在更新紀錄那裡有一顆「看這一波更新的動畫」。
+   · 快轉：自己每 5 秒換一張；「下一張」或點畫面右半邊直接跳下一張，左半邊回上一張。
+   · 最後一張是「更新紀錄在哪裡」的實際畫面，按「帶我去看」直接打開那一塊、捲過去、框起來。
+   · 畫面是網站自己的截圖（whatsnew-01.jpg…），要打開視窗才去載，平常不吃流量。
+   · 生日卡片、別的視窗開著的時候不跳；跳了的話，這一次就不再問定位、不跳更新通知，
+     不要一打開網站連跳三個視窗。 */
+const WHATSNEW={id:'v162', from:'2026-10-30', until:'2026-11-06', dur:5200, scenes:[
+  {t:'右下角的「＋投稿」', d:'每一頁都按得到，不用再滑到清單最底下。', x:85, y:87.5},
+  {t:'「我的」整理過了', d:'使用回報排第一個；整頁從 18 塊收成 13 塊。', x:32, y:27},
+  {t:'全台商圈地圖', d:'顏色越深、圈越大，裡面越多家。切縣市就跳過去。', x:56, y:23},
+  {t:'照你的待辦清單推薦', d:'你收藏的優惠，去哪個商圈一趟用得最多。', x:50, y:34},
+  {t:'點開一個商圈', d:'每一家分店在哪裡都看得到；想要的勾起來再加入。', x:50, y:28.5},
+  {t:'排一趟行程', d:'日期、要去哪幾家、段落、備註，↑↓ 調順序。', x:36, y:20.5},
+  {t:'行程看地圖', d:'每一家取最近的分店，照順序編號連起來。', x:52, y:24},
+  {t:'大家的行程', d:'先看範例：免費一路拿拿拿、生日當天最省行程…可以收藏、一鍵加進來。', x:20, y:31},
+  {t:'推薦一個地點', d:'裡面有哪幾家，搜尋站上有的、打勾就好。', x:14, y:53},
+  {t:'想看每一版改了什麼？', d:'都在「我的」→「關於壽星日」→「更新紀錄」。', x:50, y:54, last:true},
+]};
+const WN_KEY='sxr_whatsnew_'+WHATSNEW.id;
+let WN_AT=0, WN_TIMER=null, WN_PAUSED=false;
+function whatsNewActive(){
+  const d=new Date();
+  const today=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return today>=WHATSNEW.from && today<=WHATSNEW.until;
+}
+function whatsNewDone(){ try{ return !!localStorage.getItem(WN_KEY); }catch{ return false; } }
+function markWhatsNewDone(how){ try{ localStorage.setItem(WN_KEY, how); }catch{} }
+/* 開場呼叫：跳了回 true（呼叫的人就不要再跳別的） */
+function maybeShowWhatsNew(){
+  if(!whatsNewActive() || whatsNewDone()) return false;
+  if(!$('#bdayCheer')?.classList.contains('hidden')) return false;
+  if([...document.querySelectorAll('dialog')].some(d=>d.open)) return false;
+  openWhatsNew('auto');
+  return true;
+}
+function openWhatsNew(from){
+  const bars=$('#wnBars');
+  bars.innerHTML=WHATSNEW.scenes.map(()=>'<i></i>').join('');
+  bars.style.setProperty('--wn-dur', WHATSNEW.dur+'ms');
+  WN_PAUSED=false;
+  $('#dlgWhatsNew').showModal(); pushDlgHistory();
+  showWhatsNewScene(0);
+  logEvent('whatsnew_open',{from});
+}
+function showWhatsNewScene(i){
+  const n=WHATSNEW.scenes.length;
+  WN_AT=Math.max(0, Math.min(n-1, i));
+  const sc=WHATSNEW.scenes[WN_AT];
+  const img=$('#wnShot');
+  img.src=`whatsnew-${String(WN_AT+1).padStart(2,'0')}.jpg`;
+  img.alt=sc.t;
+  // 換圖時重播淡入：先拿掉動畫、排一次版、再加回去
+  img.style.animation='none'; void img.offsetWidth; img.style.animation='';
+  /* 截圖是 375×812 用 contain 放進框裡，左右（或上下）會留白——圈圈要對準的是**截圖**
+     上的位置，不是框的百分比，不然靠邊的（右下角的投稿鈕）會落到截圖外面 */
+  const tap=$('#wnTap');
+  tap.classList.remove('on');
+  const st=$('#wnStage'), W=st.clientWidth, H=st.clientHeight, ratio=375/812;
+  let w=W, h=W/ratio; if(h>H){ h=H; w=H*ratio; }
+  tap.style.left=((W-w)/2 + w*sc.x/100)+'px';
+  tap.style.top=((H-h)/2 + h*sc.y/100)+'px';
+  setTimeout(()=>tap.classList.add('on'), 450);
+  $('#wnT').textContent=sc.t;
+  $('#wnD').textContent=sc.d;
+  $('#wnCount').textContent=`${WN_AT+1} / ${n}`;
+  $$('#wnBars i').forEach((b,k)=>{ b.classList.toggle('done',k<WN_AT); b.classList.toggle('on',k===WN_AT); });
+  // 進度條要從頭播：重新插一次
+  const cur=$$('#wnBars i')[WN_AT]; if(cur){ cur.classList.remove('on'); void cur.offsetWidth; cur.classList.add('on'); }
+  $('#btnWnPrev').disabled = WN_AT===0;
+  const next=$('#btnWnNext');
+  next.textContent = sc.last ? '帶我去看更新紀錄' : '下一張 ›';
+  $('#btnWnSkip').textContent = sc.last ? '關閉' : '跳過';
+  clearTimeout(WN_TIMER);
+  // 最後一張停住，等人決定要不要去看
+  if(!sc.last && !WN_PAUSED) WN_TIMER=setTimeout(()=>showWhatsNewScene(WN_AT+1), WHATSNEW.dur);
+}
+function closeWhatsNew(how){
+  clearTimeout(WN_TIMER);
+  markWhatsNewDone(how);
+  $('#dlgWhatsNew').close();
+}
+/* 最後一張的「帶我去看」：切到「我的」、打開「關於壽星日」、捲到更新紀錄、框兩秒 */
+function goToUpdates(){
+  closeWhatsNew('done');
+  logEvent('whatsnew_go',{});
+  showSection('mine');
+  const p=$('#siteUpdatesPanel'), outer=p?.closest('.panel');
+  if(outer?.classList.contains('collapsed')) outer.querySelector('h2')?.click();
+  setTimeout(()=>{
+    p?.scrollIntoView({behavior:'smooth', block:'center'});
+    if(p){ p.style.transition='box-shadow .3s'; p.style.boxShadow='0 0 0 3px var(--accent)';
+      p.style.borderRadius='10px'; setTimeout(()=>{ p.style.boxShadow=''; }, 2400); }
+  }, 150);
+}
+$('#btnWnNext').onclick=()=>{
+  if(WHATSNEW.scenes[WN_AT].last) return goToUpdates();
+  showWhatsNewScene(WN_AT+1);
+  if(WHATSNEW.scenes[WN_AT].last) logEvent('whatsnew_done',{});
+};
+$('#btnWnPrev').onclick=()=>showWhatsNewScene(WN_AT-1);
+$('#btnWnHitNext').onclick=()=>{ if(!WHATSNEW.scenes[WN_AT].last) $('#btnWnNext').click(); };
+$('#btnWnHitPrev').onclick=()=>showWhatsNewScene(WN_AT-1);
+$('#btnWnSkip').onclick=()=>{
+  const last=WHATSNEW.scenes[WN_AT].last;
+  if(!last) logEvent('whatsnew_skip',{at:WN_AT+1});
+  closeWhatsNew(last?'done':'skip');
+};
+$('#btnWnReplay').onclick=()=>openWhatsNew('replay');
+$('#btnWnReplay').classList.toggle('hidden', !whatsNewActive());
+// 用手機返回鍵關掉也算「不想看」：記下來，下次打開不再跳
+$('#dlgWhatsNew').addEventListener('close', ()=>{
+  clearTimeout(WN_TIMER);
+  if(!whatsNewDone()) markWhatsNewDone('back');
+  consumeDlgHistory();
+});
+
 /* ---- 挑優惠：可以搜尋、可以打勾 ---------------------------------
    行程的「加店家」跟推薦地點的「裡面有哪幾家」共用這一個（celine：「建議有
    搜尋功能跟核可打勾，可以直接搜尋系統有的然後添加」）。
@@ -10615,6 +11102,7 @@ function showMyRecord(which){
   });
   try{ localStorage.setItem(REC_KEY, which); }catch{}
 }
+const REC_DEFAULT='Reports';   // celine：「使用回報要往上移，而且要比投稿左邊」
 /* 一筆都沒有的那一格，連分頁鈕都不要出現——一顆點下去是空的按鈕，比少一顆還糟。
    loadMyFeedback() 有三條路會把 #myFeedbackPanel 藏起來（沒登入、v73 沒跑、
    一筆都沒有），與其三個地方各補一行，不如直接看它的 class 有沒有變：
@@ -10624,13 +11112,13 @@ function paintMyRecordTabs(){
   const fbTab=$('#myRecordsPanel .rec-tab[data-rec="Feedback"]');
   if(fbTab) fbTab.classList.toggle('hidden', !!fb?.classList.contains('hidden'));
   const cur=$$('#myRecordsPanel .rec-tab').find(b=>b.classList.contains('on'));
-  showMyRecord(cur?.dataset.rec || 'Offers');
+  showMyRecord(cur?.dataset.rec || REC_DEFAULT);
 }
 $$('#myRecordsPanel .rec-tab').forEach(b=>b.onclick=()=>showMyRecord(b.dataset.rec));
 if($('#myFeedbackPanel') && typeof MutationObserver==='function')
   new MutationObserver(paintMyRecordTabs)
     .observe($('#myFeedbackPanel'), {attributes:true, attributeFilter:['class']});
-(()=>{ let v='Offers'; try{ v=localStorage.getItem(REC_KEY)||'Offers'; }catch{} showMyRecord(v); })();
+(()=>{ let v=REC_DEFAULT; try{ v=localStorage.getItem(REC_KEY)||REC_DEFAULT; }catch{} showMyRecord(v); })();
 
 /* ---- 「我的」→ 我回報過的問題（schema_v73）----
    嵐：「我填寫過的回報問題，要可以出現在我的頁面」。送出之後只有管理員看得到，

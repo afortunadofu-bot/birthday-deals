@@ -46,27 +46,30 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   const tabs = () => $$('#myRecordsPanel .rec-tab');
   const pane = (r) => $('#rec' + r);
   const shown = (r) => pane(r).classList.contains('on');
-  t.eq('三顆小分頁', tabs().map((b) => b.textContent.replace(/\d+/g, '').trim()),
-    ['投稿', '使用回報', '問題回報']);
-  t.ok('一開始是「投稿」', shown('Offers') && !shown('Reports') && !shown('Feedback'));
+  /* v162 celine：「使用回報要往上移，而且要比投稿左邊」——使用回報排第一、預設打開。
+     下面用名字找分頁，不用位置，之後再換順序也不會誤報。 */
+  const tab = (r) => $(`#myRecordsPanel .rec-tab[data-rec="${r}"]`);
+  t.eq('三顆小分頁，使用回報在最左邊', tabs().map((b) => b.textContent.replace(/\d+/g, '').trim()),
+    ['使用回報', '投稿', '問題回報']);
+  t.ok('一開始是「使用回報」', shown('Reports') && !shown('Offers') && !shown('Feedback'));
 
-  tabs()[1].click();
-  t.ok('點「使用回報」換過去', shown('Reports') && !shown('Offers'));
-  t.eq('選到的那顆有標起來', tabs()[1].getAttribute('aria-selected'), 'true');
-  t.eq('其他的沒有', tabs()[0].getAttribute('aria-selected'), 'false');
-  t.eq('記住上次看哪一格', win.localStorage.getItem('sxr_my_record_tab'), 'Reports');
+  tab('Offers').click();
+  t.ok('點「投稿」換過去', shown('Offers') && !shown('Reports'));
+  t.eq('選到的那顆有標起來', tab('Offers').getAttribute('aria-selected'), 'true');
+  t.eq('其他的沒有', tab('Reports').getAttribute('aria-selected'), 'false');
+  t.eq('記住上次看哪一格', win.localStorage.getItem('sxr_my_record_tab'), 'Offers');
 
   /* 「問題回報」一筆都沒有的時候，連分頁鈕都不要出現——一顆點下去是空的按鈕，
      比少一顆還糟。loadMyFeedback() 有三條路會把那一格藏起來，這裡直接看它的 class。 */
-  tabs()[2].click();
+  tab('Feedback').click();
   t.ok('切到「問題回報」', shown('Feedback'));
   $('#myFeedbackPanel').classList.add('hidden');
   await tick(win, 2);                       // MutationObserver 是非同步的
-  t.ok('那一格沒東西：分頁鈕也藏起來', tabs()[2].classList.contains('hidden'));
-  t.ok('而且自動跳到看得見的那一格', shown('Offers') && !shown('Feedback'));
+  t.ok('那一格沒東西：分頁鈕也藏起來', tab('Feedback').classList.contains('hidden'));
+  t.ok('而且自動跳到看得見的那一格', shown('Reports') && !shown('Feedback'));
   $('#myFeedbackPanel').classList.remove('hidden');
   await tick(win, 2);
-  t.ok('有東西了：分頁鈕回來', !tabs()[2].classList.contains('hidden'));
+  t.ok('有東西了：分頁鈕回來', !tab('Feedback').classList.contains('hidden'));
 
   // 記住的是一格已經藏起來的 → 開場不要停在空的那一格
   win.localStorage.setItem('sxr_my_record_tab', 'Feedback');

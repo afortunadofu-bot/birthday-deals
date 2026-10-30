@@ -45,7 +45,9 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.ok('而且排在第一個（它比顯示開關重要）', win.eval("FLAG_KEYS[0]==='auto_approve'"));
   t.ok('有標籤', !!win.eval("FLAG_LABEL['auto_approve']"));
   t.ok('說明有講清楚「誰」會被自動通過',
-    /2 筆投稿被核可過/.test(win.eval("FLAG_NOTE['auto_approve']")));
+    /* v162 起修改建議也算進門檻（「2 筆被核可過（投稿或修改建議都算）」），
+       問的是門檻跟對象，不是那一句的原字 */
+    /2 筆被核可過/.test(win.eval("FLAG_NOTE['auto_approve']")));
   t.ok('有「自動上架的」那一塊', !!$('#pnlAutoApproved'));
   t.ok('而且是切過去才載（審核頁已經夠重了）',
     win.eval("typeof PANEL_LOADER.pnlAutoApproved === 'function'"));

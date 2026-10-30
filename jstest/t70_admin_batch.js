@@ -130,9 +130,9 @@ const read = (f) => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
   t.ok('預設收著（它是看數據的，不是進審核要處理的事）',
     JSON.parse(win.eval('JSON.stringify([...PANEL_DEFAULT_CLOSED])')).includes('pnlEventStats'));
   t.ok('打開才去載', /pnlEventStats:\s*\(\)=>loadEventStats\(\)/.test(index));
-  t.ok('跟上面共用同一個區間選單',
-    /\$\('#coffeeRange'\)\.onchange=\(\)=>\{ loadCoffeeStats\(\); loadLinkStats\(\); loadEventStats\(\); \}/
-      .test(index));
+  /* v163 celine：「功能被用了幾次要可以選時間區間」——本來跟咖啡那塊共用區間，
+     選單在別塊裡面看不到；改成自己一個（細節看 t82）。 */
+  t.ok('有自己的區間選單', !!win.document.querySelector('#pnlEventStats #evRange'));
   t.ok('還沒跑 SQL 會講要跑哪一支', /schema_v151_event_stats\.sql/.test(index));
   /* 區塊的中文名要從畫面上的 h2 讀，不要另外養一張對照表——
      改了標題就對不起來，加新區塊還要記得回來補。 */

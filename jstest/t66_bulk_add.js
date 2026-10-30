@@ -42,13 +42,15 @@ const { boot, tick, makeSb, makeAsserts, stubHeavy } = require('./harness');
   `);
   await tick(win, 3);
 
+  /* v162（celine：「不要直接一件全部加入，是可以勾選那種」）：商圈那一格改成清單上直接打勾，
+     這張勾選視窗留給「大家的行程」的「店家加進待辦清單」用。商圈清單本身的勾選在 t81 驗；
+     這裡直接打開視窗，驗視窗自己的規則（哪些列、預設怎麼勾、寫失敗不假裝收好）。 */
   const bulkBtn = $('#venueBulk9');
-  t.ok('場館打開之後有一顆「一鍵加入」', !!bulkBtn);
-  /* 已經在清單裡的那一筆不算進去——按鈕上的數字就是真的會多拿到幾筆 */
-  t.ok('數字扣掉已經收藏的那一筆', /2 筆/.test(bulkBtn.textContent), bulkBtn.textContent);
+  t.ok('商圈那一格有「加入勾選的」', !!bulkBtn && /加入勾選的/.test(bulkBtn.textContent));
+  t.ok('一筆都還沒勾：按不下去（不會直接全部加）', bulkBtn.disabled);
 
   /* ---- 預設怎麼勾 ---- */
-  bulkBtn.click();
+  win.eval('openBulkAdd(9)');
   await tick(win, 2);
   t.ok('按了就打開視窗', $('#dlgBulkAdd').open === true);
   const boxes = $$('#bulkAddList input[type=checkbox]');
@@ -103,14 +105,16 @@ const { boot, tick, makeSb, makeAsserts, stubHeavy } = require('./harness');
   /* ---- 寫失敗就不能假裝收好了 ----
      一筆的 toggleWish 是先改畫面再寫（失敗就改回來）；整批不能這樣，
      十八筆一起失敗的話畫面上十八個「已收藏」全是假的，使用者不會再加一次。 */
-  const src = win.eval('String(doBulkAdd)');
+  /* v162 把「寫進待辦清單」抽成 wishAddMany()，商圈清單跟這張視窗共用——規則驗在那一支上 */
+  const src = win.eval('String(wishAddMany)');
   const writeAt = src.indexOf('upsert');
   const wishAt = src.indexOf('WISH.add(String(id)); syncWishButtons');
   t.ok('先寫資料庫、成功了才改畫面', writeAt > 0 && wishAt > writeAt);
-  t.ok('失敗就 return，不會往下走到 WISH.add', /r\.error\)\{[\s\S]{0,120}return;/.test(src));
+  t.ok('失敗就 return，不會往下走到 WISH.add', /r\.error\)\{[\s\S]{0,120}return false;/.test(src));
   t.ok('v71 還沒跑（沒有 person 欄位）會退回不帶清單再送一次',
     /person\|column\|schema cache/.test(src));
-  t.ok('加完之後場館清單上的「已收藏」要跟著更新', /fillVenue\(venueId\)/.test(src));
+  t.ok('加完之後場館清單上的「已收藏」要跟著更新',
+    /fillVenue\(venueId\)/.test(win.eval('String(doBulkAdd)')));
 
   /* ---- 行程還沒做，就不要放一顆按了沒地方看的按鈕 ---- */
   /* 行程本體還沒做，所以這張清單上刻意沒有「加入行程」——按了沒地方看的
