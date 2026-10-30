@@ -408,6 +408,10 @@
   .venue-map{height:200px;border-radius:var(--r-sm);border:1px solid var(--line);
     margin:8px 0;overflow:hidden;position:relative;z-index:0;background:var(--line-soft)}
   .venue-map-all{height:min(260px,45vh);margin:10px 0 4px}
+  .venue-legend{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin:0 0 6px;
+    font-size:.74rem;color:var(--ink-3)}
+  .venue-legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:3px;
+    vertical-align:-1px;border:1px solid rgba(0,0,0,.25)}
   /* 管理員才看得到的那一條：虛線框，一眼看得出「這是後台的東西，不是給使用者的」 */
   .venue-admin{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px;margin:4px 0 8px;
     border:1px dashed var(--line);border-radius:var(--r-sm);background:var(--surface)}
@@ -415,6 +419,27 @@
     border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);color:var(--ink)}
   .venue-admin select{font-size:.82rem}
   .venue-admin .hint{flex:1 1 100%;margin:0;font-size:.76rem}
+  /* v160 照你的待辦清單推薦商圈 */
+  .venue-recs{border:1px solid var(--accent-soft);background:var(--accent-soft);border-radius:var(--r-sm);
+    padding:10px 12px;margin:10px 0 4px}
+  .venue-recs .vr-title{font-weight:800;font-size:.9rem;margin:0 0 2px}
+  .venue-recs .sub{margin:0 0 6px}
+  .vr-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;width:100%;padding:8px 6px;
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);margin-top:6px;
+    cursor:pointer;text-align:left;font:inherit;color:var(--ink)}
+  .vr-row b{flex:1 1 auto;min-width:0}
+  .vr-row .vr-n{font-weight:800;color:var(--accent-dark);white-space:nowrap}
+  .vr-row .vr-brands{flex:1 1 100%;font-size:.78rem;color:var(--ink-3);overflow-wrap:anywhere}
+  .venue-mine{font-size:.74rem;font-weight:700;color:var(--accent-dark);background:var(--accent-soft);
+    border-radius:999px;padding:1px 7px;white-space:nowrap}
+  .venue-fix{margin:10px 2px 2px;font-size:.8rem;color:var(--ink-3)}
+  /* v160 行程的地圖：編號就是第幾站，跟清單上的編號一樣 */
+  .plan-pin{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;
+    background:#e8483c;color:#fff;font-weight:800;font-size:12px;border:2px solid #fff;
+    box-shadow:0 1px 4px rgba(0,0,0,.35)}
+  .plan-pin.done{background:#9ca3af}
+  .plan-map-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 0;font-size:.82rem}
+  .plan-map-bar select{font-size:.82rem;max-width:100%}
   .venue-bulk-bar{display:flex;align-items:center;gap:8px;padding:8px 2px 4px}
   .bulk-list{max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:var(--r-sm)}
   .bulk-row{display:flex;align-items:center;gap:8px;padding:10px;min-height:44px;
@@ -2188,8 +2213,11 @@
       </div>
       <!-- 嵐：「一趟用最多也可以一開始先看到台灣地圖看大分佈，切縣市也可以看到該縣市概要的圖」。
            一顆圈是一個商圈，越大代表裡面越多家。點了跳出名字，再按一下就展開下面那一格。 -->
+      <!-- 嵐：「希望可以看這個人都蒐藏些什麼，建議他可以去哪個商圈一次用掉」 -->
+      <div id="venueRecs"></div>
       <div class="venue-map venue-map-all hidden" id="venuesMap" role="img"
         aria-label="商圈分佈地圖"></div>
+      <div class="venue-legend hidden" id="venuesLegend" aria-hidden="true"></div>
       <div id="myVenueSuggests"></div>
       <div id="venueList"><div class="hint">載入中…</div></div>
       <!-- celine：「一趟最多目前沒顯示，也沒投稿」。投稿一個地點要的是座標
@@ -2227,7 +2255,10 @@
          待辦清單跟它算出來的「註冊死線」一起搬到最上面。
          （自己調過順序的人不受影響，版面設定存下來的順序優先。） -->
     <div class="panel" id="wishlistPanel" data-block><h2>待辦清單</h2>
-      <p class="sub">點卡片上的星號收藏，勾起來代表用過了。</p>
+      <p class="sub">點卡片上的星號收藏，勾起來代表用過了。
+        <!-- 嵐：「看這個人都蒐藏些什麼，建議他可以去哪個商圈一次用掉」——推薦本身在
+             「排行程」，這裡是入口：收藏的人最常待的就是這一塊 -->
+        <button type="button" class="btn sm" id="btnWishToVenues" style="margin-left:6px">去哪裡一次用最多 →</button></p>
       <!-- 嵐：幫別人記生日的話，待辦清單要獨立出來、不同份清單（schema_v71 的 wishlist.person） -->
       <div class="subtabs wrap hidden" role="tablist" id="wlPersonTabs"></div>
       <!-- 嵐：「加入搜尋欄，就可以直接搜尋店家」——清單一長（十幾二十筆）用滑的找很久 -->
@@ -2841,8 +2872,8 @@
   </div>
 </form></dialog>
 <dialog id="dlgVenueSuggest"><form method="dialog" class="dlg">
-  <h2>推薦一個地點</h2>
-  <p class="sub">哪裡一趟就能用到好幾家生日優惠？告訴我們名字就好，座標我們自己對。</p>
+  <h2 id="vsTitle">推薦一個地點</h2>
+  <p class="sub" id="vsSub">哪裡一趟就能用到好幾家生日優惠？告訴我們名字就好，座標我們自己對。</p>
   <div class="field"><label>地點名稱 *</label>
     <input id="vsName" maxlength="40" autocomplete="off"
       placeholder="例如：新光三越南西店、新竹巨城"></div>
@@ -5727,7 +5758,8 @@ const EVENT_LABEL={
   wishlist_to_map:'待辦清單 →「看地圖、由近到遠」', near_wish_only:'附近「只看收藏」',
   geo_ask:'問定位權限', go_submit:'開始投稿',
   venue_suggest:'打開「推薦一個地點」',
-  plan_create:'排一趟新的行程', plan_add:'把店家加進行程',
+  plan_create:'排一趟新的行程', plan_add:'把店家加進行程', plan_map:'行程的地圖（打開／收起）',
+  venue_rec_open:'從「照你的待辦清單」點進商圈', wish_to_venues:'待辦清單 →「去哪裡一次用最多」',
   rate_cta:'從提示去評分', rate_nudge:'「還沒評分」的提示出現',
   rate_all_open:'一次評很多筆', rate_submit:'送出評分',
   survey_nudge:'問卷提示出現', survey_open:'打開問卷', survey_submit:'送出問卷',
@@ -5745,7 +5777,8 @@ const EVENT_SECTION={
   wish:'優惠', near_wish_only:'優惠', geo_ask:'優惠', lean_home:'優惠',
   rate_cta:'優惠', rate_nudge:'優惠', rate_all_open:'優惠', rate_submit:'優惠',
   venue_open:'排行程', bulk_open:'排行程', bulk_wish:'排行程', venue_suggest:'排行程',
-  plan_create:'排行程', plan_add:'排行程',
+  plan_create:'排行程', plan_add:'排行程', plan_map:'排行程', venue_rec_open:'排行程',
+  wish_to_venues:'我的',
   wishlist_to_map:'我的', badge_unlock:'我的', updates_nudge:'我的', updates_page_open:'我的',
   survey_nudge:'我的', survey_open:'我的', survey_submit:'我的',
   go_submit:'全站', coffee_open:'全站', coffee_go:'全站', studio_click:'全站',
@@ -5831,7 +5864,9 @@ async function loadVenueAdmin(){
   if(!box || !myProfile?.is_admin || !LIVE) return;
   box.innerHTML='<div class="hint">載入中…</div>';
   const [sug, mine, cand]=await Promise.all([
-    sb.from('venue_suggestions').select('id,name,county,note,status,created_at')
+    /* venue_id 是 v160 才有的欄位。還沒跑的話這一句會整個失敗、推薦清單變空的——
+       所以失敗時退回不帶它的那一句（見下面 sugFallback）。 */
+    sb.from('venue_suggestions').select('id,name,county,note,status,created_at,venue_id')
       .eq('status','pending').order('created_at',{ascending:false}).limit(50),
     /* lat／lng 是給下面「這個熱點建過了沒」比對用的。v153 漏選了這兩欄，於是比對
        永遠不成立——已經建好的 53 個，在「還沒建的」那一段又全部列了一次。 */
@@ -5846,7 +5881,13 @@ async function loadVenueAdmin(){
       : '讀取失敗：'+esc(mine.error.message)}</div>`;
     return;
   }
-  VENUE_ADMIN={sug:sug.error?[]:(sug.data||[]), mine:mine.data||[],
+  let sugRows=sug.error?null:(sug.data||[]);
+  if(sugRows===null){
+    const r=await sb.from('venue_suggestions').select('id,name,county,note,status,created_at')
+      .eq('status','pending').order('created_at',{ascending:false}).limit(50);
+    sugRows=r.error?[]:(r.data||[]);
+  }
+  VENUE_ADMIN={sug:sugRows, mine:mine.data||[],
                cand:cand.error?[]:(cand.data||[]), candErr:cand.error?cand.error.message:''};
   renderVenueAdmin();
 }
@@ -5892,10 +5933,14 @@ function renderVenueAdmin(){
       ${inner}</div>`;
   const none=t=>`<div class="hint">${t}</div>`;
 
+  const venueName=id=>mine.find(v=>v.id===id)?.name;
   const sugHtml = sug.length ? sug.map(r=>`<div class="va-row">
       <div style="flex:1 1 auto;min-width:0">
+        ${r.venue_id?`<span class="flag">建議修改「${esc(venueName(r.venue_id)||'已刪除的商圈')}」</span> `:''}
         <b>${esc(r.name)}</b> <span style="color:var(--ink-3)">${esc(r.county||'')}</span>
         ${r.note?`<div class="hint" style="margin:2px 0 0">${esc(r.note)}</div>`:''}</div>
+      ${r.venue_id && venueName(r.venue_id) && r.name!==venueName(r.venue_id)
+        ? `<button type="button" class="btn sm" data-vs-rename="${r.id}">改成這個名字</button>` : ''}
       <button type="button" class="btn sm primary" data-vs-ok="${r.id}">收下</button>
       <button type="button" class="btn sm" data-vs-no="${r.id}">退回</button>
     </div>`).join('') : none('沒有待審的推薦。');
@@ -5931,6 +5976,14 @@ function renderVenueAdmin(){
     + '所以「新光三越」要寫成「新光三越南西店」這種分得出來的寫法。</p>';
 
   box.querySelectorAll('[data-vs-ok]').forEach(b=>b.onclick=()=>reviewVenueSuggest(b.dataset.vsOk,'accepted'));
+  /* 建議修改名字的：一顆按鈕直接套用，順便標成收下 */
+  box.querySelectorAll('[data-vs-rename]').forEach(b=>b.onclick=async()=>{
+    const r=sug.find(x=>String(x.id)===b.dataset.vsRename); if(!r) return;
+    const {error}=await sb.from('venues').update({name:r.name.slice(0,40)}).eq('id',r.venue_id);
+    if(error){ showToast(venueWriteHint(error)); return; }
+    forgetVenuePairs(); VENUES=null;
+    reviewVenueSuggest(r.id,'accepted');
+  });
   box.querySelectorAll('[data-vs-no]').forEach(b=>b.onclick=()=>reviewVenueSuggest(b.dataset.vsNo,'rejected'));
   box.querySelectorAll('[data-vpub]').forEach(b=>b.onchange=()=>saveVenue(b.dataset.vpub));
   box.querySelectorAll('[data-vname]').forEach(b=>b.onchange=()=>saveVenue(b.dataset.vname));
@@ -6356,7 +6409,68 @@ async function loadVenues(){
   else applyPref('venueCounty');
   renderVenues();
   paintVenuesMap();
+  // 配對晚一步到：先把清單畫出來，配對回來再補「收藏 N」跟推薦
+  if(await loadVenuePairs()){ renderVenues(); }
+  renderVenueRecs();
 }
+
+/* ---- 每個商圈裡有哪些優惠（v160）-------------------------------------
+   venue_offer_pairs() 一次給所有公開商圈的配對。用在三個地方：
+     · 照你的待辦清單推薦商圈（嵐：「建議他可以去哪個商圈一次用掉」）
+     · 清單上每一格旁邊「收藏 N」
+     · 點開一格時不用再單獨查一次（原本每點一格一個請求）
+   你收藏了什麼**不會送到資料庫**：配對是公開資料，對的動作在這台裝置上做。
+   v160 還沒跑的話這支不存在——回傳 null，每一格照舊一格一格查，推薦那塊不出現。 */
+let VENUE_PAIRS=null, VENUE_PAIRS_TRIED=false;
+async function loadVenuePairs(){
+  if(VENUE_PAIRS || VENUE_PAIRS_TRIED || !LIVE) return VENUE_PAIRS;
+  VENUE_PAIRS_TRIED=true;
+  const {data,error}=await sb.rpc('venue_offer_pairs');
+  if(error) return null;
+  const m=new Map();
+  (data||[]).forEach(r=>{
+    const k=Number(r.venue_id);
+    if(!m.has(k)) m.set(k, new Set());
+    m.get(k).add(String(r.offer_id));
+  });
+  VENUE_PAIRS=m;
+  return m;
+}
+/* 管理員改了範圍、位置、公開與否，配對就不準了，下次重抓 */
+function forgetVenuePairs(){ VENUE_PAIRS=null; VENUE_PAIRS_TRIED=false; }
+function venueWishHits(v){
+  const s=VENUE_PAIRS?.get(v.id);
+  return s ? [...WISH].filter(id=>s.has(id)) : [];
+}
+function renderVenueRecs(){
+  const box=$('#venueRecs'); if(!box) return;
+  if(!me || !VENUE_PAIRS || !WISH.size || !(VENUES||[]).length){ box.innerHTML=''; return; }
+  const ranked=(VENUES||[]).map(v=>({v, hit:venueWishHits(v)}))
+    .filter(x=>x.hit.length)
+    .sort((a,b)=>b.hit.length-a.hit.length || (b.v.offer_count||0)-(a.v.offer_count||0))
+    .slice(0,3);
+  if(!ranked.length){
+    box.innerHTML=`<div class="venue-recs"><div class="vr-title">照你的待辦清單</div>
+      <p class="sub" style="margin:0">你收藏的 ${WISH.size} 筆，都不在下面這些商圈裡。</p></div>`;
+    return;
+  }
+  const brand=id=>OFFERS.find(o=>String(o.id)===id)?.brand;
+  box.innerHTML=`<div class="venue-recs"><div class="vr-title">照你的待辦清單</div>
+    <p class="sub">你收藏了 ${WISH.size} 筆。去這${ranked.length>1?'幾':'一'}個地方，一趟用得最多：</p>
+    ${ranked.map(({v,hit})=>`<button type="button" class="vr-row" data-vr="${v.id}">
+      <b>${esc(v.name)}</b><span class="vr-n">${hit.length} 筆</span>
+      <span class="vr-brands">${esc(hit.map(brand).filter(Boolean).slice(0,6).join('、'))}${hit.length>6?'…':''}</span>
+    </button>`).join('')}</div>`;
+  box.querySelectorAll('[data-vr]').forEach(b=>b.onclick=()=>{
+    logEvent('venue_rec_open',{id:Number(b.dataset.vr)});
+    openVenueFromMap(Number(b.dataset.vr));
+  });
+}
+$('#btnWishToVenues').onclick=()=>{
+  showSection('trip');
+  setTimeout(()=>$('#pnlVenues')?.scrollIntoView({behavior:'smooth', block:'start'}), 150);
+  logEvent('wish_to_venues',{});
+};
 
 /* ---- 商圈的地圖（v159）----------------------------------------------
    嵐：「每個商圈點進去可以直接看到他在地圖的大概哪裡，還有店家點點」
@@ -6381,8 +6495,9 @@ function venuesInCounty(){
 async function paintVenuesMap(){
   const el=$('#venuesMap'); if(!el) return;
   const list=venuesInCounty();
-  if(!(VENUES||[]).length || !await loadLeaflet()){ el.classList.add('hidden'); return; }
+  if(!(VENUES||[]).length || !await loadLeaflet()){ el.classList.add('hidden'); paintVenuesLegend(); return; }
   el.classList.remove('hidden');
+  paintVenuesLegend();
   if(!VENUES_MAP){
     VENUES_MAP=L.map(el,{scrollWheelZoom:false});
     venueMapTiles(VENUES_MAP);
@@ -6393,11 +6508,16 @@ async function paintVenuesMap(){
     });
   }
   VENUES_LAYER.clearLayers();
-  /* 圈的大小照「裡面有幾家」，用平方根：面積跟家數成正比，36 家的不會大到蓋住整個城市 */
+  /* 圈的大小照「裡面有幾家」，用平方根：面積跟家數成正比，36 家的不會大到蓋住整個城市。
+     celine：「不同商圈可以標不同深淺的顏色嗎，辨識度比較高」——本來全部同一個紅，
+     台北那一團擠在一起時分不出誰是誰。改成家數越多越深（同一個紅色系、五階），
+     大小跟深淺講的是同一件事，所以兩個一起看更快。
+     由大畫到小：小圈疊在大圈上面，擠在一起的時候小的才點得到。 */
   const max=Math.max(1, ...list.map(v=>v.offer_count||0));
-  list.forEach(v=>{
+  list.slice().sort((a,b)=>(b.offer_count||0)-(a.offer_count||0)).forEach(v=>{
+    const c=venueShade(v.offer_count||0);
     L.circleMarker([v.lat,v.lng],{radius:6+10*Math.sqrt((v.offer_count||0)/max),
-        color:'#fff', weight:1.5, fillColor:'#e8483c', fillOpacity:.72, bubblingMouseEvents:false})
+        color:c.stroke, weight:1.5, fillColor:c.fill, fillOpacity:.9, bubblingMouseEvents:false})
       .bindPopup(`<b>${esc(v.name)}</b><br><span style="font-size:.8rem">${esc(v.county||'')} · ${v.offer_count} 家</span><br>`
         +`<button type="button" class="btn sm venue-go" data-id="${v.id}" style="margin-top:6px">看裡面有哪幾家</button>`)
       .addTo(VENUES_LAYER);
@@ -6410,6 +6530,25 @@ async function paintVenuesMap(){
       VENUES_MAP.fitBounds(L.latLngBounds(list.map(v=>[v.lat,v.lng])).pad(0.25), {maxZoom:14});
     else VENUES_MAP.fitBounds(TW_BOUNDS);
   },0);
+}
+/* 五階：門檻寫死（不是照這一次的最大值切），切縣市的時候同一個商圈才會是同一個顏色，
+   圖例也才能寫固定的數字。淺的那兩階用深色外框，不然在淺色底圖上會糊掉。 */
+const VENUE_SHADES=[
+  {min:30, fill:'#9f1d12', stroke:'#fff'},
+  {min:24, fill:'#d1382a', stroke:'#fff'},
+  {min:18, fill:'#ec6a59', stroke:'#fff'},
+  {min:12, fill:'#f6a093', stroke:'#c2410c'},
+  {min:0,  fill:'#fcd3cc', stroke:'#c2410c'},
+];
+function venueShade(n){ return VENUE_SHADES.find(x=>n>=x.min); }
+function paintVenuesLegend(){
+  const el=$('#venuesLegend'); if(!el) return;
+  el.innerHTML='<span>裡面幾家：</span>'+VENUE_SHADES.slice().reverse().map((x,i,a)=>{
+    const next=a[i+1]?.min;
+    const label = next ? `${x.min||1}–${next-1}` : `${x.min}+`;
+    return `<span><i style="background:${x.fill}"></i>${label}</span>`;
+  }).join('');
+  el.classList.toggle('hidden', $('#venuesMap')?.classList.contains('hidden'));
 }
 function openVenueFromMap(id){
   VENUE_OPEN=id;
@@ -6498,7 +6637,7 @@ function wireVenueAdmin(v){
     if(!confirm(`刪掉「${v.name}」嗎？裡面的留言跟愛心會一起沒有。`)) return;
     const {error}=await sb.from('venues').delete().eq('id',v.id);
     if(error){ showToast(venueWriteHint(error)); return; }
-    VENUE_OPEN=null; showToast('刪掉了'); loadVenues();
+    VENUE_OPEN=null; forgetVenuePairs(); showToast('刪掉了'); loadVenues();
   };
 }
 async function saveVenueEdit(id, patch, okMsg){
@@ -6506,6 +6645,7 @@ async function saveVenueEdit(id, patch, okMsg){
   if(error){ showToast(venueWriteHint(error)); return; }
   showToast(okMsg);
   VENUE_ADMIN=null;                 // 審核那一塊下次打開要重抓
+  forgetVenuePairs();               // 範圍、位置一動，哪幾家在裡面就變了
   loadVenues();                     // 名字、範圍、位置、公開與否都會改到清單
 }
 function renderVenues(){
@@ -6538,6 +6678,7 @@ function renderVenues(){
     <button type="button" class="venue-head" data-id="${esc(String(v.id))}"
       aria-expanded="${VENUE_OPEN===v.id?'true':'false'}">
       <span class="venue-name">${esc(v.name)}</span>
+      ${(()=>{ const n=me?venueWishHits(v).length:0; return n?`<span class="venue-mine">收藏 ${n}</span>`:''; })()}
       <span class="venue-n">${v.offer_count} 家</span>
       <span class="venue-cty">${esc(v.county||'')}</span>
     </button>
@@ -6556,9 +6697,12 @@ function toggleVenue(id){
 async function fillVenue(id){
   const body=$('#venueBody'+id); if(!body) return;
   body.innerHTML='<div class="hint">載入中…</div>';
-  const {data,error}=await sb.rpc('venue_offer_ids',{p_venue_id:id});
-  if(error){ body.innerHTML='<div class="hint">載入失敗：'+esc(error.message)+'</div>'; return; }
-  const ids=new Set((data||[]).map(x=>String(x.venue_offer_ids ?? x)));
+  let ids=VENUE_PAIRS?.get(id);
+  if(!ids){
+    const {data,error}=await sb.rpc('venue_offer_ids',{p_venue_id:id});
+    if(error){ body.innerHTML='<div class="hint">載入失敗：'+esc(error.message)+'</div>'; return; }
+    ids=new Set((data||[]).map(x=>String(x.venue_offer_ids ?? x)));
+  }
   const list=OFFERS.filter(o=>ids.has(String(o.id)));
   const v=(VENUES||[]).find(x=>x.id===id);
   const top=(v?venueAdminHtml(v):'')+(v&&v.lat!=null?`<div class="venue-map" id="venueMap${id}"></div>`:'');
@@ -6581,6 +6725,12 @@ async function fillVenue(id){
     </button>`).join('');
   const bulkBtn=$('#venueBulk'+id);
   if(bulkBtn) bulkBtn.onclick=()=>openBulkAdd(id);
+  /* 嵐：「使用者也可以投稿編輯」。管理員自己就地改就好，不用投稿給自己 */
+  if(v && !myProfile?.is_admin){
+    body.insertAdjacentHTML('beforeend', `<p class="venue-fix">名字不對、範圍不對、少了哪幾家？
+      <button type="button" class="btn sm" id="venueFix${id}">建議修改</button></p>`);
+    $('#venueFix'+id).onclick=()=>openVenueSuggest(v);
+  }
   if(v){ wireVenueAdmin(v); paintVenueMap(v); }
   $$('#venueBody'+id+' .venue-offer').forEach(b=>b.onclick=()=>openDetail(b.dataset.id));
 }
@@ -6775,24 +6925,38 @@ $('#venueCounty').onchange=()=>{ VENUE_OPEN=null; renderVenues(); paintVenuesMap
      · 送出的人在「我送出過的」看得到自己送了什麼、後來怎麼了
      · 管理員在「審核」有一個真正的佇列，不用在一堆功能建議裡翻
      · 一天 5 個的上限擋在資料庫的 trigger，不是前端 */
-function openVenueSuggest(){
+/* v160：同一張視窗兩種用法。沒帶參數＝推薦一個新地點（照舊）；帶一個商圈＝
+   建議修改那一個——名字、縣市先填好，「裡面有哪幾家」變成「少了哪幾家」。 */
+let VS_EDIT=null;
+function openVenueSuggest(venue){
+  VS_EDIT = (venue && venue.id) ? venue : null;
   if(!LIVE){ showToast(offlineMsg('推薦地點')); return; }
   if(!me){ showToast('推薦地點要先登入，右上角可以用 Google 登入'); return; }
   const sel=$('#vsCounty');
   if(sel && sel.options.length<=1)
     sel.innerHTML='<option value="">不確定／跨縣市</option>'
       +COUNTIES.filter(c=>c!=='全台').map(c=>`<option>${esc(c)}</option>`).join('');
-  $('#vsName').value=''; $('#vsNote').value=''; $('#vsMsg').innerHTML='';
+  $('#vsName').value=VS_EDIT?VS_EDIT.name:''; $('#vsNote').value=''; $('#vsMsg').innerHTML='';
+  $('#vsTitle').textContent = VS_EDIT ? `建議修改「${VS_EDIT.name}」` : '推薦一個地點';
+  $('#vsSub').textContent = VS_EDIT
+    ? '名字不對就直接改上面那一格；少了哪幾家就勾起來；其他的寫在最下面。'
+    : '哪裡一趟就能用到好幾家生日優惠？告訴我們名字就好，座標我們自己對。';
+  $('#vsNote').placeholder = VS_EDIT
+    ? '哪裡不對？例如：範圍太大、這家已經撤櫃了'
+    : '站上找不到的店寫在這裡（不填也可以）';
   VS_PICKER=mountOfferPicker($('#vsPicker'), {
-    emptyLabel:'打字搜尋站上已經有的優惠，勾起來就好。一家都不勾也可以送出。'});
+    // 建議修改的時候，已經算在裡面的那幾家不用再列
+    exclude: VS_EDIT ? [...(VENUE_PAIRS?.get(VS_EDIT.id)||[])] : [],
+    emptyLabel: VS_EDIT ? '少了哪幾家？打字搜尋、勾起來。沒少就不用勾。'
+                        : '打字搜尋站上已經有的優惠，勾起來就好。一家都不勾也可以送出。'});
   // 正在看哪個縣市就先選哪個，多數人就是在幫自己看的那一區補
-  if(sel) sel.value=$('#venueCounty')?.value||'';
+  if(sel) sel.value = VS_EDIT ? (VS_EDIT.county||'') : ($('#venueCounty')?.value||'');
   $('#dlgVenueSuggest').showModal(); pushDlgHistory();
   $('#vsName').focus();
-  logEvent('venue_suggest',{});
+  logEvent('venue_suggest',{edit:VS_EDIT?1:0});
 }
 let VS_PICKER=null;
-$('#btnVenueSuggest').onclick=openVenueSuggest;
+$('#btnVenueSuggest').onclick=()=>openVenueSuggest();
 $('#btnVsCancel').onclick=()=>$('#dlgVenueSuggest').close();
 $('#btnVsSend').onclick=async()=>{
   const name=$('#vsName').value.trim();
@@ -6805,15 +6969,17 @@ $('#btnVsSend').onclick=async()=>{
   const box=$('#vsMsg');
   if(name.length<2){ box.innerHTML='<div class="note alert">地點名稱至少要兩個字。</div>'; return; }
   const btn=$('#btnVsSend'); btn.disabled=true; btn.textContent='送出中…';
-  const {error}=await sb.from('venue_suggestions').insert({
-    name: name.slice(0,40), county: $('#vsCounty').value||null,
-    note: note ? note.slice(0,300) : null, user_id: me.id });
+  const row={ name: name.slice(0,40), county: $('#vsCounty').value||null,
+    note: note ? note.slice(0,300) : null, user_id: me.id };
+  // 只有「建議修改」才帶這一欄：v160 還沒跑的資料庫沒有它，推薦新地點不該因此送不出去
+  if(VS_EDIT) row.venue_id=VS_EDIT.id;
+  const {error}=await sb.from('venue_suggestions').insert(row);
   btn.disabled=false; btn.textContent='送出';
   if(error){
     /* 表還沒建起來：只講「還沒開放」。這張表單所有人都打得開，v153 第一版在這裡
        寫了「管理員要先跑 schema_v153…」——就是 celine 說「其他人不該看到」的那種字。
        其他錯誤照抄：一天 5 個的上限是 trigger 丟出來的，訊息本身就是中文。 */
-    const missing=/venue_suggestions|does not exist|schema cache/i.test(error.message||'');
+    const missing=/venue_suggestions|venue_id|does not exist|schema cache/i.test(error.message||'');
     box.innerHTML='<div class="note alert">'
       +(missing?'這個功能還沒開放，晚點再試試看。'
                :esc(error.message))+'</div>';
@@ -9761,6 +9927,7 @@ function plansReady(){ return !!PLANS && !!me && PLANS_OWNER===me.id; }
 function planItemsDone(p){ return p.items.filter(i=>i.done).length; }
 function renderPlans(){
   const box=$('#planBody'); if(!box || !LIVE) return;
+  if(PLAN_MAP){ PLAN_MAP.remove(); PLAN_MAP=null; }   // 容器要被換掉了，先收乾淨
   if(!me){
     box.innerHTML='<div class="hint">登入之後就能排行程：哪一天、去哪幾間店、照什麼順序。'
       +'右上角可以用 Google 登入。</div>';
@@ -9835,8 +10002,13 @@ function planBodyHtml(p){
         placeholder="幾點出門、跟誰去、要帶什麼證件…">${esc(p.note||'')}</textarea></div>
     ${p.items.length ? `<ol class="plan-items">${items}</ol>`
       : '<div class="hint" style="margin:10px 0">還沒有店。按「加店家」從待辦清單挑。</div>'}
+    ${PLAN_MAP_FOR===p.id ? `<div class="plan-map-bar"><label for="planCenter${p.id}">以哪裡為中心</label>
+        <select id="planCenter${p.id}">${planCenterOptions(p)}</select></div>
+      <div class="venue-map plan-map" id="planMap${p.id}"></div>
+      <p class="hint" id="planMapHint${p.id}" style="margin:4px 0 0"></p>` : ''}
     <div class="row" style="gap:8px;flex-wrap:wrap">
       <button type="button" class="btn sm primary" data-padd="${p.id}">＋ 加店家</button>
+      ${p.items.length ? `<button type="button" class="btn sm" data-pmap="${p.id}">${PLAN_MAP_FOR===p.id?'收起地圖':'看地圖'}</button>` : ''}
       <button type="button" class="btn sm" data-pdel="${p.id}" style="margin-left:auto">刪掉這一趟</button>
     </div>
   </div>`;
@@ -9901,6 +10073,13 @@ function wirePlans(box){
   });
   box.querySelectorAll('[data-odetail]').forEach(b=>b.onclick=()=>openDetail(b.dataset.odetail));
   box.querySelectorAll('[data-padd]').forEach(b=>b.onclick=()=>openPlanAdd(Number(b.dataset.padd)));
+  box.querySelectorAll('[data-pmap]').forEach(b=>b.onclick=()=>togglePlanMap(Number(b.dataset.pmap)));
+  if(PLAN_MAP_FOR!=null){
+    const sel=$('#planCenter'+PLAN_MAP_FOR);
+    if(sel){ sel.value=PLAN_CENTER[PLAN_MAP_FOR]||sel.value; sel.onchange=()=>{
+      PLAN_CENTER[PLAN_MAP_FOR]=sel.value; paintPlanMap(findPlan(PLAN_MAP_FOR)); }; }
+    paintPlanMap(findPlan(PLAN_MAP_FOR));
+  }
   box.querySelectorAll('[data-pdel]').forEach(b=>b.onclick=async()=>{
     const p=findPlan(b.dataset.pdel); if(!p) return;
     if(!confirm(`刪掉「${planDateLabel(p.plan_date)}${p.title?' '+p.title:''}」這一趟嗎？裡面的 ${p.items.length} 家會一起刪掉。`)) return;
@@ -9944,6 +10123,90 @@ function movePlanItem(itemId, dir){
       const bad=rs.find(r=>r.error);
       if(bad){ undo(); renderPlans(); showToast(planErrMsg(bad.error)); }
     });
+}
+
+/* ---- 行程的地圖（v160）----------------------------------------------
+   嵐：「行程旁邊可以串地圖」。
+
+   難的地方：行程裡的一家是「一個優惠」，不是「一間分店」——星巴克在台北有上百家，
+   要畫哪一家？做法是先定一個**中心**，每一家取離中心最近的那間分店：
+     · 預設中心＝這一趟的店最多落在其中的那個商圈（排行程的人多半就是照商圈排的）
+     · 也可以改成別的商圈，或「我現在的位置」
+   「離中心最近的分店」用「附近」那邊現成的 nearest_offer_stores（一次一個請求，
+   每個優惠回一間最近的），不用新的資料。30 公里內都找不到的列在地圖下面。
+
+   地圖上的編號就是清單上的編號（第幾站），用虛線照順序連起來。 */
+let PLAN_MAP=null, PLAN_MAP_FOR=null;
+const PLAN_CENTER={};                 // 每一趟上次選的中心（這一次開站內記得就好）
+const PLAN_NEAR_CACHE=new Map();      // 中心 → nearest_offer_stores 的結果，切來切去不重查
+function planCenterOptions(p){
+  const ids=new Set(p.items.map(i=>String(i.offer_id)));
+  const ranked=(VENUES||[]).map(v=>({v, n:[...(VENUE_PAIRS?.get(v.id)||[])].filter(x=>ids.has(x)).length}))
+    .sort((a,b)=>b.n-a.n || (b.v.offer_count||0)-(a.v.offer_count||0));
+  return ranked.map(({v,n})=>`<option value="v${v.id}">${esc(v.name)}${n?`（${n} 家在裡面）`:''}</option>`).join('')
+    + '<option value="here">我現在的位置</option>';
+}
+function togglePlanMap(pid){
+  PLAN_MAP_FOR = PLAN_MAP_FOR===pid ? null : pid;
+  if(PLAN_MAP_FOR!=null && !VENUES) loadVenues();      // 中心的選項要用到商圈
+  if(PLAN_MAP_FOR!=null) loadVenuePairs().then(()=>{ if(PLAN_MAP_FOR===pid) renderPlans(); });
+  renderPlans();
+  logEvent('plan_map',{on:PLAN_MAP_FOR!=null?1:0});
+}
+function planCenterPoint(pid){
+  const val=$('#planCenter'+pid)?.value||'';
+  if(val==='here') return new Promise(res=>{
+    if(!navigator.geolocation){ res(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      p=>res({lat:p.coords.latitude, lng:p.coords.longitude, key:'here'}),
+      ()=>res(null), {timeout:8000, maximumAge:300000});
+  });
+  const v=(VENUES||[]).find(x=>'v'+x.id===val);
+  return Promise.resolve(v ? {lat:v.lat, lng:v.lng, key:val} : null);
+}
+async function paintPlanMap(p){
+  if(PLAN_MAP){ PLAN_MAP.remove(); PLAN_MAP=null; }
+  if(!p) return;
+  const el=$('#planMap'+p.id), hint=$('#planMapHint'+p.id);
+  if(!el) return;
+  if(!await loadLeaflet()){ el.remove(); if(hint) hint.textContent='地圖載入失敗，晚點再試一次。'; return; }
+  const c=await planCenterPoint(p.id);
+  if(!document.body.contains(el)) return;               // 等的時候已經收起來／重畫了
+  if(!c){ if(hint) hint.textContent='拿不到中心點（定位被關掉的話，改選一個商圈）。'; return; }
+  let rows=PLAN_NEAR_CACHE.get(c.key);
+  if(!rows){
+    const {data,error}=await sb.rpc('nearest_offer_stores',{p_lat:c.lat, p_lng:c.lng, p_km:30});
+    if(error){ if(hint) hint.textContent=pubErrText(error,'找分店失敗：',/function|does not exist/i,'地圖暫時讀不到，晚點再試。'); return; }
+    rows=data||[];
+    if(c.key!=='here') PLAN_NEAR_CACHE.set(c.key, rows);   // 「我現在的位置」會變，不記
+  }
+  if(!document.body.contains(el)) return;
+  const byOffer=new Map(rows.map(r=>[String(r.offer_id), r]));
+  if(PLAN_MAP){ PLAN_MAP.remove(); PLAN_MAP=null; }
+  const m=L.map(el,{scrollWheelZoom:false}).setView([c.lat,c.lng],15);
+  PLAN_MAP=m;
+  venueMapTiles(m);
+  const pts=[], missing=[];
+  p.items.forEach((it,i)=>{
+    const o=OFFERS.find(x=>String(x.id)===String(it.offer_id));
+    const st=byOffer.get(String(it.offer_id));
+    if(!st){ missing.push(o?.brand||'（已下架）'); return; }
+    pts.push([st.lat,st.lng]);
+    L.marker([st.lat,st.lng],{icon:L.divIcon({className:'', iconSize:[24,24], iconAnchor:[12,12],
+        html:`<span class="plan-pin${it.done?' done':''}">${i+1}</span>`})})
+      .bindPopup(`<b>${i+1}. ${esc(o?.brand||'')}</b><br><span style="font-size:.8rem">${esc(st.name)}</span><br>`
+        +`<a href="${esc(mapsLink(st))}" target="_blank" rel="noopener" style="font-size:.8rem">導航↗</a>`)
+      .addTo(m);
+  });
+  if(pts.length>1) L.polyline(pts,{color:'#e8483c', weight:2, dashArray:'4 6', opacity:.8}).addTo(m);
+  setTimeout(()=>{
+    if(PLAN_MAP!==m) return;
+    m.invalidateSize();
+    if(pts.length) m.fitBounds(L.latLngBounds(pts).pad(0.2), {maxZoom:17});
+  },0);
+  if(hint) hint.textContent = missing.length
+    ? `這${missing.length>1?'幾':''}家在 30 公里內找不到分店：${missing.join('、')}`
+    : '每一家取離中心最近的那間分店。點編號看是哪一間、可以導航。';
 }
 
 /* ---- 挑優惠：可以搜尋、可以打勾 ---------------------------------
