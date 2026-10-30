@@ -21,3 +21,15 @@ app/android/local.properties
 app/android/app/release/
 app/ios/App/Pods/
 app/ios/App/build/
+
+# repo 已公開（2026-10-30），預防性擋掉常見的祕密檔。
+# 目前這些檔都不存在，也從沒進過版控；純粹是防以後手滑。
+# 注意：config.js 裡的 Supabase key 是 anon key，本來就設計成公開，防線在 RLS。
+.env
+.env.*
+secrets.properties
+keystore.properties
+*.jks
+*.keystore
+*-service-account*.json
+app/android/keystore.properties
