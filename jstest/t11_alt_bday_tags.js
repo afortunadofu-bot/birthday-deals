@@ -187,8 +187,10 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
   win.__sb = sbNoTag; win.eval('sb = window.__sb;');
   await win.renderMyWishlist();
   await tick(win, 2);
-  t.eq('v65 沒跑時自動改成不帶標籤再查一次', tried.length, 2);
-  t.ok('第一次有帶 tag、第二次沒有', /tag/.test(tried[0]) && !/,tag/.test(tried[1]), tried);
+  /* v164 在前面多試一次（registered／got_coupon），所以不數第幾次——問的是：
+     一開始有帶 tag、最後成功的那一句沒有 */
+  t.ok('v65 沒跑時自動改成不帶標籤再查一次', tried.length >= 2 && !/,tag/.test(tried[tried.length - 1]), tried);
+  t.ok('第一次有帶 tag', /tag/.test(tried[0]), tried);
   t.eq('清單照樣看得到', doc.querySelectorAll('#myWishlist [data-wl-row]').length, 1);
 
   process.exit(t.done() ? 0 : 1);

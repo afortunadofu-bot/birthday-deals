@@ -441,6 +441,28 @@
     background:none;border:0;border-radius:var(--r-sm);
     cursor:pointer;text-align:left;font:inherit;color:var(--ink)}
   .vr-acts{display:flex;justify-content:flex-end;padding:0 6px 8px}
+  /* v164 詳情的回報＋留言 */
+  .thread-bar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 8px;padding:6px 0;
+    border-bottom:1px solid var(--line-soft);font-size:.8rem;color:var(--ink-3)}
+  .thread-bar>span{flex:1 1 auto}
+  .thread-body.hidden{display:none}
+  .rep-quiet-sum{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.8rem;color:var(--ink-3);
+    padding:7px 0;border-top:1px dashed var(--line-soft)}
+  .clamp{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+  .txt-more{background:none;border:0;padding:2px 0;font:inherit;font-size:.76rem;color:var(--accent-dark);
+    cursor:pointer;font-weight:700}
+  /* v164 待辦清單：已註冊／已收到券 */
+  .wl-flag{height:28px;padding:0 10px;border:1px dashed var(--line);border-radius:999px;background:none;
+    font:inherit;font-size:.76rem;color:var(--ink-3);cursor:pointer}
+  .wl-flag[aria-pressed="true"]{border-style:solid;border-color:var(--free-line);background:var(--free-bg);
+    color:var(--free);font-weight:700}
+  .dl .dl-reg{font-size:.72rem;color:var(--free);font-weight:700;margin-left:6px}
+  .dl.dl-registered{opacity:.6}
+  /* v164 我實際花了多少 */
+  .spent-box{display:flex;gap:18px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft)}
+  .spent-box .v{font-weight:800;font-size:1.05rem}
+  .spent-box .k{font-size:.74rem;color:var(--ink-3)}
+  .venue-dist{font-size:.74rem;color:var(--ink-3);white-space:nowrap}
   #evCustom.hidden{display:none!important}
   .ev-visit{color:var(--accent-dark);font-weight:800}
   .vr-row b{flex:1 1 auto;min-width:0}
@@ -932,7 +954,7 @@
   .sv-aspect>span{width:80px;font-size:.82rem;flex:none}
   .sv-aspect .sv-group{flex:1;flex-wrap:nowrap;gap:4px}
   .sv-aspect .sv-opt{flex:1;padding:6px 0;border-radius:8px;min-width:0;text-align:center}
-  #surveyNudge,#updatesNudge,#geoNudge,#rateNudge{position:fixed;left:12px;right:12px;max-width:360px;margin-left:auto;z-index:60;
+  #surveyNudge,#updatesNudge,#geoNudge,#rateNudge,#oneLineNudge{position:fixed;left:12px;right:12px;max-width:360px;margin-left:auto;z-index:60;
     bottom:calc(72px + var(--tabbar-h) + var(--kb-offset,0px) + env(safe-area-inset-bottom));
     background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
     box-shadow:0 8px 24px rgba(0,0,0,.14);padding:12px 14px;font-size:.86rem}
@@ -1756,6 +1778,10 @@
       <div class="filt-row"><span class="filt-label">會員</span><div class="row chipgrp" id="memChips"></div></div>
       <div class="filt-row"><span class="filt-label">期間</span><div class="row chipgrp" id="timingChips"></div></div>
       <div class="filt-row"><span class="filt-label">類型</span><div class="row chipgrp" id="freeChips"></div></div>
+      <!-- 嵐：「統計花費金額／人數，讓其他人有個概念這家會花多少」「進到篩選」。
+           只算 3 人以上回報過「這次花多少」的；v164 那支 SQL 沒跑的話整列不出現。 -->
+      <div class="filt-row hidden" id="spendRow"><span class="filt-label">實際花費</span>
+        <div class="row chipgrp" id="spendChips"></div></div>
       <div class="filt-row"><span class="filt-label">分類</span><div class="row chipgrp" id="cats"></div></div>
       <div class="row">
         <label class="toggle"><input type="checkbox" id="fVerified"> 已查證</label>
@@ -1764,6 +1790,10 @@
         <label class="toggle"><input type="checkbox" id="fHasComments"> 有留言</label>
         <label class="toggle"><input type="checkbox" id="fNoCompanion"> 一人也能用（不含需同行）</label>
         <label class="toggle"><input type="checkbox" id="fTransferable"> 不用本人出示證件</label>
+        <!-- 楊晴：「可以加個標籤是不需提前加入之類的，因為有些都有規定，但是都是在留言有人寫，
+             不太有系統性」。只收資料講得清楚的：不用當會員（也不用預約），或寫明 0 天而且
+             說明裡沒有「需／須提前、先加入」。沒寫的（目前一大半）不算進來。 -->
+        <label class="toggle"><input type="checkbox" id="fNoAdvance"> 不用提前加入（當月加入就能用）</label>
         <!-- 金信宇回報：「我點擊篩選『花蓮縣』時，底下篩選出的建議店家有很多都不是
              花蓮店家」。選了縣市之後，標成「全台」的連鎖店本來就會一起列出來
              （標題那行有寫「含全台」），但「全台」常常是個寬鬆的標記——很多連鎖
@@ -2287,6 +2317,12 @@
       <p class="sub">哪些地方一次就能用到最多家生日優惠。點開看裡面有哪幾家。</p>
       <div class="row" style="margin:10px 0 2px">
         <select id="venueCounty" aria-label="縣市"><option value="">全部縣市</option></select>
+        <!-- 嵐：「商圈可以按照近到遠跟收藏數量排列」 -->
+        <select id="venueSort" aria-label="排序">
+          <option value="count">店家最多</option>
+          <option value="near">離我最近</option>
+          <option value="wish">我收藏最多</option>
+        </select>
       </div>
       <!-- 嵐：「一趟用最多也可以一開始先看到台灣地圖看大分佈，切縣市也可以看到該縣市概要的圖」。
            一顆圈是一個商圈，越大代表裡面越多家。點了跳出名字，再按一下就展開下面那一格。 -->
@@ -2507,6 +2543,8 @@
       <p class="sub">只計算回報「成功」的紀錄。</p>
       <div id="savingsSinceVisit" class="hidden"></div>
       <div class="bigstat" id="mySavings"></div>
+      <!-- 楊晴：「在省錢統計那邊，我也想知道我實際花了多少錢，這樣比較好比較說我到底有沒有真的划算」 -->
+      <div id="mySpent"></div>
       <button type="button" class="btn sm hidden" id="btnShareSavings" style="margin-top:8px">📤 分享我的省錢成果</button>
       <label class="toggle"><input type="checkbox" id="optLeaderboard"> 在排行榜顯示我的暱稱與頭像</label>
       <p class="sub" style="margin-top:4px">關掉還是會上榜，只是顯示成「匿名使用者」。</p>
@@ -3204,6 +3242,24 @@
   </div>
 </div>
 
+<!-- 嵐：「希望使用多次的人可以跳一個，給這個 app 一句回饋的地方」。回報用過 5 次以上的人
+     跳一次；寫了就不再問，「之後再說」隔 30 天。送進「回報網站問題」同一張表（類型＝一句回饋）。 -->
+<div class="hidden" id="oneLineNudge" role="dialog" aria-label="給壽星日一句話">
+  <div style="display:flex;gap:8px;align-items:flex-start">
+    <span aria-hidden="true" style="font-size:1.3rem;line-height:1">🎂</span>
+    <div style="flex:1"><b id="oneLineTitle">你已經用壽星日領了好幾次優惠</b>
+      <div class="hint" style="margin-top:2px">有什麼想跟做這個網站的人說的嗎？一句話就好。</div></div>
+    <button type="button" class="btn plain" id="btnOneLineClose" aria-label="之後再說">✕</button>
+  </div>
+  <textarea id="oneLineMsg" maxlength="300" rows="2" placeholder="好用的、不好用的、想要的都可以"
+    style="width:100%;margin-top:8px;font:inherit;font-size:.86rem"></textarea>
+  <div class="hint hidden" id="oneLineErr" style="color:var(--alert)"></div>
+  <div class="row" style="margin-top:8px;gap:8px;justify-content:flex-end">
+    <button type="button" class="btn sm" id="btnOneLineLater">之後再說</button>
+    <button type="button" class="btn sm primary" id="btnOneLineSend">送出</button>
+  </div>
+</div>
+
 <div class="hidden" id="surveyNudge" role="dialog" aria-label="回饋問卷邀請">
   <div style="display:flex;gap:8px;align-items:flex-start">
     <span aria-hidden="true" style="font-size:1.3rem;line-height:1">💬</span>
@@ -3469,7 +3525,8 @@ let sb=null, me=null, myProfile=null, OFFERS=[];
 let NEW_OFFER_IDS=new Set(), onlyNewActive=false;   // 「本週新上架／自上次來訪」入口用的狀態
 let PREV_SEEN_AT=null;   // checkNewOffers() 覆蓋 last_seen_at 之前的舊值，留給「自上次來訪省了多少」用
 let activeCat=new Set(), activeFree=new Set(), activeTiming=new Set();   // 篩選改多選：可以同時勾「當月」+「當週」
-let activeRegion=new Set(), activeMemType=new Set();   // 地區／會員也改多選，跟上面那組共用同一套 mkMulti chip 邏輯
+let activeRegion=new Set(), activeMemType=new Set();
+let activeSpend=new Set();   // v164 大家實際花多少（嵐：「統計花費金額，讓其他人有個概念這家會花多少」→「進到篩選」）   // 地區／會員也改多選，跟上面那組共用同一套 mkMulti chip 邏輯
 let deferredInstall = null;
 let WISH=new Set();          // 待辦清單（收藏的優惠 id，字串形式）
 let MY_USED_OFFER_IDS=new Set();   // 我自己回報過「用過了」的優惠 id（字串形式）——
@@ -3493,6 +3550,7 @@ function saveFilters(){
     fVerified:$('#fVerified').checked, fLive:$('#fLive').checked,
     fReported:$('#fReported').checked, fHasComments:$('#fHasComments').checked,
     fNoCompanion:$('#fNoCompanion').checked, fTransferable:$('#fTransferable').checked,
+    fNoAdvance:$('#fNoAdvance').checked, spend:[...activeSpend],
     fExactRegion:$('#fExactRegion').checked,
     sort:$('#sort').value
   })); }catch{}
@@ -3506,6 +3564,8 @@ function loadFilters(){
   (s.timing||[]).forEach(v=>activeTiming.add(v));
   $('#fNoCompanion').checked=!!s.fNoCompanion;
   $('#fTransferable').checked=!!s.fTransferable;
+  $('#fNoAdvance').checked=!!s.fNoAdvance;
+  (s.spend||[]).filter(v=>SPEND_BUCKETS.includes(v)).forEach(v=>activeSpend.add(v));
   $('#fExactRegion').checked=!!s.fExactRegion;
   $('#fVerified').checked=!!s.fVerified; $('#fLive').checked=s.fLive!==false;
   $('#fReported').checked=!!s.fReported; $('#fHasComments').checked=!!s.fHasComments;
@@ -3534,7 +3594,7 @@ const REMEMBER=[
   // 待辦清單
   'wlSort','wlYear','wlTagFilter','wlSinkDone','wlCompact',
   // 場館
-  'venueCounty',
+  'venueCounty','venueSort',
   // 首頁的簡易版
   'optLeanHome',
   // 管理員看的那幾個區間
@@ -3764,6 +3824,7 @@ const seedOffers=()=>SEED.offers.map((o,i)=>({...o, id:'seed'+i, status:'approve
 function paintOffers(){
   buildControls();
   render();
+  loadSpendSummary();
   renderA2hsPanel();
 }
 
@@ -4829,12 +4890,25 @@ async function renderMyWishlist(){
   }
   const COLS='offer_id,done,note,sort_order,created_at,year,person,offers(brand,offer,conditions,membership,timing,advance_days,value_twd,valid_until,regions,region_note)';
   const wlQuery=cols=>sb.from('wishlist').select(cols).eq('user_id',me.id).order('created_at',{ascending:false});
-  let {data,error}=await wlQuery(COLS+',tag');
+  // v164 的 registered／got_coupon 先試；沒跑就退回原本那一句
+  let {data,error}=await wlQuery(COLS+',tag,registered,got_coupon');
+  WL_FLAGS=!error;
+  if(error) ({data,error}=await wlQuery(COLS+',tag'));
   // v65／v71 還沒跑（wishlist 還沒有 tag／person 欄位）：拿掉那幾欄再查一次，清單照樣看得到
   if(error) ({data,error}=await wlQuery(COLS));
   if(error) ({data}=await wlQuery(COLS.replace(',person','')));
   WL_ROWS=data||[];
   renderWishlistBody();
+  if(WL_FLAGS) renderPlanner();     // 註冊死線那邊要標「已註冊」
+}
+let WL_FLAGS=false;
+/* Lena：「建議可以多一個欄位，勾選已註冊會員提醒自己有加入會員，也可以多一個欄位是勾選
+   已收到優惠券」。記在待辦清單那一列上（跟備註、標籤一樣只有自己看得到）。 */
+const WL_FLAG_LABEL={registered:'已註冊會員', got_coupon:'已收到優惠券'};
+function wlFlagsHtml(w){
+  if(!WL_FLAGS) return '';
+  return Object.keys(WL_FLAG_LABEL).map(k=>`<button type="button" class="wl-flag" data-id="${w.offer_id}"
+    data-flag="${k}" aria-pressed="${w[k]?'true':'false'}">${w[k]?'✓ ':''}${WL_FLAG_LABEL[k]}</button>`).join('');
 }
 // 待辦清單也要能看到「這筆的入會死線是哪一天」——跟 renderPlanner() 用同一套
 // 邏輯（生日月/日 + advance_days 往前推），只是這裡不畫圖表，只算一個日期字串。
@@ -4995,6 +5069,7 @@ function renderWishlistBody(){
       : `<div class="wl-chips">
         <span class="wl-tag-wrap${w.tag?' on':''}">🏷${tagSelectHtml}</span>
         ${w.note?'':`<button type="button" class="wl-note-add" data-id="${w.offer_id}">📝 備註</button>`}
+        ${wlFlagsHtml(w)}
       </div>`;
     return `<div class="wl-item${done?' done':''}" data-wl-row="${w.offer_id}">
       ${top}
@@ -5068,6 +5143,15 @@ function renderWishlistBody(){
     if(!ta) return;
     ta.classList.remove('hidden'); b.remove(); ta.focus();
   });
+  $$('#myWishlist .wl-flag').forEach(b=>b.onclick=async()=>{
+    const row=WL_ROWS.find(w=>String(w.offer_id)===String(b.dataset.id)); if(!row) return;
+    const k=b.dataset.flag, on=!row[k];
+    row[k]=on; renderWishlistBody();          // 先改畫面，失敗再改回來
+    const {error}=await sb.from('wishlist').update({[k]:on}).eq('user_id',me.id).eq('offer_id',row.offer_id);
+    if(error){ row[k]=!on; renderWishlistBody(); showToast(pubErrText(error,'沒存到：')); return; }
+    if(k==='registered') renderPlanner();
+    logEvent('wl_flag',{flag:k, on:on?1:0});
+  });
   // 「⋯」選單裡的動作按下去就把選單收起來
   $$('#myWishlist .wl-menu button').forEach(b=>b.addEventListener('click',()=>b.closest('details')?.removeAttribute('open')));
   let wlNoteTimer=null;
@@ -5089,7 +5173,14 @@ function renderWishlistBody(){
       inp.style.borderColor = error ? '#dc2626' : '';
       inp.title = error ? '備註存檔失敗，請檢查網路連線後重新輸入' : '';
     };
-    inp.addEventListener('input',()=>{ clearTimeout(wlNoteTimer); wlNoteTimer=setTimeout(save,600); });
+    /* 陳：「待辦清單的部分卡牌在上下移動時，備註會消失」。打的字有存進資料庫，可是
+       畫面那份（WL_ROWS）沒跟著改——上下移動是拿 WL_ROWS 整份重畫，於是這次打開之後
+       才寫的備註被畫回原本的樣子（多半是空的）。「部分」＝這次才寫的那幾張。 */
+    inp.addEventListener('input',()=>{
+      const row=WL_ROWS.find(w=>String(w.offer_id)===String(inp.dataset.id));
+      if(row) row.note=inp.value.slice(0,200);
+      clearTimeout(wlNoteTimer); wlNoteTimer=setTimeout(save,600);
+    });
     inp.addEventListener('blur',()=>{ clearTimeout(wlNoteTimer); save(); });
   });
   // DORIS 回饋：「待辦清單希望點開的時候跟在優惠頁面點開的內容一樣，可以同時看到
@@ -5921,6 +6012,7 @@ const EVENT_LABEL={
   venue_rec_open:'從「照你的待辦清單」點進商圈', venue_rec_plan:'從「照你的待辦清單」存成行程',
   near_used_only:'附近「我用過的」', reports_to_map:'使用回報 →「在地圖上看」',
   tab_open:'換頁（要跑 v163 才分得出是哪一頁）',
+  oneline_nudge:'「給壽星日一句話」（跳出／送出／之後再說）', wl_flag:'待辦清單勾「已註冊／已收到券」',
   wish_to_venues:'待辦清單 →「去哪裡一次用最多」',
   rate_cta:'從提示去評分', rate_nudge:'「還沒評分」的提示出現',
   rate_all_open:'一次評很多筆', rate_submit:'送出評分',
@@ -5941,6 +6033,7 @@ const EVENT_SECTION={
   venue_open:'排行程', bulk_open:'排行程', bulk_wish:'排行程', venue_suggest:'排行程',
   plan_create:'排行程', plan_add:'排行程', plan_map:'排行程', venue_rec_open:'排行程',
   venue_rec_plan:'排行程', near_used_only:'優惠', reports_to_map:'我的', tab_open:'全站',
+  oneline_nudge:'我的', wl_flag:'我的',
   plan_section:'排行程', plan_share:'排行程', shared_open:'排行程', shared_save:'排行程',
   whatsnew_open:'全站', whatsnew_skip:'全站', whatsnew_done:'全站', whatsnew_go:'全站',
   shared_copy:'排行程',
@@ -6060,7 +6153,8 @@ async function loadEventStats(){
       不會算，只有「本來收著、你把它點開」才算一次。</p>`
     + `<p class="hint" style="margin:6px 0 0">${esc(label)}。不含瀏覽頁面本身
       （那個是排行榜上的「總瀏覽人次」）。「人」算的是瀏覽器，同一個人換裝置會算兩個。
-      「點進這一頁」從 v163 才開始記，開站時直接落在的那一頁不算。</p>`;
+      「點進這一頁」從 v163 才開始記，開站時直接落在的那一頁不算；<b>11/2（v164）以前少算很多</b>——
+      那時候只記到從按鈕跳過去的，直接點下面分頁列的沒記到。要比較請從 11/3 開始選。</p>`;
 }
 $('#evRange').onchange=()=>{
   const custom=$('#evRange').value==='custom';
@@ -6493,6 +6587,7 @@ function maybeShowUpdatesNudge(){
   if(!$('#surveyNudge').classList.contains('hidden')) return false;
   if(!$('#geoNudge').classList.contains('hidden')) return false;
   if(!$('#rateNudge').classList.contains('hidden')) return false;
+  if(!$('#oneLineNudge').classList.contains('hidden')) return false;
   // 生日祝賀正在跳的話先讓給它，更新紀錄下次再說
   if(!$('#bdayCheer').classList.contains('hidden')) return false;
   const newer=SITE_UPDATES.filter(u=>u.date>updatesSeenDate()).length;
@@ -6928,7 +7023,8 @@ function renderVenues(){
   if(VENUE_MAP){ VENUE_MAP.remove(); VENUE_MAP=null; }
   const box=$('#venueList'), cty=$('#venueCounty').value;
   const all=VENUES||[];
-  const list=all.filter(v=>!cty||v.county===cty);
+  const list=sortVenues(all.filter(v=>!cty||v.county===cty));
+  const sortBy=$('#venueSort')?.value||'count';
   if(!list.length){
     /* 兩種「空的」要分開講：
          · 一筆都還沒公開 → 是站方還沒整理完，不是使用者選錯縣市
@@ -6955,6 +7051,7 @@ function renderVenues(){
       <span class="venue-name">${esc(v.name)}</span>
       ${(()=>{ const n=me?venueWishHits(v).length:0; return n?`<span class="venue-mine">收藏 ${n}</span>`:''; })()}
       <span class="venue-n">${v.offer_count} 家</span>
+      ${sortBy==='near'&&VENUE_HERE&&v.lat!=null?`<span class="venue-dist">${esc(fmtDistance(venueDistM(v,VENUE_HERE)))}</span>`:''}
       <span class="venue-cty">${esc(v.county||'')}</span>
     </button>
     <div class="venue-body${VENUE_OPEN===v.id?'':' hidden'}" id="venueBody${esc(String(v.id))}"></div>
@@ -6962,6 +7059,39 @@ function renderVenues(){
   $$('#venueList .venue-head').forEach(b=>b.onclick=()=>toggleVenue(Number(b.dataset.id)));
   if(VENUE_OPEN!=null) fillVenue(VENUE_OPEN);
 }
+/* 「離我最近」要一個位置：附近模式已經有就用它，沒有才問一次定位（只放在這台裝置的記憶體裡） */
+let VENUE_HERE=null;
+function sortVenues(list){
+  const by=$('#venueSort')?.value||'count';
+  const out=[...list];
+  const cnt=(a,b)=>(b.offer_count||0)-(a.offer_count||0);
+  if(by==='near' && VENUE_HERE)
+    out.sort((a,b)=>(a.lat==null)-(b.lat==null) || venueDistM(a,VENUE_HERE)-venueDistM(b,VENUE_HERE));
+  else if(by==='wish')
+    out.sort((a,b)=>venueWishHits(b).length-venueWishHits(a).length || cnt(a,b));
+  else out.sort(cnt);
+  return out;
+}
+$('#venueSort').onchange=()=>{
+  const by=$('#venueSort').value;
+  if(by==='wish' && !me){
+    showToast('登入之後才知道你收藏了哪些，先照店家多少排');
+    $('#venueSort').value='count'; savePref('venueSort','count');
+  }
+  if(by==='near' && !VENUE_HERE){
+    if(NEAR.lat!=null){ VENUE_HERE={lat:NEAR.lat, lng:NEAR.lng}; }
+    else if(navigator.geolocation){
+      $('#venueList').insertAdjacentHTML('afterbegin','<div class="hint" id="venueLocating">找你的位置中…</div>');
+      navigator.geolocation.getCurrentPosition(
+        pos=>{ VENUE_HERE={lat:pos.coords.latitude, lng:pos.coords.longitude}; VENUE_OPEN=null; renderVenues(); },
+        ()=>{ $('#venueLocating')?.remove(); $('#venueSort').value='count'; savePref('venueSort','count');
+              showToast('拿不到你的位置，先照店家多少排'); renderVenues(); },
+        {timeout:10000, maximumAge:300000});
+      return;
+    }
+  }
+  VENUE_OPEN=null; renderVenues();
+};
 function toggleVenue(id){
   VENUE_OPEN = (VENUE_OPEN===id) ? null : id;
   renderVenues();
@@ -7231,6 +7361,9 @@ $$('.tab').forEach(t=>t.onclick=()=>{
   // ——人早就切到別的分頁了還是會被標成看過。現在統一由 armUpdatesSeen()／
   // disarmUpdatesSeen() 管（上面「什麼叫看過更新」那一段），切走就收掉。
   const already = t.dataset.tab===ACTIVE_TAB;
+  /* v163 只在 showSection() 裡記換頁，可是**點分頁列走的是這一條**，不經過它——
+     所以只記到「從別的按鈕跳過去」的那幾次，「排行程 3 人點進來」少算了一大截。 */
+  if(!already) logEvent('tab_open',{tab:t.dataset.tab});
   $$('.tab').forEach(x=>x.setAttribute('aria-selected', x===t));
   ['browse','board','trip','submit','mine','admin'].forEach(n=>
     $('#tab-'+n).classList.toggle('hidden', n!==t.dataset.tab));
@@ -7379,6 +7512,12 @@ function buildControls(){
     paint();
   };
   const cnt=(f,v)=>OFFERS.filter(o=>o[f]===v).length;
+  const spendN=b=>OFFERS.filter(o=>{ const x=spendOf(o); return x && spendBucket(x.avg)===b; }).length;
+  const spendAny=OFFERS.some(o=>spendOf(o));
+  $('#spendRow')?.classList.toggle('hidden', !spendAny);
+  if(spendAny) mkMulti($('#spendChips'),
+    [['不限','']].concat(SPEND_BUCKETS.filter(spendN).map(b=>[`${b}（${spendN(b)}）`,b])),
+    activeSpend);
   mkMulti($('#timingChips'),
     [['全部期間','']].concat(TIMINGS.filter(t=>cnt('timing',t)).map(t=>[`${t}（${cnt('timing',t)}）`,t])),
     activeTiming);
@@ -7890,6 +8029,7 @@ const FILTER_SETS={
   cat:   {set:()=>activeCat,     sel:'#cats'},
   free:  {set:()=>activeFree,    sel:'#freeChips'},
   timing:{set:()=>activeTiming,  sel:'#timingChips'},
+  spend: {set:()=>activeSpend,   sel:'#spendChips'},
 };
 /* 拿掉一個值，面板裡對應的 chip 也要跟著彈起來——不然重新打開面板會看到
    「這裡還按著，但列表已經沒在篩了」。整組空掉時把「全部」那顆按下去。 */
@@ -7918,6 +8058,7 @@ function activeFilterChips(){
   box('#fHasComments','有留言');
   box('#fNoCompanion','一人也能用');
   box('#fTransferable','不用本人證件');
+  box('#fNoAdvance','不用提前加入');
   if($('#fExactRegion').checked && activeRegion.size)
     out.push({label:'不含全台', drop:()=>{ $('#fExactRegion').checked=false; }});
   return out;
@@ -7947,14 +8088,43 @@ function renderActiveFilters(){
 
    回傳一個 closure 而不是每筆都重讀一次控制項：一個畫面最多畫 500 個點，
    每個點都重讀八九個 DOM 值的話，拖動地圖就會頓。 ---- */
+/* 「不用提前加入」：資料講得清楚的才算。三商巧福那種「需提前：0 天」但說明寫
+   「需提前加入 APP」的，照說明——說明是人寫的、天數常常是預設值。 */
+function noAdvanceOk(o){
+  const note=String(o.advanceNote||'');
+  if(/(需|須)(提前|先)/.test(note)) return false;
+  if(o.membershipType==='none') return !(o.advanceDays>0);   // 不用會員，但要預約的不算「直接去」
+  return o.advanceDays===0;
+}
+/* 大家實際花多少（v164 offer_spend_summary）。篩選跟卡片只用 3 人以上回報過的——
+   一兩個人的花費差太多，拿來分區間會誤導。 */
+let SPEND=new Map(), SPEND_TRIED=false;
+const SPEND_MIN_N=3;
+const SPEND_BUCKETS=['平均花 $100 內','平均花 $100～300','平均花 $300～500','平均花 $500 以上'];
+function spendBucket(avg){
+  return avg<=100?SPEND_BUCKETS[0]:avg<=300?SPEND_BUCKETS[1]:avg<=500?SPEND_BUCKETS[2]:SPEND_BUCKETS[3];
+}
+function spendOf(o){ const x=SPEND.get(String(o.id)); return x && x.n>=SPEND_MIN_N ? x : null; }
+async function loadSpendSummary(){
+  if(SPEND_TRIED || !LIVE) return;
+  SPEND_TRIED=true;
+  const {data,error}=await sb.rpc('offer_spend_summary',{p_min:1});
+  if(error || !Array.isArray(data)) return;      // v164 還沒跑：沒有這一組篩選，其他照常
+  SPEND=new Map(data.map(r=>[String(r.offer_id), {n:Number(r.n), avg:Number(r.avg_spent),
+    min:Number(r.min_spent), max:Number(r.max_spent)}]));
+  buildControls(); render();
+}
 function filterPredicate(){
   const q=$('#q').value.trim().toLowerCase();
   const onlyV=$('#fVerified').checked, hideX=$('#fLive').checked, onlyR=$('#fReported').checked;
   const onlyC=$('#fHasComments').checked, noCompanion=$('#fNoCompanion').checked;
-  const onlyTransferable=$('#fTransferable').checked;
+  const onlyTransferable=$('#fTransferable').checked, noAdvance=$('#fNoAdvance').checked;
   const exactRegion=$('#fExactRegion').checked && activeRegion.size>0;
   const cat=activeCat, free=activeFree, timing=activeTiming, mem=activeMemType, region=activeRegion;
+  const spend=activeSpend;
   return o=>{
+    if(noAdvance&&!noAdvanceOk(o)) return false;
+    if(spend.size){ const x=spendOf(o); if(!x||!spend.has(spendBucket(x.avg))) return false; }
     if(cat.size&&!cat.has(o.category)) return false;
     if(free.size&&!free.has(o.freeTier)) return false;
     if(timing.size&&!timing.has(o.timing)) return false;
@@ -7990,6 +8160,7 @@ function render(){
   if(sortBy==='distance'&&!(NEAR.active&&NEAR.byOffer)){ sortBy='value'; if(!NEAR.active) $('#sort').value='value'; }
 
   const activeCount = (q?1:0)+activeRegion.size+activeMemType.size+activeCat.size+activeFree.size+activeTiming.size
+    +activeSpend.size+($('#fNoAdvance').checked?1:0)
     +(onlyV?1:0)+(!hideX?1:0)+(onlyR?1:0)+(onlyC?1:0)+(noCompanion?1:0)+(onlyTransferable?1:0)
     +(exactRegion?1:0);
   $('#btnClearFilters').classList.toggle('hidden',!activeCount);
@@ -8117,6 +8288,7 @@ function offerCardHtml(o, idx){
         ${o.verified?'<span class="flag ok-flag hide-lean">已查證</span>':'<span class="flag alert">未查證</span>'}
         ${o.ratingCount?`<span class="flag star hide-lean">★ ${o.ratingAvg}（${o.ratingCount}）</span>`:''}
         <span class="flag hide-lean">已用 ${o.reportCount||0} 次</span>
+        ${(()=>{ const x=spendOf(o); return x?`<span class="flag hide-lean" title="${x.n} 人回報過這次花多少">大家平均花 ${nt(x.avg)}</span>`:''; })()}
         ${MY_USED_OFFER_IDS.has(String(o.id))?'<span class="flag ok-flag">✓ 你已回報過</span>':''}
         ${o.requiresCompanion?'<span class="flag alert">需同行</span>':''}
       </div>
@@ -8252,11 +8424,13 @@ function renderPlanner(){
   // 把它們跟真正有明訂天數的死線分開，硬死線才醒目列出，其餘收合成一句，
   // 免得 28 行清單把整個版面吃掉。
   const hard=w.filter(o=>o.advanceDays!==30), soft=w.filter(o=>o.advanceDays===30);
+  // v164 待辦清單裡勾了「已註冊會員」的，這裡標出來、變淡——死線對它已經不重要了
+  const regd=id=>WL_ROWS.some(w=>String(w.offer_id)===String(id) && w.registered);
   const dlRow=o=>{
     const dl=new Date(t); dl.setDate(dl.getDate()-o.advanceDays);
-    const past=dl<TODAY;
-    return `<div class="dl dl-click${past?' past':''}" data-oid="${esc(o.id)}" style="cursor:pointer">
-      <span>${esc(o.brand)}　提前 ${o.advanceDays} 天</span>
+    const past=dl<TODAY, reg=regd(o.id);
+    return `<div class="dl dl-click${past&&!reg?' past':''}${reg?' dl-registered':''}" data-oid="${esc(o.id)}" style="cursor:pointer">
+      <span>${esc(o.brand)}　提前 ${o.advanceDays} 天${reg?'<span class="dl-reg">✓ 已註冊</span>':''}</span>
       <b>${f(dl)} 前</b></div>`;
   };
   const softDate=(()=>{const x=new Date(t);x.setDate(x.getDate()-30);return f(x);})();
@@ -8382,7 +8556,7 @@ function renderReminders(){
   });
 }
 
-['#fVerified','#fLive','#fReported','#fHasComments','#fNoCompanion','#fTransferable','#fExactRegion','#sort']
+['#fVerified','#fLive','#fReported','#fHasComments','#fNoCompanion','#fTransferable','#fNoAdvance','#fExactRegion','#sort']
   .forEach(s=>$(s).addEventListener('input',render));
 // 搜尋框單獨處理：勾選框一次只觸發一次沒差，但打字是每個按鍵都觸發一次
 // render()（整個卡片格線重建 + 存一次篩選狀態到 localStorage），品牌名稱
@@ -8409,9 +8583,10 @@ $('#btnClearFilters').onclick=()=>{
   $('#q').value='';
   $('#fVerified').checked=false; $('#fLive').checked=true; $('#fReported').checked=false;
   $('#fHasComments').checked=false; $('#fNoCompanion').checked=false; $('#fTransferable').checked=false;
-  $('#fExactRegion').checked=false;
+  $('#fExactRegion').checked=false; $('#fNoAdvance').checked=false;
   activeCat.clear(); activeFree.clear(); activeTiming.clear(); activeRegion.clear(); activeMemType.clear();
-  $$('#timingChips .chip, #freeChips .chip, #cats .chip, #regionChips .chip, #memChips .chip')
+  activeSpend.clear();
+  $$('#timingChips .chip, #freeChips .chip, #cats .chip, #regionChips .chip, #memChips .chip, #spendChips .chip')
     .forEach(c=>c.setAttribute('aria-pressed',c.dataset.v===''));
   render();
 };
@@ -8421,9 +8596,10 @@ $('#btnClearFilters').onclick=()=>{
 $('#btnEmptyClearFilters').onclick=()=>{
   $('#fVerified').checked=false; $('#fLive').checked=true; $('#fReported').checked=false;
   $('#fHasComments').checked=false; $('#fNoCompanion').checked=false; $('#fTransferable').checked=false;
-  $('#fExactRegion').checked=false;
+  $('#fExactRegion').checked=false; $('#fNoAdvance').checked=false;
   activeCat.clear(); activeFree.clear(); activeTiming.clear(); activeRegion.clear(); activeMemType.clear();
-  $$('#timingChips .chip, #freeChips .chip, #cats .chip, #regionChips .chip, #memChips .chip')
+  activeSpend.clear();
+  $$('#timingChips .chip, #freeChips .chip, #cats .chip, #regionChips .chip, #memChips .chip, #spendChips .chip')
     .forEach(c=>c.setAttribute('aria-pressed',c.dataset.v===''));
   render();
 };
@@ -8508,6 +8684,16 @@ $('#filterBackdrop').onclick=closeFilterSheet;
 
 /* ===================================================================== */
 const CMT_SHOW=8;   // 留言超過這個數量先收合，避免討論串把視窗拉得太長
+/* 嵐：「留言太多要可以一次滑到底，也要有摺疊留言的功能，太長了」「一開始可以只看到有
+   留言的，只有已使用的不用特別標（如果使用數＞10）」 */
+const REP_QUIET_OVER=10;   // 回報超過這麼多筆，沒寫字的先收成一行
+const TXT_CLAMP=140;       // 超過這麼多字的留言／回報備註先摺起來
+function clampHtml(text, cls){
+  const t=String(text||'');
+  return t.length>TXT_CLAMP
+    ? `<div class="${cls} clamp">${esc(t)}</div><button type="button" class="txt-more">展開全文</button>`
+    : `<div class="${cls}">${esc(t)}</div>`;
+}
 let dtlId=null;
 // 目前這筆優惠「大家實際花多少」的彙總（{n,avg,min,max}），沒人填就是 null
 let DTL_SPEND=null;
@@ -8841,6 +9027,8 @@ async function openDetail(id, fallback=null, focusRate=false){
     n:spends.length,
     avg:Math.round(spends.reduce((a,b)=>a+b,0)/spends.length),
     min:Math.min(...spends), max:Math.max(...spends)} : null;
+  // 上面只撈了最近 30 筆回報。有全部的彙總（v164）就用全部的——跟卡片、篩選同一個數字
+  if(SPEND.has(String(id))) DTL_SPEND=SPEND.get(String(id));
   const myScore=myR?.score||0;
   const R={success:['成功','ok'],partial:['部分','partial'],failed:['失敗','fail']};
   const cmts=c||[];
@@ -8857,7 +9045,7 @@ async function openDetail(id, fallback=null, focusRate=false){
           style="padding:2px 8px;font-size:.72rem;border-color:var(--alert-line);color:var(--alert)">刪除</button>`:''}
         </span>
       </div>
-      <div class="body">${esc(x.body)}</div></div>`;
+      ${clampHtml(x.body,'body')}</div>`;
   };
   const shown=cmts.slice(0,CMT_SHOW), rest=cmts.slice(CMT_SHOW);
   const rateHtml=`<div class="rate-box">
@@ -8877,7 +9065,23 @@ async function openDetail(id, fallback=null, focusRate=false){
   POST_COMMENT_REPORT_PROMPT_ID=null;
   const showReportFollowupPrompt = POST_REPORT_PROMPT_ID===id;
   POST_REPORT_PROMPT_ID=null;
+  const repRowsHtml=list=>list.map(x=>`<div class="rep rep-full"><span>${esc(x.used_on)}</span>
+      <span class="${R[x.result][1]}">${R[x.result][0]}</span>
+      ${x.saved_twd?`<span>省 ${nt(x.saved_twd)}</span>`:''}
+      ${x.store?`<span style="color:var(--ink-3)">${esc(x.store)}</span>`:''}
+      <span style="color:var(--ink-3);font-size:.75rem;margin-left:auto">${esc(x.profiles?.display_name||'匿名')}</span>
+      ${likeBtnHtml('report',x)}
+      ${me&&x.user_id===me.id?`<button type="button" class="btn sm dtl-rep-edit" data-rid="${esc(x.id)}"
+        style="padding:2px 8px;font-size:.72rem">編輯</button>`:''}
+      ${x.note?clampHtml(x.note,'rep-note'):''}
+    </div>`).join('');
+  const nRep=(r||[]).length;
   body.innerHTML=offerFactsHtml(o)+pendingOfferEditsHtml(pe||[])+editHistoryHtml(eh||[])+rateHtml+`<div class="thread">
+    ${(nRep||cmts.length)?`<div class="thread-bar">
+      <span>使用回報 ${nRep>=30?'最近 30':nRep} 筆・留言 ${cmts.length} 則</span>
+      <button type="button" class="btn sm th-fold" aria-expanded="true">收起</button>
+      <button type="button" class="btn sm th-bottom">↓ 到最下面</button></div>`:''}
+    <div class="thread-prompts">
     ${showCommentReportPrompt?`<div class="new-banner" id="postCommentReportPrompt" style="margin-bottom:10px">
       <span class="nb-icon" aria-hidden="true">✅</span>
       <div style="flex:1">留言送出了！要不要順便回報一下你用過的結果？</div>
@@ -8902,20 +9106,25 @@ async function openDetail(id, fallback=null, focusRate=false){
       ${me?`<button type="button" class="btn sm" id="btnInlineSuggestEdit">建議修改</button>`:''}
       <button type="button" class="btn plain" id="btnDismissReportPrompt" aria-label="關閉提示">✕</button>
     </div>`;})():''}
-    ${(r||[]).map(x=>`<div class="rep rep-full"><span>${esc(x.used_on)}</span>
-      <span class="${R[x.result][1]}">${R[x.result][0]}</span>
-      ${x.saved_twd?`<span>省 ${nt(x.saved_twd)}</span>`:''}
-      ${x.store?`<span style="color:var(--ink-3)">${esc(x.store)}</span>`:''}
-      <span style="color:var(--ink-3);font-size:.75rem;margin-left:auto">${esc(x.profiles?.display_name||'匿名')}</span>
-      ${likeBtnHtml('report',x)}
-      ${me&&x.user_id===me.id?`<button type="button" class="btn sm dtl-rep-edit" data-rid="${esc(x.id)}"
-        style="padding:2px 8px;font-size:.72rem">編輯</button>`:''}
-      ${x.note?`<div class="rep-note">${esc(x.note)}</div>`:''}
-    </div>`).join('')||'<div style="color:var(--ink-3);padding:5px 0">還沒有使用回報</div>'}
+    </div><div class="thread-body">
+    ${(()=>{
+      const rs=r||[];
+      // 回報很多的時候，只寫了「用過了」、沒寫字的收成一行統計；有寫字的照樣列出來
+      const quietMode=rs.length>REP_QUIET_OVER;
+      const loud=quietMode?rs.filter(x=>x.note):rs, quiet=quietMode?rs.filter(x=>!x.note):[];
+      const cnt=k=>quiet.filter(x=>x.result===k).length;
+      return repRowsHtml(loud)
+        + (quiet.length?`<div class="rep-quiet-sum">另外 ${quiet.length} 筆只回報了用過、沒寫字
+            （成功 ${cnt('success')}${cnt('partial')?`・部分 ${cnt('partial')}`:''}${cnt('failed')?`・失敗 ${cnt('failed')}`:''}）
+            <button type="button" class="btn sm rep-quiet-show">列出來</button></div>
+          <div class="rep-quiet hidden">${repRowsHtml(quiet)}</div>`:'')
+        + (rs.length?'':'<div style="color:var(--ink-3);padding:5px 0">還沒有使用回報</div>');
+    })()}
     <div class="cmt-list">${shown.map(cmtHtml).join('')}</div>
     ${rest.length?`<div class="cmt-rest hidden">${rest.map(cmtHtml).join('')}</div>
       <button class="btn sm cm-more" style="margin:4px 0">顯示全部 ${cmts.length} 則留言</button>`:''}
     ${!cmts.length?'<div style="color:var(--ink-3);padding:5px 0;font-size:.83rem">還沒有留言，第一個分享使用經驗吧</div>':''}
+    </div>
     ${me?`<div class="field" style="margin-top:9px">
       <textarea class="ci" maxlength="800" placeholder="分享使用經驗"></textarea>
       <button class="btn sm primary cs" data-id="${esc(id)}" style="margin-top:5px">送出留言</button></div>`
@@ -8930,6 +9139,25 @@ async function openDetail(id, fallback=null, focusRate=false){
   });
   const more=body.querySelector('.cm-more');
   if(more) more.onclick=()=>{ body.querySelector('.cmt-rest').classList.remove('hidden'); more.remove(); };
+  const quietBtn=body.querySelector('.rep-quiet-show');
+  if(quietBtn) quietBtn.onclick=()=>{ body.querySelector('.rep-quiet').classList.remove('hidden'); quietBtn.closest('.rep-quiet-sum').remove(); };
+  body.querySelectorAll('.txt-more').forEach(b=>b.onclick=()=>{
+    b.previousElementSibling?.classList.remove('clamp'); b.remove();
+  });
+  const fold=body.querySelector('.th-fold');
+  if(fold) fold.onclick=()=>{
+    const open=fold.getAttribute('aria-expanded')!=='true';
+    fold.setAttribute('aria-expanded', String(open));
+    fold.textContent=open?'收起':'展開';
+    body.querySelector('.thread-body').classList.toggle('hidden', !open);
+  };
+  // 一次滑到底：最下面是留言框（沒登入就是「登入後可留言」那一行）
+  const toBottom=body.querySelector('.th-bottom');
+  if(toBottom) toBottom.onclick=()=>{
+    const last=body.querySelector('.thread').lastElementChild;
+    last?.scrollIntoView({behavior:'smooth', block:'end'});
+    body.querySelector('.ci')?.focus({preventScroll:true});
+  };
   const inlineReportBtn=body.querySelector('#btnInlineReport');
   if(inlineReportBtn) inlineReportBtn.onclick=()=>{ body.querySelector('#postCommentReportPrompt')?.remove(); openReport(id); };
   const dismissPromptBtn=body.querySelector('#btnDismissCommentPrompt');
@@ -10178,6 +10406,27 @@ async function loadPendingBadge(){
   const el=$('#vsPendCount');
   if(el && typeof vs==='number'){ el.textContent=vs; el.classList.toggle('hidden', !vs); }
 }
+/* 只算有填「這次花多少」的那幾次——沒填的不能當 0，不然花費會被低估、看起來比較划算 */
+function renderMySpent(){
+  const el=$('#mySpent'); if(!el) return;
+  const filled=MY_REPORTS.filter(x=>x.result!=='failed' && x.spent_twd!=null && x.spent_twd!=='');
+  const others=MY_REPORTS.filter(x=>x.result!=='failed').length-filled.length;
+  if(!filled.length){
+    el.innerHTML = MY_REPORTS.length
+      ? '<p class="hint" style="margin-top:8px">回報時填「這次花多少」，這裡就算得出你實際花了多少、划不划算。</p>' : '';
+    return;
+  }
+  const spent=filled.reduce((a,x)=>a+Number(x.spent_twd||0),0);
+  const saved=filled.reduce((a,x)=>a+Number(x.saved_twd||0),0);
+  const verdict = !spent ? `一毛都沒花，省下 ${nt(saved)}。`
+    : saved>=spent ? `等於每花 1 元，省下 ${(saved/spent).toFixed(1)} 元。`
+    : `省下的比花的少——有些店的生日優惠要消費才拿得到。`;
+  el.innerHTML=`<div class="spent-box">
+      <div><div class="v">${nt(spent)}</div><div class="k">實際花了</div></div>
+      <div><div class="v">${nt(saved)}</div><div class="k">同樣這幾次省下</div></div></div>
+    <p class="hint" style="margin:4px 0 0">算的是你有填「這次花多少」的 ${filled.length} 次${
+      others>0?`（另外 ${others} 次沒填，沒算進來）`:''}。${verdict}</p>`;
+}
 async function loadMyStuff(pre){
   if(!LIVE||!me) return;
   if($('#fNickname')&&document.activeElement!==$('#fNickname')) $('#fNickname').value=myProfile?.display_name||'';
@@ -10219,7 +10468,8 @@ async function loadMyStuff(pre){
       .eq('user_id',me.id).order('used_on',{ascending:false});
   MY_REPORTS=reps||[];
   renderMyReports(R);
-  maybeShowRateNudge();
+  renderMySpent();
+  if(!maybeShowRateNudge()) maybeShowOneLine();
 
   renderSavingsSinceVisit();
 
@@ -12443,6 +12693,45 @@ function maybeShowRateNudge(){
   logEvent('rate_nudge', {action:'show', pending:list.length});
   return true;
 }
+const ONELINE_MIN=5;
+const oneLineKey=()=>'sxr_oneline_'+(me?.id||'');
+function maybeShowOneLine(){
+  if(!me || !LIVE) return false;
+  const n=MY_REPORTS.filter(x=>x.result!=='failed').length;
+  if(n<ONELINE_MIN) return false;
+  let st=null; try{ st=JSON.parse(localStorage.getItem(oneLineKey())||'null'); }catch{}
+  if(st?.done || (st?.until && Date.now()<st.until)) return false;
+  if(['#updatesNudge','#surveyNudge','#geoNudge','#rateNudge'].some(k=>!$(k)?.classList.contains('hidden'))) return false;
+  if(!$('#bdayCheer')?.classList.contains('hidden')) return false;
+  if(document.querySelector('dialog[open]')) return false;
+  $('#oneLineTitle').textContent=`你已經用壽星日領了 ${n} 次優惠 🎉`;
+  $('#oneLineErr').classList.add('hidden');
+  $('#oneLineNudge').classList.remove('hidden');
+  logEvent('oneline_nudge',{action:'show', n});
+  return true;
+}
+function closeOneLine(action, state){
+  try{ localStorage.setItem(oneLineKey(), JSON.stringify(state)); }catch{}
+  $('#oneLineNudge').classList.add('hidden');
+  logEvent('oneline_nudge',{action});
+}
+$('#btnOneLineLater').onclick=()=>closeOneLine('later',{until:Date.now()+30*864e5});
+$('#btnOneLineClose').onclick=()=>closeOneLine('close',{until:Date.now()+30*864e5});
+$('#btnOneLineSend').onclick=async()=>{
+  const message=$('#oneLineMsg').value.trim();
+  const err=$('#oneLineErr');
+  if(!message){ err.textContent='寫一句就好～'; err.classList.remove('hidden'); return; }
+  const btn=$('#btnOneLineSend'); btn.disabled=true;
+  const row={user_id:me?.id||null, type:'praise', message, page:'oneline', ua:navigator.userAgent.slice(0,300)};
+  let {error}=await sb.from('site_feedback').insert({...row, session_id:SESSION_ID});
+  // 'praise' 要 v164 才認得：還沒跑就當「建議」送，前面標一下，不要讓人白寫
+  if(error && /check constraint|violates|type/i.test(error.message||''))
+    ({error}=await sb.from('site_feedback').insert({...row, type:'suggestion', message:'[一句回饋] '+message, session_id:SESSION_ID}));
+  btn.disabled=false;
+  if(error){ err.textContent=pubErrText(error,'沒送出去：'); err.classList.remove('hidden'); return; }
+  closeOneLine('send',{done:true});
+  showToast('收到了，謝謝你 🙏');
+};
 function snoozeRateNudge(action){
   try{ localStorage.setItem('sxr_rate_snooze_until', String(Date.now()+RATE_SNOOZE_DAYS*864e5)); }catch{}
   $('#rateNudge').classList.add('hidden');
@@ -14370,7 +14659,7 @@ async function loadAdminCommentList(){
 
 /* ---- 問題回報／建議清單：用 admin_list_feedback() RPC，這樣才能連 auth.users
    一起查到已登入使用者綁定的信箱，不用靠他自己填的聯絡方式那欄 ---- */
-const FB_TYPE_LABEL={bug:'問題回報',suggestion:'建議',duplicate:'🔁 重複的優惠'};
+const FB_TYPE_LABEL={bug:'問題回報',suggestion:'建議',duplicate:'🔁 重複的優惠',praise:'💬 一句回饋'};
 let FB_ROWS=[];
 
 /* ---- 「重複的優惠」回報 → 一鍵合併（嵐：「有人回報重複的優惠，我要可以一鍵全部合併」）----
@@ -14773,6 +15062,7 @@ function maybeShowSurveyNudge(reason){
   // 更新通知還在畫面上：同一個位置不疊兩張卡片，這次先不跳
   if(!$('#updatesNudge').classList.contains('hidden')) return false;
   if(!$('#rateNudge').classList.contains('hidden')) return false;
+  if(!$('#oneLineNudge').classList.contains('hidden')) return false;
   SURVEY_NUDGE_SHOWN=true;
   $('#surveyNudge').classList.remove('hidden');
   logEvent('survey_nudge', {reason});
