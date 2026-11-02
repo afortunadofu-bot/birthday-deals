@@ -201,23 +201,47 @@ const OFFERS = [
       registered:false,got_coupon:false,offers:{brand:'提前七天',advance_days:7}}];
     renderWishlistBody();`);
   const flag = (k) => $(`#myWishlist .wl-flag[data-flag="${k}"]`);
-  t.ok('兩顆：已註冊會員、已收到優惠券', !!flag('registered') && !!flag('got_coupon'));
-  flag('registered').click();
+  const flip = (k) => { const c = flag(k); c.checked = !c.checked; c.dispatchEvent(new win.Event('change')); };
+  t.ok('兩個：已註冊會員、已收到優惠券', !!flag('registered') && !!flag('got_coupon'));
+  /* v165 celine：「已註冊會員的地方不夠明顯，而且要可以篩選」 */
+  t.ok('是真的勾選框（看得出能勾）', flag('registered').type === 'checkbox');
+  t.ok('自己一行，不跟「📝 備註」擠在一起', !!flag('registered').closest('.wl-status')
+    && !flag('registered').closest('.wl-chips'));
+  flip('registered');
   await tick(win, 3);
-  t.eq('按下去：亮起來', flag('registered').getAttribute('aria-pressed'), 'true');
+  t.ok('勾下去：整顆變綠', flag('registered').checked && flag('registered').closest('.wl-check').classList.contains('on'));
   const up = sb5.__calls.write.find((c) => c.table === 'wishlist' && c.op === 'update');
   t.eq('寫回自己那一列', up && up.args[0], { registered: true });
   win.eval("document.querySelector('#bmonth').value='12'; document.querySelector('#bday').value='1'; renderPlanner();");
   t.ok('註冊死線那邊標「已註冊」', /已註冊/.test($('#deadlines .dl[data-oid="6"]')?.textContent || ''));
+  t.ok('優惠卡片上也標「你已註冊會員」', /你已註冊會員/.test(win.eval('offerCardHtml(OFFERS.find(o=>o.id===6),0)')));
+  t.ok('沒註冊的卡片不標', !/你已註冊會員/.test(win.eval('offerCardHtml(OFFERS.find(o=>o.id===5),0)')));
+
+  // 篩選
+  win.eval(`WL_ROWS.push({offer_id:5,done:false,note:'',sort_order:1,created_at:'2026-11-01T00:00:01Z',year:${new Date().getFullYear()},
+      registered:false,got_coupon:true,offers:{brand:'要預約'}}); syncWlReg(); renderWishlistBody();`);
+  t.ok('會員篩選出現', !$('#wlRegFilterWrap').classList.contains('hidden'));
+  const rows = () => $$('#myWishlist .wl-item').map((e) => e.dataset.wlRow).sort();
+  const pick = (v) => { $('#wlRegFilter').value = v; $('#wlRegFilter').dispatchEvent(new win.Event('change')); return rows(); };
+  t.eq('已註冊會員', pick('reg'), ['6']);
+  t.eq('還沒註冊會員', pick('unreg'), ['5']);
+  t.eq('已收到券', pick('coupon'), ['5']);
+  t.eq('還沒收到券', pick('nocoupon'), ['6']);
+  t.eq('全部', pick('all'), ['5', '6']);
+  win.eval("document.querySelector('#wlCompact').checked=true; renderWishlistBody();");
+  t.ok('簡易版：標題列上有「✓ 已註冊」', /✓ 已註冊/.test($('#myWishlist [data-wl-row="6"]').textContent));
+  win.eval("document.querySelector('#wlCompact').checked=false;");
   win.eval('WL_FLAGS=false; renderWishlistBody();');
-  t.ok('v164 沒跑（沒有那兩欄）：不出現', !flag('registered'));
+  t.ok('v164 沒跑（沒有那兩欄）：勾選框跟篩選都不出現', !flag('registered') && $('#wlRegFilterWrap').classList.contains('hidden'));
+  win.eval("WL_ROWS=[]; syncWlReg();");
 
   /* ================= 八、我實際花了多少 ================= */
   win.eval(`MY_REPORTS=[{result:'success',spent_twd:200,saved_twd:500},{result:'success',spent_twd:100,saved_twd:300},
     {result:'success',spent_twd:null,saved_twd:400},{result:'failed',spent_twd:999,saved_twd:0}]; renderMySpent();`);
   const sp = $('#mySpent').textContent.replace(/\s+/g, ' ');
-  t.ok('實際花了＝有填的加起來（失敗的不算）', /\$300 實際花了/.test(sp) || /300.*實際花了/.test(sp), sp);
-  t.ok('跟同樣那幾次省下的比', /800/.test(sp));
+  /* v165 起花多少、省多少寫在「每一家」那張表跟合計列（t84），這裡只剩一句划不划算 */
+  t.ok('有填的加起來（失敗的不算）', /有填「這次花多少」的 2 次/.test(sp) && /花 \$300/.test(sp), sp);
+  t.ok('跟同樣那幾次省下的比', /省 \$800/.test(sp), sp);
   t.ok('講出沒填的幾次沒算', /另外 1 次沒填/.test(sp));
   t.ok('划不划算', /每花 1 元，省下 2\.7 元/.test(sp), sp);
 

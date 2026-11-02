@@ -40,24 +40,28 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   t.ok('預設收著',
     JSON.parse(win.eval('JSON.stringify([...PANEL_DEFAULT_CLOSED])')).includes('myRecordsPanel'));
   t.ok('「＋ 投稿」在標題列上（收起來也按得到）', rec.querySelector('h2').contains($('#btnGoSubmitMine')));
-  ['myOffers', 'myReports', 'myFeedback'].forEach((id) =>
+  ['myOffers', 'myFeedback'].forEach((id) =>
     t.ok(`畫清單的容器 #${id} 一個字都沒動`, rec.contains($('#' + id))));
+  /* v165 celine：「我省下跟使用回報區域合併」——使用回報那一格搬去「我省下多少」 */
+  t.ok('#myReports 搬去「我省下多少」', $('#mySavingsPanel').contains($('#myReports')) && !rec.contains($('#myReports')));
 
   const tabs = () => $$('#myRecordsPanel .rec-tab');
   const pane = (r) => $('#rec' + r);
   const shown = (r) => pane(r).classList.contains('on');
-  /* v162 celine：「使用回報要往上移，而且要比投稿左邊」——使用回報排第一、預設打開。
+  /* v165：使用回報搬去「我省下多少」，這裡剩投稿、問題回報兩格。
      下面用名字找分頁，不用位置，之後再換順序也不會誤報。 */
   const tab = (r) => $(`#myRecordsPanel .rec-tab[data-rec="${r}"]`);
-  t.eq('三顆小分頁，使用回報在最左邊', tabs().map((b) => b.textContent.replace(/\d+/g, '').trim()),
-    ['使用回報', '投稿', '問題回報']);
-  t.ok('一開始是「使用回報」', shown('Reports') && !shown('Offers') && !shown('Feedback'));
+  t.eq('兩顆小分頁', tabs().map((b) => b.textContent.replace(/\d+/g, '').trim()), ['投稿', '問題回報']);
+  t.ok('一開始是「投稿」', shown('Offers') && !shown('Feedback'));
 
-  tab('Offers').click();
-  t.ok('點「投稿」換過去', shown('Offers') && !shown('Reports'));
-  t.eq('選到的那顆有標起來', tab('Offers').getAttribute('aria-selected'), 'true');
-  t.eq('其他的沒有', tab('Reports').getAttribute('aria-selected'), 'false');
-  t.eq('記住上次看哪一格', win.localStorage.getItem('sxr_my_record_tab'), 'Offers');
+  tab('Feedback').click();
+  t.ok('點「問題回報」換過去', shown('Feedback') && !shown('Offers'));
+  t.eq('選到的那顆有標起來', tab('Feedback').getAttribute('aria-selected'), 'true');
+  t.eq('其他的沒有', tab('Offers').getAttribute('aria-selected'), 'false');
+  t.eq('記住上次看哪一格', win.localStorage.getItem('sxr_my_record_tab'), 'Feedback');
+  // 之前記住的是「使用回報」（v165 以前）：那一格不在了，改去看得見的
+  win.eval("showMyRecord('Reports')");
+  t.ok('記住的是已經搬走的那格：改去看得見的', shown('Offers'));
 
   /* 「問題回報」一筆都沒有的時候，連分頁鈕都不要出現——一顆點下去是空的按鈕，
      比少一顆還糟。loadMyFeedback() 有三條路會把那一格藏起來，這裡直接看它的 class。 */
@@ -66,7 +70,7 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   $('#myFeedbackPanel').classList.add('hidden');
   await tick(win, 2);                       // MutationObserver 是非同步的
   t.ok('那一格沒東西：分頁鈕也藏起來', tab('Feedback').classList.contains('hidden'));
-  t.ok('而且自動跳到看得見的那一格', shown('Reports') && !shown('Feedback'));
+  t.ok('而且自動跳到看得見的那一格', shown('Offers') && !shown('Feedback'));
   $('#myFeedbackPanel').classList.remove('hidden');
   await tick(win, 2);
   t.ok('有東西了：分頁鈕回來', !tab('Feedback').classList.contains('hidden'));

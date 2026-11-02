@@ -152,7 +152,7 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v163_event_range.
     sb={ from:()=>({ select:()=>({ eq:()=>Promise.resolve({data:[{offer_id:3}],error:null}) }) }) };`);
   await win.eval('loadMyUsedOffers()');
   t.ok('使用回報那一格多一顆「在地圖上看」', !$('#btnReportsMap').classList.contains('hidden')
-    && $('#recReports').contains($('#btnReportsMap')));
+    && $('#mySavingsPanel').contains($('#btnReportsMap')));
   $('#btnReportsMap').click();
   t.ok('按下去：開附近、只看用過的', win.eval('window.__near') === 1 && win.eval('NEAR.usedOnly') === true
     && win.eval('ACTIVE_TAB') === 'browse');

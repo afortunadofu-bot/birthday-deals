@@ -65,10 +65,9 @@ const read = (f) => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
   t.ok('「會出現在排行榜上」這種跟別人看得到有關的留著',
     subs.some((s) => /排行榜/.test(s)));
   t.ok('徽章那一塊還在（只是不再多一行說明）', !!$('#badgesPanel'));
-  /* v154 收進了「我送出過的」，變成裡面的一顆小分頁。清單本身（#myReports）沒動。 */
-  t.ok('「我的使用回報」那一格還在',
-    !!$('#myRecordsPanel #myReports')
-    && [...doc.querySelectorAll('#myRecordsPanel .rec-tab')].some((b) => /使用回報/.test(b.textContent)));
+  /* v154 收進了「我送出過的」；v165 celine「我省下跟使用回報區域合併」又搬去「我省下多少」。
+     清單本身（#myReports）一直都在，只是住處換了。 */
+  t.ok('「我的使用回報」那一格還在', !!$('#mySavingsPanel #myReports'));
   t.ok('更新紀錄那一塊還在', !!$('#siteUpdatesPanel'));
   t.ok('分享那一塊還留一句（講什麼時候用得上）',
     /生日快到時傳一下/.test($('#shareSitePanel').textContent));

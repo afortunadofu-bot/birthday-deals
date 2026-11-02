@@ -451,17 +451,30 @@
   .clamp{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
   .txt-more{background:none;border:0;padding:2px 0;font:inherit;font-size:.76rem;color:var(--accent-dark);
     cursor:pointer;font-weight:700}
-  /* v164 待辦清單：已註冊／已收到券 */
-  .wl-flag{height:28px;padding:0 10px;border:1px dashed var(--line);border-radius:999px;background:none;
-    font:inherit;font-size:.76rem;color:var(--ink-3);cursor:pointer}
-  .wl-flag[aria-pressed="true"]{border-style:solid;border-color:var(--free-line);background:var(--free-bg);
-    color:var(--free);font-weight:700}
+  /* v164／v165 待辦清單：已註冊／已收到券。自己一行、看得出是勾選框、勾了整顆變綠 */
+  .wl-status{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 0 28px}
+  .wl-check{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 12px;
+    border:1.5px solid var(--line);border-radius:999px;background:var(--surface);
+    font-size:.82rem;font-weight:700;color:var(--ink-2);cursor:pointer;user-select:none}
+  .wl-check input[type="checkbox"]{width:16px;height:16px;margin:0;accent-color:var(--free);flex:none}
+  .wl-check.on{border-color:var(--free-line);background:var(--free-bg);color:var(--free)}
+  /* v165 我省下多少＋使用回報 */
+  .my-rep-wrap{margin-top:14px;padding-top:12px;border-top:1px solid var(--line-soft)}
+  .rep-view{display:flex;gap:6px;align-items:center;margin:0 0 8px}
+  .my-shop{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;width:100%;padding:9px 4px;
+    border:0;border-top:1px solid var(--line-soft);background:none;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
+  .my-shop b{flex:1 1 auto;min-width:0}
+  .my-shop .ms-n{font-size:.78rem;color:var(--ink-3);white-space:nowrap}
+  .ms-money{display:inline-flex;gap:10px;white-space:nowrap;font-size:.84rem}
+  .ms-money small{font-size:.7rem;color:var(--ink-3);font-weight:400}
+  .mr-saved{color:var(--free);font-weight:800}
+  .mr-spent{color:var(--ink-2)}
+  .my-shop-total{cursor:default;border-top:2px solid var(--line);font-weight:800}
+  .my-shop-here{margin:10px 0;padding:9px 12px;border-radius:var(--r-sm);background:var(--free-bg);
+    border:1px solid var(--free-line);font-size:.86rem;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
   .dl .dl-reg{font-size:.72rem;color:var(--free);font-weight:700;margin-left:6px}
   .dl.dl-registered{opacity:.6}
-  /* v164 我實際花了多少 */
-  .spent-box{display:flex;gap:18px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft)}
-  .spent-box .v{font-weight:800;font-size:1.05rem}
-  .spent-box .k{font-size:.74rem;color:var(--ink-3)}
+  .my-spent-line{margin:8px 0 0}
   .venue-dist{font-size:.74rem;color:var(--ink-3);white-space:nowrap}
   #evCustom.hidden{display:none!important}
   .ev-visit{color:var(--accent-dark);font-weight:800}
@@ -2399,6 +2412,14 @@
         </select></label>
         <label class="lbl">年度<select id="wlYear"></select></label>
         <label class="lbl">標籤<select id="wlTagFilter"></select></label>
+        <!-- celine（v165）：「已註冊會員的地方不夠明顯，而且要可以篩選」 -->
+        <label class="lbl hidden" id="wlRegFilterWrap">會員<select id="wlRegFilter">
+          <option value="all">全部</option>
+          <option value="unreg">還沒註冊會員</option>
+          <option value="reg">已註冊會員</option>
+          <option value="nocoupon">還沒收到券</option>
+          <option value="coupon">已收到券</option>
+        </select></label>
         <label class="toggle"><input type="checkbox" id="wlSinkDone" checked> 已使用的排到最下面</label>
         <label class="toggle"><input type="checkbox" id="wlCompact"> 簡易版</label>
       </div>
@@ -2431,14 +2452,11 @@
       </h2>
       <div class="rec-tabs" role="tablist" aria-label="我送出過的">
         <!-- celine：「使用回報要往上移，而且要比投稿左邊」 -->
-        <button type="button" class="rec-tab on" role="tab" data-rec="Reports" aria-selected="true">使用回報</button>
-        <button type="button" class="rec-tab" role="tab" data-rec="Offers" aria-selected="false">投稿</button>
+        <!-- v165 celine：「我省下跟使用回報區域合併」——使用回報搬去「我省下多少」那一塊 -->
+        <button type="button" class="rec-tab on" role="tab" data-rec="Offers" aria-selected="true">投稿</button>
         <button type="button" class="rec-tab" role="tab" data-rec="Feedback" aria-selected="false">問題回報<span class="n hidden" id="myFbCount"></span></button>
       </div>
-      <div class="rec-pane on" id="recReports" role="tabpanel">
-        <button type="button" class="btn sm hidden" id="btnReportsMap" style="margin:0 0 8px">🗺 用過的店在地圖上看</button>
-        <div id="myReports"></div></div>
-      <div class="rec-pane" id="recOffers" role="tabpanel"><div id="myOffers"></div></div>
+      <div class="rec-pane on" id="recOffers" role="tabpanel"><div id="myOffers"></div></div>
       <!-- 嵐：「我填寫過的回報問題，要可以出現在我的頁面」（schema_v73 開的讀自己那幾筆的權限） -->
       <div class="rec-pane" id="recFeedback" role="tabpanel"><div id="myFeedbackPanel">
         <p class="sub">你用「回報網站問題」送出的內容，還有管理員的回覆。</p>
@@ -2540,11 +2558,23 @@
     </div>
     <div class="panel authed-only" id="mySavingsPanel" data-block>
       <h2>我省下多少</h2>
-      <p class="sub">只計算回報「成功」的紀錄。</p>
+      <p class="sub">上面的總數只算回報「成功」的；下面是你每一次的使用回報。</p>
       <div id="savingsSinceVisit" class="hidden"></div>
       <div class="bigstat" id="mySavings"></div>
-      <!-- 楊晴：「在省錢統計那邊，我也想知道我實際花了多少錢，這樣比較好比較說我到底有沒有真的划算」 -->
-      <div id="mySpent"></div>
+      <!-- v165 celine：「我要能直接看到我在這家店花了多少跟省多少，然後要可以看到統計加總，
+           我省下跟使用回報區域合併」。原本使用回報在「我送出過的」裡面的一格。 -->
+      <div class="my-rep-wrap hidden" id="myRepWrap">
+        <div class="rep-view" role="tablist" aria-label="怎麼看">
+          <button type="button" class="rec-tab on" role="tab" data-rv="shop" aria-selected="true">每一家</button>
+          <button type="button" class="rec-tab" role="tab" data-rv="each" aria-selected="false">每一次</button>
+          <button type="button" class="btn sm hidden" id="btnReportsMap" style="margin-left:auto">🗺 在地圖上看</button>
+        </div>
+        <div id="myShopTotals"></div>
+        <div id="myReports" class="hidden"></div>
+        <!-- 楊晴：「在省錢統計那邊，我也想知道我實際花了多少錢，這樣比較好比較說我到底有沒有真的划算」。
+             v165 起花多少、省多少寫在上面每一家／合計那一列，這裡只留一句「划不划算」。 -->
+        <div id="mySpent"></div>
+      </div>
       <button type="button" class="btn sm hidden" id="btnShareSavings" style="margin-top:8px">📤 分享我的省錢成果</button>
       <label class="toggle"><input type="checkbox" id="optLeaderboard"> 在排行榜顯示我的暱稱與頭像</label>
       <p class="sub" style="margin-top:4px">關掉還是會上榜，只是顯示成「匿名使用者」。</p>
@@ -3533,6 +3563,7 @@ let MY_USED_OFFER_IDS=new Set();   // 我自己回報過「用過了」的優惠
                                     // 跟卡片上「已用 N 次」的全站彙總數字是兩件事，
                                     // 這個是給本人看「我自己」有沒有回報過，卡片列表上要看得到。
 let MY_REPORTS=[];           // 「我的使用回報」目前這批資料，點列表時查回原始物件用
+let WL_REG=new Set();        // v165 待辦清單裡勾了「已註冊會員」的 offer_id——卡片開站就會讀，所以宣告在這裡
 let MY_RATED=new Set();      // 我已經給過星等的 offer_id（字串），登入後才有
 let MY_SCORES=new Map();     // 同一份資料，但連分數一起記——回報表單要帶回原本給的星等
 // 開站時 render() 會連續被叫好幾次（種子資料→收藏清單回來→Supabase 真資料回來），
@@ -3592,7 +3623,7 @@ const REMEMBER=[
   // 洞察分析
   'hourDays','monthlyMetric','monthlyMonths','momUnit','trendMetric','trendDays',
   // 待辦清單
-  'wlSort','wlYear','wlTagFilter','wlSinkDone','wlCompact',
+  'wlSort','wlYear','wlTagFilter','wlRegFilter','wlSinkDone','wlCompact',
   // 場館
   'venueCounty','venueSort',
   // 首頁的簡易版
@@ -4898,17 +4929,25 @@ async function renderMyWishlist(){
   if(error) ({data,error}=await wlQuery(COLS));
   if(error) ({data}=await wlQuery(COLS.replace(',person','')));
   WL_ROWS=data||[];
+  syncWlReg();
   renderWishlistBody();
-  if(WL_FLAGS) renderPlanner();     // 註冊死線那邊要標「已註冊」
+  if(WL_FLAGS){ renderPlanner(); if(WL_REG.size) render(); }   // 註冊死線、優惠卡片要標「已註冊」
 }
 let WL_FLAGS=false;
 /* Lena：「建議可以多一個欄位，勾選已註冊會員提醒自己有加入會員，也可以多一個欄位是勾選
    已收到優惠券」。記在待辦清單那一列上（跟備註、標籤一樣只有自己看得到）。 */
 const WL_FLAG_LABEL={registered:'已註冊會員', got_coupon:'已收到優惠券'};
+/* v165 celine：「已註冊會員的地方不夠明顯」。v164 是跟「📝 備註」擠在同一排的虛線小鈕，
+   看起來像次要動作。改成卡片裡自己一行、看得出是勾選框，勾了整顆變綠。 */
 function wlFlagsHtml(w){
   if(!WL_FLAGS) return '';
-  return Object.keys(WL_FLAG_LABEL).map(k=>`<button type="button" class="wl-flag" data-id="${w.offer_id}"
-    data-flag="${k}" aria-pressed="${w[k]?'true':'false'}">${w[k]?'✓ ':''}${WL_FLAG_LABEL[k]}</button>`).join('');
+  return `<div class="wl-status">${Object.keys(WL_FLAG_LABEL).map(k=>`<label class="wl-check${w[k]?' on':''}">
+    <input type="checkbox" class="wl-flag" data-id="${w.offer_id}" data-flag="${k}" ${w[k]?'checked':''}>
+    ${WL_FLAG_LABEL[k]}</label>`).join('')}</div>`;
+}
+/* 待辦清單裡勾了「已註冊會員」的優惠——優惠卡片上也標出來，不用回待辦清單看（WL_REG 宣告在最上面） */
+function syncWlReg(){
+  WL_REG=new Set(WL_ROWS.filter(w=>w.registered).map(w=>String(w.offer_id)));
 }
 // 待辦清單也要能看到「這筆的入會死線是哪一天」——跟 renderPlanner() 用同一套
 // 邏輯（生日月/日 + advance_days 往前推），只是這裡不畫圖表，只算一個日期字串。
@@ -4986,6 +5025,10 @@ function renderWishlistBody(){
   if(yearFilter!=='all') list=list.filter(w=>(w.year||CURRENT_YEAR)===Number(yearFilter));
   if(tagFilter==='__none__') list=list.filter(w=>!w.tag);
   else if(tagFilter!=='all') list=list.filter(w=>w.tag===tagFilter);
+  $('#wlRegFilterWrap')?.classList.toggle('hidden', !WL_FLAGS);
+  const regFilter=WL_FLAGS ? ($('#wlRegFilter')?.value||'all') : 'all';
+  const REG_TEST={unreg:w=>!w.registered, reg:w=>!!w.registered, nocoupon:w=>!w.got_coupon, coupon:w=>!!w.got_coupon};
+  if(REG_TEST[regFilter]) list=list.filter(REG_TEST[regFilter]);
   if(sortBy==='added_asc') list.reverse();
   else if(sortBy==='brand') list.sort((a,b)=>String(a.offers?.brand||'').localeCompare(String(b.offers?.brand||''),'zh-Hant'));
   else if(manual) list.sort((a,b)=>(a.sort_order??999999)-(b.sort_order??999999)
@@ -5032,7 +5075,9 @@ function renderWishlistBody(){
     const tagSelectHtml = `<select class="wl-tag" data-id="${w.offer_id}" data-has="${w.tag?'1':''}"
       title="標籤：把待辦清單分組" aria-label="標籤">${wlTagOptions(w.tag||'')}</select>`;
     // 狀態小膠囊（用過了／明年）放在第二行，品牌名很長時才不會被擠成好幾行；簡易版沒有第二行，放第一行
-    const pills = (done?`<span class="wl-pill wl-pill-ok">✓ ${usedByReport?'已回報':'用過了'}</span>`:'') + yearBadge;
+    const pills = (done?`<span class="wl-pill wl-pill-ok">✓ ${usedByReport?'已回報':'用過了'}</span>`:'') + yearBadge
+      + (compact && WL_FLAGS && !done && w.registered ? '<span class="wl-pill wl-pill-ok">✓ 已註冊</span>' : '')
+      + (compact && WL_FLAGS && !done && w.got_coupon ? '<span class="wl-pill wl-pill-ok">✓ 有券</span>' : '');
     const name = o.brand
       ? `<button type="button" class="wl-name wl-toggle" data-id="${w.offer_id}" title="看詳情">${esc(o.brand)}</button>`
       : `<span class="wl-name">（已下架）</span>`;
@@ -5069,11 +5114,11 @@ function renderWishlistBody(){
       : `<div class="wl-chips">
         <span class="wl-tag-wrap${w.tag?' on':''}">🏷${tagSelectHtml}</span>
         ${w.note?'':`<button type="button" class="wl-note-add" data-id="${w.offer_id}">📝 備註</button>`}
-        ${wlFlagsHtml(w)}
       </div>`;
     return `<div class="wl-item${done?' done':''}" data-wl-row="${w.offer_id}">
       ${top}
       ${metaHtml}
+      ${done?'':wlFlagsHtml(w)}
       ${chips}
       <textarea class="wl-note${w.note?'':' hidden'}" data-id="${w.offer_id}" maxlength="200" rows="1"
         placeholder="加個備註，只有你自己看得到">${esc(w.note||'')}</textarea>
@@ -5143,13 +5188,13 @@ function renderWishlistBody(){
     if(!ta) return;
     ta.classList.remove('hidden'); b.remove(); ta.focus();
   });
-  $$('#myWishlist .wl-flag').forEach(b=>b.onclick=async()=>{
-    const row=WL_ROWS.find(w=>String(w.offer_id)===String(b.dataset.id)); if(!row) return;
-    const k=b.dataset.flag, on=!row[k];
-    row[k]=on; renderWishlistBody();          // 先改畫面，失敗再改回來
+  $$('#myWishlist .wl-flag').forEach(cb=>cb.onchange=async()=>{
+    const row=WL_ROWS.find(w=>String(w.offer_id)===String(cb.dataset.id)); if(!row) return;
+    const k=cb.dataset.flag, on=cb.checked;
+    row[k]=on; syncWlReg(); renderWishlistBody();          // 先改畫面，失敗再改回來
     const {error}=await sb.from('wishlist').update({[k]:on}).eq('user_id',me.id).eq('offer_id',row.offer_id);
-    if(error){ row[k]=!on; renderWishlistBody(); showToast(pubErrText(error,'沒存到：')); return; }
-    if(k==='registered') renderPlanner();
+    if(error){ row[k]=!on; syncWlReg(); renderWishlistBody(); showToast(pubErrText(error,'沒存到：')); return; }
+    if(k==='registered'){ renderPlanner(); render(); }
     logEvent('wl_flag',{flag:k, on:on?1:0});
   });
   // 「⋯」選單裡的動作按下去就把選單收起來
@@ -5256,6 +5301,7 @@ $('#wlSearch').addEventListener('input',()=>{ if(!WL_COMPOSING) renderWishlistBo
 $('#wlSort').onchange=renderWishlistBody;
 $('#wlYear').onchange=renderWishlistBody;
 $('#wlTagFilter').onchange=renderWishlistBody;
+$('#wlRegFilter').onchange=renderWishlistBody;
 // 點選單以外的地方就收起待辦清單的「⋯」選單（一次只開一個）
 document.addEventListener('click', e=>{
   $$('#myWishlist details.wl-more[open]').forEach(d=>{ if(!d.contains(e.target)) d.removeAttribute('open'); });
@@ -5534,7 +5580,7 @@ const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
 /* 更新紀錄的內容在 updates.json，build.py 注入這裡，同一份資料也產生整頁的
    updates.html。「我的」頁面只用到日期跟標題（最新幾筆＋NEW 標記），
    細項（items）留著是給 updates.html 用的。 */
-const SITE_UPDATES = [{"date":"2026-11-02","title":"看得到大家實際花多少；待辦清單可以勾已註冊、已收到券","items":["篩選多了「不用提前加入」和「實際花費」，卡片寫出大家平均花多少；商圈可以照遠近、收藏數排","待辦清單可以勾「已註冊會員」「已收到優惠券」，上下移動備註不會再不見；也看得到自己實際花了多少","回報很多的優惠，沒寫字的收成一行、長留言先摺起來，還能一鍵滑到底"]},{"date":"2026-10-30","title":"「一趟用最多」有地圖了；行程可以分享給大家","items":["全台商圈地圖（越深越多家），點開看每家分店、勾選想要的再加入；照你的收藏推薦去哪一趟，一鍵存成行程","行程可以分段落、看地圖、公開給大家看；「大家的行程」有三趟範例，可以收藏或一鍵加進來","附近地圖上你用過的店變綠色，也能只看用過的；「我的」使用回報移到最前面，這週會先播一段更新介紹"]},{"date":"2026-10-29","title":"可以排行程了；投稿的按鈕跟到每一頁","items":["「排行程」可以排一趟：哪天、去哪幾家、照什麼順序，每家都能寫備註","還看得到哪裡一次能用到最多家；右下角「＋投稿」每一頁都按得到","「我的」從 18 塊收成 13 塊；設定會記得、清單可切字少版"]},{"date":"2026-10-28","title":"地圖上直接就能記「我用過了」","items":["地圖的店家小視窗多一顆「我用過了」，不用再回清單找","優惠詳情視窗下面也加了同一顆","回報用過之後會提醒你順便給星等，排行榜的說明也剪短了"]},{"date":"2026-10-23","title":"手機上比較不會跳出「連不到資料庫」了","items":["連線元件改成從本站載入，不再等外部網站，慢或被擋都不受影響","真的連不上時，多一顆「複製狀況」可以把情況傳給我們"]},{"date":"2026-10-22","title":"地圖好按了、篩選看得見、折扣寫出幾折","items":["地圖上的點變好按了，資訊也不會看到一半就不見","現在篩了哪些條件直接列在清單上面，可以一個一個拿掉","「我的」打開就是待辦清單；折扣會寫出幾折、折多少錢"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
+const SITE_UPDATES = [{"date":"2026-11-02","title":"看得到大家實際花多少，也看得到自己在每一家花多少、省多少","items":["篩選多了「不用提前加入」和「實際花費」，卡片寫出大家平均花多少；商圈可以照遠近、收藏數排","「我省下多少」跟使用回報合在一起，每一家花多少、省多少都看得到；待辦清單可以勾「已註冊會員」也能篩","回報很多的優惠，沒寫字的收成一行、長留言先摺起來；待辦清單上下移動備註不會再不見"]},{"date":"2026-10-30","title":"「一趟用最多」有地圖了；行程可以分享給大家","items":["全台商圈地圖（越深越多家），點開看每家分店、勾選想要的再加入；照你的收藏推薦去哪一趟，一鍵存成行程","行程可以分段落、看地圖、公開給大家看；「大家的行程」有三趟範例，可以收藏或一鍵加進來","附近地圖上你用過的店變綠色，也能只看用過的；「我的」使用回報移到最前面，這週會先播一段更新介紹"]},{"date":"2026-10-29","title":"可以排行程了；投稿的按鈕跟到每一頁","items":["「排行程」可以排一趟：哪天、去哪幾家、照什麼順序，每家都能寫備註","還看得到哪裡一次能用到最多家；右下角「＋投稿」每一頁都按得到","「我的」從 18 塊收成 13 塊；設定會記得、清單可切字少版"]},{"date":"2026-10-28","title":"地圖上直接就能記「我用過了」","items":["地圖的店家小視窗多一顆「我用過了」，不用再回清單找","優惠詳情視窗下面也加了同一顆","回報用過之後會提醒你順便給星等，排行榜的說明也剪短了"]},{"date":"2026-10-23","title":"手機上比較不會跳出「連不到資料庫」了","items":["連線元件改成從本站載入，不再等外部網站，慢或被擋都不受影響","真的連不上時，多一顆「複製狀況」可以把情況傳給我們"]},{"date":"2026-10-22","title":"地圖好按了、篩選看得見、折扣寫出幾折","items":["地圖上的點變好按了，資訊也不會看到一半就不見","現在篩了哪些條件直接列在清單上面，可以一個一個拿掉","「我的」打開就是待辦清單；折扣會寫出幾折、折多少錢"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
 const SITE_UPDATES_SHOW=3;
 
 function updatesSeenDate(){
@@ -8290,6 +8336,7 @@ function offerCardHtml(o, idx){
         <span class="flag hide-lean">已用 ${o.reportCount||0} 次</span>
         ${(()=>{ const x=spendOf(o); return x?`<span class="flag hide-lean" title="${x.n} 人回報過這次花多少">大家平均花 ${nt(x.avg)}</span>`:''; })()}
         ${MY_USED_OFFER_IDS.has(String(o.id))?'<span class="flag ok-flag">✓ 你已回報過</span>':''}
+        ${WL_REG.has(String(o.id))?'<span class="flag ok-flag">✓ 你已註冊會員</span>':''}
         ${o.requiresCompanion?'<span class="flag alert">需同行</span>':''}
       </div>
       <p class="offer">${esc(o.offer)}</p>
@@ -9076,7 +9123,10 @@ async function openDetail(id, fallback=null, focusRate=false){
       ${x.note?clampHtml(x.note,'rep-note'):''}
     </div>`).join('');
   const nRep=(r||[]).length;
-  body.innerHTML=offerFactsHtml(o)+pendingOfferEditsHtml(pe||[])+editHistoryHtml(eh||[])+rateHtml+`<div class="thread">
+  // v165「我要能直接看到我在這家店花了多少跟省多少」：詳情裡也寫出來
+  const mine=me ? myShopRows().find(x=>String(x.offer_id)===String(id)) : null;
+  const mineHtml=mine?`<div class="my-shop-here">你在這家用了 ${mine.n} 次：${moneyLine(mine.spent, mine.filled, mine.n, mine.saved)}</div>`:'';
+  body.innerHTML=offerFactsHtml(o)+pendingOfferEditsHtml(pe||[])+editHistoryHtml(eh||[])+mineHtml+rateHtml+`<div class="thread">
     ${(nRep||cmts.length)?`<div class="thread-bar">
       <span>使用回報 ${nRep>=30?'最近 30':nRep} 筆・留言 ${cmts.length} 則</span>
       <button type="button" class="btn sm th-fold" aria-expanded="true">收起</button>
@@ -10413,19 +10463,18 @@ function renderMySpent(){
   const others=MY_REPORTS.filter(x=>x.result!=='failed').length-filled.length;
   if(!filled.length){
     el.innerHTML = MY_REPORTS.length
-      ? '<p class="hint" style="margin-top:8px">回報時填「這次花多少」，這裡就算得出你實際花了多少、划不划算。</p>' : '';
+      ? '<p class="hint my-spent-line">回報時填「這次花多少」，就算得出你實際花了多少、划不划算。</p>' : '';
     return;
   }
   const spent=filled.reduce((a,x)=>a+Number(x.spent_twd||0),0);
   const saved=filled.reduce((a,x)=>a+Number(x.saved_twd||0),0);
+  /* 只拿「有填花多少」的那幾次來比——沒填的那幾次省下的錢放進來，會讓人看起來比實際划算。
+     所以這裡的「省」會比上面合計那一列小，句子裡講清楚是哪幾次。 */
   const verdict = !spent ? `一毛都沒花，省下 ${nt(saved)}。`
-    : saved>=spent ? `等於每花 1 元，省下 ${(saved/spent).toFixed(1)} 元。`
+    : saved>=spent ? `每花 1 元，省下 ${(saved/spent).toFixed(1)} 元。`
     : `省下的比花的少——有些店的生日優惠要消費才拿得到。`;
-  el.innerHTML=`<div class="spent-box">
-      <div><div class="v">${nt(spent)}</div><div class="k">實際花了</div></div>
-      <div><div class="v">${nt(saved)}</div><div class="k">同樣這幾次省下</div></div></div>
-    <p class="hint" style="margin:4px 0 0">算的是你有填「這次花多少」的 ${filled.length} 次${
-      others>0?`（另外 ${others} 次沒填，沒算進來）`:''}。${verdict}</p>`;
+  el.innerHTML=`<p class="hint my-spent-line">划不划算：有填「這次花多少」的 ${filled.length} 次，
+    花 ${nt(spent)}、省 ${nt(saved)}，${verdict}${others>0?`（另外 ${others} 次沒填，沒算進來）`:''}</p>`;
 }
 async function loadMyStuff(pre){
   if(!LIVE||!me) return;
@@ -11352,7 +11401,7 @@ function showMyRecord(which){
   });
   try{ localStorage.setItem(REC_KEY, which); }catch{}
 }
-const REC_DEFAULT='Reports';   // celine：「使用回報要往上移，而且要比投稿左邊」
+const REC_DEFAULT='Offers';    // v165 使用回報搬去「我省下多少」，這裡剩投稿跟問題回報
 /* 一筆都沒有的那一格，連分頁鈕都不要出現——一顆點下去是空的按鈕，比少一顆還糟。
    loadMyFeedback() 有三條路會把 #myFeedbackPanel 藏起來（沒登入、v73 沒跑、
    一筆都沒有），與其三個地方各補一行，不如直接看它的 class 有沒有變：
@@ -12618,10 +12667,54 @@ $('#dlgRateAll').addEventListener('close', async()=>{
    這一列本身是可以點的（點了開編輯回報），所以星等那一塊要攔住事件。
    只有「成功」的回報才問——沒用成的沒什麼好評。 */
 let MY_REPORT_LABELS=null;
+/* v165：每一家（同一筆優惠的回報加起來）——「我在這家店花了多少跟省多少」。
+   花費只加有填的；有幾次沒填就寫出來，不要讓人以為那幾次是 0 元。 */
+function myShopRows(){
+  const m=new Map();
+  MY_REPORTS.forEach(r=>{
+    const k=String(r.offer_id||'');
+    if(!m.has(k)) m.set(k,{offer_id:r.offer_id, brand:r.offers?.brand||'（已下架）', n:0, saved:0, spent:0, filled:0, last:''});
+    const x=m.get(k);
+    x.n++; x.saved+=Number(r.saved_twd||0);
+    if(r.spent_twd!=null && r.spent_twd!==''){ x.spent+=Number(r.spent_twd); x.filled++; }
+    if(String(r.used_on||'')>x.last) x.last=String(r.used_on||'');
+  });
+  return [...m.values()].sort((a,b)=>b.saved-a.saved || b.n-a.n);
+}
+const moneyLine=(spent, filled, n, saved)=>
+  `<span class="mr-spent">花 ${filled?nt(spent):'—'}${filled&&filled<n?`<small>（${n-filled} 次沒填）</small>`:''}</span>`
+  +`<span class="mr-saved">省 ${nt(saved)}</span>`;
+let MY_REP_VIEW='shop';
+try{ if(localStorage.getItem('sxr_my_rep_view')==='each') MY_REP_VIEW='each'; }catch{}
+function renderMyShopTotals(){
+  const box=$('#myShopTotals'); if(!box) return;
+  $('#myRepWrap')?.classList.toggle('hidden', !MY_REPORTS.length);
+  $$('#myRepWrap [data-rv]').forEach(b=>{
+    const on=b.dataset.rv===MY_REP_VIEW;
+    b.classList.toggle('on', on); b.setAttribute('aria-selected', on?'true':'false');
+  });
+  box.classList.toggle('hidden', MY_REP_VIEW!=='shop');
+  $('#myReports')?.classList.toggle('hidden', MY_REP_VIEW!=='each');
+  const rows=myShopRows();
+  const tot=rows.reduce((a,x)=>({n:a.n+x.n, saved:a.saved+x.saved, spent:a.spent+x.spent, filled:a.filled+x.filled}),
+    {n:0,saved:0,spent:0,filled:0});
+  box.innerHTML=rows.map(x=>`<button type="button" class="my-shop" data-oid="${esc(String(x.offer_id||''))}">
+      <b>${esc(x.brand)}</b><span class="ms-n">${x.n} 次</span>
+      <span class="ms-money">${moneyLine(x.spent, x.filled, x.n, x.saved)}</span></button>`).join('')
+    + (rows.length?`<div class="my-shop my-shop-total"><b>合計 ${rows.length} 家</b><span class="ms-n">${tot.n} 次</span>
+      <span class="ms-money">${moneyLine(tot.spent, tot.filled, tot.n, tot.saved)}</span></div>`:'');
+  box.querySelectorAll('button.my-shop').forEach(b=>b.onclick=()=>{ if(b.dataset.oid) openDetail(b.dataset.oid); });
+}
+$$('#myRepWrap [data-rv]').forEach(b=>b.onclick=()=>{
+  MY_REP_VIEW=b.dataset.rv;
+  try{ localStorage.setItem('sxr_my_rep_view', MY_REP_VIEW); }catch{}
+  renderMyShopTotals();
+});
 function renderMyReports(R){
   if(R) MY_REPORT_LABELS=R;
   const L=MY_REPORT_LABELS;
   const box=$('#myReports');
+  renderMyShopTotals();
   if(!box || !L) return;
   box.innerHTML=MY_REPORTS.map(r=>{
     const id=String(r.offer_id||'');
@@ -12633,7 +12726,7 @@ function renderMyReports(R){
     return `<div class="rep rep-click" data-id="${r.id}">
       <span>${esc(r.used_on)}</span><b style="flex:1 1 auto;min-width:0">${esc(r.offers?.brand||'（已下架）')}</b>
       <span class="${L[r.result][1]}">${L[r.result][0]}</span>
-      <span>${nt(r.saved_twd)}</span>
+      <span class="ms-money">${moneyLine(Number(r.spent_twd||0), r.spent_twd!=null&&r.spent_twd!==''?1:0, 1, Number(r.saved_twd||0))}</span>
       ${star}
       <span style="color:var(--ink-3);font-size:.75rem;white-space:nowrap">編輯 ›</span></div>`;
   }).join('')

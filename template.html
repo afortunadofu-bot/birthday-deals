@@ -451,17 +451,30 @@
   .clamp{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
   .txt-more{background:none;border:0;padding:2px 0;font:inherit;font-size:.76rem;color:var(--accent-dark);
     cursor:pointer;font-weight:700}
-  /* v164 待辦清單：已註冊／已收到券 */
-  .wl-flag{height:28px;padding:0 10px;border:1px dashed var(--line);border-radius:999px;background:none;
-    font:inherit;font-size:.76rem;color:var(--ink-3);cursor:pointer}
-  .wl-flag[aria-pressed="true"]{border-style:solid;border-color:var(--free-line);background:var(--free-bg);
-    color:var(--free);font-weight:700}
+  /* v164／v165 待辦清單：已註冊／已收到券。自己一行、看得出是勾選框、勾了整顆變綠 */
+  .wl-status{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 0 28px}
+  .wl-check{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 12px;
+    border:1.5px solid var(--line);border-radius:999px;background:var(--surface);
+    font-size:.82rem;font-weight:700;color:var(--ink-2);cursor:pointer;user-select:none}
+  .wl-check input[type="checkbox"]{width:16px;height:16px;margin:0;accent-color:var(--free);flex:none}
+  .wl-check.on{border-color:var(--free-line);background:var(--free-bg);color:var(--free)}
+  /* v165 我省下多少＋使用回報 */
+  .my-rep-wrap{margin-top:14px;padding-top:12px;border-top:1px solid var(--line-soft)}
+  .rep-view{display:flex;gap:6px;align-items:center;margin:0 0 8px}
+  .my-shop{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;width:100%;padding:9px 4px;
+    border:0;border-top:1px solid var(--line-soft);background:none;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
+  .my-shop b{flex:1 1 auto;min-width:0}
+  .my-shop .ms-n{font-size:.78rem;color:var(--ink-3);white-space:nowrap}
+  .ms-money{display:inline-flex;gap:10px;white-space:nowrap;font-size:.84rem}
+  .ms-money small{font-size:.7rem;color:var(--ink-3);font-weight:400}
+  .mr-saved{color:var(--free);font-weight:800}
+  .mr-spent{color:var(--ink-2)}
+  .my-shop-total{cursor:default;border-top:2px solid var(--line);font-weight:800}
+  .my-shop-here{margin:10px 0;padding:9px 12px;border-radius:var(--r-sm);background:var(--free-bg);
+    border:1px solid var(--free-line);font-size:.86rem;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
   .dl .dl-reg{font-size:.72rem;color:var(--free);font-weight:700;margin-left:6px}
   .dl.dl-registered{opacity:.6}
-  /* v164 我實際花了多少 */
-  .spent-box{display:flex;gap:18px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft)}
-  .spent-box .v{font-weight:800;font-size:1.05rem}
-  .spent-box .k{font-size:.74rem;color:var(--ink-3)}
+  .my-spent-line{margin:8px 0 0}
   .venue-dist{font-size:.74rem;color:var(--ink-3);white-space:nowrap}
   #evCustom.hidden{display:none!important}
   .ev-visit{color:var(--accent-dark);font-weight:800}
@@ -2399,6 +2412,14 @@
         </select></label>
         <label class="lbl">年度<select id="wlYear"></select></label>
         <label class="lbl">標籤<select id="wlTagFilter"></select></label>
+        <!-- celine（v165）：「已註冊會員的地方不夠明顯，而且要可以篩選」 -->
+        <label class="lbl hidden" id="wlRegFilterWrap">會員<select id="wlRegFilter">
+          <option value="all">全部</option>
+          <option value="unreg">還沒註冊會員</option>
+          <option value="reg">已註冊會員</option>
+          <option value="nocoupon">還沒收到券</option>
+          <option value="coupon">已收到券</option>
+        </select></label>
         <label class="toggle"><input type="checkbox" id="wlSinkDone" checked> 已使用的排到最下面</label>
         <label class="toggle"><input type="checkbox" id="wlCompact"> 簡易版</label>
       </div>
@@ -2431,14 +2452,11 @@
       </h2>
       <div class="rec-tabs" role="tablist" aria-label="我送出過的">
         <!-- celine：「使用回報要往上移，而且要比投稿左邊」 -->
-        <button type="button" class="rec-tab on" role="tab" data-rec="Reports" aria-selected="true">使用回報</button>
-        <button type="button" class="rec-tab" role="tab" data-rec="Offers" aria-selected="false">投稿</button>
+        <!-- v165 celine：「我省下跟使用回報區域合併」——使用回報搬去「我省下多少」那一塊 -->
+        <button type="button" class="rec-tab on" role="tab" data-rec="Offers" aria-selected="true">投稿</button>
         <button type="button" class="rec-tab" role="tab" data-rec="Feedback" aria-selected="false">問題回報<span class="n hidden" id="myFbCount"></span></button>
       </div>
-      <div class="rec-pane on" id="recReports" role="tabpanel">
-        <button type="button" class="btn sm hidden" id="btnReportsMap" style="margin:0 0 8px">🗺 用過的店在地圖上看</button>
-        <div id="myReports"></div></div>
-      <div class="rec-pane" id="recOffers" role="tabpanel"><div id="myOffers"></div></div>
+      <div class="rec-pane on" id="recOffers" role="tabpanel"><div id="myOffers"></div></div>
       <!-- 嵐：「我填寫過的回報問題，要可以出現在我的頁面」（schema_v73 開的讀自己那幾筆的權限） -->
       <div class="rec-pane" id="recFeedback" role="tabpanel"><div id="myFeedbackPanel">
         <p class="sub">你用「回報網站問題」送出的內容，還有管理員的回覆。</p>
@@ -2540,11 +2558,23 @@
     </div>
     <div class="panel authed-only" id="mySavingsPanel" data-block>
       <h2>我省下多少</h2>
-      <p class="sub">只計算回報「成功」的紀錄。</p>
+      <p class="sub">上面的總數只算回報「成功」的；下面是你每一次的使用回報。</p>
       <div id="savingsSinceVisit" class="hidden"></div>
       <div class="bigstat" id="mySavings"></div>
-      <!-- 楊晴：「在省錢統計那邊，我也想知道我實際花了多少錢，這樣比較好比較說我到底有沒有真的划算」 -->
-      <div id="mySpent"></div>
+      <!-- v165 celine：「我要能直接看到我在這家店花了多少跟省多少，然後要可以看到統計加總，
+           我省下跟使用回報區域合併」。原本使用回報在「我送出過的」裡面的一格。 -->
+      <div class="my-rep-wrap hidden" id="myRepWrap">
+        <div class="rep-view" role="tablist" aria-label="怎麼看">
+          <button type="button" class="rec-tab on" role="tab" data-rv="shop" aria-selected="true">每一家</button>
+          <button type="button" class="rec-tab" role="tab" data-rv="each" aria-selected="false">每一次</button>
+          <button type="button" class="btn sm hidden" id="btnReportsMap" style="margin-left:auto">🗺 在地圖上看</button>
+        </div>
+        <div id="myShopTotals"></div>
+        <div id="myReports" class="hidden"></div>
+        <!-- 楊晴：「在省錢統計那邊，我也想知道我實際花了多少錢，這樣比較好比較說我到底有沒有真的划算」。
+             v165 起花多少、省多少寫在上面每一家／合計那一列，這裡只留一句「划不划算」。 -->
+        <div id="mySpent"></div>
+      </div>
       <button type="button" class="btn sm hidden" id="btnShareSavings" style="margin-top:8px">📤 分享我的省錢成果</button>
       <label class="toggle"><input type="checkbox" id="optLeaderboard"> 在排行榜顯示我的暱稱與頭像</label>
       <p class="sub" style="margin-top:4px">關掉還是會上榜，只是顯示成「匿名使用者」。</p>
@@ -3533,6 +3563,7 @@ let MY_USED_OFFER_IDS=new Set();   // 我自己回報過「用過了」的優惠
                                     // 跟卡片上「已用 N 次」的全站彙總數字是兩件事，
                                     // 這個是給本人看「我自己」有沒有回報過，卡片列表上要看得到。
 let MY_REPORTS=[];           // 「我的使用回報」目前這批資料，點列表時查回原始物件用
+let WL_REG=new Set();        // v165 待辦清單裡勾了「已註冊會員」的 offer_id——卡片開站就會讀，所以宣告在這裡
 let MY_RATED=new Set();      // 我已經給過星等的 offer_id（字串），登入後才有
 let MY_SCORES=new Map();     // 同一份資料，但連分數一起記——回報表單要帶回原本給的星等
 // 開站時 render() 會連續被叫好幾次（種子資料→收藏清單回來→Supabase 真資料回來），
@@ -3592,7 +3623,7 @@ const REMEMBER=[
   // 洞察分析
   'hourDays','monthlyMetric','monthlyMonths','momUnit','trendMetric','trendDays',
   // 待辦清單
-  'wlSort','wlYear','wlTagFilter','wlSinkDone','wlCompact',
+  'wlSort','wlYear','wlTagFilter','wlRegFilter','wlSinkDone','wlCompact',
   // 場館
   'venueCounty','venueSort',
   // 首頁的簡易版
@@ -4898,17 +4929,25 @@ async function renderMyWishlist(){
   if(error) ({data,error}=await wlQuery(COLS));
   if(error) ({data}=await wlQuery(COLS.replace(',person','')));
   WL_ROWS=data||[];
+  syncWlReg();
   renderWishlistBody();
-  if(WL_FLAGS) renderPlanner();     // 註冊死線那邊要標「已註冊」
+  if(WL_FLAGS){ renderPlanner(); if(WL_REG.size) render(); }   // 註冊死線、優惠卡片要標「已註冊」
 }
 let WL_FLAGS=false;
 /* Lena：「建議可以多一個欄位，勾選已註冊會員提醒自己有加入會員，也可以多一個欄位是勾選
    已收到優惠券」。記在待辦清單那一列上（跟備註、標籤一樣只有自己看得到）。 */
 const WL_FLAG_LABEL={registered:'已註冊會員', got_coupon:'已收到優惠券'};
+/* v165 celine：「已註冊會員的地方不夠明顯」。v164 是跟「📝 備註」擠在同一排的虛線小鈕，
+   看起來像次要動作。改成卡片裡自己一行、看得出是勾選框，勾了整顆變綠。 */
 function wlFlagsHtml(w){
   if(!WL_FLAGS) return '';
-  return Object.keys(WL_FLAG_LABEL).map(k=>`<button type="button" class="wl-flag" data-id="${w.offer_id}"
-    data-flag="${k}" aria-pressed="${w[k]?'true':'false'}">${w[k]?'✓ ':''}${WL_FLAG_LABEL[k]}</button>`).join('');
+  return `<div class="wl-status">${Object.keys(WL_FLAG_LABEL).map(k=>`<label class="wl-check${w[k]?' on':''}">
+    <input type="checkbox" class="wl-flag" data-id="${w.offer_id}" data-flag="${k}" ${w[k]?'checked':''}>
+    ${WL_FLAG_LABEL[k]}</label>`).join('')}</div>`;
+}
+/* 待辦清單裡勾了「已註冊會員」的優惠——優惠卡片上也標出來，不用回待辦清單看（WL_REG 宣告在最上面） */
+function syncWlReg(){
+  WL_REG=new Set(WL_ROWS.filter(w=>w.registered).map(w=>String(w.offer_id)));
 }
 // 待辦清單也要能看到「這筆的入會死線是哪一天」——跟 renderPlanner() 用同一套
 // 邏輯（生日月/日 + advance_days 往前推），只是這裡不畫圖表，只算一個日期字串。
@@ -4986,6 +5025,10 @@ function renderWishlistBody(){
   if(yearFilter!=='all') list=list.filter(w=>(w.year||CURRENT_YEAR)===Number(yearFilter));
   if(tagFilter==='__none__') list=list.filter(w=>!w.tag);
   else if(tagFilter!=='all') list=list.filter(w=>w.tag===tagFilter);
+  $('#wlRegFilterWrap')?.classList.toggle('hidden', !WL_FLAGS);
+  const regFilter=WL_FLAGS ? ($('#wlRegFilter')?.value||'all') : 'all';
+  const REG_TEST={unreg:w=>!w.registered, reg:w=>!!w.registered, nocoupon:w=>!w.got_coupon, coupon:w=>!!w.got_coupon};
+  if(REG_TEST[regFilter]) list=list.filter(REG_TEST[regFilter]);
   if(sortBy==='added_asc') list.reverse();
   else if(sortBy==='brand') list.sort((a,b)=>String(a.offers?.brand||'').localeCompare(String(b.offers?.brand||''),'zh-Hant'));
   else if(manual) list.sort((a,b)=>(a.sort_order??999999)-(b.sort_order??999999)
@@ -5032,7 +5075,9 @@ function renderWishlistBody(){
     const tagSelectHtml = `<select class="wl-tag" data-id="${w.offer_id}" data-has="${w.tag?'1':''}"
       title="標籤：把待辦清單分組" aria-label="標籤">${wlTagOptions(w.tag||'')}</select>`;
     // 狀態小膠囊（用過了／明年）放在第二行，品牌名很長時才不會被擠成好幾行；簡易版沒有第二行，放第一行
-    const pills = (done?`<span class="wl-pill wl-pill-ok">✓ ${usedByReport?'已回報':'用過了'}</span>`:'') + yearBadge;
+    const pills = (done?`<span class="wl-pill wl-pill-ok">✓ ${usedByReport?'已回報':'用過了'}</span>`:'') + yearBadge
+      + (compact && WL_FLAGS && !done && w.registered ? '<span class="wl-pill wl-pill-ok">✓ 已註冊</span>' : '')
+      + (compact && WL_FLAGS && !done && w.got_coupon ? '<span class="wl-pill wl-pill-ok">✓ 有券</span>' : '');
     const name = o.brand
       ? `<button type="button" class="wl-name wl-toggle" data-id="${w.offer_id}" title="看詳情">${esc(o.brand)}</button>`
       : `<span class="wl-name">（已下架）</span>`;
@@ -5069,11 +5114,11 @@ function renderWishlistBody(){
       : `<div class="wl-chips">
         <span class="wl-tag-wrap${w.tag?' on':''}">🏷${tagSelectHtml}</span>
         ${w.note?'':`<button type="button" class="wl-note-add" data-id="${w.offer_id}">📝 備註</button>`}
-        ${wlFlagsHtml(w)}
       </div>`;
     return `<div class="wl-item${done?' done':''}" data-wl-row="${w.offer_id}">
       ${top}
       ${metaHtml}
+      ${done?'':wlFlagsHtml(w)}
       ${chips}
       <textarea class="wl-note${w.note?'':' hidden'}" data-id="${w.offer_id}" maxlength="200" rows="1"
         placeholder="加個備註，只有你自己看得到">${esc(w.note||'')}</textarea>
@@ -5143,13 +5188,13 @@ function renderWishlistBody(){
     if(!ta) return;
     ta.classList.remove('hidden'); b.remove(); ta.focus();
   });
-  $$('#myWishlist .wl-flag').forEach(b=>b.onclick=async()=>{
-    const row=WL_ROWS.find(w=>String(w.offer_id)===String(b.dataset.id)); if(!row) return;
-    const k=b.dataset.flag, on=!row[k];
-    row[k]=on; renderWishlistBody();          // 先改畫面，失敗再改回來
+  $$('#myWishlist .wl-flag').forEach(cb=>cb.onchange=async()=>{
+    const row=WL_ROWS.find(w=>String(w.offer_id)===String(cb.dataset.id)); if(!row) return;
+    const k=cb.dataset.flag, on=cb.checked;
+    row[k]=on; syncWlReg(); renderWishlistBody();          // 先改畫面，失敗再改回來
     const {error}=await sb.from('wishlist').update({[k]:on}).eq('user_id',me.id).eq('offer_id',row.offer_id);
-    if(error){ row[k]=!on; renderWishlistBody(); showToast(pubErrText(error,'沒存到：')); return; }
-    if(k==='registered') renderPlanner();
+    if(error){ row[k]=!on; syncWlReg(); renderWishlistBody(); showToast(pubErrText(error,'沒存到：')); return; }
+    if(k==='registered'){ renderPlanner(); render(); }
     logEvent('wl_flag',{flag:k, on:on?1:0});
   });
   // 「⋯」選單裡的動作按下去就把選單收起來
@@ -5256,6 +5301,7 @@ $('#wlSearch').addEventListener('input',()=>{ if(!WL_COMPOSING) renderWishlistBo
 $('#wlSort').onchange=renderWishlistBody;
 $('#wlYear').onchange=renderWishlistBody;
 $('#wlTagFilter').onchange=renderWishlistBody;
+$('#wlRegFilter').onchange=renderWishlistBody;
 // 點選單以外的地方就收起待辦清單的「⋯」選單（一次只開一個）
 document.addEventListener('click', e=>{
   $$('#myWishlist details.wl-more[open]').forEach(d=>{ if(!d.contains(e.target)) d.removeAttribute('open'); });
@@ -8290,6 +8336,7 @@ function offerCardHtml(o, idx){
         <span class="flag hide-lean">已用 ${o.reportCount||0} 次</span>
         ${(()=>{ const x=spendOf(o); return x?`<span class="flag hide-lean" title="${x.n} 人回報過這次花多少">大家平均花 ${nt(x.avg)}</span>`:''; })()}
         ${MY_USED_OFFER_IDS.has(String(o.id))?'<span class="flag ok-flag">✓ 你已回報過</span>':''}
+        ${WL_REG.has(String(o.id))?'<span class="flag ok-flag">✓ 你已註冊會員</span>':''}
         ${o.requiresCompanion?'<span class="flag alert">需同行</span>':''}
       </div>
       <p class="offer">${esc(o.offer)}</p>
@@ -9076,7 +9123,10 @@ async function openDetail(id, fallback=null, focusRate=false){
       ${x.note?clampHtml(x.note,'rep-note'):''}
     </div>`).join('');
   const nRep=(r||[]).length;
-  body.innerHTML=offerFactsHtml(o)+pendingOfferEditsHtml(pe||[])+editHistoryHtml(eh||[])+rateHtml+`<div class="thread">
+  // v165「我要能直接看到我在這家店花了多少跟省多少」：詳情裡也寫出來
+  const mine=me ? myShopRows().find(x=>String(x.offer_id)===String(id)) : null;
+  const mineHtml=mine?`<div class="my-shop-here">你在這家用了 ${mine.n} 次：${moneyLine(mine.spent, mine.filled, mine.n, mine.saved)}</div>`:'';
+  body.innerHTML=offerFactsHtml(o)+pendingOfferEditsHtml(pe||[])+editHistoryHtml(eh||[])+mineHtml+rateHtml+`<div class="thread">
     ${(nRep||cmts.length)?`<div class="thread-bar">
       <span>使用回報 ${nRep>=30?'最近 30':nRep} 筆・留言 ${cmts.length} 則</span>
       <button type="button" class="btn sm th-fold" aria-expanded="true">收起</button>
@@ -10413,19 +10463,18 @@ function renderMySpent(){
   const others=MY_REPORTS.filter(x=>x.result!=='failed').length-filled.length;
   if(!filled.length){
     el.innerHTML = MY_REPORTS.length
-      ? '<p class="hint" style="margin-top:8px">回報時填「這次花多少」，這裡就算得出你實際花了多少、划不划算。</p>' : '';
+      ? '<p class="hint my-spent-line">回報時填「這次花多少」，就算得出你實際花了多少、划不划算。</p>' : '';
     return;
   }
   const spent=filled.reduce((a,x)=>a+Number(x.spent_twd||0),0);
   const saved=filled.reduce((a,x)=>a+Number(x.saved_twd||0),0);
+  /* 只拿「有填花多少」的那幾次來比——沒填的那幾次省下的錢放進來，會讓人看起來比實際划算。
+     所以這裡的「省」會比上面合計那一列小，句子裡講清楚是哪幾次。 */
   const verdict = !spent ? `一毛都沒花，省下 ${nt(saved)}。`
-    : saved>=spent ? `等於每花 1 元，省下 ${(saved/spent).toFixed(1)} 元。`
+    : saved>=spent ? `每花 1 元，省下 ${(saved/spent).toFixed(1)} 元。`
     : `省下的比花的少——有些店的生日優惠要消費才拿得到。`;
-  el.innerHTML=`<div class="spent-box">
-      <div><div class="v">${nt(spent)}</div><div class="k">實際花了</div></div>
-      <div><div class="v">${nt(saved)}</div><div class="k">同樣這幾次省下</div></div></div>
-    <p class="hint" style="margin:4px 0 0">算的是你有填「這次花多少」的 ${filled.length} 次${
-      others>0?`（另外 ${others} 次沒填，沒算進來）`:''}。${verdict}</p>`;
+  el.innerHTML=`<p class="hint my-spent-line">划不划算：有填「這次花多少」的 ${filled.length} 次，
+    花 ${nt(spent)}、省 ${nt(saved)}，${verdict}${others>0?`（另外 ${others} 次沒填，沒算進來）`:''}</p>`;
 }
 async function loadMyStuff(pre){
   if(!LIVE||!me) return;
@@ -11352,7 +11401,7 @@ function showMyRecord(which){
   });
   try{ localStorage.setItem(REC_KEY, which); }catch{}
 }
-const REC_DEFAULT='Reports';   // celine：「使用回報要往上移，而且要比投稿左邊」
+const REC_DEFAULT='Offers';    // v165 使用回報搬去「我省下多少」，這裡剩投稿跟問題回報
 /* 一筆都沒有的那一格，連分頁鈕都不要出現——一顆點下去是空的按鈕，比少一顆還糟。
    loadMyFeedback() 有三條路會把 #myFeedbackPanel 藏起來（沒登入、v73 沒跑、
    一筆都沒有），與其三個地方各補一行，不如直接看它的 class 有沒有變：
@@ -12618,10 +12667,54 @@ $('#dlgRateAll').addEventListener('close', async()=>{
    這一列本身是可以點的（點了開編輯回報），所以星等那一塊要攔住事件。
    只有「成功」的回報才問——沒用成的沒什麼好評。 */
 let MY_REPORT_LABELS=null;
+/* v165：每一家（同一筆優惠的回報加起來）——「我在這家店花了多少跟省多少」。
+   花費只加有填的；有幾次沒填就寫出來，不要讓人以為那幾次是 0 元。 */
+function myShopRows(){
+  const m=new Map();
+  MY_REPORTS.forEach(r=>{
+    const k=String(r.offer_id||'');
+    if(!m.has(k)) m.set(k,{offer_id:r.offer_id, brand:r.offers?.brand||'（已下架）', n:0, saved:0, spent:0, filled:0, last:''});
+    const x=m.get(k);
+    x.n++; x.saved+=Number(r.saved_twd||0);
+    if(r.spent_twd!=null && r.spent_twd!==''){ x.spent+=Number(r.spent_twd); x.filled++; }
+    if(String(r.used_on||'')>x.last) x.last=String(r.used_on||'');
+  });
+  return [...m.values()].sort((a,b)=>b.saved-a.saved || b.n-a.n);
+}
+const moneyLine=(spent, filled, n, saved)=>
+  `<span class="mr-spent">花 ${filled?nt(spent):'—'}${filled&&filled<n?`<small>（${n-filled} 次沒填）</small>`:''}</span>`
+  +`<span class="mr-saved">省 ${nt(saved)}</span>`;
+let MY_REP_VIEW='shop';
+try{ if(localStorage.getItem('sxr_my_rep_view')==='each') MY_REP_VIEW='each'; }catch{}
+function renderMyShopTotals(){
+  const box=$('#myShopTotals'); if(!box) return;
+  $('#myRepWrap')?.classList.toggle('hidden', !MY_REPORTS.length);
+  $$('#myRepWrap [data-rv]').forEach(b=>{
+    const on=b.dataset.rv===MY_REP_VIEW;
+    b.classList.toggle('on', on); b.setAttribute('aria-selected', on?'true':'false');
+  });
+  box.classList.toggle('hidden', MY_REP_VIEW!=='shop');
+  $('#myReports')?.classList.toggle('hidden', MY_REP_VIEW!=='each');
+  const rows=myShopRows();
+  const tot=rows.reduce((a,x)=>({n:a.n+x.n, saved:a.saved+x.saved, spent:a.spent+x.spent, filled:a.filled+x.filled}),
+    {n:0,saved:0,spent:0,filled:0});
+  box.innerHTML=rows.map(x=>`<button type="button" class="my-shop" data-oid="${esc(String(x.offer_id||''))}">
+      <b>${esc(x.brand)}</b><span class="ms-n">${x.n} 次</span>
+      <span class="ms-money">${moneyLine(x.spent, x.filled, x.n, x.saved)}</span></button>`).join('')
+    + (rows.length?`<div class="my-shop my-shop-total"><b>合計 ${rows.length} 家</b><span class="ms-n">${tot.n} 次</span>
+      <span class="ms-money">${moneyLine(tot.spent, tot.filled, tot.n, tot.saved)}</span></div>`:'');
+  box.querySelectorAll('button.my-shop').forEach(b=>b.onclick=()=>{ if(b.dataset.oid) openDetail(b.dataset.oid); });
+}
+$$('#myRepWrap [data-rv]').forEach(b=>b.onclick=()=>{
+  MY_REP_VIEW=b.dataset.rv;
+  try{ localStorage.setItem('sxr_my_rep_view', MY_REP_VIEW); }catch{}
+  renderMyShopTotals();
+});
 function renderMyReports(R){
   if(R) MY_REPORT_LABELS=R;
   const L=MY_REPORT_LABELS;
   const box=$('#myReports');
+  renderMyShopTotals();
   if(!box || !L) return;
   box.innerHTML=MY_REPORTS.map(r=>{
     const id=String(r.offer_id||'');
@@ -12633,7 +12726,7 @@ function renderMyReports(R){
     return `<div class="rep rep-click" data-id="${r.id}">
       <span>${esc(r.used_on)}</span><b style="flex:1 1 auto;min-width:0">${esc(r.offers?.brand||'（已下架）')}</b>
       <span class="${L[r.result][1]}">${L[r.result][0]}</span>
-      <span>${nt(r.saved_twd)}</span>
+      <span class="ms-money">${moneyLine(Number(r.spent_twd||0), r.spent_twd!=null&&r.spent_twd!==''?1:0, 1, Number(r.saved_twd||0))}</span>
       ${star}
       <span style="color:var(--ink-3);font-size:.75rem;white-space:nowrap">編輯 ›</span></div>`;
   }).join('')

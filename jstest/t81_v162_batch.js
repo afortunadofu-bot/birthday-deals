@@ -31,8 +31,9 @@ const root = (f) => path.join(__dirname, '..', f);
   t.ok('我送出過的往上：緊接在註冊死線後面', at('myRecordsPanel') === at('planner') + 1, blocks.join(','));
   t.ok('幫家人記生日、成就徽章往下：在關於壽星日前面', at('altBdayPanel') < at('aboutSitePanel')
     && at('badgesPanel') < at('aboutSitePanel') && at('altBdayPanel') > at('feedbackPanel'), blocks.join(','));
-  t.eq('使用回報排在投稿左邊', $$('#myRecordsPanel .rec-tab').map((b) => b.dataset.rec), ['Reports', 'Offers', 'Feedback']);
-  t.ok('預設打開的是使用回報', $('#recReports').classList.contains('on'));
+  /* v162 是「使用回報排第一、預設打開」；v165 celine 改成「我省下跟使用回報區域合併」，
+     使用回報整個搬去「我省下多少」——看 t83。這裡只確認它真的在那裡。 */
+  t.ok('使用回報在「我省下多少」裡', $('#mySavingsPanel').contains($('#myReports')));
 
   // 自己排過順序的人：存檔也搬一次，只搬一次
   const KEY = 'sxr_order_mine', FLAG = 'sxr_order_moved_v162';
