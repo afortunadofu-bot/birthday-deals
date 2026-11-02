@@ -83,6 +83,11 @@ const TTL = { offers: FRESH_TTL, offersFirst: FRESH_TTL, stats: FRESH_TTL, board
       拿不到那一欄、而且不會報錯。jstest/t31 有一條會比對 fromRow 讀的欄位
       是不是每一個都在這裡，漏掉就測不過。 */
 const OFFER_COLS = 'id,brand,category,regions,region_note,offer,membership,membership_type,membership_cost,free_tier,advance_days,advance_note,offer_window,conditions,validity,validity_type,valid_from,valid_until,sources,status,verified,last_checked,submitted_by,review_note,created_at,timing,value_twd,group_name,admin_edit_diff,requires_companion,transferable,min_spend,report_count,last_used_on,success_rate,comment_count,rating_avg,rating_count,wish_count';
+/* v166：expected_spend（投稿的人估的「預計會花多少」）。schema_v166 還沒跑的話這一欄不存在，
+   整句查詢會 400——所以失敗一次就改用不帶它的那份欄位，Worker 先更新、SQL 後跑也不會壞。 */
+const OFFER_COLS_V166 = OFFER_COLS + ',expected_spend';
+let colsFor = () => OFFER_COLS_V166;
+const isMissingCol = (status, body) => status === 400 && /expected_spend|42703/.test(body || '');
 
 const FIRST_N = 60;
 const STALE_TTL = 86400;      // 上游掛掉時，24 小時內的舊資料還可以頂著用
@@ -157,10 +162,14 @@ async function fromSupabase(env, kind) {
   /* 開場那 60 筆：照 value_twd 由大到小，跟網站預設的「依省最多」同一個排序，
      所以背景把完整那包換上來的時候，前幾張卡片不會整個跳掉重排。 */
   if (kind === 'offersFirst') {
-    const res = await fetch(
-      `${base}/rest/v1/offers_public?select=${OFFER_COLS}`
+    const first = () => fetch(
+      `${base}/rest/v1/offers_public?select=${colsFor()}`
       + `&order=value_twd.desc.nullslast,brand.asc&limit=${FIRST_N}`,
       { headers });
+    let res = await first();
+    if (!res.ok && isMissingCol(res.status, await res.clone().text())) {
+      colsFor = () => OFFER_COLS; res = await first();
+    }
     if (!res.ok) throw new Error(`offers_public(first) ${res.status}`);
     return await res.json();
   }
@@ -168,9 +177,13 @@ async function fromSupabase(env, kind) {
   const out = [];
   for (let page = 0; page < MAX_PAGES; page++) {
     const from = page * PAGE;
-    const res = await fetch(`${base}/rest/v1/offers_public?select=${OFFER_COLS}&order=id.asc`, {
+    const get = () => fetch(`${base}/rest/v1/offers_public?select=${colsFor()}&order=id.asc`, {
       headers: { ...headers, range: `${from}-${from + PAGE - 1}` },
     });
+    let res = await get();
+    if (!res.ok && isMissingCol(res.status, await res.clone().text())) {
+      colsFor = () => OFFER_COLS; res = await get();
+    }
     if (!res.ok) throw new Error(`offers_public ${res.status}`);
     const rows = await res.json();
     out.push(...rows);

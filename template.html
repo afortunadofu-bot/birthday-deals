@@ -2223,6 +2223,24 @@
                  但 disabled 讓人沒辦法新選這一項，新投稿不會再產生 unknown -->
             <option value="unknown" disabled>尚未確認（以前投的舊資料）</option>
           </select></div>
+        <!-- v166 celine：「需要幾天註冊那個都先必填，然後都要寫預計這家需要花多少錢跟低消多少錢等，
+             使用條件也要必填」。原本這幾格都收在「補充更多細節（選填）」裡，一般人根本沒打開過。
+             新投稿才必填；修改建議／編輯不擋（改一個錯字不該被逼著補四格），見 setSubmitRequired()。 -->
+        <div class="two">
+          <div class="field"><label>需提前幾天註冊／預約<span class="req-mark"> *</span></label>
+            <input type="number" name="advance_days" min="0" max="400" required placeholder="例如 0">
+            <div class="hint">0 = 當場加入就能用；要先當會員滿幾天就寫幾天</div></div>
+          <!-- 嵐：「讓人知道去這家店領生日優惠大概會花多少錢」。低消是「規定要花多少」；
+               預計花多少是「實際去一趟大概會花多少」，大家回報的實際花費另外算。 -->
+          <div class="field"><label>低消／最低消費（元）<span class="req-mark"> *</span></label>
+            <input type="number" name="min_spend" min="0" max="100000" required placeholder="例如 350">
+            <div class="hint">規定最低要花多少；不用消費就填 0</div></div>
+        </div>
+        <div class="field"><label>預計會花多少（元）<span class="req-mark"> *</span></label>
+          <input type="number" name="expected_spend" min="0" max="100000" required placeholder="例如 200">
+          <div class="hint">去用這個優惠，大概會花多少（例如要再點一份餐、一杯飲料）；完全不用花就填 0</div></div>
+        <div class="field"><label>使用條件<span class="req-mark"> *</span></label>
+          <textarea name="conditions" maxlength="600" required placeholder="低消、訂位人數、需出示證件等；沒有特別條件就寫「無」&#10;可以換行，例如：&#10;1. 需 4 人以上&#10;2. 每桌限用一次"></textarea></div>
         <div class="field hidden" id="fEditReasonField"><label>修改原因 *</label>
           <textarea name="edit_reason" id="fEditReason" maxlength="300"
             placeholder="例如：優惠已經改成 88 折、官網公告的期限不一樣了"></textarea>
@@ -2237,21 +2255,12 @@
              鼓勵補上（不是強制擋下）。 -->
         <div class="hint" style="margin:-6px 0 4px">貼上品牌官網或官方貼文連結就好，方便管理員查證。如果是現場才知道、完全沒有網頁資訊，也可以留空——送出前會提醒一下，不會擋你送出。（最多 5 個）</div>
 
-        <!-- 其餘欄位都不是必填，預設收起來，先讓人把最重要的幾格填完送出 -->
-        <button type="button" class="sub-toggle" id="btnMoreFields" aria-expanded="false"
-          style="margin:14px 0 4px">補充更多細節（選填，可略過直接送出）</button>
-        <div class="hidden" id="moreFields">
-          <div class="two">
-            <div class="field"><label>需提前幾天註冊／預約</label><input type="number" name="advance_days" min="0" max="400">
-              <div class="hint">0 = 當下就能用；留空 = 未明訂</div></div>
-            <div class="field"><label>優惠價值（元）</label><input type="number" name="value_twd" min="0" max="100000">
-              <div class="hint">用來統計省下多少，不確定就留空</div></div>
-          </div>
-          <!-- 嵐：「讓人知道去這家店領生日優惠大概會花多少錢」。
-               低消是「規定要花多少」，詳情頁另外還會顯示大家回報的「實際平均花費」。 -->
-          <div class="field"><label>低消／最低消費（元）</label>
-            <input type="number" name="min_spend" min="0" max="100000" placeholder="例如 350">
-            <div class="hint">要消費才能領的話，寫最低要花多少。完全不用消費請把上面的「免費層級」選「免費・無低消」；不確定就留空</div></div>
+        <!-- v166：選填的這幾格預設攤開（celine：「補充欄位一般人好像都看不到」），想收再收 -->
+        <button type="button" class="sub-toggle" id="btnMoreFields" aria-expanded="true"
+          style="margin:14px 0 4px">收起選填欄位</button>
+        <div id="moreFields">
+          <div class="field"><label>優惠價值（元）</label><input type="number" name="value_twd" min="0" max="100000">
+            <div class="hint">用來統計省下多少，不確定就留空</div></div>
           <div class="field"><label>會員取得方式</label>
             <input name="membership" maxlength="200" placeholder="例如：Ocard APP 會員" list="membershipPresets">
             <datalist id="membershipPresets">
@@ -2259,8 +2268,6 @@
               <option value="LINE 官方帳號好友"><option value="官網會員"><option value="門市登記會員">
               <option value="免會員"><option value="信用卡會員">
             </datalist></div>
-          <div class="field"><label>使用條件</label>
-            <textarea name="conditions" maxlength="600" placeholder="低消、訂位人數、需出示證件等&#10;可以換行，例如：&#10;1. 需 4 人以上&#10;2. 每桌限用一次"></textarea></div>
           <div class="two">
             <div class="field"><label>檔期起日</label><input type="date" name="valid_from"></div>
             <div class="field"><label>檔期迄日</label><input type="date" name="valid_until"></div>
@@ -3808,6 +3815,7 @@ function fromRow(r){return{
   membershipCost:r.membership_cost||'free', freeTier:r.free_tier||'discount',
   advanceDays:r.advance_days, advanceNote:r.advance_note||'',
   timing:r.timing||r.offer_window||'當月', valueTwd:r.value_twd, minSpend:r.min_spend,
+  expectedSpend:r.expected_spend??null,
   conditions:r.conditions||'', validity:r.validity||'', validityType:r.validity_type||'rolling',
   validFrom:r.valid_from, validUntil:r.valid_until,
   sources:r.sources||[], bestSource:(r.sources||[])[0]||null,
@@ -8334,7 +8342,9 @@ function offerCardHtml(o, idx){
         ${o.verified?'<span class="flag ok-flag hide-lean">已查證</span>':'<span class="flag alert">未查證</span>'}
         ${o.ratingCount?`<span class="flag star hide-lean">★ ${o.ratingAvg}（${o.ratingCount}）</span>`:''}
         <span class="flag hide-lean">已用 ${o.reportCount||0} 次</span>
-        ${(()=>{ const x=spendOf(o); return x?`<span class="flag hide-lean" title="${x.n} 人回報過這次花多少">大家平均花 ${nt(x.avg)}</span>`:''; })()}
+        ${(()=>{ const x=spendOf(o);
+          if(x) return `<span class="flag hide-lean" title="${x.n} 人回報過這次花多少">大家平均花 ${nt(x.avg)}</span>`;
+          return o.expectedSpend!=null ? `<span class="flag hide-lean" title="投稿的人估的">預計花 ${nt(o.expectedSpend)}</span>` : ''; })()}
         ${MY_USED_OFFER_IDS.has(String(o.id))?'<span class="flag ok-flag">✓ 你已回報過</span>':''}
         ${WL_REG.has(String(o.id))?'<span class="flag ok-flag">✓ 你已註冊會員</span>':''}
         ${o.requiresCompanion?'<span class="flag alert">需同行</span>':''}
@@ -8891,6 +8901,7 @@ function offerFactsHtml(o){
       ${kv('本人出示證件',TRANSFER_LABEL[o.transferable]||TRANSFER_LABEL.unknown)}
       ${kv('使用條件',o.conditions||'—')}
       ${o.minSpend!=null?kv('低消',`${nt(o.minSpend)}（規定最低消費）`):''}
+      ${o.expectedSpend!=null?kv('預計花費',`${nt(o.expectedSpend)}（投稿的人估的，實際看下面「大家實際花」）`):''}
       ${/* 嵐：「每人平均消費……讓人知道大概會花多少錢」。低消是規定，這一行是大家
            實際回報的，沒人填就不出現（寧可沒有，也不要給一個樣本數 1 的平均） */''}
       ${DTL_SPEND && DTL_SPEND.n ? kv('大家實際花',
@@ -9747,7 +9758,8 @@ function resetSubmitForm(){
   editingOfferId=null; editingAsAdmin=false; editingAsSuggestion=false; origOfferForDiff=null; editingWasPending=false;
   $('#fEditReasonField').classList.add('hidden');
   $('#fEditReason').required=false;
-  setMoreFields(false);
+  setMoreFields(true);
+  setSubmitRequired(true);
   $('#submitTitle').textContent='新增一筆優惠';
   $('#submitSub').textContent='送出後進入待審，管理員核可才會公開。每人每天上限 10 筆。';
   $('#btnSubmitOffer').textContent='送出待審';
@@ -9761,7 +9773,15 @@ $('#btnCancelEdit').onclick=resetSubmitForm;
 function setMoreFields(open){
   $('#moreFields').classList.toggle('hidden',!open);
   $('#btnMoreFields').setAttribute('aria-expanded',String(open));
-  $('#btnMoreFields').textContent = open?'收起補充欄位':'補充更多細節（選填，可略過直接送出）';
+  $('#btnMoreFields').textContent = open?'收起選填欄位':'展開選填欄位（優惠價值、會員取得方式、檔期…）';
+}
+/* v166 必填的四格：新投稿才擋。編輯、修改建議都不擋——舊資料很多格是空的，
+   改一個錯字不該被逼著補四格。星號跟著藏，不然看到 * 卻送得出去會以為壞了。 */
+const SUBMIT_REQUIRED=['advance_days','min_spend','expected_spend','conditions'];
+function setSubmitRequired(on){
+  const f=$('#submitForm').elements;
+  SUBMIT_REQUIRED.forEach(n=>{ if(f[n]) f[n].required=on; });
+  $$('#submitForm .req-mark').forEach(m=>m.classList.toggle('hidden', !on));
 }
 $('#btnMoreFields').onclick=()=>setMoreFields($('#moreFields').classList.contains('hidden'));
 
@@ -9797,7 +9817,8 @@ async function startEditOffer(id, asAdmin=false, asSuggestion=false){
   const f=$('#submitForm').elements;
   f.brand.value=o.brand||''; f.category.value=o.category||''; f.offer.value=o.offer||'';
   f.timing.value=o.timing||o.offer_window||'當月'; f.value_twd.value=o.value_twd??'';
-  f.min_spend.value=o.min_spend??'';
+  f.min_spend.value=o.min_spend??''; f.expected_spend.value=o.expected_spend??'';
+  setSubmitRequired(false);
   f.membership_type.value=o.membership_type||''; f.free_tier.value=o.free_tier||'';
   f.advance_days.value=o.advance_days??''; f.membership.value=o.membership||'';
   f.conditions.value=o.conditions||''; f.valid_from.value=o.valid_from||''; f.valid_until.value=o.valid_until||'';
@@ -9856,7 +9877,7 @@ $('#fBrand').addEventListener('input',()=>{
 // 任何一項變動都抓得到；regions／sources 是陣列，不能直接用 !== 比（陣列
 // 參考不同就永遠判定「不同」，或整個沒被比到），另外寫 sameOfferVal 處理。
 const OFFER_DIFF_FIELDS=['brand','category','offer','membership','membership_type','free_tier',
-  'advance_days','value_twd','min_spend','timing','conditions','valid_from','valid_until',
+  'advance_days','value_twd','min_spend','expected_spend','timing','conditions','valid_from','valid_until',
   'requires_companion','transferable','regions','sources'];
 function offerDiffVal(src,k){
   if(k==='timing') return src.timing||src.offer_window||null;
@@ -9894,13 +9915,14 @@ $('#submitForm').onsubmit=async e=>{
     if(!proceed){ b.disabled=false; return; }
   }
   const ad=fd.get('advance_days'), vt=fd.get('value_twd'), tm=fd.get('timing')||'當月';
-  const ms=fd.get('min_spend');
+  const ms=fd.get('min_spend'), es=fd.get('expected_spend');
   const row={
     brand:fd.get('brand').trim(), category:fd.get('category'), regions,
     offer:fd.get('offer').trim(), membership:(fd.get('membership')||'').trim(),
     membership_type:fd.get('membership_type'), free_tier:fd.get('free_tier'),
     advance_days: ad===''?null:Number(ad), value_twd: vt===''?null:Number(vt),
     min_spend: (ms===''||ms==null)?null:Number(ms),
+    expected_spend: (es===''||es==null)?null:Number(es),
     timing: tm, offer_window: tm,
     conditions:(fd.get('conditions')||'').trim(),
     valid_from:fd.get('valid_from')||null, valid_until:fd.get('valid_until')||null,
@@ -9958,6 +9980,13 @@ $('#submitForm').onsubmit=async e=>{
     ({error}=await sb.from('offers').update(row).eq('id',editing).eq('submitted_by',me.id));
   }else{
     ({error}=await sb.from('offers').insert({...row, status:'pending', verified:false, submitted_by:me.id}));
+  }
+  // schema_v166 還沒跑：offers 沒有 expected_spend 這一欄，拿掉它再送一次
+  if(error && /expected_spend/.test(error.message||'') && !asSuggestion){
+    const {expected_spend, ...noEs}=row;
+    if(editing&&asAdmin) ({error}=await sb.from('offers').update(noEs).eq('id',editing));
+    else if(editing) ({error}=await sb.from('offers').update(noEs).eq('id',editing).eq('submitted_by',me.id));
+    else ({error}=await sb.from('offers').insert({...noEs, status:'pending', verified:false, submitted_by:me.id}));
   }
   b.disabled=false;
   if(error){
@@ -13942,7 +13971,8 @@ async function bulkApproveOffers(ids){
 const FILL_FIELDS=[
   ['offer','offer'], ['category','category'], ['timing','timing'],
   ['membership','membership'], ['membership_type','membershipType'], ['free_tier','freeTier'],
-  ['advance_days','advanceDays'], ['value_twd','valueTwd'], ['min_spend','minSpend'], ['conditions','conditions'],
+  ['advance_days','advanceDays'], ['value_twd','valueTwd'], ['min_spend','minSpend'], ['expected_spend','expectedSpend'],
+  ['conditions','conditions'],
   ['valid_from','validFrom'], ['valid_until','validUntil'],
   ['transferable','transferable'], ['regions','regions'], ['sources','sources'],
 ];
@@ -14230,7 +14260,7 @@ const PEND_FOLD_KEY='sxr_admin_pend_insights';
    內容還留著；只有「實際套用到 offers 的值」跟歷史紀錄的措辭會反映
    管理員是否調整過（見 schema_v42／schema_v40）。 ---- */
 const EDIT_FIELD_LABEL={brand:'品牌名稱',offer:'優惠內容',conditions:'使用條件',membership:'會員取得方式',
-  timing:'適用期間',advance_days:'提前天數',value_twd:'優惠價值',min_spend:'低消',valid_until:'檔期迄日',
+  timing:'適用期間',advance_days:'提前天數',value_twd:'優惠價值',min_spend:'低消',expected_spend:'預計花費',valid_until:'檔期迄日',
   category:'類別',requires_companion:'需同行',regions:'適用地區',transferable:'本人出示證件',
   membership_type:'會員種類',free_tier:'免費層級',valid_from:'檔期起日',sources:'資料來源'};
 // regions/sources 是陣列、requires_companion 是布林值——「新舊對照」畫面原本
@@ -14248,7 +14278,8 @@ function fmtEditVal(v){
 const EDIT_CUR_KEY={brand:'brand',offer:'current_offer',conditions:'current_conditions',
   membership:'current_membership',membership_type:'current_membership_type',
   free_tier:'current_free_tier',timing:'current_timing',advance_days:'current_advance_days',
-  value_twd:'current_value_twd',valid_from:'current_valid_from',valid_until:'current_valid_until',
+  value_twd:'current_value_twd',min_spend:'current_min_spend',expected_spend:'current_expected_spend',
+  valid_from:'current_valid_from',valid_until:'current_valid_until',
   category:'current_category',requires_companion:'current_requires_companion',
   transferable:'current_transferable',regions:'current_regions',sources:'current_sources'};
 function editDiffRowsHtml(e){
@@ -14276,7 +14307,7 @@ function patchFieldInputHtml(editId, field, value){
       <span style="color:var(--ink-3);font-size:.76rem">（此欄位僅供預覽，如需調整請退回）</span></div>`;
   const v = value==null ? '' : String(value);
   const common = `class="edit-patch-field" data-edit="${esc(String(editId))}" data-field="${esc(field)}"`;
-  if(field==='advance_days'||field==='value_twd'||field==='min_spend')
+  if(field==='advance_days'||field==='value_twd'||field==='min_spend'||field==='expected_spend')
     return `<input type="number" ${common} value="${esc(v)}" style="width:100%;margin-top:2px">`;
   if(field==='valid_until'||field==='valid_from')
     return `<input type="date" ${common} value="${esc(v)}" style="width:100%;margin-top:2px">`;
@@ -14406,7 +14437,7 @@ async function loadPendingEdits(){
       $$(`.edit-patch-field[data-edit="${id}"]`).forEach(inp=>{
         const field=inp.dataset.field;
         let val=inp.value;
-        if(field==='advance_days'||field==='value_twd'||field==='min_spend') val = val===''?null:Number(val);
+        if(field==='advance_days'||field==='value_twd'||field==='min_spend'||field==='expected_spend') val = val===''?null:Number(val);
         else if(field==='valid_until'||field==='valid_from') val = val || null;
         finalPatch[field]=val;
         if(orig[field]!==val) changed=true;
