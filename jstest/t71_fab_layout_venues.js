@@ -55,7 +55,8 @@ const read = (f) => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
   let ids = mineIds();
   t.eq('版面設定就排在「個人資料」後面',
     ids.indexOf('layoutPanel'), ids.indexOf('profilePanel') + 1, ids.slice(0, 6).join(','));
-  t.ok('不再是倒數幾塊', ids.indexOf('layoutPanel') < 5, ids.indexOf('layoutPanel'));
+  /* 原本寫 < 5；v167 把「我省下多少」排到上面去，它往後退一格。問的是「不在後半段」 */
+  t.ok('不再是倒數幾塊', ids.indexOf('layoutPanel') < ids.length / 2, `${ids.indexOf('layoutPanel')} / ${ids.length}`);
 
   /* 存檔優先（blkDesired），所以光改 HTML 的話**用過這個網站的人完全不會變**。
      搬一次存檔，然後記旗標。 */

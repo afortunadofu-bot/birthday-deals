@@ -1186,6 +1186,7 @@
   .bigstat>div.hero{flex-basis:100%;background:var(--accent-soft)}
   .bigstat>div.hero .v{font-size:clamp(2.1rem,6.5vw,3rem);letter-spacing:-.03em;line-height:1.05}
   .bigstat>div.hero .k{font-size:.8rem;color:var(--accent-dark)}
+  .bigstat>div.hero .hero-sub{margin-top:6px;font-size:.84rem;color:var(--ink-2);font-weight:600}
   /* 「看數字」表格：每張圖都有，色盲、列印、讀螢幕都讀得到 */
   .viz-data{margin-top:10px;font-size:.74rem}
   .viz-data summary{cursor:pointer;color:var(--ink-3);display:inline-block;list-style:none}
@@ -2441,6 +2442,31 @@
       <p id="plannerSub"></p>
       <div id="deadlines"></div>
     </section>
+    <!-- v167 celine：「這個區塊要預設更上面，在使用回報上面」——排在「我送出過的」前面
+         （使用回報本來住在那一塊）。自己排過順序的人由 moveBlocksV167Once() 搬一次。 -->
+    <div class="panel authed-only" id="mySavingsPanel" data-block>
+      <h2>我省下多少</h2>
+      <p class="sub">上面的總數只算回報「成功」的；下面是你每一次的使用回報。</p>
+      <div id="savingsSinceVisit" class="hidden"></div>
+      <div class="bigstat" id="mySavings"></div>
+      <!-- v165 celine：「我要能直接看到我在這家店花了多少跟省多少，然後要可以看到統計加總，
+           我省下跟使用回報區域合併」。原本使用回報在「我送出過的」裡面的一格。 -->
+      <div class="my-rep-wrap hidden" id="myRepWrap">
+        <div class="rep-view" role="tablist" aria-label="怎麼看">
+          <button type="button" class="rec-tab on" role="tab" data-rv="shop" aria-selected="true">每一家</button>
+          <button type="button" class="rec-tab" role="tab" data-rv="each" aria-selected="false">每一次</button>
+          <button type="button" class="btn sm hidden" id="btnReportsMap" style="margin-left:auto">🗺 在地圖上看</button>
+        </div>
+        <div id="myShopTotals"></div>
+        <div id="myReports" class="hidden"></div>
+        <!-- 楊晴：「在省錢統計那邊，我也想知道我實際花了多少錢，這樣比較好比較說我到底有沒有真的划算」。
+             v165 起花多少、省多少寫在上面每一家／合計那一列，這裡只留一句「划不划算」。 -->
+        <div id="mySpent"></div>
+      </div>
+      <button type="button" class="btn sm hidden" id="btnShareSavings" style="margin-top:8px">📤 分享我的省錢成果</button>
+      <label class="toggle"><input type="checkbox" id="optLeaderboard"> 在排行榜顯示我的暱稱與頭像</label>
+      <p class="sub" style="margin-top:4px">關掉還是會上榜，只是顯示成「匿名使用者」。</p>
+    </div>
     <!-- celine：「「我的」頁面 block 過多，看能不能整合」（v154：18 塊 → 13 塊）。
 
          「我的投稿」「我的使用回報」「我回報過的問題」本來各佔一個標題列。
@@ -2562,29 +2588,6 @@
     <div class="panel hidden" id="remindersPanel" data-block>
       <h2>提醒</h2>
       <div id="remindersBody"></div>
-    </div>
-    <div class="panel authed-only" id="mySavingsPanel" data-block>
-      <h2>我省下多少</h2>
-      <p class="sub">上面的總數只算回報「成功」的；下面是你每一次的使用回報。</p>
-      <div id="savingsSinceVisit" class="hidden"></div>
-      <div class="bigstat" id="mySavings"></div>
-      <!-- v165 celine：「我要能直接看到我在這家店花了多少跟省多少，然後要可以看到統計加總，
-           我省下跟使用回報區域合併」。原本使用回報在「我送出過的」裡面的一格。 -->
-      <div class="my-rep-wrap hidden" id="myRepWrap">
-        <div class="rep-view" role="tablist" aria-label="怎麼看">
-          <button type="button" class="rec-tab on" role="tab" data-rv="shop" aria-selected="true">每一家</button>
-          <button type="button" class="rec-tab" role="tab" data-rv="each" aria-selected="false">每一次</button>
-          <button type="button" class="btn sm hidden" id="btnReportsMap" style="margin-left:auto">🗺 在地圖上看</button>
-        </div>
-        <div id="myShopTotals"></div>
-        <div id="myReports" class="hidden"></div>
-        <!-- 楊晴：「在省錢統計那邊，我也想知道我實際花了多少錢，這樣比較好比較說我到底有沒有真的划算」。
-             v165 起花多少、省多少寫在上面每一家／合計那一列，這裡只留一句「划不划算」。 -->
-        <div id="mySpent"></div>
-      </div>
-      <button type="button" class="btn sm hidden" id="btnShareSavings" style="margin-top:8px">📤 分享我的省錢成果</button>
-      <label class="toggle"><input type="checkbox" id="optLeaderboard"> 在排行榜顯示我的暱稱與頭像</label>
-      <p class="sub" style="margin-top:4px">關掉還是會上榜，只是顯示成「匿名使用者」。</p>
     </div>
     <!-- 嵐：「回報網站問題移到『我的』」。原本只掛在頁尾的一行小字裡，幾乎沒人看得到。
          v154 把它旁邊那幾塊「讀一次就夠」的收進「關於壽星日」之後，它留著自己一塊：
@@ -5863,6 +5866,22 @@ function moveBlocksV162Once(){
   }catch{}
 }
 moveBlocksV162Once();
+/* v167：「我省下多少」排到「我送出過的」前面。只搬一次，之後自己再搬不會被拉回來。 */
+function moveBlocksV167Once(){
+  try{
+    if(localStorage.getItem('sxr_order_moved_v167')) return;
+    localStorage.setItem('sxr_order_moved_v167','1');
+    const saved=blkSaved('mine');
+    const i=saved.indexOf('mySavingsPanel');
+    if(i<0) return;
+    saved.splice(i,1);
+    let at=saved.indexOf('myRecordsPanel');
+    if(at<0){ at=saved.indexOf('planner'); at = at<0 ? 0 : at+1; }
+    saved.splice(at, 0, 'mySavingsPanel');
+    localStorage.setItem(BLK_PAGES.mine.key, JSON.stringify(saved));
+  }catch{}
+}
+moveBlocksV167Once();
 Object.keys(BLK_PAGES).forEach(applyBlockOrder);
 
 /* ---- 全站顯示開關（schema_v95 的 site_settings）----
@@ -10510,11 +10529,13 @@ async function loadMyStuff(pre){
   if($('#fNickname')&&document.activeElement!==$('#fNickname')) $('#fNickname').value=myProfile?.display_name||'';
   const {data:sv} = pre ? {data:pre.savings||null}
     : await sb.from('my_savings').select('*').eq('user_id',me.id).maybeSingle();
+  /* v167 celine：「我省下多少的金額方塊太多了」。四個方塊（累積、今年、成功次數、用過品牌）
+     收成一個大數字＋一行字；今年跟累積一樣的時候（多數人都是第一年用）不重複寫。 */
   $('#mySavings').innerHTML = sv ? `
-    <div class="hero"><div class="v">${nt(sv.saved_total)}</div><div class="k">累積省下</div></div>
-    <div><div class="v">${nt(sv.saved_this_year)}</div><div class="k">今年省下</div></div>
-    <div><div class="v">${sv.success_count}</div><div class="k">成功次數</div></div>
-    <div><div class="v">${sv.brands_used}</div><div class="k">用過品牌</div></div>`
+    <div class="hero"><div class="v">${nt(sv.saved_total)}</div><div class="k">累積省下</div>
+      <div class="hero-sub">${[
+        Number(sv.saved_this_year)!==Number(sv.saved_total)?`今年 ${nt(sv.saved_this_year)}`:'',
+        `成功 ${sv.success_count} 次`, `${sv.brands_used} 個品牌`].filter(Boolean).join('・')}</div></div>`
     : '<div style="color:var(--ink-3);font-size:.86rem">還沒有回報紀錄。到「優惠」分頁按「我用過了」開始記錄。</div>';
   renderBadges(sv);
   const shareBtn=$('#btnShareSavings');

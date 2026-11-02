@@ -28,7 +28,9 @@ const root = (f) => path.join(__dirname, '..', f);
   /* ================= 一、「我的」的順序 ================= */
   const blocks = win.eval("blkList('mine').map(el=>el.id)");
   const at = (id) => blocks.indexOf(id);
-  t.ok('我送出過的往上：緊接在註冊死線後面', at('myRecordsPanel') === at('planner') + 1, blocks.join(','));
+  /* v167 celine 又把「我省下多少」排到「我送出過的」前面，所以中間多一塊 */
+  t.ok('我送出過的往上：註冊死線後面（中間只隔「我省下多少」）',
+    at('myRecordsPanel') === at('planner') + 2 && at('mySavingsPanel') === at('planner') + 1, blocks.join(','));
   t.ok('幫家人記生日、成就徽章往下：在關於壽星日前面', at('altBdayPanel') < at('aboutSitePanel')
     && at('badgesPanel') < at('aboutSitePanel') && at('altBdayPanel') > at('feedbackPanel'), blocks.join(','));
   /* v162 是「使用回報排第一、預設打開」；v165 celine 改成「我省下跟使用回報區域合併」，
