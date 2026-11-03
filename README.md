@@ -32,6 +32,7 @@
 | `scraper.py` | 部落格／新聞爬蟲 → `diff_report.md` |
 | `threads_client.py` | Threads 官方 API 爬蟲 → `threads_report.md` |
 | `migrate_v2.py` / `migrate_v3.py` | 欄位遷移（已執行過，保留備查） |
+| `analysis/` | **資料分析作品集**：把 `offers.json` 與門市資料丟進 SQLite 問九個問題，產出一頁 `report.html`。跟網站無關，不影響上線流程，見 [`analysis/README.md`](analysis/README.md) |
 | `SETUP.md` | **上線步驟**，第一次請先看這份 |
 
 ---
