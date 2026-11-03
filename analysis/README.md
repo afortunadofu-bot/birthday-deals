@@ -4,7 +4,8 @@
 全部丟進 SQLite，用 SQL 算完統計量，再用 Python 排成一頁可以直接開的報告。
 
 **成品**：[`report.html`](report.html) — 一頁式報告，九題各自有「問題 → 一句結論 → 圖 →
-SQL → 表格」。GitHub 不會直接渲染 HTML，把檔案抓下來雙擊即可。
+SQL → 表格」。GitHub 不會直接渲染 HTML，把檔案抓下來雙擊即可；
+線上版（需作者開權限）：<https://claude.ai/artifact/1PwzjUXxh5SrXgyyANd8Nu>
 
 ---
 
