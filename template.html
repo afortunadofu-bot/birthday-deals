@@ -4056,6 +4056,7 @@ async function connectLive(retry=0){
   $('#btnLogin').style.opacity = '';
 
   sb = window.supabase.createClient(CFG.url, CFG.anonKey);
+  probeBackend();     // v169：資料庫被停掉的話自己掛「系統更新中」，不擋開站
   const slowTimer=setTimeout(()=>{
     note(mb,'alert','<b>資料庫回應比較慢</b>——不是網站壞了，資料庫偶爾會慢個幾秒，請再等一下下。');
   },3000);
@@ -5450,16 +5451,26 @@ function redirectTarget(){
    按「Google 登入」不去 Google，直接講登入暫停——反正登入回來也什麼都讀不到。 ---- */
 const MAINT={from:'2026-11-03', until:'2026-11-05', title:'11/3－11/5 系統更新！',
   body:'這幾天正在進行系統升級作業，登入功能將暫時無法使用，造成不便敬請見諒🙏'};
-function maintActive(now=new Date()){
-  if(window.__SXR_NO_MAINT) return false;          // 測試用：舊的登入測試不受這幾天影響
+/* v169 celine：「以後幫我注意，如果系統無法登入，都先自動掛個 banner 寫這幾天系統更新，預留我修改的時間」。
+   不用等人發現、不用改日期：開站時問一下資料庫，連不上就自己掛這一則（沒有日期，因為不知道要多久）。
+   日期那一則（MAINT）是知道要停幾天時手動填的，兩個都有的話用有日期的那一則。 */
+const MAINT_AUTO={title:'系統更新中！',
+  body:'這幾天正在進行系統升級作業，登入功能將暫時無法使用，造成不便敬請見諒🙏'};
+let MAINT_DOWN=false;      // probeBackend() 偵測到資料庫連不上
+function maintDated(now=new Date()){
   const d=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   return d>=MAINT.from && d<=MAINT.until;
 }
+function maintActive(now=new Date()){
+  if(window.__SXR_NO_MAINT) return false;          // 測試用：舊的登入測試不受這幾天影響
+  return MAINT_DOWN || maintDated(now);
+}
 function paintMaint(){
   const on=maintActive();
+  const txt=(!window.__SXR_NO_MAINT && maintDated()) ? MAINT : MAINT_AUTO;
   let gone=false; try{ gone=sessionStorage.getItem('sxr_maint_closed')==='1'; }catch{}
-  $('#maintTitle').textContent=MAINT.title;
-  $('#maintBody').textContent=MAINT.body;
+  $('#maintTitle').textContent=txt.title;
+  $('#maintBody').textContent=txt.body;
   $('#maintBanner').classList.toggle('hidden', !on || gone);
   return on;
 }
@@ -5468,6 +5479,37 @@ $('#btnDismissMaint').onclick=()=>{
   $('#maintBanner').classList.add('hidden');
 };
 paintMaint();
+/* 資料庫活著嗎？問最小的一張表的一個欄位一筆（幾十個 byte，不會再吃掉多少流量）。
+   - 402：Supabase 因為超量／欠費把專案停了 → 一定是
+   - 5xx、逾時、連不上：等 3 秒再問一次，兩次都不行才算——資料庫偶爾慢一下不要就掛公告
+   - 但「連不上」也可能是**這個人自己沒網路**：用 Cloudflare 那支 Worker 對照，
+     Worker 通、資料庫不通，才是資料庫的問題（Worker 不吃 Supabase 的流量） */
+async function probeOnce(){
+  const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(), 8000);
+  try{
+    const r=await fetch(`${CFG.url}/rest/v1/site_settings?select=key&limit=1`,
+      {headers:{apikey:CFG.anonKey, Authorization:'Bearer '+CFG.anonKey}, signal:ctl.signal, cache:'no-store'});
+    if(r.status===402) return 'down';
+    return r.status>=500 ? 'flaky' : 'up';
+  }catch{ return 'flaky'; }
+  finally{ clearTimeout(tm); }
+}
+async function internetOk(){
+  if(navigator.onLine===false) return false;
+  const api=String(window.OFFERS_API||'').trim().replace(/\/+$/,'');
+  if(!api) return true;                 // 沒有可以對照的，就相信瀏覽器說有網路
+  try{ const r=await fetch(api+'/health',{cache:'no-store'}); return r.ok; }catch{ return false; }
+}
+async function probeBackend(wait=3000){
+  if(!CFG?.url || !CFG?.anonKey) return false;
+  let st=await probeOnce();
+  if(st==='flaky'){ await new Promise(r=>setTimeout(r, wait)); st=await probeOnce(); }
+  if(st==='up') return false;
+  if(st==='flaky' && !await internetOk()) return false;   // 是自己沒網路，不是我們停機
+  MAINT_DOWN=true;
+  paintMaint();
+  return true;
+}
 $('#btnLogin').onclick = async()=>{
   if(maintActive()){
     // 關掉過的也再叫出來，捲到最上面讓人看到
