@@ -36,6 +36,9 @@ async function boot() {
     runScripts: 'dangerously',
     pretendToBeVisual: true,
     beforeParse(window) {
+      // 0. v168 系統更新公告（11/3–11/5）是照真實日期開的；測試預設當作不在那幾天，
+      //    要測公告本身的那一支自己把它刪掉（t87）
+      window.__SXR_NO_MAINT = true;
       // 1. 外部 script 一律當成載入失敗 → 走離線模式開機，開場不打網路
       const proto = window.HTMLScriptElement.prototype;
       Object.defineProperty(proto, 'src', {

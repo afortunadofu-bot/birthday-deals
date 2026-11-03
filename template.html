@@ -441,6 +441,9 @@
     background:none;border:0;border-radius:var(--r-sm);
     cursor:pointer;text-align:left;font:inherit;color:var(--ink)}
   .vr-acts{display:flex;justify-content:flex-end;padding:0 6px 8px}
+  .maint-banner{border-color:var(--alert-line);background:var(--alert-bg)}
+  .maint-banner.flash{animation:maintFlash 1.2s ease 2}
+  @keyframes maintFlash{50%{box-shadow:0 0 0 4px rgba(217,119,6,.35)}}
   /* v164 詳情的回報＋留言 */
   .thread-bar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 8px;padding:6px 0;
     border-bottom:1px solid var(--line-soft);font-size:.8rem;color:var(--ink-3)}
@@ -1774,6 +1777,14 @@
   <span style="flex:1;min-width:200px">你正在用<b>一般民眾的樣子</b>看這個網站。
     管理員的東西只是藏起來，<b>資料庫的權限沒有變</b>。</span>
   <button type="button" class="btn sm" id="btnEndPreview">回到管理員</button>
+</div></div>
+<!-- v168 系統更新公告（celine，11/3）。Supabase 流量超過免費方案上限被暫停，登入、收藏、回報都用不了。
+     平常的公告存在資料庫裡（current_announcement），資料庫停了就讀不到——所以這一則寫死在頁面上，
+     日期一過自己消失。 -->
+<div class="wrap"><div class="new-banner maint-banner hidden" id="maintBanner" role="status">
+  <span class="nb-icon" aria-hidden="true">🛠</span>
+  <div style="flex:1"><b id="maintTitle"></b><div id="maintBody" style="margin-top:2px;font-size:.82rem;color:var(--ink-2)"></div></div>
+  <button type="button" class="btn plain" id="btnDismissMaint" aria-label="關閉公告">✕</button>
 </div></div>
 <div class="wrap"><div class="new-banner hidden" id="siteAnnBanner">
   <span class="nb-icon" aria-hidden="true">📣</span>
@@ -5435,7 +5446,38 @@ function redirectTarget(){
   return location.origin + location.pathname.replace(/\/?index\.html$/, '/');
 }
 
+/* ---- v168 系統更新公告：日期內每次打開都看得到（✕ 只關這一次造訪），
+   按「Google 登入」不去 Google，直接講登入暫停——反正登入回來也什麼都讀不到。 ---- */
+const MAINT={from:'2026-11-03', until:'2026-11-05', title:'11/3－11/5 系統更新！',
+  body:'這幾天正在進行系統升級作業，登入功能將暫時無法使用，造成不便敬請見諒🙏'};
+function maintActive(now=new Date()){
+  if(window.__SXR_NO_MAINT) return false;          // 測試用：舊的登入測試不受這幾天影響
+  const d=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  return d>=MAINT.from && d<=MAINT.until;
+}
+function paintMaint(){
+  const on=maintActive();
+  let gone=false; try{ gone=sessionStorage.getItem('sxr_maint_closed')==='1'; }catch{}
+  $('#maintTitle').textContent=MAINT.title;
+  $('#maintBody').textContent=MAINT.body;
+  $('#maintBanner').classList.toggle('hidden', !on || gone);
+  return on;
+}
+$('#btnDismissMaint').onclick=()=>{
+  try{ sessionStorage.setItem('sxr_maint_closed','1'); }catch{}
+  $('#maintBanner').classList.add('hidden');
+};
+paintMaint();
 $('#btnLogin').onclick = async()=>{
+  if(maintActive()){
+    // 關掉過的也再叫出來，捲到最上面讓人看到
+    try{ sessionStorage.removeItem('sxr_maint_closed'); }catch{}
+    paintMaint();
+    $('#maintBanner').scrollIntoView({behavior:'smooth', block:'center'});
+    $('#maintBanner').classList.remove('flash'); void $('#maintBanner').offsetWidth; $('#maintBanner').classList.add('flash');
+    showToast('登入暫停到 11/5，'+'造成不便敬請見諒🙏');
+    return;
+  }
   if(!LIVE){
     // 不要沉默。直接把診斷結果推到使用者眼前。
     $$('.tab').forEach(x=>x.setAttribute('aria-selected', x.dataset.tab==='browse'));
@@ -12817,6 +12859,7 @@ const RATE_SNOOZE_DAYS=14;
 let RATE_NUDGE_SHOWN=false;
 function rateNudgeAllowed(){
   if(!LIVE || RATE_NUDGE_SHOWN || !me) return false;
+  if(maintActive()) return false;      // v168：資料庫停了，評分存不進去
   try{
     if(Number(localStorage.getItem('sxr_rate_snooze_until')||0) > Date.now()) return false;
   }catch{ return false; }
@@ -12840,6 +12883,7 @@ const ONELINE_MIN=5;
 const oneLineKey=()=>'sxr_oneline_'+(me?.id||'');
 function maybeShowOneLine(){
   if(!me || !LIVE) return false;
+  if(maintActive()) return false;      // v168：資料庫停了，送不出去
   const n=MY_REPORTS.filter(x=>x.result!=='failed').length;
   if(n<ONELINE_MIN) return false;
   let st=null; try{ st=JSON.parse(localStorage.getItem(oneLineKey())||'null'); }catch{}
@@ -15194,6 +15238,7 @@ function renderSurveyLastHint(){
 /* ---- 引導填問卷的小卡片 ---- */
 function surveyNudgeAllowed(){
   if(!LIVE || SURVEY_NUDGE_SHOWN) return false;
+  if(maintActive()) return false;      // v168 系統更新那幾天資料庫停了，填了也送不出去
   try{
     const now=Date.now();
     if(Number(localStorage.getItem('sxr_survey_snooze_until')||0) > now) return false;
