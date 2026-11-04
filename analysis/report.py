@@ -85,6 +85,10 @@ def build():
     q8, s8 = run(con, "08_footprint_quartiles.sql")
     q9, s9 = run(con, "09_expiry_watch.sql")
     m = q1[0]
+    # 縣市的最高與最低先算起來，Q1 的導言跟 Q6 都要用
+    best = q6[0]
+    floor = min(r["n_offers"] for r in q6)
+    floor_rows = [r for r in q6 if r["n_offers"] == floor]
 
     # ---------- Q1 規模 ----------
     pct = lambda a, b: f"{100.0 * a / b:.0f}%"
@@ -109,8 +113,9 @@ def build():
   <div class="hero">
     <div class="hero-num">NT${m["total_value"]:,}</div>
     <div class="hero-lbl">把 {m["n_valued"]} 筆估得出面額的優惠全部加起來，
-      一個壽星理論上能領到的總額。實際上沒有人領得完——
-      光是住在同一個縣市這件事就先砍掉一半（Q6）。</div>
+      一個壽星理論上能領到的總額。實際上沒有人領得完：住{esc(best["county"])}
+      拿得到 {best["n_offers"]} 筆，住{"、".join(esc(r["county"]) for r in floor_rows[:3])}
+      {f"等 {len(floor_rows)} 個縣市" if len(floor_rows) > 3 else ""}只剩 {floor} 筆（Q6）。</div>
   </div>
   <div class="stats">{tiles}</div>
   <div class="foot">{sql_block("01_market_shape.sql", s1)}</div>
@@ -128,7 +133,7 @@ def build():
               f'{esc(small["category"])}只有 NT${small["median_value"]}。'
               + (f'筆數不到 5 的類別（'
                  + "、".join(f'{esc(r["category"])} {r["n_valued"]} 筆' for r in thin)
-                 + '）沒有畫進圖裡——'
+                 + '）沒有畫進圖裡。'
                  f'{esc(thin[0]["category"])}的中位數有 NT${thin[0]["median_value"]}，'
                  f'但兩筆撐不起一個行情，放進去只會把其他類別壓成一條線。'
                  if thin else ''))
@@ -161,10 +166,9 @@ def build():
 
     # ---------- Q4 入會方式 ----------
     top = q4[0]
-    q4_ans = (f'<b>近一半的生日優惠綁在同一個第三方平台上。</b>'
-              f'{esc(top["access"])}一個人就吃掉 {top["n_offers"]} 筆'
-              f'（{pct(top["n_offers"], m["n_offers"])}）。'
-              f'對壽星是好事（辦一個帳號解鎖一堆品牌），對這個網站是風險：'
+    q4_ans = (f'<b>{m["n_offers"]} 筆裡有 {top["n_offers"]} 筆綁在同一個第三方平台上。</b>'
+              f'{esc(top["access"])}一個人就占了 {pct(top["n_offers"], m["n_offers"])}。'
+              f'對壽星是好事，辦一個帳號解鎖一堆品牌；對這個網站是風險，'
               f'它改規則，資料就要大改。')
     q4_body = ('<p class="caption">入會方式 × 優惠型態（格子越深筆數越多；數字都印出來了，'
                '不靠顏色讀）</p>'
@@ -182,17 +186,19 @@ def build():
     social = pick(q5, "tier_label", "4 社群貼文", "n_offers") or 0
     social_ver = pick(q5, "tier_label", "4 社群貼文", "verified_pct") or 0
     stale = max(r["days_since_check"] or 0 for r in q5)
+    weak = sum(r["n_offers"] for r in q5 if r["tier_label"][:1] in ("3", "4"))
     q5_ans = (f'<b>只有 {pct(official, m["n_offers"])} 的優惠有品牌官方背書。</b>'
-              f'最可信的來源是部落格懶人包或社群貼文的，合起來超過八成；'
+              f'有 {pct(weak, m["n_offers"])} 的優惠，最好的來源只是部落格懶人包或社群貼文；'
               f'其中社群貼文那 {social} 筆的人工複查率是 {social_ver:.0f}%。'
-              f'而且整批資料已經 {stale} 天沒有複查過——'
-              f'這一節量的不是優惠，是這個資料集自己的健康度。')
+              f'整批資料已經 {stale} 天沒有複查過。'
+              f'這一節看的是資料本身可不可靠，跟優惠大不大沒關係。')
+    official_share = f'占 {pct(official, m["n_offers"])}'
     q5_body = ('<p class="caption">以「最可信來源」分組的優惠筆數</p>'
                + ch.hbar(q5, label="tier_label", value="n_offers", label_w=150,
                          title="優惠的最佳來源可信度分佈")
                + f'<div class="stats">'
                  f'{ch.stat("距離上次複查", f"{stale} 天", "整批 last_checked 都是同一天", "warn")}'
-                 f'{ch.stat("有官方來源", f"{official} 筆", f"占 {pct(official, m['n_offers'])}")}'
+                 f'{ch.stat("有官方來源", f"{official} 筆", official_share)}'
                  f'{ch.stat("只有社群貼文", f"{social} 筆", f"複查率 {social_ver:.0f}%", "warn")}'
                  f'</div>')
     q5_tbl = table_block(q5, [("tier_label", "最佳來源"), ("n_offers", "筆數"), ("pct", "占比 %"),
@@ -201,12 +207,9 @@ def build():
                               ("days_since_check", "幾天沒查")])
 
     # ---------- Q6 縣市 ----------
-    best = q6[0]
-    floor_rows = [r for r in q6 if r["n_offers"] == min(x["n_offers"] for x in q6)]
-    floor = floor_rows[0]["n_offers"]
     no_store = [r["county"] for r in q6 if r["n_stores"] == 0]
-    q6_ans = (f'<b>住台北的壽星有 {best["n_offers"]} 個優惠可選，'
-              f'{"、".join(esc(r["county"]) for r in floor_rows)} 只有 {floor} 個——'
+    q6_ans = (f'<b>住{esc(best["county"])}的壽星有 {best["n_offers"]} 個優惠可選，'
+              f'{"、".join(esc(r["county"]) for r in floor_rows)}只有 {floor} 個，'
               f'差 {round(best["n_offers"] / floor, 1)} 倍。</b>'
               f'而且那 {floor} 個全部是全台連鎖，'
               f'也就是說這些縣市的壽星完全沒有「本地品牌」的生日優惠可拿。'
@@ -230,9 +233,9 @@ def build():
               f'面額中位數 NT${qq1["median_value"]}，'
               f'最多的那四分之一（{qq4["min_stores"]}–{qq4["max_stores"]} 家）只有 '
               f'NT${qq4["median_value"]}。'
-              f'log10(門市數) 與面額的 Pearson 相關是 {r_val}，'
-              f'弱負相關、不是強關係——{qq4["n_brands"]} 家大連鎖裡還是有開 300 元的。'
-              f'這裡只有 {q8[0]["corr_n"]} 個品牌有門市資料，所以是觀察，不是定律。')
+              f'這是弱負相關：log10(門市數) 與面額的 Pearson 相關 {r_val}，'
+              f'門市最多的那 {qq4["n_brands"]} 個品牌裡，還是有人開 300 元。'
+              f'而且只有 {q8[0]["corr_n"]} 個品牌有門市資料，所以這是觀察，不是定律。')
     q7_body = ('<p class="caption">每一點是一個品牌：橫軸門市數（對數刻度）、縱軸優惠面額</p>'
                + ch.scatter(q7, x="n_stores", y="value_twd", name="brand",
                             xlabel="門市數（對數）", ylabel="面額（元）",
@@ -259,8 +262,8 @@ def build():
     q9_ans = (f'<b>這份快照裡的限期檔期，到今天全部不能用了。</b>'
               f'{len(q9)} 筆 fixed 優惠中 {len(expired)} 筆已過期、{len(noend)} 筆沒寫迄日。'
               f'快照停在 {esc(meta_build)}，檔期卻會自己走——'
-              f'所以線上版不能靠人工記得下架，必須用 valid_until 自動判斷。'
-              f'這一節是維運清單，不是分析結論。')
+              f'線上版不能靠人工記得下架，得用 valid_until 自動判斷。'
+              f'這一節列的是要處理的清單。')
     pill = {"已過期": ("critical", "✕"), "沒寫迄日": ("warning", "！"),
             "14 天內到期": ("warning", "！"), "還沒開始": ("muted", "·"),
             "進行中": ("good", "✓")}
@@ -305,7 +308,8 @@ def build():
 
     limits = f"""
 <section class="card" id="limits">
-  <h2>資料限制（先說清楚再看結論）</h2>
+  <h2>資料限制</h2>
+  <p class="answer">這份分析不能拿來說什麼，先寫在前面。</p>
   <ul class="limits">
     <li><b>這是快照，不是即時資料。</b>優惠來自 <code>offers.json</code>，
       最後查證日 {esc(meta_build)}；線上版的 Postgres 已經長得更大，
@@ -315,12 +319,11 @@ def build():
       換算成新台幣的估計值，{m["n_offers"] - m["n_valued"]} 筆估不出來（吃到飽、
       「依門市公告」）就留 null，不當 0。所有平均與中位數都只算得出來的那些。</li>
     <li><b>門市數只到對得上的品牌。</b>門市來自 Google Places 的品牌搜尋結果，
-      {n_brand_stores} 個品牌抓得到門市，其中 {q8[0]["corr_n"]} 個同時估得出面額——
+      {n_brand_stores} 個品牌抓得到門市，其中 {q8[0]["corr_n"]} 個同時估得出面額，
       Q7 的散佈圖就是這 {q8[0]["corr_n"]} 個點。品牌名對不上的（聯名卡、改名、小店）
       沒有門市數，所以這一題天生偏向連鎖品牌。</li>
     <li><b>縣市覆蓋看的是「有沒有」，不是「多好拿」。</b>Q6 算的是這個縣市有幾筆優惠，
-      沒有按人口或店數標準化——手上沒有可引用的人口資料，寧可不換算，
-      也不要生一個看起來精確的數字。</li>
+      沒有按人口或店數標準化：手上沒有可引用的人口資料，所以不換算。</li>
     <li><b>沒有使用者行為資料。</b>這份分析完全是優惠與門市的靜態結構，
       沒有碰任何人的瀏覽或兌換紀錄。</li>
   </ul>
@@ -381,8 +384,7 @@ def build():
     哪一類最大方、多少優惠其實當天辦來不及、住不同縣市差多少、
     還有這批資料自己有多可信。</p>
   <p>每一節都是「問題 → 一句結論 → 圖 → SQL → 表格」。
-    結論的數字是從查詢結果算出來的，不是寫死的字串；
-    資料換一版，這一頁的數字會自己跟著換。</p>
+    結論的數字是從查詢結果算出來的。資料換一版，這一頁的數字會自己跟著換。</p>
 </section>
 {"".join(secs)}
 {method}

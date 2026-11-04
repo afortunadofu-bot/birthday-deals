@@ -150,7 +150,7 @@ pre.tree{background:var(--page)}
     <p class="sub">139 筆台灣生日優惠，用 SQL 問九個問題</p>
     <p class="byline">資料：壽星日 <code>offers.json</code>（最後查證 2026-08-04）
       ＋ Google Places 門市彙總　·　工具：SQLite ＋ Python 標準庫　·
-      產出 2026-11-03 11:38 (UTC+8)</p>
+      產出 2026-11-04 15:32 (UTC+8)</p>
     <nav class="jump"><a href="#q1">Q1 規模</a><a href="#q2">Q2 類別</a><a href="#q3">Q3 提前門檻</a><a href="#q4">Q4 入會方式</a><a href="#q5">Q5 資料可信度</a><a href="#q6">Q6 縣市落差</a><a href="#q7">Q7–8 門市規模</a><a href="#q9">Q9 檔期</a><a href="#method">方法</a><a href="#limits">資料限制</a></nav>
     <button class="theme" type="button" aria-label="切換深淺色">◐</button>
   </div>
@@ -162,8 +162,7 @@ pre.tree{background:var(--page)}
     哪一類最大方、多少優惠其實當天辦來不及、住不同縣市差多少、
     還有這批資料自己有多可信。</p>
   <p>每一節都是「問題 → 一句結論 → 圖 → SQL → 表格」。
-    結論的數字是從查詢結果算出來的，不是寫死的字串；
-    資料換一版，這一頁的數字會自己跟著換。</p>
+    結論的數字是從查詢結果算出來的。資料換一版，這一頁的數字會自己跟著換。</p>
 </section>
 
 <section class="card hero-card" id="q1">
@@ -172,8 +171,9 @@ pre.tree{background:var(--page)}
   <div class="hero">
     <div class="hero-num">NT$20,720</div>
     <div class="hero-lbl">把 123 筆估得出面額的優惠全部加起來，
-      一個壽星理論上能領到的總額。實際上沒有人領得完——
-      光是住在同一個縣市這件事就先砍掉一半（Q6）。</div>
+      一個壽星理論上能領到的總額。實際上沒有人領得完：住台北市
+      拿得到 115 筆，住嘉義縣、花蓮縣、澎湖縣
+      等 5 個縣市只剩 33 筆（Q6）。</div>
   </div>
   <div class="stats"><div class="stat"><div class="stat-label">優惠筆數</div><div class="stat-value">139</div><div class="stat-sub">7 個類別、139 個品牌</div></div><div class="stat"><div class="stat-label">面額中位數</div><div class="stat-value">NT$130</div><div class="stat-sub">123 筆估得出面額，最大 NT$999</div></div><div class="stat"><div class="stat-label">當天辦就能用</div><div class="stat-value">49%</div><div class="stat-sub">68 筆免費入會又不用提前</div></div><div class="stat"><div class="stat-label">全台都吃得到</div><div class="stat-value">24%</div><div class="stat-sub">33 筆全台連鎖，其餘限定縣市</div></div><div class="stat"><div class="stat-label">人工複查過</div><div class="stat-value">54%</div><div class="stat-sub">75 筆標記 verified</div></div><div class="stat"><div class="stat-label">每年都有</div><div class="stat-value">86%</div><div class="stat-sub">120 筆常態、19 筆限期檔期</div></div></div>
   <div class="foot"><details class="sqlbox"><summary>看這一題的 SQL<code>queries/01_market_shape.sql</code></summary><pre><code>-- Q1 這批生日優惠長什麼樣子？（報告開頭的幾個數字）
@@ -205,7 +205,7 @@ from offers;</code></pre></details></div>
 <section class="card" id="q2">
   <div class="qno">Q2</div>
   <h2>哪一類的生日優惠最大方？</h2>
-  <p class="answer"><b>吃一頓的生日禮，是喝一杯的 3.3 倍。</b>火鍋燒肉的面額中位數 NT$200，飲料只有 NT$60。筆數不到 5 的類別（娛樂樂園 2 筆、零售美妝 4 筆）沒有畫進圖裡——娛樂樂園的中位數有 NT$949，但兩筆撐不起一個行情，放進去只會把其他類別壓成一條線。</p>
+  <p class="answer"><b>吃一頓的生日禮，是喝一杯的 3.3 倍。</b>火鍋燒肉的面額中位數 NT$200，飲料只有 NT$60。筆數不到 5 的類別（娛樂樂園 2 筆、零售美妝 4 筆）沒有畫進圖裡。娛樂樂園的中位數有 NT$949，但兩筆撐不起一個行情，放進去只會把其他類別壓成一條線。</p>
   <p class="caption">各類別面額中位數（括號是估得出面額的筆數；只畫 5 筆以上的類別）</p><svg class="chart" viewBox="0 0 720 174" role="img" aria-label="各類別生日優惠面額中位數" preserveAspectRatio="xMidYMid meet">
 <line class="grid" x1="140.0" y1="6" x2="140.0" y2="146"/>
 <text class="tick" x="140.0" y="162" text-anchor="middle">0</text>
@@ -380,7 +380,7 @@ select bucket,
 <section class="card" id="q4">
   <div class="qno">Q4</div>
   <h2>要先變成誰的會員，才換得到什麼？</h2>
-  <p class="answer"><b>近一半的生日優惠綁在同一個第三方平台上。</b>Ocard 第三方集點一個人就吃掉 65 筆（47%）。對壽星是好事（辦一個帳號解鎖一堆品牌），對這個網站是風險：它改規則，資料就要大改。</p>
+  <p class="answer"><b>139 筆裡有 65 筆綁在同一個第三方平台上。</b>Ocard 第三方集點一個人就占了 47%。對壽星是好事，辦一個帳號解鎖一堆品牌；對這個網站是風險，它改規則，資料就要大改。</p>
   <p class="caption">入會方式 × 優惠型態（格子越深筆數越多；數字都印出來了，不靠顏色讀）</p><table class="matrix"><thead><tr><th></th><th>合計</th><th>免費無低消</th><th>免費有低消</th><th>買一送一</th><th>折扣</th><th>面額中位數</th><th>當天可辦</th></tr></thead><tbody><tr><th scope="row">Ocard 第三方集點</th><td><b>65</b></td><td style="background:rgba(42,120,214,0.56)">12</td><td class="on-fill" style="background:rgba(42,120,214,0.92)">26</td><td style="background:rgba(42,120,214,0.56)">12</td><td class="on-fill" style="background:rgba(42,120,214,0.64)">15</td><td>90</td><td>50</td></tr><tr><th scope="row">品牌 APP</th><td><b>33</b></td><td style="background:rgba(42,120,214,0.00)">·</td><td class="on-fill" style="background:rgba(42,120,214,0.59)">13</td><td style="background:rgba(42,120,214,0.11)">1</td><td class="on-fill" style="background:rgba(42,120,214,0.70)">17</td><td>130</td><td>18</td></tr><tr><th scope="row">不用會員</th><td><b>23</b></td><td style="background:rgba(42,120,214,0.11)">1</td><td class="on-fill" style="background:rgba(42,120,214,0.59)">13</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.46)">9</td><td>300</td><td>0</td></tr><tr><th scope="row">品牌自家會員</th><td><b>13</b></td><td style="background:rgba(42,120,214,0.23)">3</td><td style="background:rgba(42,120,214,0.32)">5</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.32)">5</td><td>150</td><td>0</td></tr><tr><th scope="row">LINE 官方帳號</th><td><b>3</b></td><td style="background:rgba(42,120,214,0.11)">1</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.11)">1</td><td style="background:rgba(42,120,214,0.11)">1</td><td>65</td><td>0</td></tr><tr><th scope="row">指定信用卡</th><td><b>1</b></td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.11)">1</td><td>150</td><td>0</td></tr><tr><th scope="row">要升到指定會員等級</th><td><b>1</b></td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.11)">1</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.00)">·</td><td>120</td><td>0</td></tr></tbody></table><p class="note">「當天可辦」那欄要小心讀：「不用會員」這組有 22 筆的 advance_days 是 null（品牌沒明訂），所以它顯示 0，不是真的來不及。這就是 Q3 把「未明訂」單獨一組的原因。</p>
   <div class="foot"><details class="sqlbox"><summary>看這一題的 SQL<code>queries/04_membership_matrix.sql</code></summary><pre><code>-- Q4 要先變成誰的會員，才換得到什麼？
 --
@@ -430,7 +430,7 @@ select l.access,
 <section class="card" id="q5">
   <div class="qno">Q5</div>
   <h2>這些優惠是誰說的？多久沒複查了？</h2>
-  <p class="answer"><b>只有 12% 的優惠有品牌官方背書。</b>最可信的來源是部落格懶人包或社群貼文的，合起來超過八成；其中社群貼文那 54 筆的人工複查率是 0%。而且整批資料已經 91 天沒有複查過——這一節量的不是優惠，是這個資料集自己的健康度。</p>
+  <p class="answer"><b>只有 12% 的優惠有品牌官方背書。</b>有 86% 的優惠，最好的來源只是部落格懶人包或社群貼文；其中社群貼文那 54 筆的人工複查率是 0%。整批資料已經 92 天沒有複查過。這一節看的是資料本身可不可靠，跟優惠大不大沒關係。</p>
   <p class="caption">以「最可信來源」分組的優惠筆數</p><svg class="chart" viewBox="0 0 720 146" role="img" aria-label="優惠的最佳來源可信度分佈" preserveAspectRatio="xMidYMid meet">
 <line class="grid" x1="158.0" y1="6" x2="158.0" y2="118"/>
 <text class="tick" x="158.0" y="134" text-anchor="middle">0</text>
@@ -463,7 +463,7 @@ select l.access,
 <text class="val" x="505.6" y="103">54</text>
 </g>
 <line class="axis" x1="158" y1="6" x2="158" y2="118"/>
-</svg><div class="stats"><div class="stat" data-tone="warn"><div class="stat-label">距離上次複查</div><div class="stat-value">91 天</div><div class="stat-sub">整批 last_checked 都是同一天</div></div><div class="stat"><div class="stat-label">有官方來源</div><div class="stat-value">17 筆</div><div class="stat-sub">占 12%</div></div><div class="stat" data-tone="warn"><div class="stat-label">只有社群貼文</div><div class="stat-value">54 筆</div><div class="stat-sub">複查率 0%</div></div></div>
+</svg><div class="stats"><div class="stat" data-tone="warn"><div class="stat-label">距離上次複查</div><div class="stat-value">92 天</div><div class="stat-sub">整批 last_checked 都是同一天</div></div><div class="stat"><div class="stat-label">有官方來源</div><div class="stat-value">17 筆</div><div class="stat-sub">占 12%</div></div><div class="stat" data-tone="warn"><div class="stat-label">只有社群貼文</div><div class="stat-value">54 筆</div><div class="stat-sub">複查率 0%</div></div></div>
   <div class="foot"><details class="sqlbox"><summary>看這一題的 SQL<code>queries/05_source_trust.sql</code></summary><pre><code>-- Q5 這些優惠是誰說的？多久沒複查了？
 --
 -- 每筆優惠可以有多個來源，tier 越小越可信：1 品牌官方／2 新聞媒體／3 部落格懶人包／4 社群貼文。
@@ -495,12 +495,12 @@ select tier_label,
        max(days_since_check)                                   as days_since_check
   from t
  group by tier_label, tier
- order by tier;</code></pre></details><details class="tablebox"><summary>看完整表格</summary><table class="data"><thead><tr><th>最佳來源</th><th>筆數</th><th>占比 %</th><th>複查過</th><th>複查率 %</th><th>平均面額</th><th>平均來源數</th><th>幾天沒查</th></tr></thead><tbody><tr><td>1 品牌官方</td><td>17</td><td>12.2</td><td>17</td><td>100</td><td>123</td><td>2</td><td>91</td></tr><tr><td>2 新聞媒體</td><td>3</td><td>2.2</td><td>2</td><td>67</td><td>473</td><td>1</td><td>91</td></tr><tr><td>3 部落格懶人包</td><td>65</td><td>46.8</td><td>56</td><td>86</td><td>183</td><td>1</td><td>91</td></tr><tr><td>4 社群貼文</td><td>54</td><td>38.8</td><td>0</td><td>0</td><td>138</td><td>1</td><td>91</td></tr></tbody></table></details></div>
+ order by tier;</code></pre></details><details class="tablebox"><summary>看完整表格</summary><table class="data"><thead><tr><th>最佳來源</th><th>筆數</th><th>占比 %</th><th>複查過</th><th>複查率 %</th><th>平均面額</th><th>平均來源數</th><th>幾天沒查</th></tr></thead><tbody><tr><td>1 品牌官方</td><td>17</td><td>12.2</td><td>17</td><td>100</td><td>123</td><td>2</td><td>92</td></tr><tr><td>2 新聞媒體</td><td>3</td><td>2.2</td><td>2</td><td>67</td><td>473</td><td>1</td><td>92</td></tr><tr><td>3 部落格懶人包</td><td>65</td><td>46.8</td><td>56</td><td>86</td><td>183</td><td>1</td><td>92</td></tr><tr><td>4 社群貼文</td><td>54</td><td>38.8</td><td>0</td><td>0</td><td>138</td><td>1</td><td>92</td></tr></tbody></table></details></div>
 </section>
 <section class="card" id="q6">
   <div class="qno">Q6</div>
   <h2>住在哪裡，生日優惠差多少？</h2>
-  <p class="answer"><b>住台北的壽星有 115 個優惠可選，嘉義縣、花蓮縣、澎湖縣、金門縣、連江縣 只有 33 個——差 3.5 倍。</b>而且那 33 個全部是全台連鎖，也就是說這些縣市的壽星完全沒有「本地品牌」的生日優惠可拿。金門縣、連江縣連一家對得上的門市都沒有。</p>
+  <p class="answer"><b>住台北市的壽星有 115 個優惠可選，嘉義縣、花蓮縣、澎湖縣、金門縣、連江縣只有 33 個，差 3.5 倍。</b>而且那 33 個全部是全台連鎖，也就是說這些縣市的壽星完全沒有「本地品牌」的生日優惠可拿。金門縣、連江縣連一家對得上的門市都沒有。</p>
   <p class="caption">各縣市可用的優惠筆數（含全台連鎖）</p><svg class="chart" viewBox="0 0 720 580" role="img" aria-label="各縣市可用生日優惠數" preserveAspectRatio="xMidYMid meet">
 <line class="grid" x1="84.0" y1="24" x2="84.0" y2="552"/>
 <text class="tick" x="84.0" y="568" text-anchor="middle">0</text>
@@ -654,7 +654,7 @@ select name                                                   as county,
 <section class="card" id="q7">
   <div class="qno">Q7 · Q8</div>
   <h2>店開得多的品牌，生日禮是不是比較薄？</h2>
-  <p class="answer"><b>店開得越多，生日禮越薄。</b>門市數最少的那四分之一品牌（1–3 家店）面額中位數 NT$180，最多的那四分之一（23–583 家）只有 NT$72。log10(門市數) 與面額的 Pearson 相關是 -0.284，弱負相關、不是強關係——26 家大連鎖裡還是有開 300 元的。這裡只有 106 個品牌有門市資料，所以是觀察，不是定律。</p>
+  <p class="answer"><b>店開得越多，生日禮越薄。</b>門市數最少的那四分之一品牌（1–3 家店）面額中位數 NT$180，最多的那四分之一（23–583 家）只有 NT$72。這是弱負相關：log10(門市數) 與面額的 Pearson 相關 -0.284，門市最多的那 26 個品牌裡，還是有人開 300 元。而且只有 106 個品牌有門市資料，所以這是觀察，不是定律。</p>
   <p class="caption">每一點是一個品牌：橫軸門市數（對數刻度）、縱軸優惠面額</p><svg class="chart" viewBox="0 0 720 340" role="img" aria-label="門市數與優惠面額">
 <line class="grid" x1="52" y1="296.0" x2="704" y2="296.0"/>
 <text class="tick" x="44" y="300.0" text-anchor="end">0</text>
@@ -890,7 +890,7 @@ select bv.q                                                as store_quartile,
 <section class="card" id="q9">
   <div class="qno">Q9</div>
   <h2>哪幾筆已經不能用了？</h2>
-  <p class="answer"><b>這份快照裡的限期檔期，到今天全部不能用了。</b>19 筆 fixed 優惠中 18 筆已過期、1 筆沒寫迄日。快照停在 2026-08-04，檔期卻會自己走——所以線上版不能靠人工記得下架，必須用 valid_until 自動判斷。這一節是維運清單，不是分析結論。</p>
+  <p class="answer"><b>這份快照裡的限期檔期，到今天全部不能用了。</b>19 筆 fixed 優惠中 18 筆已過期、1 筆沒寫迄日。快照停在 2026-08-04，檔期卻會自己走——線上版不能靠人工記得下架，得用 valid_until 自動判斷。這一節列的是要處理的清單。</p>
   <p class="caption">19 筆限期檔期的現況（狀態同時有圖示與文字，不只靠顏色）</p><table class="data"><thead><tr><th>狀態</th><th>品牌</th><th>類別</th><th>檔期</th><th>面額</th><th>來源層級</th></tr></thead><tbody><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>順成蛋糕</td><td>甜點烘焙</td><td class="num">2026-08-01 → 2026-08-28</td><td class="num">200</td><td class="num">3</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>原燒</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">200</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>王品牛排</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">150</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>藝奇</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">100</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>夏慕尼</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">170</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>西堤</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">70</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>陶板屋</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">70</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>品田牧場</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">50</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>莆田</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">150</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>青花驕</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">80</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>享鴨</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">150</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>丰禾</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">180</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>和牛涮</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">120</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>肉次方</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">80</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>尬鍋</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">80</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>阪前</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">200</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>就饗</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">—</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>金咕</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">—</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="warning">！ 沒寫迄日</span></td><td>六福村主題遊樂園</td><td>娛樂樂園</td><td class="num">— → 沒寫</td><td class="num">999</td><td class="num">2</td></tr></tbody></table>
   <div class="foot"><details class="sqlbox"><summary>看這一題的 SQL<code>queries/09_expiry_watch.sql</code></summary><pre><code>-- Q9 哪幾筆已經不能用了？（資料維運清單）
 --
@@ -948,22 +948,22 @@ select brand,
 </section>
 
 <section class="card" id="limits">
-  <h2>資料限制（先說清楚再看結論）</h2>
+  <h2>資料限制</h2>
+  <p class="answer">這份分析不能拿來說什麼，先寫在前面。</p>
   <ul class="limits">
     <li><b>這是快照，不是即時資料。</b>優惠來自 <code>offers.json</code>，
       最後查證日 2026-08-04；線上版的 Postgres 已經長得更大，
-      但這台機器跑分析時（2026-11-03）線上資料庫正好在維護，所以全部用本機快照。
+      但這台機器跑分析時（2026-11-04）線上資料庫正好在維護，所以全部用本機快照。
       Q9 的「全部過期」是快照的必然結果，不是線上網站的狀態。</li>
     <li><b>面額是估的。</b><code>value_twd</code> 是把「一份雞塊」「九折」這種優惠
       換算成新台幣的估計值，16 筆估不出來（吃到飽、
       「依門市公告」）就留 null，不當 0。所有平均與中位數都只算得出來的那些。</li>
     <li><b>門市數只到對得上的品牌。</b>門市來自 Google Places 的品牌搜尋結果，
-      117 個品牌抓得到門市，其中 106 個同時估得出面額——
+      117 個品牌抓得到門市，其中 106 個同時估得出面額，
       Q7 的散佈圖就是這 106 個點。品牌名對不上的（聯名卡、改名、小店）
       沒有門市數，所以這一題天生偏向連鎖品牌。</li>
     <li><b>縣市覆蓋看的是「有沒有」，不是「多好拿」。</b>Q6 算的是這個縣市有幾筆優惠，
-      沒有按人口或店數標準化——手上沒有可引用的人口資料，寧可不換算，
-      也不要生一個看起來精確的數字。</li>
+      沒有按人口或店數標準化：手上沒有可引用的人口資料，所以不換算。</li>
     <li><b>沒有使用者行為資料。</b>這份分析完全是優惠與門市的靜態結構，
       沒有碰任何人的瀏覽或兌換紀錄。</li>
   </ul>
@@ -972,7 +972,7 @@ select brand,
 <footer class="wrap foot-note">
   <p>壽星日資料分析　·　139 筆優惠、139 個品牌、
     4,734 家門市彙總　·
-    產出 2026-11-03 11:38（UTC+8）</p>
+    產出 2026-11-04 15:32（UTC+8）</p>
 </footer>
 <script>
 (function () {
