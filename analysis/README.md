@@ -3,9 +3,10 @@
 資料是我自己做的網站上的：**139 筆台灣生日優惠**、**4,734 家對得上的門市**。
 全部丟進 SQLite，統計量用 SQL 算，Python 只負責排成一頁可以直接開的報告。
 
-**成品**：[`report.html`](report.html)，一頁式報告，九題各自有「問題 → 一句結論 → 圖 →
-SQL → 表格」。GitHub 不會直接渲染 HTML，把檔案抓下來雙擊就能看。
-線上版：<https://claude.ai/artifact/1PwzjUXxh5SrXgyyANd8Nu>（私人連結，要看跟我說一聲）
+**成品**：<https://afortunadofu-bot.github.io/birthday-deals/>
+一頁式報告，九題各自有「問題 → 一句結論 → 圖 → SQL → 表格」。
+原始檔是 [`report.html`](report.html)，`report.py` 會同時寫一份到 repo 根目錄的
+`docs/index.html`，GitHub Pages 就是從那裡發的。
 
 ---
 
@@ -63,10 +64,12 @@ analysis/
 ├ schema.sql       分析庫的 DDL；兩個 view 處理「全台連鎖要展開到每個縣市」
 ├ queries/         01…09，一題一個 .sql，每支開頭都寫為什麼這樣問
 ├ charts.py        inline SVG：橫條、直條、散佈、熱度交叉表
-├ report.py        跑查詢 → 算結論 → 產出 report.html
+├ report.py        跑查詢 → 算結論 → 產出 report.html 與 ../docs/index.html
 ├ report.html      成品（進版控，不用跑就看得到）
 └ data/
    └ store_counts.csv   品牌 × 縣市門市數（653 列）
+
+../docs/            GitHub Pages 的來源，只有這份報告，跟網站本體分開
 ```
 
 ## 怎麼跑

@@ -20,6 +20,10 @@ HERE = Path(__file__).resolve().parent
 DB = HERE / "analysis.db"
 QUERIES = HERE / "queries"
 OUT = HERE / "report.html"
+# GitHub Pages 的來源是 repo 根目錄的 docs/（Settings → Pages 設成 main /docs）。
+# 同一份內容寫兩個地方，是為了讓「看原始碼的人」跟「只想看報告的人」都不用多跑一步；
+# 由這支程式一起寫，就不會有一邊更新、另一邊還是舊的。
+PAGES = HERE.parent / "docs" / "index.html"
 TPE = timezone(timedelta(hours=8))
 
 TITLE = "壽星日資料分析"
@@ -409,8 +413,11 @@ def build():
 </script>
 </body></html>"""
     OUT.write_text(doc, encoding="utf-8")
+    PAGES.parent.mkdir(exist_ok=True)
+    PAGES.write_text(doc, encoding="utf-8")
+    (PAGES.parent / ".nojekyll").write_text("", encoding="utf-8")
     con.close()
-    print(f"寫好 {OUT.name}（{len(doc):,} 字元）")
+    print(f"寫好 {OUT.name} 與 docs/{PAGES.name}（{len(doc):,} 字元）")
     for n, rows in [("Q2", q2), ("Q3", q3), ("Q4", q4), ("Q5", q5),
                     ("Q6", q6), ("Q7", q7), ("Q8", q8), ("Q9", q9)]:
         print(f"  {n}: {len(rows)} 列")
