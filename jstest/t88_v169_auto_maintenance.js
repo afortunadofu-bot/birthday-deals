@@ -29,7 +29,7 @@ const { boot, tick, makeAsserts } = require('./harness');
   setNet([402], 200);
   t.ok('402（超量被停）：馬上掛', (await probe()) === true && !$('#maintBanner').classList.contains('hidden'));
   t.eq('標題沒有日期（不知道要停多久）', $('#maintTitle').textContent, '系統更新中！');
-  t.ok('內文照 celine 的字', /這幾天正在進行系統升級作業，登入功能將暫時無法使用，造成不便敬請見諒🙏/.test($('#maintBody').textContent));
+  t.ok('內文照 celine 的字', /這幾天正在進行系統升級作業，登入和排行榜功能將暫時無法使用，造成不便敬請見諒🙏/.test($('#maintBody').textContent));
   t.ok('登入被擋下來', win.eval('maintActive()') === true);
   t.eq('只問了一次（402 不用再確認）', win.__calls.filter((u) => /supabase/.test(u)).length, 1);
   t.ok('問的是最小的那一筆（不吃流量）', /site_settings\?select=key&limit=1/.test(win.__calls[0]));

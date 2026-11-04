@@ -19,7 +19,7 @@ const { boot, tick, makeAsserts } = require('./harness');
   win.eval("maintActive=()=>true; paintMaint();");
   t.ok('那幾天：最上面的公告出現', !$('#maintBanner').classList.contains('hidden'));
   t.eq('標題照原文', $('#maintTitle').textContent, '11/3－11/5 系統更新！');
-  t.eq('內文照原文', $('#maintBody').textContent, '這幾天正在進行系統升級作業，登入功能將暫時無法使用，造成不便敬請見諒🙏');
+  t.eq('內文照原文', $('#maintBody').textContent, '這幾天正在進行系統升級作業，登入和排行榜功能將暫時無法使用，造成不便敬請見諒🙏');
 
   // 按登入：不去 Google，公告叫出來
   let oauth = 0;

@@ -5486,12 +5486,13 @@ function redirectTarget(){
 /* ---- v168 系統更新公告：日期內每次打開都看得到（✕ 只關這一次造訪），
    按「Google 登入」不去 Google，直接講登入暫停——反正登入回來也什麼都讀不到。 ---- */
 const MAINT={from:'2026-11-03', until:'2026-11-05', title:'11/3－11/5 系統更新！',
-  body:'這幾天正在進行系統升級作業，登入功能將暫時無法使用，造成不便敬請見諒🙏'};
+  body:'這幾天正在進行系統升級作業，登入和排行榜功能將暫時無法使用，造成不便敬請見諒🙏'};
 /* v169 celine：「以後幫我注意，如果系統無法登入，都先自動掛個 banner 寫這幾天系統更新，預留我修改的時間」。
    不用等人發現、不用改日期：開站時問一下資料庫，連不上就自己掛這一則（沒有日期，因為不知道要多久）。
    日期那一則（MAINT）是知道要停幾天時手動填的，兩個都有的話用有日期的那一則。 */
+/* v172 celine：「你要在公告多備註說排行榜功能也都不能用」 */
 const MAINT_AUTO={title:'系統更新中！',
-  body:'這幾天正在進行系統升級作業，登入功能將暫時無法使用，造成不便敬請見諒🙏'};
+  body:'這幾天正在進行系統升級作業，登入和排行榜功能將暫時無法使用，造成不便敬請見諒🙏'};
 let MAINT_DOWN=false;      // probeBackend() 偵測到資料庫連不上
 function maintDated(now=new Date()){
   const d=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
