@@ -99,15 +99,17 @@ function errSb(msg) {
   const ddTxt = dd ? dd.nextElementSibling.textContent : '';
   t.ok('「我的」下方那一行也不提', /找不到/.test(ddTxt) && !BAD.test(ddTxt), ddTxt);
 
-  // 真的錯誤（不是還沒建表）原文照樣帶出來，不要全部吞成「還沒開放」
+  // 真的錯誤（不是還沒建表）不要全部吞成「還沒開放」——但 v171 起講的是中文解釋，不是英文原文
+  // （celine：「各式各樣的 error 都盡量不要跳英文出來，都要有中文解釋」）
   t.eq('還沒建表 → 只說還沒開放', win.pubErrText({ message: MISSING }, '失敗：'), win.eval('PUB_NOT_OPEN'));
-  t.eq('其他錯誤 → 前綴＋原文',
-    win.pubErrText({ message: 'permission denied for table x' }, '失敗：'), '失敗：permission denied for table x');
-  t.eq('字串也收', win.pubErrText('timeout', '失敗：'), '失敗：timeout');
+  t.eq('其他錯誤 → 前綴＋中文解釋（不是英文原文）',
+    win.pubErrText({ message: 'permission denied for table x' }, '失敗：'), '失敗：沒有權限做這件事（可能還沒登入、登入過期，或這一筆不是你的）');
+  t.eq('字串也收', win.pubErrText('timeout', '失敗：'), '失敗：伺服器回應太慢，請稍等一下再試一次');
   use('permission denied for table notifications');
   await win.openNotifDialog();
   await tick(win, 2);
-  t.ok('通知：真的錯誤還是看得到原文', /permission denied/.test(txt('#notifList')), txt('#notifList'));
+  t.ok('通知：真的錯誤講得出是什麼（中文），不是吞成「還沒開放」',
+    /沒有權限/.test(txt('#notifList')) && !/permission denied/.test(txt('#notifList')), txt('#notifList'));
   $('#dlgNotif').close();
 
   /* ================= 二、靜態：畫得出來的字串 ================= */

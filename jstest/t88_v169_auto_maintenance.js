@@ -50,7 +50,23 @@ const { boot, tick, makeAsserts } = require('./harness');
   win.eval('maintDated=()=>true; MAINT_DOWN=true; paintMaint();');
   t.eq('手動填了日期：用有日期的那一則', $('#maintTitle').textContent, '11/3－11/5 系統更新！');
 
-  t.ok('開站就會去問（不擋開站）', /createClient\(CFG\.url, CFG\.anonKey\);\s*probeBackend\(\);/.test(
+  /* v170：Supabase 被停掉時，畫面上不要出現「Service for this project is restricted…」那串英文——
+     所有請求經過 sxFetch，402 換成一句人話，順便掛公告 */
+  win.Response = global.Response;
+  win.eval('maintDated=()=>false; MAINT_DOWN=false; paintMaint();');
+  win.fetch = () => Promise.resolve(new global.Response(JSON.stringify({ message: 'Service for this project is restricted due to the following violations: exceed_egress_quota.' }), { status: 402 }));
+  const r402 = await win.eval('sxFetch("https://x.supabase.co/rest/v1/venues_public")');
+  const body = JSON.parse(await r402.text());
+  t.ok('402：錯誤訊息換成人話（各區塊的「載入失敗：…」就會是這句）', /系統更新中/.test(body.message) && !/restricted|egress/i.test(JSON.stringify(body)));
+  t.eq('狀態碼照舊是 402（呼叫的程式照樣知道是失敗）', r402.status, 402);
+  t.ok('而且公告自己掛起來', win.eval('MAINT_DOWN') === true && !$('#maintBanner').classList.contains('hidden'));
+  win.fetch = () => Promise.resolve(new global.Response('{"x":1}', { status: 200 }));
+  const r200 = await win.eval('sxFetch("https://x.supabase.co/rest/v1/offers")');
+  t.eq('其他回應原樣交回去', await r200.text(), '{"x":1}');
+  t.ok('Supabase 的連線都走 sxFetch', /createClient\(CFG\.url, CFG\.anonKey, \{global:\{fetch:sxFetch\}\}\)/.test(
+    require('fs').readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8')));
+
+  t.ok('開站就會去問（不擋開站）', /createClient\(CFG\.url, CFG\.anonKey, \{global:\{fetch:sxFetch\}\}\);\s*probeBackend\(\);/.test(
     require('fs').readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8')));
 
   process.exit(t.done() ? 0 : 1);
