@@ -1,3 +1,5 @@
 analysis.db
 __pycache__/
 data/live/
+data/private/*
+!data/private/README.md
