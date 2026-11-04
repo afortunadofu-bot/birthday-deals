@@ -32,8 +32,8 @@
 | `scraper.py` | 部落格／新聞爬蟲 → `diff_report.md` |
 | `threads_client.py` | Threads 官方 API 爬蟲 → `threads_report.md` |
 | `migrate_v2.py` / `migrate_v3.py` | 欄位遷移（已執行過，保留備查） |
-| `analysis/` | **資料分析作品集**：把 `offers.json` 與門市資料丟進 SQLite 問九個問題，產出一頁報告（[線上版](https://afortunadofu-bot.github.io/birthday-deals/)）。跟網站無關，不影響上線流程，見 [`analysis/README.md`](analysis/README.md) |
-| `docs/` | GitHub Pages 的來源（Settings → Pages 設成 main `/docs`），裡面只有 `analysis/report.py` 產出的那份報告，**不是**網站本體 |
+| `analysis/` | **產品分析作品集的產生器**：SQLite ＋ Python，產出[線上作品集站](https://afortunadofu-bot.github.io/birthday-deals/)（首頁、壽星日／Bandary／RelateStats 三個案例、九題 SQL 報告）。跟網站無關，不影響上線流程，見 [`analysis/README.md`](analysis/README.md) |
+| `docs/` | GitHub Pages 的來源（Settings → Pages 設成 main `/docs`），裡面只有 `analysis/build_site.py` 產出的作品集頁面，**不是**網站本體 |
 | `SETUP.md` | **上線步驟**，第一次請先看這份 |
 
 ---

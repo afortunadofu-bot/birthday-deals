@@ -14,6 +14,7 @@ drop table if exists offer_sources;
 drop table if exists stores;
 drop table if exists store_counts;
 drop table if exists counties;
+drop table if exists offer_demand;
 
 -- 一筆優惠 = 一個品牌在一個年度提供的生日方案。
 create table offers (
@@ -87,6 +88,18 @@ create table store_counts (
     county    text    not null,
     n_stores  integer not null,
     primary key (brand, county)
+);
+
+-- 每筆優惠的「需求面」彙總：有多少人回報用過、成功率、留言數、被收藏幾次。
+-- 只有 --live（跟線上公開 view 要資料）才會有東西；吃快照的時候是空的。
+-- 這裡全部是每筆優惠的彙總數字，沒有任何個人層級的紀錄。
+create table offer_demand (
+    offer_id     text primary key references offers(id),
+    report_count integer,   -- 回報「我用過了」的次數
+    success_rate real,      -- 回報成功的百分比
+    comment_count integer,
+    last_used_on text,      -- 最後一次被回報使用的日期
+    wish_count   integer    -- 被加進願望清單的次數
 );
 
 -- 22 個縣市（含金門、連江），order_no 用來固定圖表上的順序：由北到南、本島到離島。

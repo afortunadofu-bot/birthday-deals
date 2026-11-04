@@ -15,6 +15,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 import charts as ch
+import theme as th
 
 HERE = Path(__file__).resolve().parent
 DB = HERE / "analysis.db"
@@ -23,7 +24,7 @@ OUT = HERE / "report.html"
 # GitHub Pages 的來源是 repo 根目錄的 docs/（Settings → Pages 設成 main /docs）。
 # 同一份內容寫兩個地方，是為了讓「看原始碼的人」跟「只想看報告的人」都不用多跑一步；
 # 由這支程式一起寫，就不會有一邊更新、另一邊還是舊的。
-PAGES = HERE.parent / "docs" / "index.html"
+PAGES = HERE.parent / "docs" / "sql-report.html"
 TPE = timezone(timedelta(hours=8))
 
 TITLE = "壽星日資料分析"
@@ -361,57 +362,24 @@ def build():
                   [("1", "Q1 規模"), ("2", "Q2 類別"), ("3", "Q3 提前門檻"),
                    ("4", "Q4 入會方式"), ("5", "Q5 資料可信度"), ("6", "Q6 縣市落差"),
                    ("7", "Q7–8 門市規模"), ("9", "Q9 檔期")])
-    doc = f"""<!doctype html>
-<html lang="zh-Hant"><head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{TITLE}</title>
-<meta name="description" content="{esc(SUBTITLE)}">
-<style>{CSS}</style>
-</head>
-<body>
-<header class="top">
-  <div class="wrap">
-    <h1>{TITLE}</h1>
-    <p class="sub">{esc(SUBTITLE)}</p>
-    <p class="byline">資料：壽星日 <code>offers.json</code>（最後查證 {esc(meta_build)}）
-      ＋ Google Places 門市彙總　·　工具：SQLite ＋ Python 標準庫　·
-      產出 {now:%Y-%m-%d %H:%M} (UTC+8)</p>
-    <nav class="jump">{nav}<a href="#method">方法</a><a href="#limits">資料限制</a></nav>
-    <button class="theme" type="button" aria-label="切換深淺色">◐</button>
-  </div>
-</header>
-<main class="wrap">
-<section class="card intro">
-  <p>壽星日是我做的一個網站，收台灣的生日優惠。做網站的時候只在意「怎麼顯示」，
-    從來沒認真問過這批資料本身長什麼樣子。這一頁把它丟進 SQLite 問九個問題：
-    哪一類最大方、多少優惠其實當天辦來不及、住不同縣市差多少、
+    intro = th.card("", """
+  <p>壽星日是小數據所的其中一個 app，收台灣的生日優惠。做網站的時候只在意
+    「怎麼顯示」，從來沒認真問過這批資料本身長什麼樣子。這一頁把它丟進 SQLite
+    問九個問題：哪一類最大方、多少優惠其實當天辦來不及、住不同縣市差多少、
     還有這批資料自己有多可信。</p>
   <p>每一節都是「問題 → 一句結論 → 圖 → SQL → 表格」。
     結論的數字是從查詢結果算出來的。資料換一版，這一頁的數字會自己跟著換。</p>
-</section>
-{"".join(secs)}
-{method}
-{limits}
-</main>
-<footer class="wrap foot-note">
-  <p>{TITLE}　·　{m["n_offers"]} 筆優惠、{m["n_brands"]} 個品牌、
-    {n_stores_total:,} 家門市彙總　·
-    產出 {now:%Y-%m-%d %H:%M}（UTC+8）</p>
-</footer>
-<script>
-(function () {{
-  var btn = document.querySelector('.theme'), root = document.documentElement;
-  try {{ var s = localStorage.getItem('bd-theme'); if (s) root.dataset.theme = s; }} catch (e) {{}}
-  btn.addEventListener('click', function () {{
-    var dark = root.dataset.theme === 'dark' ||
-      (!root.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
-    root.dataset.theme = dark ? 'light' : 'dark';
-    try {{ localStorage.setItem('bd-theme', root.dataset.theme); }} catch (e) {{}}
-  }});
-}})();
-</script>
-</body></html>"""
+""")
+    doc = th.page(
+        filename="sql-report.html",
+        title=TITLE,
+        lead=esc(SUBTITLE),
+        desc="139 筆台灣生日優惠的 SQL 分析：價值分布、取得門檻、資料可信度、縣市落差與檔期監控。",
+        meta=(f'資料：壽星日 <code>offers.json</code>（最後查證 {esc(meta_build)}）'
+              f'＋ Google Places 門市彙總　·　工具：SQLite ＋ Python 標準庫　·　'
+              f'產出 {now:%Y-%m-%d %H:%M}（UTC+8）'),
+        body=intro + "".join(secs) + method + limits,
+    )
     OUT.write_text(doc, encoding="utf-8")
     PAGES.parent.mkdir(exist_ok=True)
     PAGES.write_text(doc, encoding="utf-8")
@@ -423,144 +391,6 @@ def build():
         print(f"  {n}: {len(rows)} 列")
 
 
-CSS = """
-:root{
-  color-scheme: light;
-  --page:#f9f9f7; --surface:#fcfcfb; --card:#ffffff;
-  --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
-  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
-  --series-1:#2a78d6; --series-dim:#9ec5f4;
-  --good:#0ca30c; --warning:#fab219; --critical:#d03b3b;
-}
-@media (prefers-color-scheme: dark){
-  :root:where(:not([data-theme=light])){
-    color-scheme: dark;
-    --page:#0d0d0d; --surface:#1a1a19; --card:#1a1a19;
-    --ink:#f0efec; --ink-2:#c3c2b7; --muted:#898781;
-    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
-    --series-1:#3987e5; --series-dim:#1c5cab;
-  }
-}
-:root[data-theme=dark]{
-  color-scheme: dark;
-  --page:#0d0d0d; --surface:#1a1a19; --card:#1a1a19;
-  --ink:#f0efec; --ink-2:#c3c2b7; --muted:#898781;
-  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
-  --series-1:#3987e5; --series-dim:#1c5cab;
-}
-*{box-sizing:border-box}
-body{
-  margin:0; background:var(--page); color:var(--ink);
-  font:15px/1.7 system-ui,-apple-system,"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif;
-  -webkit-font-smoothing:antialiased;
-}
-.wrap{max-width:860px; margin:0 auto; padding:0 16px}
-.top{padding:40px 0 8px; position:relative}
-.top h1{font-size:30px; line-height:1.25; margin:0 0 6px; letter-spacing:-.01em}
-.sub{margin:0 0 14px; color:var(--ink-2); font-size:17px}
-.byline{margin:0; color:var(--muted); font-size:13px}
-.jump{display:flex; flex-wrap:wrap; gap:6px; margin:18px 0 0}
-.jump a{
-  font-size:13px; color:var(--ink-2); text-decoration:none;
-  border:1px solid var(--border); border-radius:999px; padding:3px 11px;
-}
-.jump a:hover{color:var(--ink); border-color:var(--axis)}
-.theme{
-  position:absolute; top:40px; right:16px; width:34px; height:34px;
-  border-radius:999px; border:1px solid var(--border); background:var(--card);
-  color:var(--ink-2); font-size:15px; cursor:pointer;
-}
-main{padding:20px 0 40px}
-.card{
-  background:var(--card); border:1px solid var(--border); border-radius:14px;
-  padding:26px 26px 20px; margin:16px 0;
-}
-.card.intro{color:var(--ink-2)}
-.card.intro p{margin:0 0 10px}
-.qno{
-  font-size:12px; font-weight:600; letter-spacing:.08em; color:var(--series-1);
-  margin-bottom:6px;
-}
-.card h2{font-size:21px; line-height:1.35; margin:0 0 12px; letter-spacing:-.01em}
-.answer{margin:0 0 18px; color:var(--ink-2)}
-.answer b{color:var(--ink)}
-.caption{margin:22px 0 6px; font-size:13px; color:var(--muted)}
-.note{margin:12px 0 0; font-size:13px; color:var(--muted)}
-.hero{display:flex; gap:18px; align-items:baseline; flex-wrap:wrap; margin:4px 0 22px}
-.hero-num{font-size:50px; font-weight:650; line-height:1; letter-spacing:-.02em}
-.hero-lbl{flex:1 1 280px; color:var(--ink-2); font-size:14px}
-.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(168px,1fr)); gap:12px}
-.stat{border:1px solid var(--border); border-radius:10px; padding:12px 14px}
-.stat-label{font-size:12px; color:var(--muted)}
-.stat-value{font-size:24px; font-weight:620; line-height:1.3; margin:2px 0}
-.stat-sub{font-size:12px; color:var(--ink-2)}
-.stat[data-tone=warn] .stat-value{color:var(--critical)}
-.chart{width:100%; height:auto; display:block; margin:2px 0 4px; overflow:visible}
-.chart .grid{stroke:var(--grid); stroke-width:1}
-.chart .axis{stroke:var(--axis); stroke-width:1}
-.chart .bar{fill:var(--series-1)}
-.chart .bar-dim{fill:var(--series-dim)}
-.chart .dot{fill:var(--series-1); stroke:var(--card); stroke-width:2}
-.chart .row:hover .bar,.chart .row:hover .dot{filter:brightness(1.12)}
-.chart .row:hover .dot{r:6}
-.chart text{font:12px/1 system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
-.chart .lbl{fill:var(--ink-2)}
-.chart .sublbl,.chart .tick,.chart .axlbl{fill:var(--muted); font-size:11px}
-.chart .tick{font-variant-numeric:tabular-nums}
-.chart .val{fill:var(--ink-2); font-variant-numeric:tabular-nums}
-.chart .anno{fill:var(--ink-2); font-size:11px}
-.chart .refline{stroke:var(--axis); stroke-width:1}
-.chart .reflbl{fill:var(--muted); font-size:11px}
-table{border-collapse:collapse; width:100%; font-size:13px; margin:6px 0 2px}
-th,td{text-align:left; padding:6px 9px; border-bottom:1px solid var(--border)}
-thead th{color:var(--muted); font-weight:600; font-size:12px; white-space:nowrap}
-td{font-variant-numeric:tabular-nums; color:var(--ink-2)}
-tbody th{font-weight:500; color:var(--ink); white-space:nowrap}
-table.matrix{border-collapse:separate; border-spacing:2px}
-table.matrix td{text-align:center; color:var(--ink); border-radius:3px; border:0}
-table.matrix th{border:0; border-bottom:1px solid var(--border)}
-table.matrix td.on-fill{color:#fff}
-table.data td.num{font-variant-numeric:tabular-nums}
-.pill{
-  display:inline-block; font-size:12px; padding:1px 9px; border-radius:999px;
-  border:1px solid var(--border); white-space:nowrap;
-}
-.pill[data-tone=critical]{color:var(--critical); border-color:var(--critical)}
-.pill[data-tone=warning]{color:#8a5a00; border-color:var(--warning)}
-:root[data-theme=dark] .pill[data-tone=warning]{color:var(--warning)}
-@media (prefers-color-scheme: dark){
-  :root:where(:not([data-theme=light])) .pill[data-tone=warning]{color:var(--warning)}
-}
-.pill[data-tone=good]{color:var(--good); border-color:var(--good)}
-.foot{margin-top:18px; border-top:1px solid var(--border); padding-top:12px}
-details{margin:6px 0}
-summary{
-  cursor:pointer; font-size:13px; color:var(--ink-2); list-style:none;
-  display:flex; gap:8px; align-items:center;
-}
-summary::-webkit-details-marker{display:none}
-summary::before{content:"▸"; color:var(--muted); font-size:11px}
-details[open] summary::before{content:"▾"}
-summary code{font-size:12px; color:var(--muted)}
-pre{
-  background:var(--page); border:1px solid var(--border); border-radius:8px;
-  padding:14px; overflow-x:auto; margin:8px 0 0;
-}
-pre code,code{
-  font:12.5px/1.65 ui-monospace,SFMono-Regular,Consolas,"Noto Sans Mono",monospace;
-}
-code{color:var(--ink-2)}
-pre.tree{background:var(--page)}
-.limits{margin:0; padding-left:20px; color:var(--ink-2)}
-.limits li{margin-bottom:9px}
-.limits b{color:var(--ink)}
-.foot-note{color:var(--muted); font-size:12px; padding-bottom:40px}
-@media (max-width:620px){
-  .card{padding:20px 16px 16px}
-  .top h1{font-size:25px}
-  .hero-num{font-size:40px}
-}
-"""
 
 if __name__ == "__main__":
     build()

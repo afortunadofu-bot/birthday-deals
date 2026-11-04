@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="zh-Hant"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>壽星日 Birthday Deals</title>
+<meta name="description" content="壽星日的產品分析案例：指標框架、供給面分析、資料治理、成本分析與決策紀錄。">
+<style>
+:root{
+  color-scheme: light;
+  --page:#f9f9f7; --surface:#fcfcfb; --card:#ffffff;
+  --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+  --series-1:#2a78d6; --series-dim:#9ec5f4;
+  --good:#0ca30c; --warning:#fab219; --critical:#d03b3b;
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme=light])){
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19; --card:#1a1a19;
+    --ink:#f0efec; --ink-2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+    --series-1:#3987e5; --series-dim:#1c5cab;
+  }
+}
+:root[data-theme=dark]{
+  color-scheme: dark;
+  --page:#0d0d0d; --surface:#1a1a19; --card:#1a1a19;
+  --ink:#f0efec; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+  --series-1:#3987e5; --series-dim:#1c5cab;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--page); color:var(--ink);
+  font:15px/1.7 system-ui,-apple-system,"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:880px; margin:0 auto; padding:0 16px}
+.top{padding:34px 0 8px; position:relative}
+.brand{
+  display:inline-block; font-size:13px; letter-spacing:.06em; color:var(--muted);
+  text-decoration:none; margin-bottom:10px;
+}
+.brand:hover{color:var(--ink-2)}
+.top h1{font-size:30px; line-height:1.25; margin:0 0 8px; letter-spacing:-.01em}
+.sub{margin:0 0 12px; color:var(--ink-2); font-size:17px}
+.byline{margin:0; color:var(--muted); font-size:13px}
+.jump{display:flex; flex-wrap:wrap; gap:6px; margin:18px 0 0}
+.jump a{
+  font-size:13px; color:var(--ink-2); text-decoration:none;
+  border:1px solid var(--border); border-radius:999px; padding:3px 11px;
+}
+.jump a:hover{color:var(--ink); border-color:var(--axis)}
+.jump a.on{color:var(--card); background:var(--ink); border-color:var(--ink)}
+.theme{
+  position:absolute; top:34px; right:16px; width:34px; height:34px;
+  border-radius:999px; border:1px solid var(--border); background:var(--card);
+  color:var(--ink-2); font-size:15px; cursor:pointer;
+}
+main{padding:20px 0 40px}
+.card{
+  background:var(--card); border:1px solid var(--border); border-radius:14px;
+  padding:26px 26px 20px; margin:16px 0;
+}
+.card.intro{color:var(--ink-2)}
+.card p{margin:0 0 12px}
+.card p:last-child{margin-bottom:8px}
+.qno{font-size:12px; font-weight:600; letter-spacing:.08em; color:var(--series-1); margin-bottom:6px}
+.card h2{font-size:21px; line-height:1.35; margin:0 0 12px; letter-spacing:-.01em}
+.card h3{font-size:16px; margin:22px 0 8px}
+.answer{margin:0 0 18px; color:var(--ink-2)}
+.answer b{color:var(--ink)}
+.caption{margin:22px 0 6px; font-size:13px; color:var(--muted)}
+.note{margin:12px 0 0; font-size:13px; color:var(--muted)}
+.lede{font-size:17px; color:var(--ink-2)}
+.hero{display:flex; gap:18px; align-items:baseline; flex-wrap:wrap; margin:4px 0 22px}
+.hero-num{font-size:50px; font-weight:650; line-height:1; letter-spacing:-.02em}
+.hero-lbl{flex:1 1 280px; color:var(--ink-2); font-size:14px}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(168px,1fr)); gap:12px; margin:14px 0}
+.stat{border:1px solid var(--border); border-radius:10px; padding:12px 14px}
+.stat-label{font-size:12px; color:var(--muted)}
+.stat-value{font-size:24px; font-weight:620; line-height:1.3; margin:2px 0}
+.stat-sub{font-size:12px; color:var(--ink-2)}
+.stat[data-tone=warn] .stat-value{color:var(--critical)}
+.stat[data-tone=good] .stat-value{color:var(--good)}
+.pending{
+  display:inline-block; font-size:12px; padding:1px 9px; border-radius:999px;
+  border:1px dashed var(--axis); color:var(--muted); white-space:nowrap;
+}
+.case{
+  display:block; text-decoration:none; color:inherit;
+  background:var(--card); border:1px solid var(--border); border-radius:14px;
+  padding:20px 22px 16px; margin:12px 0;
+}
+.case:hover{border-color:var(--axis)}
+.case-head{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
+.case-name{font-size:19px; font-weight:620}
+.case-status{font-size:12px; color:var(--muted)}
+.case-line{margin:6px 0 10px; color:var(--ink-2)}
+.case-points{margin:0 0 12px; padding-left:20px; color:var(--ink-2); font-size:14px}
+.case-points li{margin-bottom:4px}
+.case-go{font-size:13px; color:var(--series-1)}
+table{border-collapse:collapse; width:100%; font-size:13px; margin:6px 0 2px}
+th,td{text-align:left; padding:6px 9px; border-bottom:1px solid var(--border); vertical-align:top}
+thead th{color:var(--muted); font-weight:600; font-size:12px; white-space:nowrap}
+td{color:var(--ink-2)}
+tbody th{font-weight:500; color:var(--ink)}
+table.metrics tbody th{white-space:nowrap}
+table.metrics td:last-child{font-variant-numeric:tabular-nums; white-space:nowrap}
+table.matrix{border-collapse:separate; border-spacing:2px}
+table.matrix td{text-align:center; color:var(--ink); border-radius:3px; border:0}
+table.matrix th{border:0; border-bottom:1px solid var(--border)}
+table.matrix td.on-fill{color:#fff}
+table.data td.num{font-variant-numeric:tabular-nums}
+.timeline{margin:8px 0 0; padding-left:0; list-style:none; counter-reset:none}
+.timeline li{border-left:2px solid var(--grid); padding:0 0 16px 16px; margin:0}
+.timeline li:last-child{padding-bottom:0}
+.tl-head{display:flex; gap:10px; align-items:baseline; flex-wrap:wrap}
+.tl-ver{
+  font-size:12px; font-variant-numeric:tabular-nums; color:var(--series-1);
+  font-weight:600; white-space:nowrap;
+}
+.tl-what{font-weight:560}
+.tl-why{margin:4px 0 0; color:var(--ink-2); font-size:14px}
+.pill{
+  display:inline-block; font-size:12px; padding:1px 9px; border-radius:999px;
+  border:1px solid var(--border); white-space:nowrap;
+}
+.pill[data-tone=critical]{color:var(--critical); border-color:var(--critical)}
+.pill[data-tone=warning]{color:#8a5a00; border-color:var(--warning)}
+:root[data-theme=dark] .pill[data-tone=warning]{color:var(--warning)}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme=light])) .pill[data-tone=warning]{color:var(--warning)}
+}
+.pill[data-tone=good]{color:var(--good); border-color:var(--good)}
+.chart{width:100%; height:auto; display:block; margin:2px 0 4px; overflow:visible}
+.chart .grid{stroke:var(--grid); stroke-width:1}
+.chart .axis{stroke:var(--axis); stroke-width:1}
+.chart .bar{fill:var(--series-1)}
+.chart .bar-dim{fill:var(--series-dim)}
+.chart .dot{fill:var(--series-1); stroke:var(--card); stroke-width:2}
+.chart .row:hover .bar,.chart .row:hover .dot{filter:brightness(1.12)}
+.chart .row:hover .dot{r:6}
+.chart text{font:12px/1 system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+.chart .lbl{fill:var(--ink-2)}
+.chart .sublbl,.chart .tick,.chart .axlbl{fill:var(--muted); font-size:11px}
+.chart .tick{font-variant-numeric:tabular-nums}
+.chart .val{fill:var(--ink-2); font-variant-numeric:tabular-nums}
+.chart .anno{fill:var(--ink-2); font-size:11px}
+.chart .refline{stroke:var(--axis); stroke-width:1}
+.chart .reflbl{fill:var(--muted); font-size:11px}
+.foot{margin-top:18px; border-top:1px solid var(--border); padding-top:12px}
+details{margin:6px 0}
+summary{
+  cursor:pointer; font-size:13px; color:var(--ink-2); list-style:none;
+  display:flex; gap:8px; align-items:center;
+}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸"; color:var(--muted); font-size:11px}
+details[open] summary::before{content:"▾"}
+summary code{font-size:12px; color:var(--muted)}
+pre{
+  background:var(--page); border:1px solid var(--border); border-radius:8px;
+  padding:14px; overflow-x:auto; margin:8px 0 0;
+}
+pre code,code{font:12.5px/1.65 ui-monospace,SFMono-Regular,Consolas,"Noto Sans Mono",monospace}
+code{color:var(--ink-2)}
+ul.plain{margin:0; padding-left:20px; color:var(--ink-2)}
+ul.plain li{margin-bottom:9px}
+ul.plain b{color:var(--ink)}
+.foot-note{color:var(--muted); font-size:12px; padding-bottom:40px}
+@media (max-width:620px){
+  .card{padding:20px 16px 16px}
+  .top h1{font-size:25px}
+  .hero-num{font-size:40px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html">小數據所</a>
+    <h1>壽星日 Birthday Deals</h1>
+    <p class="sub">台灣各品牌的生日優惠，可以篩選、收藏、記錄自己省下多少。</p>
+    <p class="byline">線上：<a href="https://birthdaydeals.celine-fu-work.workers.dev/">birthdaydeals</a>　·　2026-08 開站，154 個版本　·　角色：企劃／開發／分析　·　更新 2026-11-04</p>
+    <nav class="jump"><a href="index.html">首頁</a><a href="birthday-deals.html" class="on">壽星日</a><a href="bandary.html">Bandary</a><a href="relatestats.html">RelateStats</a><a href="sql-report.html">SQL 報告</a></nav>
+    <button class="theme" type="button" aria-label="切換深淺色">◐</button>
+  </div>
+</header>
+<main class="wrap">
+<section class="card">
+  <p class="lede">壽星日收台灣各品牌的生日優惠，可以篩選、收藏、記錄自己省下多少。
+    2026 年 8 月開站，到現在 154 個版本。企劃、開發、資料整理、分析都是我一個人。</p>
+  <p>這一頁講的是分析的部分：這個產品該看哪些數字、我實際算出了什麼、
+    算完之後改了什麼。完整的 SQL 跟圖表在
+    <a href="sql-report.html">九題報告</a>那一頁。</p>
+</section><section class="card"><h2>這個產品該看哪些數字</h2><table class="metrics"><thead><tr><th>指標</th><th>怎麼算</th><th>現況</th></tr></thead><tbody><tr><th scope="row">供給：優惠數</th><td>approved 狀態的優惠筆數</td><td>139 筆（2026-08 快照）</td></tr><tr><th scope="row">供給：縣市覆蓋</th><td>每個縣市拿得到幾筆（含全台連鎖）</td><td>115 ↔ 33 筆</td></tr><tr><th scope="row">供給：能當天用的比例</th><td>免費入會且不用提前登錄的占比</td><td>49%</td></tr><tr><th scope="row">品質：官方來源比例</th><td>最佳來源是品牌官方的占比</td><td>12%</td></tr><tr><th scope="row">品質：複查延遲</th><td>今天減去 last_checked</td><td>92 天</td></tr><tr><th scope="row">品質：過期未下架</th><td>validity_type=fixed 且 valid_until 已過</td><td>18 / 19 筆</td></tr><tr><th scope="row">需求：回報使用</th><td>回報「我用過了」的次數（offer_stats）</td><td><span class="pending">待補：資料庫停權中</span></td></tr><tr><th scope="row">需求：兌換成功率</th><td>回報成功 ÷ 全部回報</td><td><span class="pending">待補：資料庫停權中</span></td></tr><tr><th scope="row">需求：收藏</th><td>被加進願望清單的次數（wishlist_counts）</td><td><span class="pending">待補：資料庫停權中</span></td></tr><tr><th scope="row">需求：留言</th><td>每筆優惠底下的留言數</td><td><span class="pending">待補：資料庫停權中</span></td></tr><tr><th scope="row">需求：到站與漏斗</th><td>site_events 的 pageview → 點開 → 外連，以 session 去重</td><td><span class="pending">待補：管理員限定，要另外匯出</span></td></tr><tr><th scope="row">成本：Egress</th><td>Supabase 每月送出的位元組</td><td>上一個週期超過 5 GB 額度</td></tr><tr><th scope="row">成本：固定成本</th><td>快取過期回源一輪的量 × 一天幾輪 × 幾個機房</td><td>約 180 KB／輪</td></tr></tbody></table></section><section class="card"><h2>分析一：供給面</h2>
+  <p>完整的九題在<a href="sql-report.html">報告那一頁</a>，這裡只留跟產品決策有關的三個。</p>
+  <h3>住在哪裡，差 3.5 倍</h3>
+  <p>住台北市的壽星有 115 個優惠可選，
+     最少的縣市只有 33 個，而且那些全部是全台連鎖，
+     等於這些縣市完全沒有本地品牌的生日優惠可拿。這是產品的供給缺口，
+     不是演算法調一調就會好的東西。</p>
+  <svg class="chart" viewBox="0 0 720 518" role="img" aria-label="各縣市可用生日優惠數" preserveAspectRatio="xMidYMid meet">
+<line class="grid" x1="84.0" y1="6" x2="84.0" y2="490"/>
+<text class="tick" x="84.0" y="506" text-anchor="middle">0</text>
+<line class="grid" x1="277.3" y1="6" x2="277.3" y2="490"/>
+<text class="tick" x="277.3" y="506" text-anchor="middle">50</text>
+<line class="grid" x1="470.7" y1="6" x2="470.7" y2="490"/>
+<text class="tick" x="470.7" y="506" text-anchor="middle">100</text>
+<line class="grid" x1="664.0" y1="6" x2="664.0" y2="490"/>
+<text class="tick" x="664.0" y="506" text-anchor="middle">150</text>
+<g class="row"><title>台北市：115</title>
+<text class="lbl" x="76" y="16" text-anchor="end">台北市</text>
+<path class="bar" d="M84.0,6.0 H524.7 A4,4 0 0 1 528.7,10.0 V15.0 A4,4 0 0 1 524.7,19.0 H84.0 Z"/>
+<text class="val" x="534.7" y="16">115</text>
+</g>
+<g class="row"><title>台中市：90</title>
+<text class="lbl" x="76" y="38" text-anchor="end">台中市</text>
+<path class="bar" d="M84.0,28.0 H428.0 A4,4 0 0 1 432.0,32.0 V37.0 A4,4 0 0 1 428.0,41.0 H84.0 Z"/>
+<text class="val" x="438.0" y="38">90</text>
+</g>
+<g class="row"><title>新北市：86</title>
+<text class="lbl" x="76" y="60" text-anchor="end">新北市</text>
+<path class="bar" d="M84.0,50.0 H412.5 A4,4 0 0 1 416.5,54.0 V59.0 A4,4 0 0 1 412.5,63.0 H84.0 Z"/>
+<text class="val" x="422.5" y="60">86</text>
+</g>
+<g class="row"><title>高雄市：73</title>
+<text class="lbl" x="76" y="82" text-anchor="end">高雄市</text>
+<path class="bar" d="M84.0,72.0 H362.3 A4,4 0 0 1 366.3,76.0 V81.0 A4,4 0 0 1 362.3,85.0 H84.0 Z"/>
+<text class="val" x="372.3" y="82">73</text>
+</g>
+<g class="row"><title>桃園市：71</title>
+<text class="lbl" x="76" y="104" text-anchor="end">桃園市</text>
+<path class="bar" d="M84.0,94.0 H354.5 A4,4 0 0 1 358.5,98.0 V103.0 A4,4 0 0 1 354.5,107.0 H84.0 Z"/>
+<text class="val" x="364.5" y="104">71</text>
+</g>
+<g class="row"><title>台南市：58</title>
+<text class="lbl" x="76" y="126" text-anchor="end">台南市</text>
+<path class="bar" d="M84.0,116.0 H304.3 A4,4 0 0 1 308.3,120.0 V125.0 A4,4 0 0 1 304.3,129.0 H84.0 Z"/>
+<text class="val" x="314.3" y="126">58</text>
+</g>
+<g class="row"><title>新竹市：52</title>
+<text class="lbl" x="76" y="148" text-anchor="end">新竹市</text>
+<path class="bar" d="M84.0,138.0 H281.1 A4,4 0 0 1 285.1,142.0 V147.0 A4,4 0 0 1 281.1,151.0 H84.0 Z"/>
+<text class="val" x="291.1" y="148">52</text>
+</g>
+<g class="row"><title>新竹縣：44</title>
+<text class="lbl" x="76" y="170" text-anchor="end">新竹縣</text>
+<path class="bar" d="M84.0,160.0 H250.1 A4,4 0 0 1 254.1,164.0 V169.0 A4,4 0 0 1 250.1,173.0 H84.0 Z"/>
+<text class="val" x="260.1" y="170">44</text>
+</g>
+<g class="row"><title>宜蘭縣：42</title>
+<text class="lbl" x="76" y="192" text-anchor="end">宜蘭縣</text>
+<path class="bar" d="M84.0,182.0 H242.4 A4,4 0 0 1 246.4,186.0 V191.0 A4,4 0 0 1 242.4,195.0 H84.0 Z"/>
+<text class="val" x="252.4" y="192">42</text>
+</g>
+<g class="row"><title>彰化縣：41</title>
+<text class="lbl" x="76" y="214" text-anchor="end">彰化縣</text>
+<path class="bar" d="M84.0,204.0 H238.5 A4,4 0 0 1 242.5,208.0 V213.0 A4,4 0 0 1 238.5,217.0 H84.0 Z"/>
+<text class="val" x="248.5" y="214">41</text>
+</g>
+<g class="row"><title>嘉義市：41</title>
+<text class="lbl" x="76" y="236" text-anchor="end">嘉義市</text>
+<path class="bar" d="M84.0,226.0 H238.5 A4,4 0 0 1 242.5,230.0 V235.0 A4,4 0 0 1 238.5,239.0 H84.0 Z"/>
+<text class="val" x="248.5" y="236">41</text>
+</g>
+<g class="row"><title>屏東縣：41</title>
+<text class="lbl" x="76" y="258" text-anchor="end">屏東縣</text>
+<path class="bar" d="M84.0,248.0 H238.5 A4,4 0 0 1 242.5,252.0 V257.0 A4,4 0 0 1 238.5,261.0 H84.0 Z"/>
+<text class="val" x="248.5" y="258">41</text>
+</g>
+<g class="row"><title>苗栗縣：38</title>
+<text class="lbl" x="76" y="280" text-anchor="end">苗栗縣</text>
+<path class="bar" d="M84.0,270.0 H226.9 A4,4 0 0 1 230.9,274.0 V279.0 A4,4 0 0 1 226.9,283.0 H84.0 Z"/>
+<text class="val" x="236.9" y="280">38</text>
+</g>
+<g class="row"><title>雲林縣：38</title>
+<text class="lbl" x="76" y="302" text-anchor="end">雲林縣</text>
+<path class="bar" d="M84.0,292.0 H226.9 A4,4 0 0 1 230.9,296.0 V301.0 A4,4 0 0 1 226.9,305.0 H84.0 Z"/>
+<text class="val" x="236.9" y="302">38</text>
+</g>
+<g class="row"><title>基隆市：36</title>
+<text class="lbl" x="76" y="324" text-anchor="end">基隆市</text>
+<path class="bar" d="M84.0,314.0 H219.2 A4,4 0 0 1 223.2,318.0 V323.0 A4,4 0 0 1 219.2,327.0 H84.0 Z"/>
+<text class="val" x="229.2" y="324">36</text>
+</g>
+<g class="row"><title>南投縣：35</title>
+<text class="lbl" x="76" y="346" text-anchor="end">南投縣</text>
+<path class="bar" d="M84.0,336.0 H215.3 A4,4 0 0 1 219.3,340.0 V345.0 A4,4 0 0 1 215.3,349.0 H84.0 Z"/>
+<text class="val" x="225.3" y="346">35</text>
+</g>
+<g class="row"><title>台東縣：35</title>
+<text class="lbl" x="76" y="368" text-anchor="end">台東縣</text>
+<path class="bar" d="M84.0,358.0 H215.3 A4,4 0 0 1 219.3,362.0 V367.0 A4,4 0 0 1 215.3,371.0 H84.0 Z"/>
+<text class="val" x="225.3" y="368">35</text>
+</g>
+<g class="row"><title>嘉義縣：33</title>
+<text class="lbl" x="76" y="390" text-anchor="end">嘉義縣</text>
+<path class="bar" d="M84.0,380.0 H207.6 A4,4 0 0 1 211.6,384.0 V389.0 A4,4 0 0 1 207.6,393.0 H84.0 Z"/>
+<text class="val" x="217.6" y="390">33</text>
+</g>
+<g class="row"><title>花蓮縣：33</title>
+<text class="lbl" x="76" y="412" text-anchor="end">花蓮縣</text>
+<path class="bar" d="M84.0,402.0 H207.6 A4,4 0 0 1 211.6,406.0 V411.0 A4,4 0 0 1 207.6,415.0 H84.0 Z"/>
+<text class="val" x="217.6" y="412">33</text>
+</g>
+<g class="row"><title>澎湖縣：33</title>
+<text class="lbl" x="76" y="434" text-anchor="end">澎湖縣</text>
+<path class="bar" d="M84.0,424.0 H207.6 A4,4 0 0 1 211.6,428.0 V433.0 A4,4 0 0 1 207.6,437.0 H84.0 Z"/>
+<text class="val" x="217.6" y="434">33</text>
+</g>
+<g class="row"><title>金門縣：33</title>
+<text class="lbl" x="76" y="456" text-anchor="end">金門縣</text>
+<path class="bar" d="M84.0,446.0 H207.6 A4,4 0 0 1 211.6,450.0 V455.0 A4,4 0 0 1 207.6,459.0 H84.0 Z"/>
+<text class="val" x="217.6" y="456">33</text>
+</g>
+<g class="row"><title>連江縣：33</title>
+<text class="lbl" x="76" y="478" text-anchor="end">連江縣</text>
+<path class="bar" d="M84.0,468.0 H207.6 A4,4 0 0 1 211.6,472.0 V477.0 A4,4 0 0 1 207.6,481.0 H84.0 Z"/>
+<text class="val" x="217.6" y="478">33</text>
+</g>
+<line class="axis" x1="84" y1="6" x2="84" y2="490"/>
+</svg>
+  <h3>一半的優惠，生日當天才查就來不及</h3>
+  <p>49% 的優惠是當天辦會員當天就能領，其餘要提前登錄，
+     還有 32 筆品牌根本沒寫要多久。對一個「生日當天才會被打開」的產品來說，
+     這直接決定了要不要做提前提醒，答案是要。</p>
+  <h3>只有 12% 的優惠有品牌官方背書</h3>
+  <p>其餘的最佳來源是部落格懶人包或社群貼文。這不是「資料很爛」，
+     是「這類資料本來就長這樣」，所以產品要承認它：來源分級顯示在卡片上、
+     使用者可以回報有沒有用、過期的自己下架。</p>
+  <svg class="chart" viewBox="0 0 720 146" role="img" aria-label="優惠的最佳來源可信度分佈" preserveAspectRatio="xMidYMid meet">
+<line class="grid" x1="158.0" y1="6" x2="158.0" y2="118"/>
+<text class="tick" x="158.0" y="134" text-anchor="middle">0</text>
+<line class="grid" x1="284.5" y1="6" x2="284.5" y2="118"/>
+<text class="tick" x="284.5" y="134" text-anchor="middle">20</text>
+<line class="grid" x1="411.0" y1="6" x2="411.0" y2="118"/>
+<text class="tick" x="411.0" y="134" text-anchor="middle">40</text>
+<line class="grid" x1="537.5" y1="6" x2="537.5" y2="118"/>
+<text class="tick" x="537.5" y="134" text-anchor="middle">60</text>
+<line class="grid" x1="664.0" y1="6" x2="664.0" y2="118"/>
+<text class="tick" x="664.0" y="134" text-anchor="middle">80</text>
+<g class="row"><title>1 品牌官方：17</title>
+<text class="lbl" x="150" y="19" text-anchor="end">1 品牌官方</text>
+<path class="bar" d="M158.0,6.0 H261.5 A4,4 0 0 1 265.5,10.0 V18.0 A4,4 0 0 1 261.5,22.0 H158.0 Z"/>
+<text class="val" x="271.5" y="19">17</text>
+</g>
+<g class="row"><title>2 新聞媒體：3</title>
+<text class="lbl" x="150" y="47" text-anchor="end">2 新聞媒體</text>
+<path class="bar" d="M158.0,34.0 H173.0 A4,4 0 0 1 177.0,38.0 V46.0 A4,4 0 0 1 173.0,50.0 H158.0 Z"/>
+<text class="val" x="183.0" y="47">3</text>
+</g>
+<g class="row"><title>3 部落格懶人包：65</title>
+<text class="lbl" x="150" y="75" text-anchor="end">3 部落格懶人包</text>
+<path class="bar" d="M158.0,62.0 H565.1 A4,4 0 0 1 569.1,66.0 V74.0 A4,4 0 0 1 565.1,78.0 H158.0 Z"/>
+<text class="val" x="575.1" y="75">65</text>
+</g>
+<g class="row"><title>4 社群貼文：54</title>
+<text class="lbl" x="150" y="103" text-anchor="end">4 社群貼文</text>
+<path class="bar" d="M158.0,90.0 H495.6 A4,4 0 0 1 499.6,94.0 V102.0 A4,4 0 0 1 495.6,106.0 H158.0 Z"/>
+<text class="val" x="505.6" y="103">54</text>
+</g>
+<line class="axis" x1="158" y1="6" x2="158" y2="118"/>
+</svg>
+</section><section class="card"><h2>分析二：成本與可靠性</h2>
+  <p>2026 年 10 月，Supabase 的免費額度（Egress 5 GB／月）被判超額，整個專案被停權，
+    登入、收藏、回報、投稿全部不能用。這一段是把它當成一個分析題來處理的過程。</p>
+  <h3>先分清楚是事故還是日常</h3>
+  <p>逐日看 log 的量：9/20～9/28 是 70～110 MB／天，9/30 之後跳到 450～540，
+     10/04 最高 830 MB。對得上 10/02～10/04 的資料庫事故——
+     掃全表的查詢把 API 打到一直回 522。修好的隔天就掉回來了。
+     <b>所以超額是一次事故造成的，不是日常流量撐不住</b>，這個結論決定了後面要做什麼：
+     要防的是「下一次事故」，不是「使用者變多」。</p>
+  <h3>量每一條路徑到底吐出多少位元組</h3>
+  <p>不猜，實際量。優惠清單壓縮後一次 128 KB、<code>/board</code> 合計 33 KB、
+     <code>/stats</code> 約 1 KB，一輪回源約 180 KB。快取 30 分鐘一輪，
+     一天 48 輪，一個機房一個月約 0.26 GB——而 Cloudflare 是每個機房各一份快取，
+     三四個機房就是一個月 1.1～1.4 GB 的固定成本。<b>這部分跟有幾個使用者完全無關</b>，
+     是先要認的帳。</p>
+  <h3>照「真的會發生」排，不是照「砍得最多」排</h3>
+  <p>有一條原本以為很肥的查詢，實際量完壓縮後只有 354 bytes，就放掉不做了。
+     真正做的三件事：快取 10 分鐘拉到 30 分鐘（上游請求一天 144 → 48 次，
+     每個機房每月 0.6 → 0.2 GB）、優惠清單從 <code>select=*</code> 改成逐欄點名
+     （146 → 128 KB，砍掉五個前端根本沒在讀的欄位）、
+     還有一批把請求數減半的改動（每天的量 115 → 85 MB，約少 25%）。</p>
+  <h3>回頭看有沒有用</h3>
+  <p>用量頁從 1.284 GB 掉到 0.896 GB，跟自己算的對得起來。
+     但這次仍然被停權，因為被判的是上一個計費週期——事故那三天就在裡面。
+     所以同一批分析也產出了一條維運規則：<b>加新的 RPC 或 view 的時候要特別小心</b>，
+     走快取的有擋，前端直接打的沒有。</p>
+  <p class="note">數字出處：repo 裡的 <code>SUPABASE-流量.md</code>，2026-10-20 實測。</p>
+</section><section class="card"><h2>分析三：使用者行為（等資料）</h2>
+  <p>這是這個案例現在唯一的空白，而且空白的原因是技術性的：
+    資料庫停權中，讀不到任何一筆事件。</p>
+  <p>能先做的都做了：事件表本來就設計好了，分析要用的指標也定義完了
+    （上面那張表的「需求」那幾列）。事件表長這樣：</p>
+  <pre><code>site_events(
+  id          bigserial,
+  event_type  text,        -- pageview / submit / use_report / wish / rate / static_view …
+  session_id  text,        -- 匿名，localStorage 產生
+  user_id     uuid,        -- 可為 null（沒登入也能用）
+  meta        jsonb,
+  created_at  timestamptz
+)</code></pre>
+  <p>要算的是三件事：<b>漏斗</b>（到站 → 點開優惠 → 點外連或收藏 → 回報用過）、
+    <b>內容供給與需求對不對得上</b>（最多人收藏的類別，跟優惠數最多的類別是不是同一批）、
+    以及<b>回訪</b>（生日是一年一次的事件，所以留存要看的是「隔年還會不會回來」，
+    不是次日留存）。</p>
+  <h3>已經寫好、等資料就會亮起來的部分</h3>
+  <p>有一半不用等管理員權限。線上有四支 view 本來就開放公開讀
+    （<code>offers_public</code>、<code>wishlist_counts</code>、<code>most_wished</code>、
+    <code>leaderboard_monthly</code>），裡面有每筆優惠的回報數、兌換成功率、
+    留言數與收藏數——那已經是需求面的一半。抓這四支的程式
+    （<code>fetch_live.py</code>）跟吃它的 ETL（<code>build_db.py --live</code>）都寫好了，
+    現在跑會停在一句「Supabase 回 402」。</p>
+  <p>兩支對應的查詢也先寫完了：
+    <code>10_demand_vs_supply.sql</code> 比「哪一類收藏多」跟「哪一類優惠多」的落差，
+    用來決定下一批要去談哪種品牌；
+    <code>11_offer_health.sql</code> 挑出回報多、成功率低的優惠，那是資料錯了或品牌改規則，
+    屬於維運清單。</p>
+  <p>真正要等管理員匯出的只剩漏斗跟回訪，因為 <code>site_events</code> 是
+    admin 限定、anon key 讀不到。</p>
+  <p class="note">公開的只會是彙總。個人層級的事件不離開資料庫，也不進版控。</p>
+</section><section class="card"><h2>決策紀錄（節錄）</h2><ol class="timeline"><li><div class="tl-head"><span class="tl-ver">v129</span><span class="tl-what">快取 10 分鐘 → 30 分鐘</span></div><p class="tl-why">成本分析的直接結果：上游請求一天 144 → 48 次。代價是新優惠最多晚 30 分鐘出現，對一個「一年用一次」的產品可以接受。</p></li><li><div class="tl-head"><span class="tl-ver">v132</span><span class="tl-what">優惠清單從 &lt;code&gt;select=*&lt;/code&gt; 改成逐欄點名</span></div><p class="tl-why">量完才發現有五個欄位前端一個都沒讀。146 → 128 KB。順手加了一條測試：view 以後加欄位沒跟著改，測試就會紅。</p></li><li><div class="tl-head"><span class="tl-ver">v133</span><span class="tl-what">標「全台」但其實沒那麼全台的，改成實際有分店的縣市</span></div><p class="tl-why">門市資料跟優惠的 regions 欄位對不起來，是縣市覆蓋那一題算出來的。影響的是使用者在自己縣市看到的清單準不準。</p></li><li><div class="tl-head"><span class="tl-ver">v144</span><span class="tl-what">自動上架：老手的新投稿不用再等審核</span></div><p class="tl-why">投稿審核是人工瓶頸。先看投稿者過去的紀錄，再決定要不要擋。</p></li><li><div class="tl-head"><span class="tl-ver">v167</span><span class="tl-what">「我省下多少」收成一個數字，排到「我送出過的」前面</span></div><p class="tl-why">這個產品的核心價值是「幫你算省下多少」，版面要讓它第一眼就看得到。</p></li><li><div class="tl-head"><span class="tl-ver">v168–v172</span><span class="tl-what">資料庫停掉時，自動掛「系統更新中」、錯誤訊息一律中文</span></div><p class="tl-why">停權期間使用者看到的是英文錯誤。可靠性也是產品的一部分：壞掉的時候要壞得像話。</p></li></ol></section><section class="card"><h2>還沒做到的</h2>
+  <ul class="plain">
+    <li><b>使用者行為那一段還是空的。</b>資料庫恢復之後要補完漏斗、回訪與內容供需。</li>
+    <li><b>優惠筆數要換成現在的。</b>這一頁用的是 2026-08 的快照（139 筆），
+      線上實際已經成長到好幾百筆，等得到資料就重跑。</li>
+    <li><b>縣市覆蓋沒有按人口標準化。</b>手上沒有可引用的人口資料，所以先不換算。</li>
+  </ul>
+</section>
+</main>
+<footer class="wrap foot-note">
+  <p>小數據所｜產品分析作品集　·　內容與圖表由 <code>analysis/</code> 的 Python 產生，
+     資料換一版重跑就會更新。</p>
+</footer>
+<script>
+(function () {
+  var btn = document.querySelector('.theme'), root = document.documentElement;
+  try { var s = localStorage.getItem('sdl-theme'); if (s) root.dataset.theme = s; } catch (e) {}
+  btn.addEventListener('click', function () {
+    var dark = root.dataset.theme === 'dark' ||
+      (!root.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('sdl-theme', root.dataset.theme); } catch (e) {}
+  });
+})();
+</script>
+</body></html>

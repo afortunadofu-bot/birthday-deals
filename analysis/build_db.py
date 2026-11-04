@@ -34,6 +34,7 @@ COUNTS_CSV = DATA / "store_counts.csv"
 
 OFFERS_JSON = REPO / "offers.json"
 STORE_FILES = [REPO / "stores_fetched.json", REPO / "stores_fetched_regions.json"]
+LIVE = DATA / "live"      # fetch_live.py 抓下來的線上資料（不進版控）
 
 # 縣市：名稱跟 ../fetch_stores.py 的 COUNTIES 一致（台不臺），分區是標準地理分區。
 COUNTIES = [
@@ -91,6 +92,64 @@ def rows_for_offer(o):
     return offer, region_rows, source_rows
 
 
+def load_live():
+    """讀 fetch_live.py 抓下來的線上資料，整理成跟快照一樣的形狀。
+
+    線上的欄位名跟 offers.json 不一樣（資料庫是 snake_case，JSON 是 camelCase），
+    而且 window 是 SQL 保留字所以在資料庫裡叫 offer_window。這裡統一翻成快照的寫法，
+    後面的查詢就不用管資料是從哪來的。"""
+    src = LIVE / "offers_public.json"
+    if not src.exists():
+        sys.exit(f"沒有 {src}，先跑 python fetch_live.py")
+    rows = json.loads(src.read_text(encoding="utf-8"))
+
+    wish = {}
+    wp = LIVE / "wishlist_counts.json"
+    if wp.exists():
+        for w in json.loads(wp.read_text(encoding="utf-8")):
+            oid = w.get("offer_id", w.get("id"))
+            # 這個 view 的計數欄位名沒寫死在前端，所以挑第一個像數字的欄位
+            n = next((v for k, v in w.items()
+                      if k not in ("offer_id", "id") and isinstance(v, int)), 0)
+            wish[str(oid)] = n
+
+    offers, demand = [], []
+    for o in rows:
+        oid = str(o.get("slug") or o.get("id"))
+        offers.append({
+            "id": oid,
+            "brand": o.get("brand"),
+            "groupName": o.get("group_name"),
+            "category": o.get("category") or "其他",
+            "offer": o.get("offer") or "",
+            "conditions": o.get("conditions"),
+            "validity": o.get("validity"),
+            "membership": o.get("membership"),
+            "membershipType": o.get("membership_type"),
+            "membershipCost": o.get("membership_cost"),
+            "advanceDays": o.get("advance_days"),
+            "advanceNote": o.get("advance_note"),
+            "freeTier": o.get("free_tier"),
+            "valueTwd": o.get("value_twd"),
+            "timing": o.get("offer_window"),
+            "validityType": o.get("validity_type") or "rolling",
+            "validFrom": o.get("valid_from"),
+            "validUntil": o.get("valid_until"),
+            "verified": o.get("verified"),
+            "lastChecked": o.get("last_checked"),
+            "regions": o.get("regions") or [],
+            "sources": o.get("sources") or [],
+            "bestSource": min((s for s in (o.get("sources") or []) if s.get("tier")),
+                              key=lambda s: s["tier"], default={}),
+        })
+        demand.append((oid, o.get("report_count"), o.get("success_rate"),
+                       o.get("comment_count"), o.get("last_used_on"),
+                       wish.get(oid)))
+    meta = {"version": "live", "lastBuild": max(
+        (o.get("last_checked") or "") for o in rows) or "—"}
+    return meta, offers, demand
+
+
 def load_stores_detail():
     """讀本機門市明細；沒有檔案就回 None（代表這次要吃現成的 CSV）。"""
     found = [p for p in STORE_FILES if p.exists()]
@@ -143,9 +202,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--refresh-counts", action="store_true",
                     help="有本機門市明細時，重算 data/store_counts.csv")
+    ap.add_argument("--live", action="store_true",
+                    help="用 fetch_live.py 抓下來的線上資料，而不是 ../offers.json 快照")
     args = ap.parse_args()
 
-    meta, offers = load_offers()
+    demand = []
+    if args.live:
+        meta, offers, demand = load_live()
+    else:
+        meta, offers = load_offers()
     offer_brands = {norm(o["brand"]) for o in offers}
 
     detail = load_stores_detail()
@@ -175,6 +240,7 @@ def main():
 
     con.executemany("insert into stores values (?,?,?,?,?,?,?)", stores)
     con.executemany("insert into store_counts values (?,?,?)", counts)
+    con.executemany("insert into offer_demand values (?,?,?,?,?,?)", demand)
     con.commit()
 
     q = lambda sql: con.execute(sql).fetchone()[0]
@@ -188,6 +254,10 @@ def main():
           f"全台連鎖 {q('select count(*) from offers where is_nationwide=1')} 筆，"
           f"未標註 {q('select count(*) from offers where has_region_data=0')} 筆")
     print(f"  來源          {q('select count(*) from offer_sources')} 筆")
+    if demand:
+        print(f"  需求彙總      {q('select count(*) from offer_demand')} 筆，"
+              f"有人回報過的 "
+              f"{q('select count(*) from offer_demand where coalesce(report_count,0) > 0')} 筆")
     print(f"  門市          {source_note}")
     print(f"                {q('select coalesce(sum(n_stores),0) from store_counts')} 家，"
           f"對得上 {matched}/{len(offer_brands)} 個品牌")

@@ -1,38 +1,52 @@
-# 壽星日資料分析｜SQL + Python 作品集
+# 小數據所｜產品分析作品集（的產生器）
 
-資料是我自己做的網站上的：**139 筆台灣生日優惠**、**4,734 家對得上的門市**。
-全部丟進 SQLite，統計量用 SQL 算，Python 只負責排成一頁可以直接開的報告。
+**線上版：<https://afortunadofu-bot.github.io/birthday-deals/>**
 
-**成品**：<https://afortunadofu-bot.github.io/birthday-deals/>
-一頁式報告，九題各自有「問題 → 一句結論 → 圖 → SQL → 表格」。
-原始檔是 [`report.html`](report.html)，`report.py` 會同時寫一份到 repo 根目錄的
-`docs/index.html`，GitHub Pages 就是從那裡發的。
+這個資料夾是那個站的原始碼。頁面不是手寫的 HTML，是 Python 從 SQLite 查完再排出來的，
+所以資料換一版、重跑一次，頁面上的數字跟結論會自己跟著換。
 
----
+| 頁面 | 內容 |
+|---|---|
+| `index.html` | 首頁：定位、三個案例、我怎麼做產品分析 |
+| `birthday-deals.html` | 壽星日：指標框架、供給面分析、成本分析、決策紀錄 |
+| `bandary.html` | Bandary 聽團曆：要衡量什麼、為什麼不看下載數 |
+| `relatestats.html` | RelateStats：拿不到遙測的產品怎麼衡量 |
+| `sql-report.html` | 九題 SQL 報告（技術細節，每題都附 SQL） |
 
-## 為什麼是這個題目
+## 怎麼跑
 
-[壽星日](https://birthdaydeals.celine-fu-work.workers.dev/) 是我做的網站，收台灣的生日優惠。
-做網站的時候只在意「怎麼顯示」，從來沒問過這批資料本身長什麼樣子。
-這份分析就是補上那一問。除了「哪家最大方」這種好看的問題，
-也問「這批資料有多可信」「哪幾筆其實已經不能用了」這種會打自己臉的問題。
+```bash
+python build_db.py        # 建 analysis.db
+python build_site.py      # 產出整個站到 ../docs/
+```
 
-九個問題：
+不用裝任何套件。需要 Python 3.9 以上，以及 SQLite 3.35 以上（查詢用到 window function
+跟 `sqrt()`／`log10()`）；我自己跑的是 Python 3.13 + SQLite 3.50，舊版沒實測過。
 
-| | 問題 | 答案 |
-|---|---|---|
-| Q1 | 這批優惠加起來有多大？ | 139 筆、總面額 NT$20,720、中位數 NT$130 |
-| Q2 | 哪一類最大方？ | 火鍋燒肉中位數 NT$200，是飲料 NT$60 的 3.3 倍 |
-| Q3 | 生日當天才想到還來得及嗎？ | 只有 49% 當天辦當天能用；23% 品牌根本沒寫要提前多久 |
-| Q4 | 要先變成誰的會員？ | 47% 綁在 Ocard 一個第三方平台上 |
-| Q5 | 這些優惠是誰說的？ | 只有 12% 有品牌官方來源；靠社群貼文的 54 筆複查率 0% |
-| Q6 | 住哪裡差多少？ | 台北 115 個 vs 嘉義縣／花蓮／澎湖／金門／連江 33 個，差 3.5 倍 |
-| Q7–8 | 店多的品牌比較小氣嗎？ | 是，但很弱：log10(門市數) 與面額 Pearson r = −0.28 |
-| Q9 | 哪幾筆不能用了？ | 快照裡 19 筆限期檔期，今天全部過期 |
+資料庫恢復之後要換成線上的資料：
 
-報告裡每一句結論都是從查詢結果算出來的。資料換一版，數字會自己跟著換。
+```bash
+python fetch_live.py          # 抓線上公開 view（offers_public 等四支）
+python build_db.py --live     # 用線上資料重建，順便灌入需求面彙總
+python build_site.py
+```
 
----
+## 檔案
+
+```
+analysis/
+├ build_db.py      ETL：offers.json（或線上資料）＋門市明細 → analysis.db
+├ fetch_live.py    用公開的 anon key 抓線上四支 view，存到 data/live/（不進版控）
+├ schema.sql       分析庫的 DDL 與兩個 view
+├ queries/         01…11，一題一個 .sql，每支開頭都寫為什麼這樣問
+├ charts.py        inline SVG：橫條、直條、散佈、熱度交叉表
+├ theme.py         全站共用的 CSS 與頁面外殼
+├ report.py        跑 01–09 → 產出九題報告
+├ build_site.py    產出首頁與三個案例頁，並叫 report.py 跑一次
+└ data/
+   ├ store_counts.csv   品牌 × 縣市門市數（653 列，進版控）
+   └ live/              線上抓回來的原始回應（不進版控）
+```
 
 ## 技術重點
 
@@ -45,68 +59,18 @@
 - 交叉表 → `sum(case when … then 1 else 0 end)` 自己 pivot
 - Pearson 相關係數 → 把公式展開成 `sum(x*y)`、`sum(x*x)` 幾項，一句 SQL 算完
 
-**Python 只做兩件事**：把巢狀 JSON 攤平成可以 join 的表，以及把查詢結果排成報告。
-沒用 pandas，也沒用 matplotlib。`git clone` 之後直接 `python` 就跑得完。
-
-**圖是自己產的 inline SVG**（[`charts.py`](charts.py)）。會自己畫圖是為了三個實際問題：
+**Python 只做兩件事**：把巢狀 JSON 攤平成可以 join 的表，以及把查詢結果排成頁面。
+沒用 pandas，也沒用 matplotlib。圖是自己產的 inline SVG（`charts.py`）：
 中文字型在別台機器上常常缺、深色模式不想出兩套圖檔、報告想保持成單一個 HTML 檔。
-畫法照一套固定規則：單一數列只用一個顏色（長度已經在表達大小，顏色不要重複講）、
-條狀圖資料端圓角 4px、格線是一階之差的實線、不標每一個點的數字、
-每張圖都有 hover 提示跟一份文字表格（顏色不是唯一的資訊通道）。
-
----
-
-## 檔案
-
-```
-analysis/
-├ build_db.py      ETL：offers.json + 門市明細 → analysis.db
-├ schema.sql       分析庫的 DDL；兩個 view 處理「全台連鎖要展開到每個縣市」
-├ queries/         01…09，一題一個 .sql，每支開頭都寫為什麼這樣問
-├ charts.py        inline SVG：橫條、直條、散佈、熱度交叉表
-├ report.py        跑查詢 → 算結論 → 產出 report.html 與 ../docs/index.html
-├ report.html      成品（進版控，不用跑就看得到）
-└ data/
-   └ store_counts.csv   品牌 × 縣市門市數（653 列）
-
-../docs/            GitHub Pages 的來源，只有這份報告，跟網站本體分開
-```
-
-## 怎麼跑
-
-```bash
-python build_db.py   # 建 analysis.db
-python report.py     # 產 report.html
-```
-
-不用裝任何套件。需要 Python 3.9 以上，以及 SQLite 3.35 以上（查詢用到 window function
-跟 `sqrt()`／`log10()`）；我自己跑的是 Python 3.13 + SQLite 3.50，舊版沒實測過。
-`analysis.db` 不進版控，每次都重建得出來。
-
----
 
 ## 資料與界線
 
-兩份來源：
-
-1. **優惠**：`../offers.json`，139 筆，最後查證 2026-08-04。這是快照，不是線上即時資料
-   （線上那套 Postgres 的優惠更多；跑這份分析時它剛好在維護）。
-2. **門市**：Google Places 的品牌搜尋結果，本機 11,515 筆明細，對得上優惠品牌的 4,734 家。
-
-**原始 Places 回應不進 git。** `place_id`、店名、經緯度是 Google 的資料，
-不該跟著一個公開 repo 散出去；但「某品牌在某縣市有幾家店」是算出來的統計量，
-所以版控裡只有 `data/store_counts.csv` 這份彙總。本機有明細就重算，沒有就讀 CSV，
-兩種情況跑出來的報告一樣。
-
-**沒有碰任何人的行為資料**：這份分析完全是優惠與門市的靜態結構，
-不包含瀏覽、收藏、兌換等使用者紀錄。
-
-其他限制（面額是估的、沒有按人口標準化、門市只到對得上的品牌）寫在報告最後一節。
-
----
-
-## 分析完之後該動的兩件事
-
-Q9 其實是一張維運清單：快照裡 19 筆限期檔期到今天全部過期，
-說明「靠人記得下架」一定會漏，得用 `valid_until` 自動判斷。
-Q5 的 91 天沒複查，則是把「資料新鮮度」變成一個可以追蹤的數字，而不是感覺。
+- **優惠**：目前是 `../offers.json`（139 筆，最後查證 2026-08-04）。線上實際更多，
+  但 Supabase 因為 egress 超額被停權，現在讀不到。頁面上凡是用快照的地方都標了日期。
+- **門市**：Google Places 的品牌搜尋結果，本機 11,515 筆明細，對得上優惠品牌的 4,734 家。
+  **原始 Places 回應不進 git**——那是 Google 的資料；版控裡只有
+  `data/store_counts.csv` 這份「某品牌在某縣市有幾家店」的彙總。
+- **使用者資料**：只用彙總。線上四支公開 view 給的是每筆優惠的回報數、成功率、
+  留言數、收藏數；個人層級的事件（`site_events`）是管理員限定，這裡讀不到也不放。
+- **還沒有的數字一律標「待補」**，不先填一個看起來合理的值。Bandary 與 RelateStats
+  兩頁現在大半是待補，缺的是 Play Console 與 Firebase 的匯出。

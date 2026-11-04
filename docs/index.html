@@ -2,8 +2,8 @@
 <html lang="zh-Hant"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>壽星日資料分析</title>
-<meta name="description" content="139 筆台灣生日優惠，用 SQL 問九個問題">
+<title>小數據所｜產品分析作品集</title>
+<meta name="description" content="BA／產品分析作品集：壽星日、Bandary 聽團曆、RelateStats 三個產品的指標設計、資料分析與產品決策。">
 <style>
 :root{
   color-scheme: light;
@@ -35,10 +35,15 @@ body{
   font:15px/1.7 system-ui,-apple-system,"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif;
   -webkit-font-smoothing:antialiased;
 }
-.wrap{max-width:860px; margin:0 auto; padding:0 16px}
-.top{padding:40px 0 8px; position:relative}
-.top h1{font-size:30px; line-height:1.25; margin:0 0 6px; letter-spacing:-.01em}
-.sub{margin:0 0 14px; color:var(--ink-2); font-size:17px}
+.wrap{max-width:880px; margin:0 auto; padding:0 16px}
+.top{padding:34px 0 8px; position:relative}
+.brand{
+  display:inline-block; font-size:13px; letter-spacing:.06em; color:var(--muted);
+  text-decoration:none; margin-bottom:10px;
+}
+.brand:hover{color:var(--ink-2)}
+.top h1{font-size:30px; line-height:1.25; margin:0 0 8px; letter-spacing:-.01em}
+.sub{margin:0 0 12px; color:var(--ink-2); font-size:17px}
 .byline{margin:0; color:var(--muted); font-size:13px}
 .jump{display:flex; flex-wrap:wrap; gap:6px; margin:18px 0 0}
 .jump a{
@@ -46,8 +51,9 @@ body{
   border:1px solid var(--border); border-radius:999px; padding:3px 11px;
 }
 .jump a:hover{color:var(--ink); border-color:var(--axis)}
+.jump a.on{color:var(--card); background:var(--ink); border-color:var(--ink)}
 .theme{
-  position:absolute; top:40px; right:16px; width:34px; height:34px;
+  position:absolute; top:34px; right:16px; width:34px; height:34px;
   border-radius:999px; border:1px solid var(--border); background:var(--card);
   color:var(--ink-2); font-size:15px; cursor:pointer;
 }
@@ -57,25 +63,76 @@ main{padding:20px 0 40px}
   padding:26px 26px 20px; margin:16px 0;
 }
 .card.intro{color:var(--ink-2)}
-.card.intro p{margin:0 0 10px}
-.qno{
-  font-size:12px; font-weight:600; letter-spacing:.08em; color:var(--series-1);
-  margin-bottom:6px;
-}
+.card p{margin:0 0 12px}
+.card p:last-child{margin-bottom:8px}
+.qno{font-size:12px; font-weight:600; letter-spacing:.08em; color:var(--series-1); margin-bottom:6px}
 .card h2{font-size:21px; line-height:1.35; margin:0 0 12px; letter-spacing:-.01em}
+.card h3{font-size:16px; margin:22px 0 8px}
 .answer{margin:0 0 18px; color:var(--ink-2)}
 .answer b{color:var(--ink)}
 .caption{margin:22px 0 6px; font-size:13px; color:var(--muted)}
 .note{margin:12px 0 0; font-size:13px; color:var(--muted)}
+.lede{font-size:17px; color:var(--ink-2)}
 .hero{display:flex; gap:18px; align-items:baseline; flex-wrap:wrap; margin:4px 0 22px}
 .hero-num{font-size:50px; font-weight:650; line-height:1; letter-spacing:-.02em}
 .hero-lbl{flex:1 1 280px; color:var(--ink-2); font-size:14px}
-.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(168px,1fr)); gap:12px}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(168px,1fr)); gap:12px; margin:14px 0}
 .stat{border:1px solid var(--border); border-radius:10px; padding:12px 14px}
 .stat-label{font-size:12px; color:var(--muted)}
 .stat-value{font-size:24px; font-weight:620; line-height:1.3; margin:2px 0}
 .stat-sub{font-size:12px; color:var(--ink-2)}
 .stat[data-tone=warn] .stat-value{color:var(--critical)}
+.stat[data-tone=good] .stat-value{color:var(--good)}
+.pending{
+  display:inline-block; font-size:12px; padding:1px 9px; border-radius:999px;
+  border:1px dashed var(--axis); color:var(--muted); white-space:nowrap;
+}
+.case{
+  display:block; text-decoration:none; color:inherit;
+  background:var(--card); border:1px solid var(--border); border-radius:14px;
+  padding:20px 22px 16px; margin:12px 0;
+}
+.case:hover{border-color:var(--axis)}
+.case-head{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
+.case-name{font-size:19px; font-weight:620}
+.case-status{font-size:12px; color:var(--muted)}
+.case-line{margin:6px 0 10px; color:var(--ink-2)}
+.case-points{margin:0 0 12px; padding-left:20px; color:var(--ink-2); font-size:14px}
+.case-points li{margin-bottom:4px}
+.case-go{font-size:13px; color:var(--series-1)}
+table{border-collapse:collapse; width:100%; font-size:13px; margin:6px 0 2px}
+th,td{text-align:left; padding:6px 9px; border-bottom:1px solid var(--border); vertical-align:top}
+thead th{color:var(--muted); font-weight:600; font-size:12px; white-space:nowrap}
+td{color:var(--ink-2)}
+tbody th{font-weight:500; color:var(--ink)}
+table.metrics tbody th{white-space:nowrap}
+table.metrics td:last-child{font-variant-numeric:tabular-nums; white-space:nowrap}
+table.matrix{border-collapse:separate; border-spacing:2px}
+table.matrix td{text-align:center; color:var(--ink); border-radius:3px; border:0}
+table.matrix th{border:0; border-bottom:1px solid var(--border)}
+table.matrix td.on-fill{color:#fff}
+table.data td.num{font-variant-numeric:tabular-nums}
+.timeline{margin:8px 0 0; padding-left:0; list-style:none; counter-reset:none}
+.timeline li{border-left:2px solid var(--grid); padding:0 0 16px 16px; margin:0}
+.timeline li:last-child{padding-bottom:0}
+.tl-head{display:flex; gap:10px; align-items:baseline; flex-wrap:wrap}
+.tl-ver{
+  font-size:12px; font-variant-numeric:tabular-nums; color:var(--series-1);
+  font-weight:600; white-space:nowrap;
+}
+.tl-what{font-weight:560}
+.tl-why{margin:4px 0 0; color:var(--ink-2); font-size:14px}
+.pill{
+  display:inline-block; font-size:12px; padding:1px 9px; border-radius:999px;
+  border:1px solid var(--border); white-space:nowrap;
+}
+.pill[data-tone=critical]{color:var(--critical); border-color:var(--critical)}
+.pill[data-tone=warning]{color:#8a5a00; border-color:var(--warning)}
+:root[data-theme=dark] .pill[data-tone=warning]{color:var(--warning)}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme=light])) .pill[data-tone=warning]{color:var(--warning)}
+}
+.pill[data-tone=good]{color:var(--good); border-color:var(--good)}
 .chart{width:100%; height:auto; display:block; margin:2px 0 4px; overflow:visible}
 .chart .grid{stroke:var(--grid); stroke-width:1}
 .chart .axis{stroke:var(--axis); stroke-width:1}
@@ -92,27 +149,6 @@ main{padding:20px 0 40px}
 .chart .anno{fill:var(--ink-2); font-size:11px}
 .chart .refline{stroke:var(--axis); stroke-width:1}
 .chart .reflbl{fill:var(--muted); font-size:11px}
-table{border-collapse:collapse; width:100%; font-size:13px; margin:6px 0 2px}
-th,td{text-align:left; padding:6px 9px; border-bottom:1px solid var(--border)}
-thead th{color:var(--muted); font-weight:600; font-size:12px; white-space:nowrap}
-td{font-variant-numeric:tabular-nums; color:var(--ink-2)}
-tbody th{font-weight:500; color:var(--ink); white-space:nowrap}
-table.matrix{border-collapse:separate; border-spacing:2px}
-table.matrix td{text-align:center; color:var(--ink); border-radius:3px; border:0}
-table.matrix th{border:0; border-bottom:1px solid var(--border)}
-table.matrix td.on-fill{color:#fff}
-table.data td.num{font-variant-numeric:tabular-nums}
-.pill{
-  display:inline-block; font-size:12px; padding:1px 9px; border-radius:999px;
-  border:1px solid var(--border); white-space:nowrap;
-}
-.pill[data-tone=critical]{color:var(--critical); border-color:var(--critical)}
-.pill[data-tone=warning]{color:#8a5a00; border-color:var(--warning)}
-:root[data-theme=dark] .pill[data-tone=warning]{color:var(--warning)}
-@media (prefers-color-scheme: dark){
-  :root:where(:not([data-theme=light])) .pill[data-tone=warning]{color:var(--warning)}
-}
-.pill[data-tone=good]{color:var(--good); border-color:var(--good)}
 .foot{margin-top:18px; border-top:1px solid var(--border); padding-top:12px}
 details{margin:6px 0}
 summary{
@@ -127,14 +163,11 @@ pre{
   background:var(--page); border:1px solid var(--border); border-radius:8px;
   padding:14px; overflow-x:auto; margin:8px 0 0;
 }
-pre code,code{
-  font:12.5px/1.65 ui-monospace,SFMono-Regular,Consolas,"Noto Sans Mono",monospace;
-}
+pre code,code{font:12.5px/1.65 ui-monospace,SFMono-Regular,Consolas,"Noto Sans Mono",monospace}
 code{color:var(--ink-2)}
-pre.tree{background:var(--page)}
-.limits{margin:0; padding-left:20px; color:var(--ink-2)}
-.limits li{margin-bottom:9px}
-.limits b{color:var(--ink)}
+ul.plain{margin:0; padding-left:20px; color:var(--ink-2)}
+ul.plain li{margin-bottom:9px}
+ul.plain b{color:var(--ink)}
 .foot-note{color:var(--muted); font-size:12px; padding-bottom:40px}
 @media (max-width:620px){
   .card{padding:20px 16px 16px}
@@ -146,843 +179,76 @@ pre.tree{background:var(--page)}
 <body>
 <header class="top">
   <div class="wrap">
-    <h1>壽星日資料分析</h1>
-    <p class="sub">139 筆台灣生日優惠，用 SQL 問九個問題</p>
-    <p class="byline">資料：壽星日 <code>offers.json</code>（最後查證 2026-08-04）
-      ＋ Google Places 門市彙總　·　工具：SQLite ＋ Python 標準庫　·
-      產出 2026-11-04 15:35 (UTC+8)</p>
-    <nav class="jump"><a href="#q1">Q1 規模</a><a href="#q2">Q2 類別</a><a href="#q3">Q3 提前門檻</a><a href="#q4">Q4 入會方式</a><a href="#q5">Q5 資料可信度</a><a href="#q6">Q6 縣市落差</a><a href="#q7">Q7–8 門市規模</a><a href="#q9">Q9 檔期</a><a href="#method">方法</a><a href="#limits">資料限制</a></nav>
+    <a class="brand" href="index.html">小數據所</a>
+    <h1>小數據所｜產品分析作品集</h1>
+    <p class="sub">把沒人幫你算的事算出來。三個自己做的產品，跟它們背後的數字。</p>
+    <p class="byline">定位：BA／產品分析　·　內容更新 2026-11-04</p>
+    <nav class="jump"><a href="index.html" class="on">首頁</a><a href="birthday-deals.html">壽星日</a><a href="bandary.html">Bandary</a><a href="relatestats.html">RelateStats</a><a href="sql-report.html">SQL 報告</a></nav>
     <button class="theme" type="button" aria-label="切換深淺色">◐</button>
   </div>
 </header>
 <main class="wrap">
-<section class="card intro">
-  <p>壽星日是我做的一個網站，收台灣的生日優惠。做網站的時候只在意「怎麼顯示」，
-    從來沒認真問過這批資料本身長什麼樣子。這一頁把它丟進 SQLite 問九個問題：
-    哪一類最大方、多少優惠其實當天辦來不及、住不同縣市差多少、
-    還有這批資料自己有多可信。</p>
-  <p>每一節都是「問題 → 一句結論 → 圖 → SQL → 表格」。
-    結論的數字是從查詢結果算出來的。資料換一版，這一頁的數字會自己跟著換。</p>
-</section>
-
-<section class="card hero-card" id="q1">
-  <div class="qno">Q1</div>
-  <h2>這批生日優惠加起來有多大？</h2>
-  <div class="hero">
-    <div class="hero-num">NT$20,720</div>
-    <div class="hero-lbl">把 123 筆估得出面額的優惠全部加起來，
-      一個壽星理論上能領到的總額。實際上沒有人領得完：住台北市
-      拿得到 115 筆，住嘉義縣、花蓮縣、澎湖縣
-      等 5 個縣市只剩 33 筆（Q6）。</div>
-  </div>
-  <div class="stats"><div class="stat"><div class="stat-label">優惠筆數</div><div class="stat-value">139</div><div class="stat-sub">7 個類別、139 個品牌</div></div><div class="stat"><div class="stat-label">面額中位數</div><div class="stat-value">NT$130</div><div class="stat-sub">123 筆估得出面額，最大 NT$999</div></div><div class="stat"><div class="stat-label">當天辦就能用</div><div class="stat-value">49%</div><div class="stat-sub">68 筆免費入會又不用提前</div></div><div class="stat"><div class="stat-label">全台都吃得到</div><div class="stat-value">24%</div><div class="stat-sub">33 筆全台連鎖，其餘限定縣市</div></div><div class="stat"><div class="stat-label">人工複查過</div><div class="stat-value">54%</div><div class="stat-sub">75 筆標記 verified</div></div><div class="stat"><div class="stat-label">每年都有</div><div class="stat-value">86%</div><div class="stat-sub">120 筆常態、19 筆限期檔期</div></div></div>
-  <div class="foot"><details class="sqlbox"><summary>看這一題的 SQL<code>queries/01_market_shape.sql</code></summary><pre><code>-- Q1 這批生日優惠長什麼樣子？（報告開頭的幾個數字）
---
--- 一列就講完整體規模。寫法上刻意用 sum(case when ...) 而不是跑好幾個 count(*)，
--- 只掃一次 offers 就把所有比例算出來。
-select
-    count(*)                                               as n_offers,
-    count(distinct brand)                                  as n_brands,
-    count(distinct group_name)                             as n_groups,
-    count(distinct category)                               as n_categories,
-    sum(case when is_nationwide = 1 then 1 else 0 end)     as n_nationwide,
-    sum(case when verified = 1 then 1 else 0 end)          as n_verified,
-    sum(case when validity_type = &#x27;rolling&#x27; then 1 else 0 end) as n_rolling,
-    sum(case when membership_cost = &#x27;free&#x27;
-              and coalesce(advance_days, 999) = 0 then 1 else 0 end) as n_walk_in,
-    count(value_twd)                                       as n_valued,
-    sum(value_twd)                                         as total_value,
-    max(value_twd)                                         as max_value,
-    -- 中位數：SQLite 沒有 median()，用排序後取中間那一（兩）筆的平均。
-    (select avg(value_twd) from (
-        select value_twd,
-               row_number() over (order by value_twd) as rn,
-               count(*)     over ()                   as n
-          from offers where value_twd is not null
-     ) where rn in ((n + 1) / 2, (n + 2) / 2))             as median_value
-from offers;</code></pre></details></div>
-</section>
-<section class="card" id="q2">
-  <div class="qno">Q2</div>
-  <h2>哪一類的生日優惠最大方？</h2>
-  <p class="answer"><b>吃一頓的生日禮，是喝一杯的 3.3 倍。</b>火鍋燒肉的面額中位數 NT$200，飲料只有 NT$60。筆數不到 5 的類別（娛樂樂園 2 筆、零售美妝 4 筆）沒有畫進圖裡。娛樂樂園的中位數有 NT$949，但兩筆撐不起一個行情，放進去只會把其他類別壓成一條線。</p>
-  <p class="caption">各類別面額中位數（括號是估得出面額的筆數；只畫 5 筆以上的類別）</p><svg class="chart" viewBox="0 0 720 174" role="img" aria-label="各類別生日優惠面額中位數" preserveAspectRatio="xMidYMid meet">
-<line class="grid" x1="140.0" y1="6" x2="140.0" y2="146"/>
-<text class="tick" x="140.0" y="162" text-anchor="middle">0</text>
-<line class="grid" x1="271.0" y1="6" x2="271.0" y2="146"/>
-<text class="tick" x="271.0" y="162" text-anchor="middle">50</text>
-<line class="grid" x1="402.0" y1="6" x2="402.0" y2="146"/>
-<text class="tick" x="402.0" y="162" text-anchor="middle">100</text>
-<line class="grid" x1="533.0" y1="6" x2="533.0" y2="146"/>
-<text class="tick" x="533.0" y="162" text-anchor="middle">150</text>
-<line class="grid" x1="664.0" y1="6" x2="664.0" y2="146"/>
-<text class="tick" x="664.0" y="162" text-anchor="middle">200</text>
-<g class="row"><title>火鍋燒肉（19）：200 元</title>
-<text class="lbl" x="132" y="19" text-anchor="end">火鍋燒肉（19）</text>
-<path class="bar" d="M140.0,6.0 H660.0 A4,4 0 0 1 664.0,10.0 V18.0 A4,4 0 0 1 660.0,22.0 H140.0 Z"/>
-<text class="val" x="670.0" y="19">200 元</text>
-</g>
-<g class="row"><title>餐廳（33）：180 元</title>
-<text class="lbl" x="132" y="47" text-anchor="end">餐廳（33）</text>
-<path class="bar" d="M140.0,34.0 H607.6 A4,4 0 0 1 611.6,38.0 V46.0 A4,4 0 0 1 607.6,50.0 H140.0 Z"/>
-<text class="val" x="617.6" y="47">180 元</text>
-</g>
-<g class="row"><title>甜點烘焙（25）：100 元</title>
-<text class="lbl" x="132" y="75" text-anchor="end">甜點烘焙（25）</text>
-<path class="bar" d="M140.0,62.0 H398.0 A4,4 0 0 1 402.0,66.0 V74.0 A4,4 0 0 1 398.0,78.0 H140.0 Z"/>
-<text class="val" x="408.0" y="75">100 元</text>
-</g>
-<g class="row"><title>速食（22）：67 元</title>
-<text class="lbl" x="132" y="103" text-anchor="end">速食（22）</text>
-<path class="bar" d="M140.0,90.0 H311.5 A4,4 0 0 1 315.5,94.0 V102.0 A4,4 0 0 1 311.5,106.0 H140.0 Z"/>
-<text class="val" x="321.5" y="103">67 元</text>
-</g>
-<g class="row"><title>飲料（18）：60 元</title>
-<text class="lbl" x="132" y="131" text-anchor="end">飲料（18）</text>
-<path class="bar" d="M140.0,118.0 H293.2 A4,4 0 0 1 297.2,122.0 V130.0 A4,4 0 0 1 293.2,134.0 H140.0 Z"/>
-<text class="val" x="303.2" y="131">60 元</text>
-</g>
-<line class="axis" x1="140" y1="6" x2="140" y2="146"/>
-</svg>
-  <div class="foot"><details class="sqlbox"><summary>看這一題的 SQL<code>queries/02_value_by_category.sql</code></summary><pre><code>-- Q2 哪一類的生日優惠最大方？
---
--- 用中位數而不是平均：139 筆裡有幾個上千元的（樂園套票、套餐組）會把平均拉歪。
--- SQLite 沒有 median()／percentile_cont()，所以自己用 window function 做：
--- 先在每個 category 裡排序編號，再取中間那一（兩）筆平均；四分位同理。
-with valued as (
-    select category, value_twd,
-           row_number() over (partition by category order by value_twd) as rn,
-           count(*)     over (partition by category)                    as n
-      from offers
-     where value_twd is not null
-),
-stat as (
-    select category,
-           n,
-           avg(case when rn in ((n + 1) / 2, (n + 2) / 2) then value_twd end) as median_value,
-           avg(case when rn = max(1, n / 4)              then value_twd end)  as q1_value,
-           avg(case when rn = max(1, (n * 3 + 3) / 4)    then value_twd end)  as q3_value,
-           min(value_twd) as min_value,
-           max(value_twd) as max_value
-      from valued
-     group by category, n
-),
--- 全體中位數，當作比較基準
-overall as (
-    select avg(value_twd) as median_all from (
-        select value_twd,
-               row_number() over (order by value_twd) as rn,
-               count(*)     over ()                   as n
-          from offers where value_twd is not null
-    ) where rn in ((n + 1) / 2, (n + 2) / 2)
-),
-counted as (
-    select category, count(*) as n_all from offers group by category
-)
-select s.category,
-       c.n_all,
-       s.n                             as n_valued,
-       cast(s.median_value as integer) as median_value,
-       cast(s.q1_value     as integer) as q1_value,
-       cast(s.q3_value     as integer) as q3_value,
-       s.min_value,
-       s.max_value,
-       round(s.median_value / o.median_all, 2) as vs_overall
-  from stat s
-  join counted c on c.category = s.category
- cross join overall o
- order by s.median_value desc;</code></pre></details><details class="tablebox"><summary>看完整表格</summary><table class="data"><thead><tr><th>類別</th><th>優惠數</th><th>可估面額</th><th>中位數</th><th>Q1</th><th>Q3</th><th>最小</th><th>最大</th><th>對全體倍數</th></tr></thead><tbody><tr><td>娛樂樂園</td><td>2</td><td>2</td><td>949</td><td>899</td><td>999</td><td>899</td><td>999</td><td>7.3</td></tr><tr><td>火鍋燒肉</td><td>21</td><td>19</td><td>200</td><td>150</td><td>300</td><td>100</td><td>600</td><td>1.54</td></tr><tr><td>餐廳</td><td>41</td><td>33</td><td>180</td><td>100</td><td>298</td><td>50</td><td>500</td><td>1.38</td></tr><tr><td>甜點烘焙</td><td>28</td><td>25</td><td>100</td><td>65</td><td>180</td><td>31</td><td>350</td><td>0.77</td></tr><tr><td>零售美妝</td><td>5</td><td>4</td><td>100</td><td>100</td><td>100</td><td>100</td><td>300</td><td>0.77</td></tr><tr><td>速食</td><td>24</td><td>22</td><td>67</td><td>50</td><td>160</td><td>40</td><td>300</td><td>0.52</td></tr><tr><td>飲料</td><td>18</td><td>18</td><td>60</td><td>45</td><td>65</td><td>20</td><td>120</td><td>0.46</td></tr></tbody></table></details></div>
-</section>
-<section class="card" id="q3">
-  <div class="qno">Q3</div>
-  <h2>生日當天才想到，還來得及嗎？</h2>
-  <p class="answer"><b>生日當天才查，只剩一半能用。</b>139 筆裡只有 68 筆（49%）是當天辦會員當天就能領；33 筆要你提前八天以上入會（多數是整整一個月），還有 32 筆（23%）品牌根本沒說要多久——對壽星來說，沒說＝不保證。</p>
-  <p class="caption">按「要提前幾天入會」分組的優惠筆數</p><svg class="chart" viewBox="0 0 720 240" role="img" aria-label="">
-<line class="grid" x1="44" y1="194.0" x2="708" y2="194.0"/>
-<text class="tick" x="36" y="198.0" text-anchor="end">0</text>
-<line class="grid" x1="44" y1="148.0" x2="708" y2="148.0"/>
-<text class="tick" x="36" y="152.0" text-anchor="end">20</text>
-<line class="grid" x1="44" y1="102.0" x2="708" y2="102.0"/>
-<text class="tick" x="36" y="106.0" text-anchor="end">40</text>
-<line class="grid" x1="44" y1="56.0" x2="708" y2="56.0"/>
-<text class="tick" x="36" y="60.0" text-anchor="end">60</text>
-<line class="grid" x1="44" y1="10.0" x2="708" y2="10.0"/>
-<text class="tick" x="36" y="14.0" text-anchor="end">80</text>
-<g class="row"><title>當天辦就能用：68</title>
-<path class="bar" d="M98.4,194.0 V41.6 A4,4 0 0 1 102.4,37.6 H118.4 A4,4 0 0 1 122.4,41.6 V194.0 Z"/>
-<text class="val" x="110.4" y="31.6" text-anchor="middle">68</text>
-<text class="lbl" x="110.4" y="212" text-anchor="middle">當天辦就能用</text>
-</g>
-<g class="row"><title>要提前 1–7 天：6</title>
-<path class="bar" d="M231.2,194.0 V184.2 A4,4 0 0 1 235.2,180.2 H251.2 A4,4 0 0 1 255.2,184.2 V194.0 Z"/>
-<text class="val" x="243.2" y="174.2" text-anchor="middle">6</text>
-<text class="lbl" x="243.2" y="212" text-anchor="middle">要提前 1–7 天</text>
-</g>
-<g class="row"><title>要提前 8–30 天：32</title>
-<path class="bar" d="M364.0,194.0 V124.4 A4,4 0 0 1 368.0,120.4 H384.0 A4,4 0 0 1 388.0,124.4 V194.0 Z"/>
-<text class="val" x="376.0" y="114.4" text-anchor="middle">32</text>
-<text class="lbl" x="376.0" y="212" text-anchor="middle">要提前 8–30 天</text>
-</g>
-<g class="row"><title>要提前 30 天以上：1</title>
-<path class="bar" d="M496.8,194.0 V194.0 A2.3000000000000003,2.3000000000000003 0 0 1 499.1,191.7 H518.5 A2.3000000000000003,2.3000000000000003 0 0 1 520.8,194.0 V194.0 Z"/>
-<text class="val" x="508.8" y="185.7" text-anchor="middle">1</text>
-<text class="lbl" x="508.8" y="212" text-anchor="middle">要提前 30 天以上</text>
-</g>
-<g class="row"><title>未明訂：32</title>
-<path class="bar" d="M629.6,194.0 V124.4 A4,4 0 0 1 633.6,120.4 H649.6 A4,4 0 0 1 653.6,124.4 V194.0 Z"/>
-<text class="val" x="641.6" y="114.4" text-anchor="middle">32</text>
-<text class="lbl" x="641.6" y="212" text-anchor="middle">未明訂</text>
-</g>
-<line class="axis" x1="44" y1="194" x2="708" y2="194"/>
-</svg>
-  <div class="foot"><details class="sqlbox"><summary>看這一題的 SQL<code>queries/03_advance_days.sql</code></summary><pre><code>-- Q3 生日當天才想到要用，還來得及嗎？
---
--- advance_days = 這個優惠要求提前幾天完成入會／預約。0 表示當天辦當天用，
--- null 表示品牌沒明訂（對壽星來說等於「不保證」，所以單獨一欄，不混進 0）。
--- 重點是累積比例：用 sum() over (order by ...) 把「N 天前就要辦好」的優惠累加起來，
--- 才看得出「生日前一天才查，還剩多少可以用」。
-with bucketed as (
-    select case
-             when advance_days is null then &#x27;未明訂&#x27;
-             when advance_days = 0     then &#x27;當天辦就能用&#x27;
-             when advance_days &lt;= 7    then &#x27;要提前 1–7 天&#x27;
-             when advance_days &lt;= 30   then &#x27;要提前 8–30 天&#x27;
-             else &#x27;要提前 30 天以上&#x27;
-           end as bucket,
-           case
-             when advance_days is null then 9
-             when advance_days = 0     then 0
-             when advance_days &lt;= 7    then 1
-             when advance_days &lt;= 30   then 2
-             else 3
-           end as sort_key,
-           value_twd
-      from offers
-),
-agg as (
-    select bucket, sort_key,
-           count(*)                      as n_offers,
-           cast(avg(value_twd) as integer) as avg_value
-      from bucketed
-     group by bucket, sort_key
-)
-select bucket,
-       n_offers,
-       avg_value,
-       round(100.0 * n_offers / sum(n_offers) over (), 1) as pct,
-       -- 依門檻由鬆到緊累加：到這一列為止「拿得到」的優惠有幾筆
-       sum(case when sort_key &lt; 9 then n_offers else 0 end)
-           over (order by sort_key rows between unbounded preceding and current row)
-                                                          as cum_reachable
-  from agg
- order by sort_key;</code></pre></details><details class="tablebox"><summary>看完整表格</summary><table class="data"><thead><tr><th>提前門檻</th><th>筆數</th><th>占比 %</th><th>平均面額</th><th>累計可拿到</th></tr></thead><tbody><tr><td>當天辦就能用</td><td>68</td><td>48.9</td><td>131</td><td>68</td></tr><tr><td>要提前 1–7 天</td><td>6</td><td>4.3</td><td>212</td><td>74</td></tr><tr><td>要提前 8–30 天</td><td>32</td><td>23</td><td>112</td><td>106</td></tr><tr><td>要提前 30 天以上</td><td>1</td><td>0.7</td><td>65</td><td>107</td></tr><tr><td>未明訂</td><td>32</td><td>23</td><td>300</td><td>107</td></tr></tbody></table></details></div>
-</section>
-<section class="card" id="q4">
-  <div class="qno">Q4</div>
-  <h2>要先變成誰的會員，才換得到什麼？</h2>
-  <p class="answer"><b>139 筆裡有 65 筆綁在同一個第三方平台上。</b>Ocard 第三方集點一個人就占了 47%。對壽星是好事，辦一個帳號解鎖一堆品牌；對這個網站是風險，它改規則，資料就要大改。</p>
-  <p class="caption">入會方式 × 優惠型態（格子越深筆數越多；數字都印出來了，不靠顏色讀）</p><table class="matrix"><thead><tr><th></th><th>合計</th><th>免費無低消</th><th>免費有低消</th><th>買一送一</th><th>折扣</th><th>面額中位數</th><th>當天可辦</th></tr></thead><tbody><tr><th scope="row">Ocard 第三方集點</th><td><b>65</b></td><td style="background:rgba(42,120,214,0.56)">12</td><td class="on-fill" style="background:rgba(42,120,214,0.92)">26</td><td style="background:rgba(42,120,214,0.56)">12</td><td class="on-fill" style="background:rgba(42,120,214,0.64)">15</td><td>90</td><td>50</td></tr><tr><th scope="row">品牌 APP</th><td><b>33</b></td><td style="background:rgba(42,120,214,0.00)">·</td><td class="on-fill" style="background:rgba(42,120,214,0.59)">13</td><td style="background:rgba(42,120,214,0.11)">1</td><td class="on-fill" style="background:rgba(42,120,214,0.70)">17</td><td>130</td><td>18</td></tr><tr><th scope="row">不用會員</th><td><b>23</b></td><td style="background:rgba(42,120,214,0.11)">1</td><td class="on-fill" style="background:rgba(42,120,214,0.59)">13</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.46)">9</td><td>300</td><td>0</td></tr><tr><th scope="row">品牌自家會員</th><td><b>13</b></td><td style="background:rgba(42,120,214,0.23)">3</td><td style="background:rgba(42,120,214,0.32)">5</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.32)">5</td><td>150</td><td>0</td></tr><tr><th scope="row">LINE 官方帳號</th><td><b>3</b></td><td style="background:rgba(42,120,214,0.11)">1</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.11)">1</td><td style="background:rgba(42,120,214,0.11)">1</td><td>65</td><td>0</td></tr><tr><th scope="row">指定信用卡</th><td><b>1</b></td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.11)">1</td><td>150</td><td>0</td></tr><tr><th scope="row">要升到指定會員等級</th><td><b>1</b></td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.11)">1</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.00)">·</td><td>120</td><td>0</td></tr></tbody></table><p class="note">「當天可辦」那欄要小心讀：「不用會員」這組有 22 筆的 advance_days 是 null（品牌沒明訂），所以它顯示 0，不是真的來不及。這就是 Q3 把「未明訂」單獨一組的原因。</p>
-  <div class="foot"><details class="sqlbox"><summary>看這一題的 SQL<code>queries/04_membership_matrix.sql</code></summary><pre><code>-- Q4 要先變成誰的會員，才換得到什麼？
---
--- 兩個分類交叉：入會方式（Ocard／品牌 APP／LINE／不用會員…）× 優惠型態
--- （免費無低消／免費有低消／買一送一／折扣）。SQLite 沒有 pivot，
--- 用 sum(case when ...) 把列轉成欄，最後一欄是這一種入會方式的優惠面額中位數。
-with labelled as (
-    select case membership_type
-             when &#x27;none&#x27;  then &#x27;不用會員&#x27;
-             when &#x27;app&#x27;   then &#x27;品牌 APP&#x27;
-             when &#x27;line&#x27;  then &#x27;LINE 官方帳號&#x27;
-             when &#x27;ocard&#x27; then &#x27;Ocard 第三方集點&#x27;
-             when &#x27;brand&#x27; then &#x27;品牌自家會員&#x27;
-             when &#x27;card&#x27;  then &#x27;指定信用卡&#x27;
-             when &#x27;tier&#x27;  then &#x27;要升到指定會員等級&#x27;
-             else coalesce(membership_type, &#x27;未標註&#x27;)
-           end as access,
-           membership_type,
-           free_tier,
-           value_twd,
-           coalesce(advance_days, 999) as advance_days
-      from offers
-),
-med as (  -- 每種入會方式的面額中位數
-    select membership_type,
-           avg(case when rn in ((n + 1) / 2, (n + 2) / 2) then value_twd end) as median_value
-      from (
-        select membership_type, value_twd,
-               row_number() over (partition by membership_type order by value_twd) as rn,
-               count(*)     over (partition by membership_type)                    as n
-          from labelled where value_twd is not null
-      ) group by membership_type
-)
-select l.access,
-       count(*) as n_offers,
-       sum(case when l.free_tier = &#x27;free_no_min&#x27; then 1 else 0 end) as free_no_min,
-       sum(case when l.free_tier = &#x27;free_min&#x27;    then 1 else 0 end) as free_with_min,
-       sum(case when l.free_tier = &#x27;bogo&#x27;        then 1 else 0 end) as bogo,
-       sum(case when l.free_tier = &#x27;discount&#x27;    then 1 else 0 end) as discount,
-       sum(case when l.advance_days = 0          then 1 else 0 end) as same_day_ok,
-       cast(m.median_value as integer) as median_value
-  from labelled l
-  left join med m on m.membership_type = l.membership_type
- group by l.access, m.median_value
- order by n_offers desc;</code></pre></details></div>
-</section>
-<section class="card" id="q5">
-  <div class="qno">Q5</div>
-  <h2>這些優惠是誰說的？多久沒複查了？</h2>
-  <p class="answer"><b>只有 12% 的優惠有品牌官方背書。</b>有 86% 的優惠，最好的來源只是部落格懶人包或社群貼文；其中社群貼文那 54 筆的人工複查率是 0%。整批資料已經 92 天沒有複查過。這一節看的是資料本身可不可靠，跟優惠大不大沒關係。</p>
-  <p class="caption">以「最可信來源」分組的優惠筆數</p><svg class="chart" viewBox="0 0 720 146" role="img" aria-label="優惠的最佳來源可信度分佈" preserveAspectRatio="xMidYMid meet">
-<line class="grid" x1="158.0" y1="6" x2="158.0" y2="118"/>
-<text class="tick" x="158.0" y="134" text-anchor="middle">0</text>
-<line class="grid" x1="284.5" y1="6" x2="284.5" y2="118"/>
-<text class="tick" x="284.5" y="134" text-anchor="middle">20</text>
-<line class="grid" x1="411.0" y1="6" x2="411.0" y2="118"/>
-<text class="tick" x="411.0" y="134" text-anchor="middle">40</text>
-<line class="grid" x1="537.5" y1="6" x2="537.5" y2="118"/>
-<text class="tick" x="537.5" y="134" text-anchor="middle">60</text>
-<line class="grid" x1="664.0" y1="6" x2="664.0" y2="118"/>
-<text class="tick" x="664.0" y="134" text-anchor="middle">80</text>
-<g class="row"><title>1 品牌官方：17</title>
-<text class="lbl" x="150" y="19" text-anchor="end">1 品牌官方</text>
-<path class="bar" d="M158.0,6.0 H261.5 A4,4 0 0 1 265.5,10.0 V18.0 A4,4 0 0 1 261.5,22.0 H158.0 Z"/>
-<text class="val" x="271.5" y="19">17</text>
-</g>
-<g class="row"><title>2 新聞媒體：3</title>
-<text class="lbl" x="150" y="47" text-anchor="end">2 新聞媒體</text>
-<path class="bar" d="M158.0,34.0 H173.0 A4,4 0 0 1 177.0,38.0 V46.0 A4,4 0 0 1 173.0,50.0 H158.0 Z"/>
-<text class="val" x="183.0" y="47">3</text>
-</g>
-<g class="row"><title>3 部落格懶人包：65</title>
-<text class="lbl" x="150" y="75" text-anchor="end">3 部落格懶人包</text>
-<path class="bar" d="M158.0,62.0 H565.1 A4,4 0 0 1 569.1,66.0 V74.0 A4,4 0 0 1 565.1,78.0 H158.0 Z"/>
-<text class="val" x="575.1" y="75">65</text>
-</g>
-<g class="row"><title>4 社群貼文：54</title>
-<text class="lbl" x="150" y="103" text-anchor="end">4 社群貼文</text>
-<path class="bar" d="M158.0,90.0 H495.6 A4,4 0 0 1 499.6,94.0 V102.0 A4,4 0 0 1 495.6,106.0 H158.0 Z"/>
-<text class="val" x="505.6" y="103">54</text>
-</g>
-<line class="axis" x1="158" y1="6" x2="158" y2="118"/>
-</svg><div class="stats"><div class="stat" data-tone="warn"><div class="stat-label">距離上次複查</div><div class="stat-value">92 天</div><div class="stat-sub">整批 last_checked 都是同一天</div></div><div class="stat"><div class="stat-label">有官方來源</div><div class="stat-value">17 筆</div><div class="stat-sub">占 12%</div></div><div class="stat" data-tone="warn"><div class="stat-label">只有社群貼文</div><div class="stat-value">54 筆</div><div class="stat-sub">複查率 0%</div></div></div>
-  <div class="foot"><details class="sqlbox"><summary>看這一題的 SQL<code>queries/05_source_trust.sql</code></summary><pre><code>-- Q5 這些優惠是誰說的？多久沒複查了？
---
--- 每筆優惠可以有多個來源，tier 越小越可信：1 品牌官方／2 新聞媒體／3 部落格懶人包／4 社群貼文。
--- best_source_tier 是其中最可信的那一個。這一題問的是資料治理，不是優惠本身：
--- 「最好的來源只是部落格」的優惠佔多少、這些優惠是不是反而面額開得特別大、
--- 以及距離上次複查過了幾天（julianday 相減）。
-with t as (
-    select case best_source_tier
-             when 1 then &#x27;1 品牌官方&#x27;
-             when 2 then &#x27;2 新聞媒體&#x27;
-             when 3 then &#x27;3 部落格懶人包&#x27;
-             when 4 then &#x27;4 社群貼文&#x27;
-             else &#x27;未標註&#x27;
-           end                                   as tier_label,
-           coalesce(best_source_tier, 9)         as tier,
-           verified,
-           value_twd,
-           cast(julianday(&#x27;now&#x27;) - julianday(last_checked) as integer) as days_since_check,
-           (select count(*) from offer_sources s where s.offer_id = offers.id) as n_sources
-      from offers
-)
-select tier_label,
-       count(*)                                                as n_offers,
-       round(100.0 * count(*) / sum(count(*)) over (), 1)       as pct,
-       sum(verified)                                           as n_verified,
-       round(100.0 * sum(verified) / count(*), 0)               as verified_pct,
-       cast(avg(value_twd) as integer)                          as avg_value,
-       round(avg(n_sources), 1)                                as avg_sources,
-       max(days_since_check)                                   as days_since_check
-  from t
- group by tier_label, tier
- order by tier;</code></pre></details><details class="tablebox"><summary>看完整表格</summary><table class="data"><thead><tr><th>最佳來源</th><th>筆數</th><th>占比 %</th><th>複查過</th><th>複查率 %</th><th>平均面額</th><th>平均來源數</th><th>幾天沒查</th></tr></thead><tbody><tr><td>1 品牌官方</td><td>17</td><td>12.2</td><td>17</td><td>100</td><td>123</td><td>2</td><td>92</td></tr><tr><td>2 新聞媒體</td><td>3</td><td>2.2</td><td>2</td><td>67</td><td>473</td><td>1</td><td>92</td></tr><tr><td>3 部落格懶人包</td><td>65</td><td>46.8</td><td>56</td><td>86</td><td>183</td><td>1</td><td>92</td></tr><tr><td>4 社群貼文</td><td>54</td><td>38.8</td><td>0</td><td>0</td><td>138</td><td>1</td><td>92</td></tr></tbody></table></details></div>
-</section>
-<section class="card" id="q6">
-  <div class="qno">Q6</div>
-  <h2>住在哪裡，生日優惠差多少？</h2>
-  <p class="answer"><b>住台北市的壽星有 115 個優惠可選，嘉義縣、花蓮縣、澎湖縣、金門縣、連江縣只有 33 個，差 3.5 倍。</b>而且那 33 個全部是全台連鎖，也就是說這些縣市的壽星完全沒有「本地品牌」的生日優惠可拿。金門縣、連江縣連一家對得上的門市都沒有。</p>
-  <p class="caption">各縣市可用的優惠筆數（含全台連鎖）</p><svg class="chart" viewBox="0 0 720 580" role="img" aria-label="各縣市可用生日優惠數" preserveAspectRatio="xMidYMid meet">
-<line class="grid" x1="84.0" y1="24" x2="84.0" y2="552"/>
-<text class="tick" x="84.0" y="568" text-anchor="middle">0</text>
-<line class="grid" x1="277.3" y1="24" x2="277.3" y2="552"/>
-<text class="tick" x="277.3" y="568" text-anchor="middle">50</text>
-<line class="grid" x1="470.7" y1="24" x2="470.7" y2="552"/>
-<text class="tick" x="470.7" y="568" text-anchor="middle">100</text>
-<line class="grid" x1="664.0" y1="24" x2="664.0" y2="552"/>
-<text class="tick" x="664.0" y="568" text-anchor="middle">150</text>
-<g class="row"><title>台北市：115</title>
-<text class="lbl" x="76" y="35" text-anchor="end">台北市</text>
-<path class="bar" d="M84.0,24.0 H524.7 A4,4 0 0 1 528.7,28.0 V34.0 A4,4 0 0 1 524.7,38.0 H84.0 Z"/>
-<text class="val" x="534.7" y="35">115</text>
-</g>
-<g class="row"><title>台中市：90</title>
-<text class="lbl" x="76" y="59" text-anchor="end">台中市</text>
-<path class="bar" d="M84.0,48.0 H428.0 A4,4 0 0 1 432.0,52.0 V58.0 A4,4 0 0 1 428.0,62.0 H84.0 Z"/>
-<text class="val" x="438.0" y="59">90</text>
-</g>
-<g class="row"><title>新北市：86</title>
-<text class="lbl" x="76" y="83" text-anchor="end">新北市</text>
-<path class="bar" d="M84.0,72.0 H412.5 A4,4 0 0 1 416.5,76.0 V82.0 A4,4 0 0 1 412.5,86.0 H84.0 Z"/>
-<text class="val" x="422.5" y="83">86</text>
-</g>
-<g class="row"><title>高雄市：73</title>
-<text class="lbl" x="76" y="107" text-anchor="end">高雄市</text>
-<path class="bar" d="M84.0,96.0 H362.3 A4,4 0 0 1 366.3,100.0 V106.0 A4,4 0 0 1 362.3,110.0 H84.0 Z"/>
-<text class="val" x="372.3" y="107">73</text>
-</g>
-<g class="row"><title>桃園市：71</title>
-<text class="lbl" x="76" y="131" text-anchor="end">桃園市</text>
-<path class="bar" d="M84.0,120.0 H354.5 A4,4 0 0 1 358.5,124.0 V130.0 A4,4 0 0 1 354.5,134.0 H84.0 Z"/>
-<text class="val" x="364.5" y="131">71</text>
-</g>
-<g class="row"><title>台南市：58</title>
-<text class="lbl" x="76" y="155" text-anchor="end">台南市</text>
-<path class="bar" d="M84.0,144.0 H304.3 A4,4 0 0 1 308.3,148.0 V154.0 A4,4 0 0 1 304.3,158.0 H84.0 Z"/>
-<text class="val" x="314.3" y="155">58</text>
-</g>
-<g class="row"><title>新竹市：52</title>
-<text class="lbl" x="76" y="179" text-anchor="end">新竹市</text>
-<path class="bar" d="M84.0,168.0 H281.1 A4,4 0 0 1 285.1,172.0 V178.0 A4,4 0 0 1 281.1,182.0 H84.0 Z"/>
-<text class="val" x="291.1" y="179">52</text>
-</g>
-<g class="row"><title>新竹縣：44</title>
-<text class="lbl" x="76" y="203" text-anchor="end">新竹縣</text>
-<path class="bar" d="M84.0,192.0 H250.1 A4,4 0 0 1 254.1,196.0 V202.0 A4,4 0 0 1 250.1,206.0 H84.0 Z"/>
-<text class="val" x="260.1" y="203">44</text>
-</g>
-<g class="row"><title>宜蘭縣：42</title>
-<text class="lbl" x="76" y="227" text-anchor="end">宜蘭縣</text>
-<path class="bar" d="M84.0,216.0 H242.4 A4,4 0 0 1 246.4,220.0 V226.0 A4,4 0 0 1 242.4,230.0 H84.0 Z"/>
-<text class="val" x="252.4" y="227">42</text>
-</g>
-<g class="row"><title>彰化縣：41</title>
-<text class="lbl" x="76" y="251" text-anchor="end">彰化縣</text>
-<path class="bar" d="M84.0,240.0 H238.5 A4,4 0 0 1 242.5,244.0 V250.0 A4,4 0 0 1 238.5,254.0 H84.0 Z"/>
-<text class="val" x="248.5" y="251">41</text>
-</g>
-<g class="row"><title>嘉義市：41</title>
-<text class="lbl" x="76" y="275" text-anchor="end">嘉義市</text>
-<path class="bar" d="M84.0,264.0 H238.5 A4,4 0 0 1 242.5,268.0 V274.0 A4,4 0 0 1 238.5,278.0 H84.0 Z"/>
-<text class="val" x="248.5" y="275">41</text>
-</g>
-<g class="row"><title>屏東縣：41</title>
-<text class="lbl" x="76" y="299" text-anchor="end">屏東縣</text>
-<path class="bar" d="M84.0,288.0 H238.5 A4,4 0 0 1 242.5,292.0 V298.0 A4,4 0 0 1 238.5,302.0 H84.0 Z"/>
-<text class="val" x="248.5" y="299">41</text>
-</g>
-<g class="row"><title>苗栗縣：38</title>
-<text class="lbl" x="76" y="323" text-anchor="end">苗栗縣</text>
-<path class="bar" d="M84.0,312.0 H226.9 A4,4 0 0 1 230.9,316.0 V322.0 A4,4 0 0 1 226.9,326.0 H84.0 Z"/>
-<text class="val" x="236.9" y="323">38</text>
-</g>
-<g class="row"><title>雲林縣：38</title>
-<text class="lbl" x="76" y="347" text-anchor="end">雲林縣</text>
-<path class="bar" d="M84.0,336.0 H226.9 A4,4 0 0 1 230.9,340.0 V346.0 A4,4 0 0 1 226.9,350.0 H84.0 Z"/>
-<text class="val" x="236.9" y="347">38</text>
-</g>
-<g class="row"><title>基隆市：36</title>
-<text class="lbl" x="76" y="371" text-anchor="end">基隆市</text>
-<path class="bar" d="M84.0,360.0 H219.2 A4,4 0 0 1 223.2,364.0 V370.0 A4,4 0 0 1 219.2,374.0 H84.0 Z"/>
-<text class="val" x="229.2" y="371">36</text>
-</g>
-<g class="row"><title>南投縣：35</title>
-<text class="lbl" x="76" y="395" text-anchor="end">南投縣</text>
-<path class="bar" d="M84.0,384.0 H215.3 A4,4 0 0 1 219.3,388.0 V394.0 A4,4 0 0 1 215.3,398.0 H84.0 Z"/>
-<text class="val" x="225.3" y="395">35</text>
-</g>
-<g class="row"><title>台東縣：35</title>
-<text class="lbl" x="76" y="419" text-anchor="end">台東縣</text>
-<path class="bar" d="M84.0,408.0 H215.3 A4,4 0 0 1 219.3,412.0 V418.0 A4,4 0 0 1 215.3,422.0 H84.0 Z"/>
-<text class="val" x="225.3" y="419">35</text>
-</g>
-<g class="row"><title>嘉義縣：33</title>
-<text class="lbl" x="76" y="443" text-anchor="end">嘉義縣</text>
-<path class="bar" d="M84.0,432.0 H207.6 A4,4 0 0 1 211.6,436.0 V442.0 A4,4 0 0 1 207.6,446.0 H84.0 Z"/>
-<text class="val" x="217.6" y="443">33</text>
-</g>
-<g class="row"><title>花蓮縣：33</title>
-<text class="lbl" x="76" y="467" text-anchor="end">花蓮縣</text>
-<path class="bar" d="M84.0,456.0 H207.6 A4,4 0 0 1 211.6,460.0 V466.0 A4,4 0 0 1 207.6,470.0 H84.0 Z"/>
-<text class="val" x="217.6" y="467">33</text>
-</g>
-<g class="row"><title>澎湖縣：33</title>
-<text class="lbl" x="76" y="491" text-anchor="end">澎湖縣</text>
-<path class="bar" d="M84.0,480.0 H207.6 A4,4 0 0 1 211.6,484.0 V490.0 A4,4 0 0 1 207.6,494.0 H84.0 Z"/>
-<text class="val" x="217.6" y="491">33</text>
-</g>
-<g class="row"><title>金門縣：33</title>
-<text class="lbl" x="76" y="515" text-anchor="end">金門縣</text>
-<path class="bar" d="M84.0,504.0 H207.6 A4,4 0 0 1 211.6,508.0 V514.0 A4,4 0 0 1 207.6,518.0 H84.0 Z"/>
-<text class="val" x="217.6" y="515">33</text>
-</g>
-<g class="row"><title>連江縣：33</title>
-<text class="lbl" x="76" y="539" text-anchor="end">連江縣</text>
-<path class="bar" d="M84.0,528.0 H207.6 A4,4 0 0 1 211.6,532.0 V538.0 A4,4 0 0 1 207.6,542.0 H84.0 Z"/>
-<text class="val" x="217.6" y="539">33</text>
-</g>
-<line class="refline" x1="211.6" y1="12" x2="211.6" y2="552"/>
-<text class="reflbl" x="216.6" y="18">全台連鎖 33 筆＝地板</text>
-<line class="axis" x1="84" y1="24" x2="84" y2="552"/>
-</svg>
-  <div class="foot"><details class="sqlbox"><summary>看這一題的 SQL<code>queries/06_county_coverage.sql</code></summary><pre><code>-- Q6 住在哪裡，生日優惠差多少？
---
--- v_offer_county 把兩種來源併起來：明確標了這個縣市的優惠，加上「全台」連鎖。
--- 這一題的重點是 window function 當分母：max(n_offers) over () 一次拿到全國最高的那個
--- 縣市，每一列就能直接算「跟最好的縣市差幾倍」，不用再開子查詢。
-with per_county as (
-    select c.name, c.area, c.order_no,
-           (select count(*) from v_offer_county v where v.county = c.name)                      as n_offers,
-           (select count(*) from v_offer_county v where v.county = c.name and v.via = &#x27;region&#x27;) as n_local,
-           coalesce((select sum(n_stores) from store_counts s where s.county = c.name), 0)      as n_stores,
-           coalesce((select count(distinct brand) from store_counts s where s.county = c.name), 0) as n_brands_with_store
-      from counties c
-)
-select name                                                   as county,
-       area,
-       n_offers,
-       n_local,                                               -- 其中是「限定這個縣市」的
-       n_offers - n_local                                     as n_chain,  -- 其中是全台連鎖的
-       n_stores,
-       n_brands_with_store,
-       rank() over (order by n_offers desc)                   as rk,
-       round(100.0 * n_offers / (select count(*) from offers), 0) as pct_of_all,
-       round(1.0 * max(n_offers) over () / nullif(n_offers, 0), 1) as gap_to_best,
-       order_no
-  from per_county
- order by n_offers desc, order_no;</code></pre></details><details class="tablebox"><summary>看完整表格</summary><table class="data"><thead><tr><th>縣市</th><th>分區</th><th>可用優惠</th><th>限定本地</th><th>全台連鎖</th><th>門市數</th><th>有門市的品牌</th><th>排名</th><th>跟第一名差幾倍</th></tr></thead><tbody><tr><td>台北市</td><td>北部</td><td>115</td><td>82</td><td>33</td><td>968</td><td>94</td><td>1</td><td>1</td></tr><tr><td>台中市</td><td>中部</td><td>90</td><td>57</td><td>33</td><td>652</td><td>74</td><td>2</td><td>1.3</td></tr><tr><td>新北市</td><td>北部</td><td>86</td><td>53</td><td>33</td><td>753</td><td>69</td><td>3</td><td>1.3</td></tr><tr><td>高雄市</td><td>南部</td><td>73</td><td>40</td><td>33</td><td>550</td><td>57</td><td>4</td><td>1.6</td></tr><tr><td>桃園市</td><td>北部</td><td>71</td><td>38</td><td>33</td><td>450</td><td>56</td><td>5</td><td>1.6</td></tr><tr><td>台南市</td><td>南部</td><td>58</td><td>25</td><td>33</td><td>305</td><td>43</td><td>6</td><td>2</td></tr><tr><td>新竹市</td><td>北部</td><td>52</td><td>19</td><td>33</td><td>109</td><td>30</td><td>7</td><td>2.2</td></tr><tr><td>新竹縣</td><td>北部</td><td>44</td><td>11</td><td>33</td><td>107</td><td>26</td><td>8</td><td>2.6</td></tr><tr><td>宜蘭縣</td><td>東部</td><td>42</td><td>9</td><td>33</td><td>57</td><td>18</td><td>9</td><td>2.7</td></tr><tr><td>彰化縣</td><td>中部</td><td>41</td><td>8</td><td>33</td><td>162</td><td>22</td><td>10</td><td>2.8</td></tr><tr><td>嘉義市</td><td>南部</td><td>41</td><td>8</td><td>33</td><td>77</td><td>23</td><td>10</td><td>2.8</td></tr><tr><td>屏東縣</td><td>南部</td><td>41</td><td>8</td><td>33</td><td>125</td><td>24</td><td>10</td><td>2.8</td></tr><tr><td>苗栗縣</td><td>中部</td><td>38</td><td>5</td><td>33</td><td>73</td><td>20</td><td>13</td><td>3</td></tr><tr><td>雲林縣</td><td>中部</td><td>38</td><td>5</td><td>33</td><td>102</td><td>21</td><td>13</td><td>3</td></tr><tr><td>基隆市</td><td>北部</td><td>36</td><td>3</td><td>33</td><td>52</td><td>15</td><td>15</td><td>3.2</td></tr><tr><td>南投縣</td><td>中部</td><td>35</td><td>2</td><td>33</td><td>49</td><td>14</td><td>16</td><td>3.3</td></tr><tr><td>台東縣</td><td>東部</td><td>35</td><td>2</td><td>33</td><td>28</td><td>11</td><td>16</td><td>3.3</td></tr><tr><td>嘉義縣</td><td>南部</td><td>33</td><td>0</td><td>33</td><td>46</td><td>10</td><td>18</td><td>3.5</td></tr><tr><td>花蓮縣</td><td>東部</td><td>33</td><td>0</td><td>33</td><td>54</td><td>14</td><td>18</td><td>3.5</td></tr><tr><td>澎湖縣</td><td>離島</td><td>33</td><td>0</td><td>33</td><td>15</td><td>11</td><td>18</td><td>3.5</td></tr><tr><td>金門縣</td><td>離島</td><td>33</td><td>0</td><td>33</td><td>0</td><td>0</td><td>18</td><td>3.5</td></tr><tr><td>連江縣</td><td>離島</td><td>33</td><td>0</td><td>33</td><td>0</td><td>0</td><td>18</td><td>3.5</td></tr></tbody></table></details></div>
-</section>
-<section class="card" id="q7">
-  <div class="qno">Q7 · Q8</div>
-  <h2>店開得多的品牌，生日禮是不是比較薄？</h2>
-  <p class="answer"><b>店開得越多，生日禮越薄。</b>門市數最少的那四分之一品牌（1–3 家店）面額中位數 NT$180，最多的那四分之一（23–583 家）只有 NT$72。這是弱負相關：log10(門市數) 與面額的 Pearson 相關 -0.284，門市最多的那 26 個品牌裡，還是有人開 300 元。而且只有 106 個品牌有門市資料，所以這是觀察，不是定律。</p>
-  <p class="caption">每一點是一個品牌：橫軸門市數（對數刻度）、縱軸優惠面額</p><svg class="chart" viewBox="0 0 720 340" role="img" aria-label="門市數與優惠面額">
-<line class="grid" x1="52" y1="296.0" x2="704" y2="296.0"/>
-<text class="tick" x="44" y="300.0" text-anchor="end">0</text>
-<line class="grid" x1="52" y1="229.5" x2="704" y2="229.5"/>
-<text class="tick" x="44" y="233.5" text-anchor="end">250</text>
-<line class="grid" x1="52" y1="163.0" x2="704" y2="163.0"/>
-<text class="tick" x="44" y="167.0" text-anchor="end">500</text>
-<line class="grid" x1="52" y1="96.5" x2="704" y2="96.5"/>
-<text class="tick" x="44" y="100.5" text-anchor="end">750</text>
-<line class="grid" x1="52" y1="30.0" x2="704" y2="30.0"/>
-<text class="tick" x="44" y="34.0" text-anchor="end">1,000</text>
-<text class="tick" x="76.1" y="314" text-anchor="middle">1</text>
-<text class="tick" x="180.1" y="314" text-anchor="middle">3</text>
-<text class="tick" x="294.1" y="314" text-anchor="middle">10</text>
-<text class="tick" x="398.1" y="314" text-anchor="middle">30</text>
-<text class="tick" x="512.0" y="314" text-anchor="middle">100</text>
-<text class="tick" x="616.0" y="314" text-anchor="middle">300</text>
-<g class="row"><title>星巴克 Starbucks：583 家店、面額 120 元</title><circle class="dot" cx="678.9" cy="264.1" r="4.5"/></g>
-<g class="row"><title>屈臣氏 Watsons：579 家店、面額 300 元</title><circle class="dot" cx="678.3" cy="216.2" r="4.5"/></g>
-<g class="row"><title>遠傳 FET 心生活：523 家店、面額 100 元</title><circle class="dot" cx="668.6" cy="269.4" r="4.5"/></g>
-<g class="row"><title>吳家紅茶冰：456 家店、面額 30 元</title><circle class="dot" cx="655.7" cy="288.0" r="4.5"/></g>
-<g class="row"><title>麥當勞：411 家店、面額 60 元</title><circle class="dot" cx="645.8" cy="280.0" r="4.5"/></g>
-<g class="row"><title>摩斯漢堡：284 家店、面額 40 元</title><circle class="dot" cx="610.8" cy="285.4" r="4.5"/></g>
-<g class="row"><title>三商巧福：178 家店、面額 140 元</title><circle class="dot" cx="566.6" cy="258.8" r="4.5"/></g>
-<g class="row"><title>茶湯會 TP TEA：131 家店、面額 20 元</title><circle class="dot" cx="537.6" cy="290.7" r="4.5"/></g>
-<g class="row"><title>築間幸福鍋物：95 家店、面額 180 元</title><circle class="dot" cx="507.2" cy="248.1" r="4.5"/></g>
-<g class="row"><title>天仁茗茶：80 家店、面額 65 元</title><circle class="dot" cx="490.9" cy="278.7" r="4.5"/></g>
-<g class="row"><title>福勝亭：73 家店、面額 220 元</title><circle class="dot" cx="482.2" cy="237.5" r="4.5"/></g>
-<g class="row"><title>錢都日式涮涮鍋：68 家店、面額 100 元</title><circle class="dot" cx="475.5" cy="269.4" r="4.5"/></g>
-<g class="row"><title>丸亀製麵：63 家店、面額 74 元</title><circle class="dot" cx="468.3" cy="276.3" r="4.5"/></g>
-<g class="row"><title>珍煮丹：63 家店、面額 65 元</title><circle class="dot" cx="468.3" cy="278.7" r="4.5"/></g>
-<g class="row"><title>爭鮮gogo：42 家店、面額 40 元</title><circle class="dot" cx="429.9" cy="285.4" r="4.5"/></g>
-<g class="row"><title>31冰淇淋 Baskin-Robbins：39 家店、面額 95 元</title><circle class="dot" cx="422.9" cy="270.7" r="4.5"/></g>
-<g class="row"><title>UG TEA：35 家店、面額 65 元</title><circle class="dot" cx="412.7" cy="278.7" r="4.5"/></g>
-<g class="row"><title>西堤：34 家店、面額 70 元</title><circle class="dot" cx="409.9" cy="277.4" r="4.5"/></g>
-<g class="row"><title>小時厚牛排：33 家店、面額 300 元</title><circle class="dot" cx="407.1" cy="216.2" r="4.5"/></g>
-<g class="row"><title>聚 北海道昆布鍋：32 家店、面額 150 元</title><circle class="dot" cx="404.2" cy="256.1" r="4.5"/></g>
-<g class="row"><title>陶板屋：32 家店、面額 70 元</title><circle class="dot" cx="404.2" cy="277.4" r="4.5"/></g>
-<g class="row"><title>beard papa&#x27;s：28 家店、面額 60 元</title><circle class="dot" cx="391.5" cy="280.0" r="4.5"/></g>
-<g class="row"><title>金色三麥：28 家店、面額 500 元</title><circle class="dot" cx="391.5" cy="163.0" r="4.5"/></g>
-<g class="row"><title>定食8：25 家店、面額 50 元</title><circle class="dot" cx="380.8" cy="282.7" r="4.5"/></g>
-<g class="row"><title>涓豆腐 DUBU HOUSE：24 家店、面額 200 元</title><circle class="dot" cx="376.9" cy="242.8" r="4.5"/></g>
-<g class="row"><title>洪瑞珍：23 家店、面額 45 元</title><circle class="dot" cx="372.9" cy="284.0" r="4.5"/></g>
-<g class="row"><title>爭鮮PLUS：23 家店、面額 60 元</title><circle class="dot" cx="372.9" cy="280.0" r="4.5"/></g>
-<g class="row"><title>貳樓 Second Floor Cafe：22 家店、面額 180 元</title><circle class="dot" cx="368.7" cy="248.1" r="4.5"/></g>
-<g class="row"><title>莫凡彼 Mövenpick：22 家店、面額 84 元</title><circle class="dot" cx="368.7" cy="273.7" r="4.5"/></g>
-<g class="row"><title>鮮五丼：21 家店、面額 130 元</title><circle class="dot" cx="364.3" cy="261.4" r="4.5"/></g>
-<g class="row"><title>養鍋 Yang Guo：20 家店、面額 250 元</title><circle class="dot" cx="359.7" cy="229.5" r="4.5"/></g>
-<g class="row"><title>品田牧場：20 家店、面額 50 元</title><circle class="dot" cx="359.7" cy="282.7" r="4.5"/></g>
-<g class="row"><title>順成蛋糕：17 家店、面額 200 元</title><circle class="dot" cx="344.3" cy="242.8" r="4.5"/></g>
-<g class="row"><title>三商炸雞：17 家店、面額 60 元</title><circle class="dot" cx="344.3" cy="280.0" r="4.5"/></g>
-<g class="row"><title>大師兄銷魂麵舖：17 家店、面額 298 元</title><circle class="dot" cx="344.3" cy="216.7" r="4.5"/></g>
-<g class="row"><title>硬咖啡：14 家店、面額 50 元</title><circle class="dot" cx="325.9" cy="282.7" r="4.5"/></g>
-<g class="row"><title>夏慕尼：14 家店、面額 170 元</title><circle class="dot" cx="325.9" cy="250.8" r="4.5"/></g>
-<g class="row"><title>德克士：13 家店、面額 187 元</title><circle class="dot" cx="318.9" cy="246.3" r="4.5"/></g>
-<g class="row"><title>再睡5分鐘：13 家店、面額 65 元</title><circle class="dot" cx="318.9" cy="278.7" r="4.5"/></g>
-<g class="row"><title>御前上茶：13 家店、面額 65 元</title><circle class="dot" cx="318.9" cy="278.7" r="4.5"/></g>
-<g class="row"><title>季緣：12 家店、面額 60 元</title><circle class="dot" cx="311.3" cy="280.0" r="4.5"/></g>
-<g class="row"><title>添好運 Tim Ho Wan：12 家店、面額 100 元</title><circle class="dot" cx="311.3" cy="269.4" r="4.5"/></g>
-<g class="row"><title>燒肉 LIKE：11 家店、面額 120 元</title><circle class="dot" cx="303.1" cy="264.1" r="4.5"/></g>
-<g class="row"><title>聖娜 Semeur：11 家店、面額 60 元</title><circle class="dot" cx="303.1" cy="280.0" r="4.5"/></g>
-<g class="row"><title>玉豆腐：11 家店、面額 300 元</title><circle class="dot" cx="303.1" cy="216.2" r="4.5"/></g>
-<g class="row"><title>原燒：11 家店、面額 200 元</title><circle class="dot" cx="303.1" cy="242.8" r="4.5"/></g>
-<g class="row"><title>和牛涮：11 家店、面額 120 元</title><circle class="dot" cx="303.1" cy="264.1" r="4.5"/></g>
-<g class="row"><title>久違石頭火鍋：10 家店、面額 250 元</title><circle class="dot" cx="294.1" cy="229.5" r="4.5"/></g>
-<g class="row"><title>王品牛排：10 家店、面額 150 元</title><circle class="dot" cx="294.1" cy="256.1" r="4.5"/></g>
-<g class="row"><title>藝奇：10 家店、面額 100 元</title><circle class="dot" cx="294.1" cy="269.4" r="4.5"/></g>
-<g class="row"><title>萬客什鍋：9 家店、面額 150 元</title><circle class="dot" cx="284.1" cy="256.1" r="4.5"/></g>
-<g class="row"><title>森森燒肉：9 家店、面額 150 元</title><circle class="dot" cx="284.1" cy="256.1" r="4.5"/></g>
-<g class="row"><title>裕珍馨：9 家店、面額 100 元</title><circle class="dot" cx="284.1" cy="269.4" r="4.5"/></g>
-<g class="row"><title>TGI FRIDAYS：9 家店、面額 400 元</title><circle class="dot" cx="284.1" cy="189.6" r="4.5"/></g>
-<g class="row"><title>PAUL：8 家店、面額 150 元</title><circle class="dot" cx="273.0" cy="256.1" r="4.5"/></g>
-<g class="row"><title>薄多義 BoDeGi：8 家店、面額 350 元</title><circle class="dot" cx="273.0" cy="202.9" r="4.5"/></g>
-<g class="row"><title>京都勝牛：8 家店、面額 200 元</title><circle class="dot" cx="273.0" cy="242.8" r="4.5"/></g>
-<g class="row"><title>IKEA 宜家家居：8 家店、面額 150 元</title><circle class="dot" cx="273.0" cy="256.1" r="4.5"/></g>
-<g class="row"><title>好丘 Good Cho&#x27;s：7 家店、面額 65 元</title><circle class="dot" cx="260.3" cy="278.7" r="4.5"/></g>
-<g class="row"><title>樂漢堡：7 家店、面額 300 元</title><circle class="dot" cx="260.3" cy="216.2" r="4.5"/></g>
-<g class="row"><title>Global Mall 環球購物中心：7 家店、面額 100 元</title><circle class="dot" cx="260.3" cy="269.4" r="4.5"/></g>
-<g class="row"><title>Pizza Rock：7 家店、面額 300 元</title><circle class="dot" cx="260.3" cy="216.2" r="4.5"/></g>
-<g class="row"><title>享鴨：7 家店、面額 150 元</title><circle class="dot" cx="260.3" cy="256.1" r="4.5"/></g>
-<g class="row"><title>青花驕：7 家店、面額 80 元</title><circle class="dot" cx="260.3" cy="274.7" r="4.5"/></g>
-<g class="row"><title>肉次方：7 家店、面額 80 元</title><circle class="dot" cx="260.3" cy="274.7" r="4.5"/></g>
-<g class="row"><title>鍋泰暖：6 家店、面額 200 元</title><circle class="dot" cx="245.7" cy="242.8" r="4.5"/></g>
-<g class="row"><title>老乾杯 KANPAI CLASSIC：6 家店、面額 200 元</title><circle class="dot" cx="245.7" cy="242.8" r="4.5"/></g>
-<g class="row"><title>自己做 Zi Ji Zuo：6 家店、面額 350 元</title><circle class="dot" cx="245.7" cy="202.9" r="4.5"/></g>
-<g class="row"><title>唐吉訶德 DON DON DONKI：6 家店、面額 100 元</title><circle class="dot" cx="245.7" cy="269.4" r="4.5"/></g>
-<g class="row"><title>鬥牛士二鍋：5 家店、面額 400 元</title><circle class="dot" cx="228.5" cy="189.6" r="4.5"/></g>
-<g class="row"><title>Lady M：5 家店、面額 100 元</title><circle class="dot" cx="228.5" cy="269.4" r="4.5"/></g>
-<g class="row"><title>玖仰 JIUYANG：5 家店、面額 90 元</title><circle class="dot" cx="228.5" cy="272.1" r="4.5"/></g>
-<g class="row"><title>Popeyes：5 家店、面額 45 元</title><circle class="dot" cx="228.5" cy="284.0" r="4.5"/></g>
-<g class="row"><title>gonna EAT：5 家店、面額 60 元</title><circle class="dot" cx="228.5" cy="280.0" r="4.5"/></g>
-<g class="row"><title>阪前：5 家店、面額 200 元</title><circle class="dot" cx="228.5" cy="242.8" r="4.5"/></g>
-<g class="row"><title>大河屋：5 家店、面額 120 元</title><circle class="dot" cx="228.5" cy="264.1" r="4.5"/></g>
-<g class="row"><title>品川蘭：4 家店、面額 200 元</title><circle class="dot" cx="207.3" cy="242.8" r="4.5"/></g>
-<g class="row"><title>春囍打邊爐：3 家店、面額 600 元</title><circle class="dot" cx="180.1" cy="136.4" r="4.5"/></g>
-<g class="row"><title>木村堂燒肉：3 家店、面額 500 元</title><circle class="dot" cx="180.1" cy="163.0" r="4.5"/></g>
-<g class="row"><title>8% ice：3 家店、面額 180 元</title><circle class="dot" cx="180.1" cy="248.1" r="4.5"/></g>
-<g class="row"><title>波記 BO KEE：3 家店、面額 100 元</title><circle class="dot" cx="180.1" cy="269.4" r="4.5"/></g>
-<g class="row"><title>Bolo Pan 菠蘿包專門店：3 家店、面額 65 元</title><circle class="dot" cx="180.1" cy="278.7" r="4.5"/></g>
-<g class="row"><title>GLÖ FROYO：3 家店、面額 31 元</title><circle class="dot" cx="180.1" cy="287.8" r="4.5"/></g>
-<g class="row"><title>法大炸雞：3 家店、面額 279 元</title><circle class="dot" cx="180.1" cy="221.8" r="4.5"/></g>
-<g class="row"><title>顏太煮：3 家店、面額 60 元</title><circle class="dot" cx="180.1" cy="280.0" r="4.5"/></g>
-<g class="row"><title>丰禾：3 家店、面額 180 元</title><circle class="dot" cx="180.1" cy="248.1" r="4.5"/></g>
-<g class="row"><title>微兜 Vino Vino：3 家店、面額 180 元</title><circle class="dot" cx="180.1" cy="248.1" r="4.5"/></g>
-<g class="row"><title>莆田：3 家店、面額 150 元</title><circle class="dot" cx="180.1" cy="256.1" r="4.5"/></g>
-<g class="row"><title>阿薄郎薄皮餃子：3 家店、面額 150 元</title><circle class="dot" cx="180.1" cy="256.1" r="4.5"/></g>
-<g class="row"><title>六福村主題遊樂園：2 家店、面額 999 元</title><circle class="dot" cx="141.7" cy="30.3" r="4.5"/></g>
-<g class="row"><title>劍湖山世界：2 家店、面額 899 元</title><circle class="dot" cx="141.7" cy="56.9" r="4.5"/></g>
-<g class="row"><title>泰滾 Rolling Thai：2 家店、面額 400 元</title><circle class="dot" cx="141.7" cy="189.6" r="4.5"/></g>
-<g class="row"><title>蔬鍋藝：2 家店、面額 250 元</title><circle class="dot" cx="141.7" cy="229.5" r="4.5"/></g>
-<g class="row"><title>HABIBI Pâtisserie：2 家店、面額 90 元</title><circle class="dot" cx="141.7" cy="272.1" r="4.5"/></g>
-<g class="row"><title>巧福PLUS：2 家店、面額 160 元</title><circle class="dot" cx="141.7" cy="253.4" r="4.5"/></g>
-<g class="row"><title>天母盛鑫餐廳：2 家店、面額 395 元</title><circle class="dot" cx="141.7" cy="190.9" r="4.5"/></g>
-<g class="row"><title>一幻拉麵 ICHIGEN：2 家店、面額 280 元</title><circle class="dot" cx="141.7" cy="221.5" r="4.5"/></g>
-<g class="row"><title>瓦庫燒肉：1 家店、面額 200 元</title><circle class="dot" cx="76.1" cy="242.8" r="4.5"/></g>
-<g class="row"><title>J.S. Foodies Tokyo：1 家店、面額 280 元</title><circle class="dot" cx="76.1" cy="221.5" r="4.5"/></g>
-<g class="row"><title>蛋金固烘焙坊：1 家店、面額 200 元</title><circle class="dot" cx="76.1" cy="242.8" r="4.5"/></g>
-<g class="row"><title>TSUJIRI 辻利茶舖：1 家店、面額 160 元</title><circle class="dot" cx="76.1" cy="253.4" r="4.5"/></g>
-<g class="row"><title>善菓屋 ARTISAN BAKERY：1 家店、面額 80 元</title><circle class="dot" cx="76.1" cy="274.7" r="4.5"/></g>
-<g class="row"><title>山崎咖啡所：1 家店、面額 70 元</title><circle class="dot" cx="76.1" cy="277.4" r="4.5"/></g>
-<g class="row"><title>椰糖：1 家店、面額 120 元</title><circle class="dot" cx="76.1" cy="264.1" r="4.5"/></g>
-<g class="row"><title>傑克兄弟牛排：1 家店、面額 300 元</title><circle class="dot" cx="76.1" cy="216.2" r="4.5"/></g>
-<g class="row"><title>尬鍋：1 家店、面額 80 元</title><circle class="dot" cx="76.1" cy="274.7" r="4.5"/></g>
-<text class="anno" x="669.9" y="268.1" text-anchor="end">星巴克 Starbucks</text>
-<line class="axis" x1="52" y1="296" x2="704" y2="296"/>
-<text class="axlbl" x="704" y="334" text-anchor="end">門市數（對數）</text>
-<text class="axlbl" x="2" y="12">面額（元）</text>
-</svg><p class="caption">按門市數四等分後的面額中位數</p><svg class="chart" viewBox="0 0 720 236" role="img" aria-label="">
-<line class="grid" x1="44" y1="190.0" x2="708" y2="190.0"/>
-<text class="tick" x="36" y="194.0" text-anchor="end">0</text>
-<line class="grid" x1="44" y1="145.0" x2="708" y2="145.0"/>
-<text class="tick" x="36" y="149.0" text-anchor="end">50</text>
-<line class="grid" x1="44" y1="100.0" x2="708" y2="100.0"/>
-<text class="tick" x="36" y="104.0" text-anchor="end">100</text>
-<line class="grid" x1="44" y1="55.0" x2="708" y2="55.0"/>
-<text class="tick" x="36" y="59.0" text-anchor="end">150</text>
-<line class="grid" x1="44" y1="10.0" x2="708" y2="10.0"/>
-<text class="tick" x="36" y="14.0" text-anchor="end">200</text>
-<g class="row"><title>第 1 組：180 元</title>
-<path class="bar" d="M115.0,190.0 V32.0 A4,4 0 0 1 119.0,28.0 H135.0 A4,4 0 0 1 139.0,32.0 V190.0 Z"/>
-<text class="val" x="127.0" y="22.0" text-anchor="middle">180 元</text>
-<text class="lbl" x="127.0" y="208" text-anchor="middle">第 1 組</text>
-<text class="sublbl" x="127.0" y="223" text-anchor="middle">1–3 家</text>
-</g>
-<g class="row"><title>第 2 組：150 元</title>
-<path class="bar" d="M281.0,190.0 V59.0 A4,4 0 0 1 285.0,55.0 H301.0 A4,4 0 0 1 305.0,59.0 V190.0 Z"/>
-<text class="val" x="293.0" y="49.0" text-anchor="middle">150 元</text>
-<text class="lbl" x="293.0" y="208" text-anchor="middle">第 2 組</text>
-<text class="sublbl" x="293.0" y="223" text-anchor="middle">3–9 家</text>
-</g>
-<g class="row"><title>第 3 組：125 元</title>
-<path class="bar" d="M447.0,190.0 V81.5 A4,4 0 0 1 451.0,77.5 H467.0 A4,4 0 0 1 471.0,81.5 V190.0 Z"/>
-<text class="val" x="459.0" y="71.5" text-anchor="middle">125 元</text>
-<text class="lbl" x="459.0" y="208" text-anchor="middle">第 3 組</text>
-<text class="sublbl" x="459.0" y="223" text-anchor="middle">9–23 家</text>
-</g>
-<g class="row"><title>第 4 組：72 元</title>
-<path class="bar" d="M613.0,190.0 V129.2 A4,4 0 0 1 617.0,125.2 H633.0 A4,4 0 0 1 637.0,129.2 V190.0 Z"/>
-<text class="val" x="625.0" y="119.2" text-anchor="middle">72 元</text>
-<text class="lbl" x="625.0" y="208" text-anchor="middle">第 4 組</text>
-<text class="sublbl" x="625.0" y="223" text-anchor="middle">23–583 家</text>
-</g>
-<line class="axis" x1="44" y1="190" x2="708" y2="190"/>
-</svg>
-  <div class="foot"><details class="sqlbox"><summary>看這一題的 SQL<code>queries/07_footprint_vs_value.sql + 08_footprint_quartiles.sql</code></summary><pre><code>-- Q7 店開得多的品牌，生日優惠是不是比較小？（品牌層級的散佈資料）
---
--- 直覺上連鎖越大、單客成本壓得越低，生日禮應該越薄。這一題先把每個品牌的
--- 門市數跟優惠面額配成一組點，下一題（08）再算分位平均跟相關係數。
--- 門市數來自 store_counts（彙總），所以只有對得上的品牌會出現。
-select o.brand,
-       o.category,
-       o.value_twd,
-       f.n_stores,
-       f.n_counties,
-       o.free_tier,
-       o.is_nationwide,
-       ntile(4) over (order by f.n_stores) as store_quartile,
-       -- 同類別裡的面額排名，拿來標出每一類最大方的那一家
-       rank() over (partition by o.category order by o.value_twd desc) as rank_in_category
-  from offers o
-  join v_brand_footprint f on f.brand = o.brand
- where o.value_twd is not null
- order by f.n_stores desc;
-
-
--- ── 分組與相關係數：queries/08_footprint_quartiles.sql ──
-
--- Q8 把品牌按門市數分成四組，面額差多少？順便用純 SQL 算相關係數。
---
--- ntile(4) 把品牌依門市數切四等份，再比每一組的面額中位數。
--- 最後兩欄是 Pearson 相關係數，直接在 SQL 裡展開公式算：
---   r = (n·Σxy − Σx·Σy) / √(n·Σx² − (Σx)²) · √(n·Σy² − (Σy)²)
--- x 取 log10(門市數)：門市數從個位數到上千家，不取對數的話幾家超大連鎖會主導整個係數。
--- 四組的值相同（同一個母數算出來的），放在每一列只是方便一起讀。
-with bv as (
-    select o.brand, o.value_twd as y, f.n_stores,
-           log10(f.n_stores) as x,
-           ntile(4) over (order by f.n_stores) as q
-      from offers o
-      join v_brand_footprint f on f.brand = o.brand
-     where o.value_twd is not null
-),
-med as (
-    select q,
-           avg(case when rn in ((n + 1) / 2, (n + 2) / 2) then y end) as median_value
-      from (select q, y,
-                   row_number() over (partition by q order by y) as rn,
-                   count(*)     over (partition by q)            as n
-              from bv)
-     group by q
-),
-corr as (
-    select count(*) as n, sum(x) as sx, sum(y) as sy,
-           sum(x * y) as sxy, sum(x * x) as sxx, sum(y * y) as syy
-      from bv
-)
-select bv.q                                                as store_quartile,
-       count(*)                                            as n_brands,
-       min(bv.n_stores)                                    as min_stores,
-       max(bv.n_stores)                                    as max_stores,
-       cast(med.median_value as integer)                   as median_value,
-       cast(avg(bv.y) as integer)                          as avg_value,
-       round((corr.n * corr.sxy - corr.sx * corr.sy) /
-             (sqrt(corr.n * corr.sxx - corr.sx * corr.sx) *
-              sqrt(corr.n * corr.syy - corr.sy * corr.sy)), 3) as pearson_r,
-       corr.n                                              as corr_n
-  from bv
-  join med  on med.q = bv.q
- cross join corr
- group by bv.q, med.median_value, corr.n, corr.sx, corr.sy, corr.sxy, corr.sxx, corr.syy
- order by bv.q;</code></pre></details><details class="tablebox"><summary>看分組統計</summary><table class="data"><thead><tr><th>門市數分組</th><th>品牌數</th><th>最少店數</th><th>最多店數</th><th>面額中位數</th><th>平均面額</th><th>Pearson r</th><th>樣本數</th></tr></thead><tbody><tr><td>1</td><td>27</td><td>1</td><td>3</td><td>180</td><td>265</td><td>-0.28</td><td>106</td></tr><tr><td>2</td><td>27</td><td>3</td><td>9</td><td>150</td><td>176</td><td>-0.28</td><td>106</td></tr><tr><td>3</td><td>26</td><td>9</td><td>23</td><td>125</td><td>138</td><td>-0.28</td><td>106</td></tr><tr><td>4</td><td>26</td><td>23</td><td>583</td><td>72</td><td>121</td><td>-0.28</td><td>106</td></tr></tbody></table></details><details class="tablebox"><summary>看門市數前 40 大的品牌</summary><table class="data"><thead><tr><th>品牌</th><th>類別</th><th>門市</th><th>跨縣市</th><th>面額</th><th>分組</th></tr></thead><tbody><tr><td>星巴克 Starbucks</td><td>飲料</td><td>583</td><td>20</td><td>120</td><td>4</td></tr><tr><td>屈臣氏 Watsons</td><td>零售美妝</td><td>579</td><td>20</td><td>300</td><td>4</td></tr><tr><td>遠傳 FET 心生活</td><td>零售美妝</td><td>523</td><td>20</td><td>100</td><td>4</td></tr><tr><td>吳家紅茶冰</td><td>飲料</td><td>456</td><td>18</td><td>30</td><td>4</td></tr><tr><td>麥當勞</td><td>速食</td><td>411</td><td>20</td><td>60</td><td>4</td></tr><tr><td>摩斯漢堡</td><td>速食</td><td>284</td><td>20</td><td>40</td><td>4</td></tr><tr><td>三商巧福</td><td>速食</td><td>178</td><td>16</td><td>140</td><td>4</td></tr><tr><td>茶湯會 TP TEA</td><td>飲料</td><td>131</td><td>18</td><td>20</td><td>4</td></tr><tr><td>築間幸福鍋物</td><td>火鍋燒肉</td><td>95</td><td>12</td><td>180</td><td>4</td></tr><tr><td>天仁茗茶</td><td>飲料</td><td>80</td><td>14</td><td>65</td><td>4</td></tr><tr><td>福勝亭</td><td>速食</td><td>73</td><td>14</td><td>220</td><td>4</td></tr><tr><td>錢都日式涮涮鍋</td><td>火鍋燒肉</td><td>68</td><td>4</td><td>100</td><td>4</td></tr><tr><td>丸亀製麵</td><td>速食</td><td>63</td><td>14</td><td>74</td><td>4</td></tr><tr><td>珍煮丹</td><td>飲料</td><td>63</td><td>16</td><td>65</td><td>4</td></tr><tr><td>爭鮮gogo</td><td>速食</td><td>42</td><td>10</td><td>40</td><td>4</td></tr><tr><td>31冰淇淋 Baskin-Robbins</td><td>速食</td><td>39</td><td>9</td><td>95</td><td>4</td></tr><tr><td>UG TEA</td><td>飲料</td><td>35</td><td>3</td><td>65</td><td>4</td></tr><tr><td>西堤</td><td>餐廳</td><td>34</td><td>14</td><td>70</td><td>4</td></tr><tr><td>小時厚牛排</td><td>餐廳</td><td>33</td><td>9</td><td>300</td><td>4</td></tr><tr><td>聚 北海道昆布鍋</td><td>火鍋燒肉</td><td>32</td><td>12</td><td>150</td><td>4</td></tr><tr><td>陶板屋</td><td>餐廳</td><td>32</td><td>14</td><td>70</td><td>4</td></tr><tr><td>beard papa&#x27;s</td><td>甜點烘焙</td><td>28</td><td>7</td><td>60</td><td>4</td></tr><tr><td>金色三麥</td><td>餐廳</td><td>28</td><td>10</td><td>500</td><td>4</td></tr><tr><td>定食8</td><td>速食</td><td>25</td><td>13</td><td>50</td><td>4</td></tr><tr><td>涓豆腐 DUBU HOUSE</td><td>餐廳</td><td>24</td><td>9</td><td>200</td><td>4</td></tr><tr><td>洪瑞珍</td><td>甜點烘焙</td><td>23</td><td>4</td><td>45</td><td>3</td></tr><tr><td>爭鮮PLUS</td><td>速食</td><td>23</td><td>14</td><td>60</td><td>4</td></tr><tr><td>貳樓 Second Floor Cafe</td><td>甜點烘焙</td><td>22</td><td>8</td><td>180</td><td>3</td></tr><tr><td>莫凡彼 Mövenpick</td><td>甜點烘焙</td><td>22</td><td>5</td><td>84</td><td>3</td></tr><tr><td>鮮五丼</td><td>速食</td><td>21</td><td>6</td><td>130</td><td>3</td></tr><tr><td>養鍋 Yang Guo</td><td>火鍋燒肉</td><td>20</td><td>11</td><td>250</td><td>3</td></tr><tr><td>品田牧場</td><td>餐廳</td><td>20</td><td>10</td><td>50</td><td>3</td></tr><tr><td>順成蛋糕</td><td>甜點烘焙</td><td>17</td><td>2</td><td>200</td><td>3</td></tr><tr><td>三商炸雞</td><td>速食</td><td>17</td><td>7</td><td>60</td><td>3</td></tr><tr><td>大師兄銷魂麵舖</td><td>餐廳</td><td>17</td><td>5</td><td>298</td><td>3</td></tr><tr><td>硬咖啡</td><td>飲料</td><td>14</td><td>1</td><td>50</td><td>3</td></tr><tr><td>夏慕尼</td><td>餐廳</td><td>14</td><td>6</td><td>170</td><td>3</td></tr><tr><td>德克士</td><td>速食</td><td>13</td><td>3</td><td>187</td><td>3</td></tr><tr><td>再睡5分鐘</td><td>飲料</td><td>13</td><td>4</td><td>65</td><td>3</td></tr><tr><td>御前上茶</td><td>飲料</td><td>13</td><td>5</td><td>65</td><td>3</td></tr></tbody></table></details></div>
-</section>
-<section class="card" id="q9">
-  <div class="qno">Q9</div>
-  <h2>哪幾筆已經不能用了？</h2>
-  <p class="answer"><b>這份快照裡的限期檔期，到今天全部不能用了。</b>19 筆 fixed 優惠中 18 筆已過期、1 筆沒寫迄日。快照停在 2026-08-04，檔期卻會自己走——線上版不能靠人工記得下架，得用 valid_until 自動判斷。這一節列的是要處理的清單。</p>
-  <p class="caption">19 筆限期檔期的現況（狀態同時有圖示與文字，不只靠顏色）</p><table class="data"><thead><tr><th>狀態</th><th>品牌</th><th>類別</th><th>檔期</th><th>面額</th><th>來源層級</th></tr></thead><tbody><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>順成蛋糕</td><td>甜點烘焙</td><td class="num">2026-08-01 → 2026-08-28</td><td class="num">200</td><td class="num">3</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>原燒</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">200</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>王品牛排</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">150</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>藝奇</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">100</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>夏慕尼</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">170</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>西堤</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">70</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>陶板屋</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">70</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>品田牧場</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">50</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>莆田</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">150</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>青花驕</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">80</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>享鴨</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">150</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>丰禾</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">180</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>和牛涮</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">120</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>肉次方</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">80</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>尬鍋</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">80</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>阪前</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">200</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>就饗</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">—</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="critical">✕ 已過期</span></td><td>金咕</td><td>餐廳</td><td class="num">2026-07-25 → 2026-08-31</td><td class="num">—</td><td class="num">1</td></tr><tr><td><span class="pill" data-tone="warning">！ 沒寫迄日</span></td><td>六福村主題遊樂園</td><td>娛樂樂園</td><td class="num">— → 沒寫</td><td class="num">999</td><td class="num">2</td></tr></tbody></table>
-  <div class="foot"><details class="sqlbox"><summary>看這一題的 SQL<code>queries/09_expiry_watch.sql</code></summary><pre><code>-- Q9 哪幾筆已經不能用了？（資料維運清單）
---
--- validity_type = &#x27;fixed&#x27; 的優惠是限期檔期，有 valid_from／valid_until；
--- rolling 是每年都有的常態優惠。對一個會被壽星拿去用的網站來說，
--- 「檔期過了還留在頁面上」比「少收錄一筆」嚴重，所以這一題直接產出要處理的清單：
--- 過期、快到期（14 天內）、還沒開始、以及沒寫迄日的 fixed（等於沒辦法自動下架）。
-select brand,
-       category,
-       valid_from,
-       valid_until,
-       value_twd,
-       best_source_tier,
-       verified,
-       case
-         when valid_until is null                             then &#x27;沒寫迄日&#x27;
-         when julianday(valid_until) &lt;  julianday(&#x27;now&#x27;)      then &#x27;已過期&#x27;
-         when julianday(valid_from)  &gt;  julianday(&#x27;now&#x27;)      then &#x27;還沒開始&#x27;
-         when julianday(valid_until) &lt;= julianday(&#x27;now&#x27;) + 14 then &#x27;14 天內到期&#x27;
-         else &#x27;進行中&#x27;
-       end                                                     as status,
-       cast(julianday(valid_until) - julianday(&#x27;now&#x27;) as integer) as days_left,
-       cast(julianday(&#x27;now&#x27;) - julianday(last_checked) as integer) as days_since_check
-  from offers
- where validity_type = &#x27;fixed&#x27;
- order by case
-            when valid_until is null                        then 1
-            when julianday(valid_until) &lt; julianday(&#x27;now&#x27;)  then 0
-            else 2
-          end,
-          valid_until;</code></pre></details></div>
-</section>
-
-<section class="card" id="method">
-  <h2>怎麼做的</h2>
-  <p>九個問題、九個 <code>.sql</code> 檔，全部跑在 SQLite。統計量刻意全部寫在 SQL 裡：
-    中位數與四分位用 <code>row_number() over (partition by …)</code> 自己做
-    （SQLite 沒有 <code>percentile_cont</code>）、累積比例用
-    <code>sum() over (order by …)</code>、分組用 <code>ntile(4)</code>、
-    Pearson 相關係數直接把公式展開成 <code>sum(x*y)</code> 那幾項算。
-    Python 只負責兩件事：把巢狀 JSON 攤平成可以 join 的表，以及把查詢結果排成這一頁。</p>
-  <p>沒有第三方套件。<code>pandas</code>／<code>matplotlib</code> 都沒用到，
-    圖是直接產 inline SVG：中文不會因為缺字型變成方塊、深色模式用 CSS 變數自動切換、
-    整份報告就是一個 HTML 檔。</p>
-  <pre class="tree"><code>analysis/
-├ build_db.py      JSON → SQLite（含門市彙總，653 列 CSV 進版控）
-├ schema.sql       分析庫的 DDL 與兩個 view
-├ queries/         01…09，一題一檔
-├ charts.py        inline SVG：橫條、直條、散佈、交叉表
-├ report.py        跑查詢 → 算結論 → 吐這一頁
-└ data/store_counts.csv   品牌×縣市門市數（原始 Places 回應不進 git）</code></pre>
-  <p class="note">重跑：<code>python build_db.py &amp;&amp; python report.py</code>。
-    門市明細在本機才有，缺的時候會自動改讀 <code>data/store_counts.csv</code>，
-    所以 clone 下來就跑得完整份報告。</p>
-</section>
-
-<section class="card" id="limits">
-  <h2>資料限制</h2>
-  <p class="answer">這份分析不能拿來說什麼，先寫在前面。</p>
-  <ul class="limits">
-    <li><b>這是快照，不是即時資料。</b>優惠來自 <code>offers.json</code>，
-      最後查證日 2026-08-04；線上版的 Postgres 已經長得更大，
-      但這台機器跑分析時（2026-11-04）線上資料庫正好在維護，所以全部用本機快照。
-      Q9 的「全部過期」是快照的必然結果，不是線上網站的狀態。</li>
-    <li><b>面額是估的。</b><code>value_twd</code> 是把「一份雞塊」「九折」這種優惠
-      換算成新台幣的估計值，16 筆估不出來（吃到飽、
-      「依門市公告」）就留 null，不當 0。所有平均與中位數都只算得出來的那些。</li>
-    <li><b>門市數只到對得上的品牌。</b>門市來自 Google Places 的品牌搜尋結果，
-      117 個品牌抓得到門市，其中 106 個同時估得出面額，
-      Q7 的散佈圖就是這 106 個點。品牌名對不上的（聯名卡、改名、小店）
-      沒有門市數，所以這一題天生偏向連鎖品牌。</li>
-    <li><b>縣市覆蓋看的是「有沒有」，不是「多好拿」。</b>Q6 算的是這個縣市有幾筆優惠，
-      沒有按人口或店數標準化：手上沒有可引用的人口資料，所以不換算。</li>
-    <li><b>沒有使用者行為資料。</b>這份分析完全是優惠與門市的靜態結構，
-      沒有碰任何人的瀏覽或兌換紀錄。</li>
+<section class="card">
+  <p class="lede">這三個產品都是同一件事的不同版本：<b>把沒人幫你算的事算出來。</b>
+    銀行幫你算錢，公司幫你算工時，剩下那些呢？你今年進了幾次 live house、
+    一年一次的那天究竟省下多少，算出來其實很有意思。</p>
+  <p>這份作品集要給的不是「我做了三個 app」，而是這三個產品背後我怎麼做決定：
+    要衡量什麼、資料從哪來、算出來之後改了什麼、改完有沒有用。
+    有數據的地方放數據，還沒有的地方直接標成「待補」，不先填一個看起來合理的數字。</p>
+</section><div class="stats"><div class="stat"><div class="stat-label">線上產品</div><div class="stat-value">3 個</div><div class="stat-sub">壽星日（網站＋App 殼）、Bandary、RelateStats</div></div><div class="stat"><div class="stat-label">壽星日版本</div><div class="stat-value">154 個</div><div class="stat-sub">2026-08 開站到現在，188 個 commit</div></div><div class="stat"><div class="stat-label">回歸測試</div><div class="stat-value">92 支</div><div class="stat-sub">每個版本上線前全部跑過</div></div><div class="stat"><div class="stat-label">分析過的優惠</div><div class="stat-value">139 筆</div><div class="stat-sub">加上 4,734 家門市的縣市分布</div></div></div><section class="card"><h2>三個案例</h2><a class="case" href="birthday-deals.html"><div class="case-head"><span class="case-name">壽星日 Birthday Deals</span><span class="case-status">有真實資料</span></div><p class="case-line">台灣各品牌的生日優惠，可以篩選、收藏、記錄自己省下多少。</p><ul class="case-points"><li>供給面：139 筆優惠的價值、門檻、縣市覆蓋，九支 SQL 問完</li><li>資料治理：只有 12% 有品牌官方來源，推導出自動下架的需求</li><li>成本分析：資料庫流量超額，拆解成因之後一天少 25% 的量</li></ul><span class="case-go">看這個案例 →</span></a><a class="case" href="bandary.html"><div class="case-head"><span class="case-name">Bandary 聽團曆</span><span class="case-status">指標已定義，等數據</span></div><p class="case-line">台灣聽團仔的演出記錄：追場次、每日選歌、好友日曆、免費活動共享。</p><ul class="case-points"><li>已上架 Google Play，版本 1.117.2</li><li>要衡量的是「記錄行為會不會持續」，不是下載數</li><li>數據等 Play Console 與 Firebase 匯出</li></ul><span class="case-go">看這個案例 →</span></a><a class="case" href="relatestats.html"><div class="case-head"><span class="case-name">RelateStats</span><span class="case-status">沒有遙測的案例</span></div><p class="case-line">把通訊軟體上的注意力停留時間算成數字，做社交人格與數位健康分析。</p><ul class="case-points"><li>刻意不要 INTERNET 權限，所以產品端一筆遙測都收不到</li><li>拿不到行為資料的產品，怎麼知道做得好不好</li><li>只能靠 Play Console、評論與許願板</li></ul><span class="case-go">看這個案例 →</span></a></section><section class="card"><h2>我怎麼做產品分析</h2>
+  <p>每個案例都照同一個順序走，所以三頁讀起來是同一套方法的三次應用。</p>
+  <h3>1. 先定義要衡量什麼</h3>
+  <p>做之前先寫下來：這個產品好不好，看哪幾個數字。壽星日分成供給（有多少優惠能拿）、
+    需求（有沒有人真的用）、品質（資料可不可信）、成本（跑得起來嗎）四組；
+    RelateStats 因為收不到行為資料，整組指標得換一套寫法。</p>
+  <h3>2. 資料從哪來，界線在哪</h3>
+  <p>壽星日的事件表 <code>site_events</code> 是自己設計的，欄位只有事件類型、
+    一個匿名的 session、選填的使用者 id 跟一包 meta。分析一律只用彙總，
+    個人層級的紀錄不離開資料庫，也不進版控。
+    這一頁公開在網路上，所以這條線要先畫好再開始算。</p>
+  <h3>3. 算完要能導向一個決定</h3>
+  <p>不以「做出一張圖」為終點。「19 筆限期優惠全部過期」要推到
+    「不能靠人記得下架，得用 <code>valid_until</code> 自動判斷」；
+    「資料庫流量超額」要推到「哪一條路徑吃掉最多、先砍哪一條」。</p>
+  <h3>4. 改完要回去看數字</h3>
+  <p>154 個版本都有紀錄，改動大的會回頭量一次。
+    把快取從 10 分鐘拉到 30 分鐘之後，上游請求從一天 144 次降到 48 次；
+    一批減量上線之後，每天的量從 115 MB 降到 85 MB。
+    沒有回去量的就不敢說它有效。</p>
+</section><section class="card"><h2>具體會的東西</h2>
+  <ul class="plain">
+    <li><b>SQL。</b>九支查詢全部用 window function 跟 CTE 寫完：中位數與四分位
+      （SQLite 沒有 <code>percentile_cont</code>，自己用 <code>row_number()</code> 做）、
+      累積比例、<code>ntile(4)</code> 分組、交叉表、Pearson 相關係數直接展開公式算。
+      <a href="sql-report.html">每一題的 SQL 都附在報告裡</a>。</li>
+    <li><b>Python。</b>把巢狀 JSON 攤平成可以 join 的表、彙總成可以進版控的 CSV、
+      再把查詢結果排版成這幾頁。沒有第三方套件，圖是自己產的 inline SVG。</li>
+    <li><b>事件追蹤設計。</b>事件表的欄位、哪些事件要記、匿名 session 怎麼接，
+      以及「公開的排行榜數字」跟「內部的分析數字」為什麼不能共用同一個定義。</li>
+    <li><b>成本分析。</b>把一次流量超額拆成固定成本與變動成本，量出每條路徑的位元組，
+      按「真的會發生」排風險順序，再決定砍哪一條。</li>
+    <li><b>資料治理。</b>來源分級（官方／媒體／部落格／社群）、複查延遲、
+      過期自動下架，都是從分析結果長出來的規則。</li>
   </ul>
+</section><section class="card"><h2>聯絡</h2>
+  <p>這些產品都還在線上跑：<a href="https://birthdaydeals.celine-fu-work.workers.dev/">壽星日</a>（免費方案，人多的時候會慢幾秒）。
+    程式碼在 <a href="https://github.com/afortunadofu-bot/birthday-deals">GitHub</a>。</p>
+  <p>想聊聊或要更完整的資料，信箱是 <code>celine.fu@gmail.com</code>。</p>
 </section>
 </main>
 <footer class="wrap foot-note">
-  <p>壽星日資料分析　·　139 筆優惠、139 個品牌、
-    4,734 家門市彙總　·
-    產出 2026-11-04 15:35（UTC+8）</p>
+  <p>小數據所｜產品分析作品集　·　內容與圖表由 <code>analysis/</code> 的 Python 產生，
+     資料換一版重跑就會更新。</p>
 </footer>
 <script>
 (function () {
   var btn = document.querySelector('.theme'), root = document.documentElement;
-  try { var s = localStorage.getItem('bd-theme'); if (s) root.dataset.theme = s; } catch (e) {}
+  try { var s = localStorage.getItem('sdl-theme'); if (s) root.dataset.theme = s; } catch (e) {}
   btn.addEventListener('click', function () {
     var dark = root.dataset.theme === 'dark' ||
       (!root.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
     root.dataset.theme = dark ? 'light' : 'dark';
-    try { localStorage.setItem('bd-theme', root.dataset.theme); } catch (e) {}
+    try { localStorage.setItem('sdl-theme', root.dataset.theme); } catch (e) {}
   });
 })();
 </script>
