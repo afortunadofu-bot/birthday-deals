@@ -442,6 +442,16 @@
     cursor:pointer;text-align:left;font:inherit;color:var(--ink)}
   .vr-acts{display:flex;justify-content:flex-end;padding:0 6px 8px}
   .hours-box{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+  .he-day{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:7px 0;border-top:1px solid var(--line-soft)}
+  .he-day:first-of-type{border-top:0}
+  .he-dn{width:2.6em;font-weight:700;font-size:.88rem}
+  .he-segs{display:flex;flex-direction:column;gap:4px}
+  .he-seg{display:inline-flex;align-items:center;gap:4px}
+  .he-seg input[type=time]{width:7.2em;padding:6px 6px;min-width:0}
+  .he-off{color:var(--ink-3);font-size:.86rem}
+  .he-btns{margin-left:auto;display:flex;gap:4px}
+  .he-acts{gap:6px;margin:8px 0 6px}
+  #heNote{width:100%}
   #hoursAtPick{gap:6px}
   #hoursAtPick select{min-width:0}
   .filt-hint{font-size:.76rem;color:var(--ink-3);line-height:1.45}
@@ -2278,6 +2288,12 @@
           <div class="hint">去用這個優惠，大概會花多少（例如要再點一份餐、一杯飲料）；完全不用花就填 0</div></div>
         <div class="field"><label>使用條件<span class="req-mark"> *</span></label>
           <textarea name="conditions" maxlength="600" required placeholder="低消、訂位人數、需出示證件等；沒有特別條件就寫「無」&#10;可以換行，例如：&#10;1. 需 4 人以上&#10;2. 每桌限用一次"></textarea></div>
+        <!-- v179 celine：「先不爬營業時間，但使用者投稿跟編輯都可以輸入及更改營業時間」。
+             選填：按「＋ 填營業時間」才展開，沒按就是沒填（null），不會被當成「整週沒開」。
+             schema_v179 跑了才出現（probeHoursCol），不然填了也存不進去。 -->
+        <div class="field hidden" id="fHoursField"><label>營業時間（選填）</label>
+          <div id="hoursEditor"></div>
+          <div class="hint">打烊過午夜照填就好，例如 18:00–02:00。連鎖店填大部分分店的時間，不一樣的寫在補充。</div></div>
         <div class="field hidden" id="fEditReasonField"><label>修改原因 *</label>
           <textarea name="edit_reason" id="fEditReason" maxlength="300"
             placeholder="例如：優惠已經改成 88 折、官網公告的期限不一樣了"></textarea>
@@ -3906,6 +3922,7 @@ function fromRow(r){return{
   advanceDays:r.advance_days, advanceNote:r.advance_note||'',
   timing:r.timing||r.offer_window||'當月', valueTwd:r.value_twd, minSpend:r.min_spend,
   expectedSpend:r.expected_spend??null,
+  hours:Array.isArray(r.hours)?r.hours:null, hoursNote:r.hours_note||'',
   conditions:r.conditions||'', validity:r.validity||'', validityType:r.validity_type||'rolling',
   validFrom:r.valid_from, validUntil:r.valid_until,
   sources:r.sources||[], bestSource:(r.sources||[])[0]||null,
@@ -7589,6 +7606,7 @@ function showSection(name){
   ['browse','board','trip','submit','mine','admin'].forEach(n=>
     $('#tab-'+n).classList.toggle('hidden', n!==name));
   ensureTabData(name);
+  if(name==='submit') probeHoursCol();
   ACTIVE_TAB=name;
   paintFabSubmit();
   window.scrollTo({top:0, behavior:'smooth'});
@@ -7782,6 +7800,7 @@ btnToTop.onclick=()=>window.scrollTo({top:0, behavior:'smooth'});
 
 /* ===================================================================== */
 function buildControls(){
+  buildHoursControls();
   const bm=$('#bmonth'), bd=$('#bday');
   if(!bm.dataset.done){
     for(let m=1;m<=12;m++) bm.add(new Option(m+' 月',m));
@@ -8433,7 +8452,10 @@ function twNow(){
   return {dow:d.getUTCDay(), min:d.getUTCHours()*60+d.getUTCMinutes()};
 }
 const fmtHM=m=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
-function hoursOn(){ return HOURS_AVAIL && (HOURS_F.mode==='now' || HOURS_F.mode==='at'); }
+/* v179：投稿的人填的營業時間（offers.hours）跟著優惠一起下載，直接在手機上算，不用問資料庫；
+   分店的（v178，Google 抓的）有資料才去問。同一筆兩邊都有的話，以投稿填的為準。 */
+function hoursRowAvail(){ return HOURS_AVAIL || OFFERS.some(o=>isWeekHours(o.hours)); }
+function hoursOn(){ return hoursRowAvail() && (HOURS_F.mode==='now' || HOURS_F.mode==='at'); }
 function hoursMow(){
   if(HOURS_F.mode==='now'){ const n=twNow(); return n.dow*1440+Math.floor(n.min/15)*15; }
   if(HOURS_F.mode==='at') return HOURS_F.dow*1440+HOURS_F.min;
@@ -8469,6 +8491,7 @@ async function fetchHoursOpen(key){
 /* 篩選用：null＝沒在篩；{loading}＝還在問（先不擋，問回來會再畫一次）；{map}／{err} */
 function hoursState(){
   if(!hoursOn()) return null;
+  if(!HOURS_AVAIL) return {map:new Map()};      // 沒有分店營業時間：只看投稿填的
   const key=hoursKey(), c=HOURS_CACHE.get(key);
   if(!c){ fetchHoursOpen(key); return {loading:true}; }
   return c;
@@ -8484,8 +8507,9 @@ function setHoursMode(v){
 }
 function buildHoursControls(){
   const row=$('#hoursRow'); if(!row) return;
-  row.classList.toggle('hidden', !HOURS_AVAIL);
-  if(!HOURS_AVAIL) return;
+  const avail=hoursRowAvail();
+  row.classList.toggle('hidden', !avail);
+  if(!avail) return;
   const opts=[['不限',''],['現在有開','now'],['指定時間','at']];
   $('#hoursChips').innerHTML=opts.map(([l,v])=>
     `<button type="button" class="chip" data-v="${v}" aria-pressed="${HOURS_F.mode===v}">${l}</button>`).join('');
@@ -8508,7 +8532,7 @@ function hoursCountNote(base){
   const st=hoursState(); if(!st) return '';
   if(st.loading) return `　🕒 ${hoursLabel()}（查營業時間中…）`;
   if(st.err) return `　🕒 營業時間讀不到：${st.err}`;
-  const unknown=OFFERS.filter(o=>base(o) && !st.map.has(String(o.id))).length;
+  const unknown=OFFERS.filter(o=>base(o) && !isWeekHours(o.hours) && !st.map.has(String(o.id))).length;
   return `　🕒 ${hoursLabel()}`+(unknown?`（另有 ${unknown} 筆查不到營業時間，沒列出）`:'');
 }
 
@@ -8521,9 +8545,9 @@ function filterPredicate(opts={}){
   const cat=activeCat, free=activeFree, timing=activeTiming, mem=activeMemType, region=activeRegion;
   const spend=activeSpend;
   const hrs=opts.skipHours?null:hoursState();
-  const hrsMap=hrs&&hrs.map;
+  const hrsMap=hrs&&hrs.map, hrsMow=hrsMap?hoursMow():null;
   return o=>{
-    if(hrsMap && hrsMap.get(String(o.id))!==true) return false;
+    if(hrsMap && !(isWeekHours(o.hours) ? weekOpen(o.hours, hrsMow) : hrsMap.get(String(o.id))===true)) return false;
     if(noAdvance&&!noAdvanceOk(o)) return false;
     if(spend.size){ const x=spendOf(o); if(!x||!spend.has(spendBucket(x.avg))) return false; }
     if(cat.size&&!cat.has(o.category)) return false;
@@ -9252,6 +9276,7 @@ function offerFactsHtml(o){
       ${kv('使用條件',o.conditions||'—')}
       ${o.minSpend!=null?kv('低消',`${nt(o.minSpend)}（規定最低消費）`):''}
       ${o.expectedSpend!=null?kv('預計花費',`${nt(o.expectedSpend)}（投稿的人估的，實際看下面「大家實際花」）`):''}
+      ${(isWeekHours(o.hours)||o.hoursNote)?kv('營業時間',hoursDetailText(o)):''}
       ${/* 嵐：「每人平均消費……讓人知道大概會花多少錢」。低消是規定，這一行是大家
            實際回報的，沒人填就不出現（寧可沒有，也不要給一個樣本數 1 的平均） */''}
       ${DTL_SPEND && DTL_SPEND.n ? kv('大家實際花',
@@ -10100,8 +10125,144 @@ function collectSources(){
   }).filter(Boolean);
 }
 
+/* ---- v179 營業時間編輯器（投稿／編輯／建議修改共用一份）----------------------
+   資料庫存的是一週裡的分鐘區間 [[開,關],…]（週日 00:00＝0，跟 v178 分店的同一套）；
+   畫面上是一天一列：週一 11:00–21:00 ［＋一段］［公休］。
+   一天的一段用 [開, 關]（當天的第幾分鐘）表示，關 ≤ 開＝過午夜（00:00–00:00＝整天）。 */
+const HE_ORDER=[1,2,3,4,5,6,0];             // 畫面從週一排到週日
+let HE={on:false, all24:false, days:null, note:''};
+const heDefaultDays=()=>{ const d={}; for(let i=0;i<7;i++) d[i]=[[660,1260]]; return d; };   // 11:00–21:00
+const heCopy=x=>JSON.parse(JSON.stringify(x));
+function isWeekHours(h){
+  return Array.isArray(h) && h.length>0 && h.every(x=>Array.isArray(x) && x.length===2
+    && Number.isInteger(x[0]) && Number.isInteger(x[1]) && x[0]>=0 && x[1]<=10080 && x[0]<x[1]);
+}
+/* 區間 → 一天一列 */
+function hoursToDays(h){
+  if(!isWeekHours(h)) return null;
+  let rs=h.map(x=>[x[0],x[1]]).sort((a,b)=>a[0]-b[0]);
+  if(rs.length===1 && rs[0][0]===0 && rs[0][1]===10080) return {all24:true, days:heDefaultDays()};
+  // 週六跨到週日的那段存的時候拆成兩段（尾巴在週日 00:00 開頭），接回去
+  if(rs.length>1 && rs[0][0]===0 && rs[rs.length-1][1]===10080){
+    const head=rs.shift(); rs[rs.length-1]=[rs[rs.length-1][0], 10080+head[1]];
+  }
+  const days={}; for(let i=0;i<7;i++) days[i]=[];
+  const put=(a,b)=>{ const d=Math.floor(a/1440); days[d%7].push([a-d*1440, (b-d*1440)%1440]); };
+  for(let [a,b] of rs){
+    if(b-a>1440 && a%1440){ const nx=(Math.floor(a/1440)+1)*1440; put(a,nx); a=nx; }
+    while(b-a>1440){ put(a,a+1440); a+=1440; }
+    put(a,b);
+  }
+  return {all24:false, days};
+}
+/* 一天一列 → 區間（排好、相連的接起來）。一段都沒有＝null */
+function daysToHours(all24, days){
+  if(all24) return [[0,10080]];
+  const out=[];
+  for(let d=0; d<7; d++) for(const [o,c] of (days[d]||[])){
+    if(!Number.isFinite(o) || !Number.isFinite(c)) continue;
+    const a=d*1440+o, b=d*1440+(c<=o?c+1440:c);
+    if(b>10080){ out.push([a,10080]); out.push([0,b-10080]); } else out.push([a,b]);
+  }
+  if(!out.length) return null;
+  out.sort((x,y)=>x[0]-y[0]);
+  const m=[];
+  for(const r of out){ if(m.length && r[0]<=m[m.length-1][1]) m[m.length-1][1]=Math.max(m[m.length-1][1],r[1]); else m.push(r); }
+  return m;
+}
+const hmToMin=v=>{ const t=/^(\d{1,2}):(\d{2})/.exec(v||''); return t?Number(t[1])*60+Number(t[2]):NaN; };
+const segText=([o,c])=>(o===0&&c===0)?'24 小時':`${fmtHM(o)}–${c===0?'24:00':fmtHM(c)}`;
+/* 給人看的：「週一至週五 11:00–21:00」「週六、週日 10:00–22:00」「週二 公休」 */
+function hoursLines(h){
+  const p=hoursToDays(h); if(!p) return [];
+  if(p.all24) return ['24 小時營業'];
+  const txt=d=>p.days[d].length ? p.days[d].map(segText).join('、') : '公休';
+  const out=[]; let i=0;
+  while(i<7){
+    let j=i; while(j+1<7 && txt(HE_ORDER[j+1])===txt(HE_ORDER[i])) j++;
+    const a=DOW_ZH[HE_ORDER[i]], b=DOW_ZH[HE_ORDER[j]];
+    out.push(`${j===i?a:j===i+1?`${a}、${b}`:`${a}至${b}`} ${txt(HE_ORDER[i])}`);
+    i=j+1;
+  }
+  return out;
+}
+const weekOpen=(h,mow)=>isWeekHours(h) && h.some(([a,b])=>mow>=a && mow<b);
+function nowMow(){ const n=twNow(); return n.dow*1440+n.min; }
+/* 詳情那一格：現在有沒有開＋每天的時間＋補充 */
+function hoursDetailText(o){
+  const lines=hoursLines(o.hours);
+  const head=lines.length ? (weekOpen(o.hours, nowMow()) ? '🟢 現在營業中' : '⚪ 現在休息中') : '';
+  return [head, ...lines, o.hoursNote?`（${o.hoursNote}）`:''].filter(Boolean).join('\n');
+}
+/* 資料庫有 offers.hours 這一欄（schema_v179 跑過）才把編輯器放出來——不然看得到、
+   填得了，送出時卻被默默拿掉。打開「新增」那一頁時問一次，只要一欄一列。 */
+let HOURS_COL=null;
+async function probeHoursCol(){
+  if(HOURS_COL!==null || !LIVE) return;
+  HOURS_COL=false;
+  const {error}=await sb.from('offers').select('hours').limit(1);
+  HOURS_COL=!error;
+  $('#fHoursField')?.classList.toggle('hidden', !HOURS_COL);
+}
+function setHoursEditor(h, note){
+  const p=hoursToDays(h);
+  HE={on:!!p || !!note, all24:!!p&&p.all24, days:p?p.days:heDefaultDays(), note:note||''};
+  renderHoursEditor();
+}
+function readHoursEditor(){
+  if(!HE.on) return {hours:null, hours_note:null};
+  return {hours:daysToHours(HE.all24, HE.days), hours_note:(HE.note||'').trim()||null};
+}
+function renderHoursEditor(){
+  const box=$('#hoursEditor'); if(!box) return;
+  if(!HE.on){
+    box.innerHTML='<button type="button" class="btn sm" id="heStart">＋ 填營業時間</button>';
+    $('#heStart').onclick=()=>{ HE={on:true, all24:false, days:heDefaultDays(), note:HE.note||''}; renderHoursEditor(); };
+    return;
+  }
+  const dayRow=d=>{
+    const segs=HE.days[d]||[];
+    return `<div class="he-day" data-d="${d}"><span class="he-dn">${DOW_ZH[d]}</span>
+      ${segs.length ? `<span class="he-segs">${segs.map((sg,i)=>`<span class="he-seg">
+          <input type="time" class="he-t" data-d="${d}" data-i="${i}" data-k="0" value="${fmtHM(sg[0])}" aria-label="${DOW_ZH[d]}開門">
+          –<input type="time" class="he-t" data-d="${d}" data-i="${i}" data-k="1" value="${fmtHM(sg[1])}" aria-label="${DOW_ZH[d]}打烊">
+          ${i>0?`<button type="button" class="btn sm plain he-x" data-d="${d}" data-i="${i}" aria-label="拿掉${DOW_ZH[d]}這一段">✕</button>`:''}
+        </span>`).join('')}</span>` : '<span class="he-off">公休</span>'}
+      <span class="he-btns">
+        ${segs.length && segs.length<3?`<button type="button" class="btn sm plain he-add" data-d="${d}" title="中午有休息的話，分兩段填">＋一段</button>`:''}
+        <button type="button" class="btn sm plain he-tog" data-d="${d}">${segs.length?'公休':'有開'}</button>
+      </span></div>`;
+  };
+  box.innerHTML=`<label class="toggle"><input type="checkbox" id="he24"${HE.all24?' checked':''}> 24 小時營業</label>
+    ${HE.all24?'':HE_ORDER.map(dayRow).join('')}
+    <div class="row he-acts">
+      ${HE.all24?'':'<button type="button" class="btn sm" id="heCopyMon">週一的時間套用到每一天</button>'}
+      <button type="button" class="btn sm plain" id="heClear">不填營業時間</button>
+    </div>
+    <input type="text" id="heNote" maxlength="120" placeholder="補充（選填）：例如 各分店不同、國定假日公休" value="${esc(HE.note||'')}">`;
+  $('#he24').onchange=e=>{ HE.all24=e.target.checked; renderHoursEditor(); };
+  $('#heClear').onclick=()=>{ HE={on:false, all24:false, days:null, note:''}; renderHoursEditor(); };
+  $('#heNote').oninput=e=>{ HE.note=e.target.value; };
+  if($('#heCopyMon')) $('#heCopyMon').onclick=()=>{
+    for(let d=0; d<7; d++) HE.days[d]=heCopy(HE.days[1]||[]);
+    renderHoursEditor();
+  };
+  $$('#hoursEditor .he-t').forEach(inp=>inp.onchange=()=>{
+    const v=hmToMin(inp.value); if(!Number.isFinite(v)) return;
+    HE.days[inp.dataset.d][inp.dataset.i][Number(inp.dataset.k)]=v;
+  });
+  $$('#hoursEditor .he-add').forEach(b=>b.onclick=()=>{ HE.days[b.dataset.d].push([1020,1260]); renderHoursEditor(); });  // 17:00–21:00
+  $$('#hoursEditor .he-x').forEach(b=>b.onclick=()=>{ HE.days[b.dataset.d].splice(Number(b.dataset.i),1); renderHoursEditor(); });
+  $$('#hoursEditor .he-tog').forEach(b=>b.onclick=()=>{
+    const d=b.dataset.d;
+    HE.days[d]=HE.days[d].length ? [] : heCopy((HE.days[1]&&HE.days[1].length)?HE.days[1]:[[660,1260]]);
+    renderHoursEditor();
+  });
+}
+
 function resetSubmitForm(){
   $('#submitForm').reset();
+  HE={on:false, all24:false, days:null, note:''}; renderHoursEditor();
   $$('#fRegions .chip').forEach(c=>c.setAttribute('aria-pressed','false'));
   fillSourceRows([]);
   $('#submitMsg').innerHTML='';
@@ -10117,6 +10278,7 @@ function resetSubmitForm(){
   $('#brandDupHint').classList.add('hidden');
 }
 $('#btnReset').onclick=resetSubmitForm;
+renderHoursEditor();
 $('#btnCancelEdit').onclick=resetSubmitForm;
 
 /* ---- 「補充更多細節」收合區 ---- */
@@ -10177,6 +10339,7 @@ async function startEditOffer(id, asAdmin=false, asSuggestion=false){
   fillSourceRows(o.sources||[]);
   const regs=new Set(o.regions||[]);
   $$('#fRegions .chip').forEach(c=>c.setAttribute('aria-pressed',String(regs.has(c.dataset.r))));
+  setHoursEditor(o.hours, o.hours_note);
   setMoreFields(true);   // 編輯時把補充欄位打開，不然帶進來的值會被藏起來看不到
   $('#submitMsg').innerHTML='';
   window.scrollTo({top:0,behavior:'smooth'});
@@ -10228,7 +10391,7 @@ $('#fBrand').addEventListener('input',()=>{
 // 參考不同就永遠判定「不同」，或整個沒被比到），另外寫 sameOfferVal 處理。
 const OFFER_DIFF_FIELDS=['brand','category','offer','membership','membership_type','free_tier',
   'advance_days','value_twd','min_spend','expected_spend','timing','conditions','valid_from','valid_until',
-  'requires_companion','transferable','regions','sources'];
+  'requires_companion','transferable','regions','sources','hours','hours_note'];
 function offerDiffVal(src,k){
   if(k==='timing') return src.timing||src.offer_window||null;
   const v=src[k];
@@ -10279,7 +10442,13 @@ $('#submitForm').onsubmit=async e=>{
     validity_type: fd.get('valid_until')?'fixed':'rolling',
     requires_companion: fd.get('requires_companion')==='on',
     transferable: fd.get('transferable')||'unknown',
-    sources};
+    sources, ...readHoursEditor()};
+  if(HE.on && !HE.all24 && !row.hours){
+    b.disabled=false;
+    note($('#submitMsg'),'alert','營業時間每一天都是「公休」——不知道營業時間的話，按「不填營業時間」就好。');
+    $('#hoursEditor').scrollIntoView({block:'center',behavior:'smooth'});
+    return;
+  }
   const editing=editingOfferId, asAdmin=editingAsAdmin, asSuggestion=editingAsSuggestion, wasPending=editingWasPending;
   // 全新投稿（不是編輯/建議修改）才檢查重複——這裡是送出前最後一道防線，
   // 打字時應該已經先在 renderBrandDupHint() 提醒過一次了，這裡再擋一次是
@@ -10331,12 +10500,15 @@ $('#submitForm').onsubmit=async e=>{
   }else{
     ({error}=await sb.from('offers').insert({...row, status:'pending', verified:false, submitted_by:me.id}));
   }
-  // schema_v166 還沒跑：offers 沒有 expected_spend 這一欄，拿掉它再送一次
-  if(error && /expected_spend/.test(error.message||'') && !asSuggestion){
-    const {expected_spend, ...noEs}=row;
-    if(editing&&asAdmin) ({error}=await sb.from('offers').update(noEs).eq('id',editing));
-    else if(editing) ({error}=await sb.from('offers').update(noEs).eq('id',editing).eq('submitted_by',me.id));
-    else ({error}=await sb.from('offers').insert({...noEs, status:'pending', verified:false, submitted_by:me.id}));
+  // schema_v166／v179 還沒跑：offers 沒有那幾欄（預計花費、營業時間），拿掉再送一次
+  for(let tries=0; error && !asSuggestion && tries<3; tries++){
+    const msg=error.message||'';
+    const drop=['expected_spend','hours_note','hours'].filter(k=>k in row && new RegExp(`\\b${k}\\b`).test(msg));
+    if(!drop.length) break;
+    drop.forEach(k=>{ delete row[k]; });
+    if(editing&&asAdmin) ({error}=await sb.from('offers').update(row).eq('id',editing));
+    else if(editing) ({error}=await sb.from('offers').update(row).eq('id',editing).eq('submitted_by',me.id));
+    else ({error}=await sb.from('offers').insert({...row, status:'pending', verified:false, submitted_by:me.id}));
   }
   b.disabled=false;
   if(error){
@@ -14616,12 +14788,14 @@ const PEND_FOLD_KEY='sxr_admin_pend_insights';
 const EDIT_FIELD_LABEL={brand:'品牌名稱',offer:'優惠內容',conditions:'使用條件',membership:'會員取得方式',
   timing:'適用期間',advance_days:'提前天數',value_twd:'優惠價值',min_spend:'低消',expected_spend:'預計花費',valid_until:'檔期迄日',
   category:'類別',requires_companion:'需同行',regions:'適用地區',transferable:'本人出示證件',
-  membership_type:'會員種類',free_tier:'免費層級',valid_from:'檔期起日',sources:'資料來源'};
+  membership_type:'會員種類',free_tier:'免費層級',valid_from:'檔期起日',sources:'資料來源',
+  hours:'營業時間',hours_note:'營業時間補充'};
 // regions/sources 是陣列、requires_companion 是布林值——「新舊對照」畫面原本
 // 只处理過純文字/數字欄位，這幾種類型直接 String() 會印出 "true"/"false" 或
 // "[object Object]"，這裡跟 editHistoryHtml 共用同一套格式化規則。
 function fmtEditVal(v){
   if(v==null||v==='') return '—';
+  if(isWeekHours(v)) return hoursLines(v).join('；');     // v179 營業時間
   if(Array.isArray(v)) return v.length?v.map(x=>(x&&typeof x==='object')?(x.url||JSON.stringify(x)):String(x)).join('、'):'—';
   if(v===true) return '是'; if(v===false) return '否';
   return String(v);
@@ -14635,7 +14809,8 @@ const EDIT_CUR_KEY={brand:'brand',offer:'current_offer',conditions:'current_cond
   value_twd:'current_value_twd',min_spend:'current_min_spend',expected_spend:'current_expected_spend',
   valid_from:'current_valid_from',valid_until:'current_valid_until',
   category:'current_category',requires_companion:'current_requires_companion',
-  transferable:'current_transferable',regions:'current_regions',sources:'current_sources'};
+  transferable:'current_transferable',regions:'current_regions',sources:'current_sources',
+  hours:'current_hours',hours_note:'current_hours_note'};
 function editDiffRowsHtml(e){
   return Object.entries(e.patch||{}).map(([k,v])=>`
     <div class="row" style="gap:6px;align-items:flex-start;margin-top:6px">
@@ -14653,7 +14828,7 @@ let EDIT_ORIG_PATCH={};   // edit id -> 民眾原始送出的 patch，核可時�
 // 進到「核可時把輸入框當下的值收集起來」那段邏輯（沒有 edit-patch-field
 // 這個 class，就不會被收集，也就不會誤觸發 override）。
 function patchFieldInputHtml(editId, field, value){
-  if(field==='regions'||field==='sources')
+  if(field==='regions'||field==='sources'||field==='hours')
     // sources 是網址陣列，民眾貼的來源連結常常很長又沒有空白可斷行，
     // overflow-wrap:anywhere 讓它撐滿寬度後換行，不會把整個 row 撐爆
     // 跑版（見上面 .sub-item 那段一樣的問題跟修法）。
@@ -14705,11 +14880,20 @@ async function bulkApproveEdits(ids){
 }
 async function loadPendingEdits(){
   if(!LIVE||!myProfile?.is_admin) return;
-  const {data,error}=await sb.from('offer_edits')
+  // v179：改前的營業時間也要看得到；v179 還沒跑（沒有這兩欄）就退回不帶的查詢
+  const qEdits=extra=>sb.from('offer_edits')
     .select('id,offer_id,proposed_by,patch,reason,source_url,source_tier,created_at,'
-      +'offers(brand,offer,conditions,membership,timing,advance_days,value_twd,valid_until,'
-      +'category,regions,membership_type,free_tier,valid_from,requires_companion,transferable,sources)')
+      +'offers(brand,offer,conditions,membership,timing,advance_days,value_twd,min_spend,expected_spend,valid_until,'
+      +'category,regions,membership_type,free_tier,valid_from,requires_companion,transferable,sources'+extra+')')
     .eq('status','pending').order('created_at',{ascending:true});
+  let {data,error}=await qEdits(',hours,hours_note');
+  if(error && /hours|expected_spend|42703|column/i.test(error.message||'')) ({data,error}=await qEdits(''));
+  if(error && /expected_spend|min_spend|42703|column/i.test(error.message||''))
+    ({data,error}=await sb.from('offer_edits')
+      .select('id,offer_id,proposed_by,patch,reason,source_url,source_tier,created_at,'
+        +'offers(brand,offer,conditions,membership,timing,advance_days,value_twd,valid_until,'
+        +'category,regions,membership_type,free_tier,valid_from,requires_companion,transferable,sources)')
+      .eq('status','pending').order('created_at',{ascending:true}));
   const ec=$('#editCount');
   if(error){
     const hint=/relation|does not exist|offer_edits/i.test(error.message)?'（Supabase 可能還沒跑 schema_v11_edits.sql）':'';

@@ -87,7 +87,10 @@ function fakeCaches() {
     .match(/\br[.]([a-z_]+)/g) || []).map((m) => m.slice(2)))];
   /* v166 起新欄位先放在 OFFER_COLS_V166（SQL 沒跑時 Worker 退回 OFFER_COLS），兩份合起來算 */
   const extra = ((workerSrc.match(/const OFFER_COLS_V166 = OFFER_COLS \+ '([^']+)'/) || [])[1] || '')
-    .split(',').filter(Boolean);
+    .split(',').filter(Boolean)
+    /* v179：hours、hours_note 再疊一層 OFFER_COLS_V179 */
+    .concat(((workerSrc.match(/const OFFER_COLS_V179 = OFFER_COLS_V166 \+ '([^']+)'/) || [])[1] || '')
+      .split(',').filter(Boolean));
   const all = cols.split(',').concat(extra);
   const missing = used.filter((c) => !all.includes(c));
   t.eq('fromRow 讀的每一欄，Worker 都有去要（漏了前端會靜靜地少一欄）', missing, []);

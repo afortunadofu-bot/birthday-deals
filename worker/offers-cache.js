@@ -86,8 +86,13 @@ const OFFER_COLS = 'id,brand,category,regions,region_note,offer,membership,membe
 /* v166：expected_spend（投稿的人估的「預計會花多少」）。schema_v166 還沒跑的話這一欄不存在，
    整句查詢會 400——所以失敗一次就改用不帶它的那份欄位，Worker 先更新、SQL 後跑也不會壞。 */
 const OFFER_COLS_V166 = OFFER_COLS + ',expected_spend';
-let colsFor = () => OFFER_COLS_V166;
-const isMissingCol = (status, body) => status === 400 && /expected_spend|42703/.test(body || '');
+/* v179：hours、hours_note（投稿的人填的營業時間）。一樣：SQL 還沒跑就一層一層退回舊清單。 */
+const OFFER_COLS_V179 = OFFER_COLS_V166 + ',hours,hours_note';
+const COLS_CHAIN = [OFFER_COLS_V179, OFFER_COLS_V166, OFFER_COLS];
+let colsIdx = 0;
+let colsFor = () => COLS_CHAIN[colsIdx];
+const isMissingCol = (status, body) => status === 400 && /expected_spend|hours|42703/.test(body || '');
+const nextCols = () => (colsIdx < COLS_CHAIN.length - 1 ? (colsIdx++, true) : false);
 
 const FIRST_N = 60;
 const STALE_TTL = 86400;      // 上游掛掉時，24 小時內的舊資料還可以頂著用
@@ -167,8 +172,8 @@ async function fromSupabase(env, kind) {
       + `&order=value_twd.desc.nullslast,brand.asc&limit=${FIRST_N}`,
       { headers });
     let res = await first();
-    if (!res.ok && isMissingCol(res.status, await res.clone().text())) {
-      colsFor = () => OFFER_COLS; res = await first();
+    while (!res.ok && isMissingCol(res.status, await res.clone().text()) && nextCols()) {
+      res = await first();
     }
     if (!res.ok) throw new Error(`offers_public(first) ${res.status}`);
     return await res.json();
@@ -181,8 +186,8 @@ async function fromSupabase(env, kind) {
       headers: { ...headers, range: `${from}-${from + PAGE - 1}` },
     });
     let res = await get();
-    if (!res.ok && isMissingCol(res.status, await res.clone().text())) {
-      colsFor = () => OFFER_COLS; res = await get();
+    while (!res.ok && isMissingCol(res.status, await res.clone().text()) && nextCols()) {
+      res = await get();
     }
     if (!res.ok) throw new Error(`offers_public ${res.status}`);
     const rows = await res.json();

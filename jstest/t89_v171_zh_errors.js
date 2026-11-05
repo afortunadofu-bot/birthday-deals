@@ -58,7 +58,9 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
     && !/\.test\(|\.includes\(|\.match\(|zhErr|const m=|const t=|const raw/.test(l));
   t.eq('顯示錯誤的地方都經過 zhErr（沒有漏網的）', raw.map((l) => l.trim().slice(0, 80)), []);
   t.ok('判斷要不要退回舊查詢的地方還是讀英文原文（不能在源頭翻掉）',
-    /\/expected_spend\/\.test\(error\.message\|\|''\)/.test(index));
+    /* v179 起投稿的退回改成一個迴圈（預計花費、營業時間都可能沒那一欄），一樣讀英文原文；
+       實際退回行為 t85、t95 有用英文錯誤訊息跑過 */
+    /const msg=error\.message\|\|'';\s*const drop=\['expected_spend','hours_note','hours'\]/.test(index));
 
   process.exit(t.done() ? 0 : 1);
 })().catch((e) => { console.error(e); process.exit(1); });

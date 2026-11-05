@@ -115,7 +115,8 @@ const worker = fs.readFileSync(path.join(__dirname, '..', 'worker', 'offers-cach
 
   /* ---- Worker ---- */
   t.ok('Worker：多要 expected_spend', /OFFER_COLS_V166 = OFFER_COLS \+ ',expected_spend'/.test(worker));
-  t.ok('Worker：SQL 還沒跑就退回原本的欄位，不會壞', /colsFor = \(\) => OFFER_COLS; res = await/.test(worker)
+  /* v179 起改成一串欄位清單一層一層退（V179 → V166 → 原本的），最後一層一定是原本的 OFFER_COLS */
+  t.ok('Worker：SQL 還沒跑就退回原本的欄位，不會壞', /COLS_CHAIN = \[[^\]]*OFFER_COLS_V166, OFFER_COLS\]/.test(worker)
     && (worker.match(/isMissingCol\(res\.status/g) || []).length === 2);
 
   process.exit(t.done() ? 0 : 1);
