@@ -5,6 +5,7 @@ diff_report.md
 threads_report.md
 node_modules/
 .places_cache/
+.places_cache_hours/
 stores_import.sql
 stores_fetched.json
 stores_import_*.sql

@@ -13,6 +13,23 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v178　分店營業時間＋「幾點有開」篩選
+
+`schema_v178_store_hours.sql`、`fetch_stores.py`、`template.html`。
+
+> celine（11/5，附省一餐的截圖：早餐／午餐／晚餐／宵夜）：「掃各家的營業時間，篩選多一個可以選時間」
+
+- **資料**：`offer_stores` 加 `open_week int4range[]`（一週 10080 分鐘裡的營業區間，週日 00:00＝0，跟 Google 的 day 編號一樣）、`hours_text`（Google 的「星期一: 10:00 – 21:00」原文）、`hours_fetched_at`。null＝查不到，跟「整週沒開」分開
+- **`offers_open_at(p_mow, p_counties)`**：這個時間點每筆優惠有沒有分店開著；只看前台看得到的分店，選了縣市只看那幾個縣市。security invoker，anon 可叫。回傳幾百列兩個值，選了時間才叫、同一個時間＋縣市問過就記著
+- **抓資料**：`fetch_stores.py --hours` 多要 `regularOpeningHours`，Text Search 從 Pro 升到 Enterprise 計價（每 1,000 次 US$35，每月前 1,000 次免費）。快取另放 `.places_cache_hours/`（舊快取沒有營業時間）。`--hours --dry-run` 會估錢：3,430 個縣市查詢，約 US$85～133。這一輪也會順便補上之前沒抓過分店的優惠
+- **前台**：篩選多一列「營業時間」：不限／現在有開／指定時間（星期＋每半小時）。「現在」用台灣時間、15 分鐘一格。「N / M 筆」那行寫「🕒 週六 19:00 有開（另有 N 筆查不到營業時間，沒列出）」。讀不到不擋任何優惠、說中文
+- **資料庫裡還沒有任何營業時間之前，整列不出現**，所以這版可以先上；跑完 SQL＋匯入之後自動出現。那時再補 updates.json 的更新紀錄
+- 已知限制：國定假日／臨時公休（Google 的 specialDays）沒抓；「附近」模式也是看「任一家分店有開」，不是看最近那一家
+
+測試：`jstest/t94_v178_hours_filter.js`、`jstest/test_fetch_stores_hours.py`
+
+---
+
 ## v177　頁尾連到小數據所的 Threads、聯絡信箱換成品牌信箱
 
 `template.html`、`about.html`、`privacy.html`、`terms.html`、`updates.json`。

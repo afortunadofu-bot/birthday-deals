@@ -441,6 +441,10 @@
     background:none;border:0;border-radius:var(--r-sm);
     cursor:pointer;text-align:left;font:inherit;color:var(--ink)}
   .vr-acts{display:flex;justify-content:flex-end;padding:0 6px 8px}
+  .hours-box{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+  #hoursAtPick{gap:6px}
+  #hoursAtPick select{min-width:0}
+  .filt-hint{font-size:.76rem;color:var(--ink-3);line-height:1.45}
   .praise-row{padding:10px 0;border-top:1px solid var(--line-soft)}
   .praise-row:first-child{border-top:0;padding-top:2px}
   .praise-msg{font-size:.92rem;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -1816,6 +1820,18 @@
            只算 3 人以上回報過「這次花多少」的；v164 那支 SQL 沒跑的話整列不出現。 -->
       <div class="filt-row hidden" id="spendRow"><span class="filt-label">實際花費</span>
         <div class="row chipgrp" id="spendChips"></div></div>
+      <!-- v178 celine：「掃各家的營業時間，篩選多一個可以選時間」。
+           分店營業時間是 fetch_stores.py --hours 從 Google 抓的（schema_v178）。
+           資料庫裡還沒有任何營業時間的話，整列不出現。 -->
+      <div class="filt-row hidden" id="hoursRow"><span class="filt-label">營業時間</span>
+        <div class="hours-box">
+          <div class="row chipgrp" id="hoursChips"></div>
+          <div class="row hidden" id="hoursAtPick">
+            <select id="hoursDay" aria-label="星期幾"></select>
+            <select id="hoursTime" aria-label="幾點"></select>
+          </div>
+          <div class="filt-hint" id="hoursHint">只看「那個時間至少有一家分店開著」的；照 Google 上的平常營業時間，國定假日、臨時公休不算。</div>
+        </div></div>
       <div class="filt-row"><span class="filt-label">分類</span><div class="row chipgrp" id="cats"></div></div>
       <div class="row">
         <label class="toggle"><input type="checkbox" id="fVerified"> 已查證</label>
@@ -3596,6 +3612,7 @@ let NEW_OFFER_IDS=new Set(), onlyNewActive=false;   // 「本週新上架／自�
 let PREV_SEEN_AT=null;   // checkNewOffers() 覆蓋 last_seen_at 之前的舊值，留給「自上次來訪省了多少」用
 let activeCat=new Set(), activeFree=new Set(), activeTiming=new Set();   // 篩選改多選：可以同時勾「當月」+「當週」
 let activeRegion=new Set(), activeMemType=new Set();
+let HOURS_F={mode:'', dow:null, min:null};   // v178 營業時間篩選 mode: '' | 'now' | 'at'（要在 loadFilters 之前宣告）
 let activeSpend=new Set();   // v164 大家實際花多少（嵐：「統計花費金額，讓其他人有個概念這家會花多少」→「進到篩選」）   // 地區／會員也改多選，跟上面那組共用同一套 mkMulti chip 邏輯
 let deferredInstall = null;
 let WISH=new Set();          // 待辦清單（收藏的優惠 id，字串形式）
@@ -3622,6 +3639,7 @@ function saveFilters(){
     fReported:$('#fReported').checked, fHasComments:$('#fHasComments').checked,
     fNoCompanion:$('#fNoCompanion').checked, fTransferable:$('#fTransferable').checked,
     fNoAdvance:$('#fNoAdvance').checked, spend:[...activeSpend],
+    hours:HOURS_F.mode?{...HOURS_F}:null,
     fExactRegion:$('#fExactRegion').checked,
     sort:$('#sort').value
   })); }catch{}
@@ -3637,6 +3655,9 @@ function loadFilters(){
   $('#fTransferable').checked=!!s.fTransferable;
   $('#fNoAdvance').checked=!!s.fNoAdvance;
   (s.spend||[]).filter(v=>SPEND_BUCKETS.includes(v)).forEach(v=>activeSpend.add(v));
+  const h=s.hours;
+  if(h && (h.mode==='now' || (h.mode==='at' && h.dow>=0 && h.dow<=6 && h.min>=0 && h.min<1440 && h.min%30===0)))
+    HOURS_F={mode:h.mode, dow:h.mode==='at'?h.dow:null, min:h.mode==='at'?h.min:null};
   $('#fExactRegion').checked=!!s.fExactRegion;
   $('#fVerified').checked=!!s.fVerified; $('#fLive').checked=s.fLive!==false;
   $('#fReported').checked=!!s.fReported; $('#fHasComments').checked=!!s.fHasComments;
@@ -3933,6 +3954,7 @@ function paintOffers(){
   buildControls();
   render();
   loadSpendSummary();
+  loadHoursAvail();
   renderA2hsPanel();
 }
 
@@ -8340,6 +8362,7 @@ function activeFilterChips(){
   box('#fNoCompanion','一人也能用');
   box('#fTransferable','不用本人證件');
   box('#fNoAdvance','不用提前加入');
+  if(hoursOn()) out.push({label:hoursLabel(), drop:()=>{ HOURS_F.mode=''; buildHoursControls(); }});
   if($('#fExactRegion').checked && activeRegion.size)
     out.push({label:'不含全台', drop:()=>{ $('#fExactRegion').checked=false; }});
   return out;
@@ -8395,7 +8418,101 @@ async function loadSpendSummary(){
     min:Number(r.min_spent), max:Number(r.max_spent)}]));
   buildControls(); render();
 }
-function filterPredicate(){
+/* ---- v178 營業時間篩選 ----------------------------------------------
+   celine：「掃各家的營業時間，篩選多一個可以選時間」。
+   分店營業時間在資料庫（offer_stores.open_week，一週裡的分鐘區間），全台一萬多家
+   不下載到手機上——選了時間才問一次 offers_open_at：「這個時間，哪幾筆優惠至少有
+   一家分店開著」（選了縣市就只看那幾個縣市的分店）。同一個時間＋縣市問過就記著。
+   「現在有開」以 15 分鐘為一格，免得每分鐘都重問。
+   查不到營業時間的優惠（純線上、Google 上沒寫）不列出，件數寫在「N / M 筆」那行。 */
+let HOURS_AVAIL=false, HOURS_TRIED=false;
+const HOURS_CACHE=new Map(), HOURS_PENDING=new Set();
+const DOW_ZH=['週日','週一','週二','週三','週四','週五','週六'];
+function twNow(){
+  const d=new Date(Date.now()+8*3600e3);     // 營業時間都是台灣時間，不管手機設在哪個時區
+  return {dow:d.getUTCDay(), min:d.getUTCHours()*60+d.getUTCMinutes()};
+}
+const fmtHM=m=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+function hoursOn(){ return HOURS_AVAIL && (HOURS_F.mode==='now' || HOURS_F.mode==='at'); }
+function hoursMow(){
+  if(HOURS_F.mode==='now'){ const n=twNow(); return n.dow*1440+Math.floor(n.min/15)*15; }
+  if(HOURS_F.mode==='at') return HOURS_F.dow*1440+HOURS_F.min;
+  return null;
+}
+function hoursCounties(){ return [...activeRegion].filter(r=>COUNTIES.includes(r)&&r!=='全台').sort(); }
+function hoursKey(){ return `${hoursMow()}|${hoursCounties().join(',')}`; }
+function hoursLabel(){
+  if(HOURS_F.mode==='now') return '現在有開';
+  if(HOURS_F.mode==='at') return `${DOW_ZH[HOURS_F.dow]} ${fmtHM(HOURS_F.min)} 有開`;
+  return '';
+}
+async function loadHoursAvail(){
+  if(HOURS_TRIED || !LIVE) return;
+  HOURS_TRIED=true;
+  // 只問「有沒有任何一家分店有營業時間」——v178 沒跑（沒有這個欄位）或還沒匯入，整列不出現
+  const {data,error}=await sb.from('offer_stores').select('offer_id').not('open_week','is',null).limit(1);
+  HOURS_AVAIL=!error && Array.isArray(data) && data.length>0;
+  buildHoursControls();
+  if(HOURS_F.mode) render();
+}
+async function fetchHoursOpen(key){
+  if(HOURS_CACHE.has(key) || HOURS_PENDING.has(key)) return;
+  HOURS_PENDING.add(key);
+  const [mow, cs]=key.split('|');
+  const {data,error}=await sb.rpc('offers_open_at',{p_mow:Number(mow), p_counties:cs?cs.split(','):null});
+  HOURS_PENDING.delete(key);
+  HOURS_CACHE.set(key, (error || !Array.isArray(data))
+    ? {err:zhErr(error||'讀不到營業時間')}
+    : {map:new Map(data.map(r=>[String(r.offer_id), !!r.is_open]))});
+  render();
+}
+/* 篩選用：null＝沒在篩；{loading}＝還在問（先不擋，問回來會再畫一次）；{map}／{err} */
+function hoursState(){
+  if(!hoursOn()) return null;
+  const key=hoursKey(), c=HOURS_CACHE.get(key);
+  if(!c){ fetchHoursOpen(key); return {loading:true}; }
+  return c;
+}
+function setHoursMode(v){
+  HOURS_F.mode=v;
+  if(v==='at' && HOURS_F.dow==null){
+    const n=twNow();                           // 預設：今天、下一個整點或半點
+    const m=Math.ceil(n.min/30)*30;
+    HOURS_F.dow=m>=1440?(n.dow+1)%7:n.dow; HOURS_F.min=m%1440;
+  }
+  buildHoursControls(); render();
+}
+function buildHoursControls(){
+  const row=$('#hoursRow'); if(!row) return;
+  row.classList.toggle('hidden', !HOURS_AVAIL);
+  if(!HOURS_AVAIL) return;
+  const opts=[['不限',''],['現在有開','now'],['指定時間','at']];
+  $('#hoursChips').innerHTML=opts.map(([l,v])=>
+    `<button type="button" class="chip" data-v="${v}" aria-pressed="${HOURS_F.mode===v}">${l}</button>`).join('');
+  $$('#hoursChips .chip').forEach(b=>b.onclick=()=>setHoursMode(b.dataset.v));
+  const at=HOURS_F.mode==='at';
+  $('#hoursAtPick').classList.toggle('hidden', !at);
+  if(at){
+    const today=twNow().dow;
+    // 從週一排到週日，今天標出來
+    $('#hoursDay').innerHTML=[1,2,3,4,5,6,0].map(d=>
+      `<option value="${d}"${d===HOURS_F.dow?' selected':''}>${DOW_ZH[d]}${d===today?'（今天）':''}</option>`).join('');
+    $('#hoursTime').innerHTML=Array.from({length:48},(_,i)=>i*30).map(m=>
+      `<option value="${m}"${m===HOURS_F.min?' selected':''}>${fmtHM(m)}</option>`).join('');
+    $('#hoursDay').onchange=()=>{ HOURS_F.dow=Number($('#hoursDay').value); render(); };
+    $('#hoursTime').onchange=()=>{ HOURS_F.min=Number($('#hoursTime').value); render(); };
+  }
+}
+/* 「N / M 筆」後面那一段：選了營業時間的話，講清楚現在是用哪個時間、幾筆查不到 */
+function hoursCountNote(base){
+  const st=hoursState(); if(!st) return '';
+  if(st.loading) return `　🕒 ${hoursLabel()}（查營業時間中…）`;
+  if(st.err) return `　🕒 營業時間讀不到：${st.err}`;
+  const unknown=OFFERS.filter(o=>base(o) && !st.map.has(String(o.id))).length;
+  return `　🕒 ${hoursLabel()}`+(unknown?`（另有 ${unknown} 筆查不到營業時間，沒列出）`:'');
+}
+
+function filterPredicate(opts={}){
   const q=$('#q').value.trim().toLowerCase();
   const onlyV=$('#fVerified').checked, hideX=$('#fLive').checked, onlyR=$('#fReported').checked;
   const onlyC=$('#fHasComments').checked, noCompanion=$('#fNoCompanion').checked;
@@ -8403,7 +8520,10 @@ function filterPredicate(){
   const exactRegion=$('#fExactRegion').checked && activeRegion.size>0;
   const cat=activeCat, free=activeFree, timing=activeTiming, mem=activeMemType, region=activeRegion;
   const spend=activeSpend;
+  const hrs=opts.skipHours?null:hoursState();
+  const hrsMap=hrs&&hrs.map;
   return o=>{
+    if(hrsMap && hrsMap.get(String(o.id))!==true) return false;
     if(noAdvance&&!noAdvanceOk(o)) return false;
     if(spend.size){ const x=spendOf(o); if(!x||!spend.has(spendBucket(x.avg))) return false; }
     if(cat.size&&!cat.has(o.category)) return false;
@@ -8441,7 +8561,7 @@ function render(){
   if(sortBy==='distance'&&!(NEAR.active&&NEAR.byOffer)){ sortBy='value'; if(!NEAR.active) $('#sort').value='value'; }
 
   const activeCount = (q?1:0)+activeRegion.size+activeMemType.size+activeCat.size+activeFree.size+activeTiming.size
-    +activeSpend.size+($('#fNoAdvance').checked?1:0)
+    +activeSpend.size+($('#fNoAdvance').checked?1:0)+(hoursOn()?1:0)
     +(onlyV?1:0)+(!hideX?1:0)+(onlyR?1:0)+(onlyC?1:0)+(noCompanion?1:0)+(onlyTransferable?1:0)
     +(exactRegion?1:0);
   $('#btnClearFilters').classList.toggle('hidden',!activeCount);
@@ -8496,7 +8616,8 @@ function render(){
   const sum=list.filter(o=>o.valueTwd).reduce((a,o)=>a+o.valueTwd,0);
   $('#count').textContent=`${list.length} / ${OFFERS.length} 筆`
     +(activeRegion.size?`　${[...activeRegion].filter(r=>r!=='__none__').join('、')}${
-        $('#fExactRegion')?.checked?'（不含全台）':'含全台'}`:'')+(sum?`　合計約 ${nt(sum)}`:'')+(NEAR.active&&NEAR.byOffer?`　📍 ${NEAR.km} 公里內`:'');
+        $('#fExactRegion')?.checked?'（不含全台）':'含全台'}`:'')+(sum?`　合計約 ${nt(sum)}`:'')+(NEAR.active&&NEAR.byOffer?`　📍 ${NEAR.km} 公里內`:'')
+    +hoursCountNote(filterPredicate({skipHours:true}));
   $('#empty').classList.toggle('hidden',list.length>0);
   // 搜尋沒結果時，使用者常常不知道是「真的沒有」還是「被篩選 chips 擋住了」。
   // 這裡只用關鍵字（忽略地區/類別/會員等篩選條件）再撈一次，如果其實有東西、
@@ -8870,6 +8991,7 @@ $('#btnClearFilters').onclick=()=>{
   $('#fExactRegion').checked=false; $('#fNoAdvance').checked=false;
   activeCat.clear(); activeFree.clear(); activeTiming.clear(); activeRegion.clear(); activeMemType.clear();
   activeSpend.clear();
+  HOURS_F.mode=''; buildHoursControls();
   $$('#timingChips .chip, #freeChips .chip, #cats .chip, #regionChips .chip, #memChips .chip, #spendChips .chip')
     .forEach(c=>c.setAttribute('aria-pressed',c.dataset.v===''));
   render();
@@ -8883,6 +9005,7 @@ $('#btnEmptyClearFilters').onclick=()=>{
   $('#fExactRegion').checked=false; $('#fNoAdvance').checked=false;
   activeCat.clear(); activeFree.clear(); activeTiming.clear(); activeRegion.clear(); activeMemType.clear();
   activeSpend.clear();
+  HOURS_F.mode=''; buildHoursControls();
   $$('#timingChips .chip, #freeChips .chip, #cats .chip, #regionChips .chip, #memChips .chip, #spendChips .chip')
     .forEach(c=>c.setAttribute('aria-pressed',c.dataset.v===''));
   render();

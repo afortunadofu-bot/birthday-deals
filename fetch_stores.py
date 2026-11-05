@@ -27,6 +27,14 @@
 然後把 stores_import_*.sql 依序全部貼進 Supabase SQL Editor 執行（要先跑過 schema_v58）。
   python fetch_stores.py --cache-only         # 改完比對規則／別名後，只用快取重算，不花錢
   python fetch_stores.py --fill-regions       # 只跑「適用縣市」空白的那幾筆，照分店回推縣市
+  python fetch_stores.py --hours --dry-run    # 連營業時間一起抓：先看要花多少
+  python fetch_stores.py --hours              # 連營業時間一起抓（要先跑 schema_v178）
+
+--hours（v178）：celine「掃各家的營業時間，篩選多一個可以選時間」。多要 Google 的
+regularOpeningHours 這個欄位——Text Search 會從 Pro 升到 Enterprise 計價（每 1,000 次
+US$35，每個月前 1,000 次免費）。快取另外放 .places_cache_hours/（舊快取裡沒有營業時間，
+不能拿來用），所以第一次跑等於全部重查一遍；之後重跑一樣走快取不重複計費。
+這一輪也會把之前沒抓過分店的優惠一起抓進來。
 
 --fill-regions：使用者（金信宇）回報「篩花蓮縣跑出一堆不是花蓮的店」，查下去發現線上有
 67 筆優惠的「適用縣市」整個是空的——任何縣市篩選都找不到它們，在「附近」也不會出現。
@@ -104,6 +112,46 @@ FIELD_MASK = ",".join([
     "places.id", "places.displayName", "places.formattedAddress",
     "places.location", "places.businessStatus", "nextPageToken",
 ])
+HOURS = False                 # --hours：連營業時間一起抓（v178）
+HOURS_FIELD = "places.regularOpeningHours"
+# Text Search Enterprise（含營業時間）的價格，--hours --dry-run 估錢用。
+# 來源：https://developers.google.com/maps/billing-and-pricing/pricing（2026-11 查）
+ENTERPRISE_USD_PER_1000 = 35.0
+ENTERPRISE_FREE_PER_MONTH = 1000
+WEEK = 7 * 1440
+
+
+def week_ranges(opening):
+    """Google regularOpeningHours → 一週裡的分鐘區間 [(開, 關)…]，週日 00:00＝0。
+    跨午夜的（22:00–02:00）照算成一段；跨過週六→週日的拆兩段。24 小時營業 Google
+    會給一段只有 open（週日 00:00）沒有 close 的，算整週。沒有 periods 就回 None
+    （＝不知道，跟「整週都沒開」不一樣）。"""
+    periods = (opening or {}).get("periods")
+    if not periods:
+        return None
+    out = []
+    for per in periods:
+        o, c = per.get("open") or {}, per.get("close")
+        if "day" not in o:
+            continue
+        start = o["day"] * 1440 + o.get("hour", 0) * 60 + o.get("minute", 0)
+        if not c:
+            return [(0, WEEK)]
+        end = c.get("day", o["day"]) * 1440 + c.get("hour", 0) * 60 + c.get("minute", 0)
+        if end <= start:
+            end += WEEK
+        if end > WEEK:
+            out += [(start, WEEK), (0, end - WEEK)]
+        else:
+            out.append((start, end))
+    out.sort()
+    merged = []
+    for a, b in out:
+        if merged and a <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], b))
+        else:
+            merged.append((a, b))
+    return merged
 
 
 VARIANTS = str.maketrans({"臺": "台", "寿": "壽", "舖": "舗", "蔵": "藏", "珈": "咖", "琲": "啡",
@@ -336,7 +384,7 @@ def search(api_key, query, page_token=None, refresh=False, rect=None):
     req = urllib.request.Request(API_URL, data=raw.encode("utf-8"), method="POST", headers={
         "Content-Type": "application/json",
         "X-Goog-Api-Key": api_key,
-        "X-Goog-FieldMask": FIELD_MASK,
+        "X-Goog-FieldMask": FIELD_MASK + ("," + HOURS_FIELD if HOURS else ""),
     })
     for attempt in range(4):
         try:
@@ -453,8 +501,13 @@ def keep_place(p, keys, county):
     addr = p.get("formattedAddress", "")
     if tw(county) not in tw(addr):
         return None
-    return {"place_id": p["id"], "name": name, "address": addr, "county": county,
-            "lat": loc["latitude"], "lng": loc["longitude"], "business_status": p.get("businessStatus")}
+    r = {"place_id": p["id"], "name": name, "address": addr, "county": county,
+         "lat": loc["latitude"], "lng": loc["longitude"], "business_status": p.get("businessStatus")}
+    if HOURS:
+        oh = p.get("regularOpeningHours") or {}
+        r["open_week"] = week_ranges(oh)
+        r["hours_text"] = oh.get("weekdayDescriptions") or None
+    return r
 
 
 def fetch_county(api_key, query, keys, county, refresh, max_pages):
@@ -507,9 +560,24 @@ def discover_nationwide(api_key, query, keys, refresh, max_pages):
 
 
 def row_sql(r):
-    return (f"({int(r['offer_id'])},{sql_str(r['place_id'])}::text,{sql_str(r['name'])}::text,"
+    base = (f"({int(r['offer_id'])},{sql_str(r['place_id'])}::text,{sql_str(r['name'])}::text,"
             f"{sql_str(r['address'])}::text,{sql_str(r['county'])}::text,{float(r['lat'])}::float8,"
-            f"{float(r['lng'])}::float8,{sql_str(r['business_status'])}::text)")
+            f"{float(r['lng'])}::float8,{sql_str(r['business_status'])}::text")
+    if not HOURS:
+        return base + ")"
+    return base + f",{ranges_sql(r.get('open_week'))},{text_array_sql(r.get('hours_text'))})"
+
+
+def ranges_sql(rs):
+    if rs is None:
+        return "null::int4range[]"
+    return "'{" + ",".join(f'"[{int(a)},{int(b)})"' for a, b in rs) + "}'::int4range[]"
+
+
+def text_array_sql(xs):
+    if not xs:
+        return "null::text[]"
+    return "array[" + ",".join(sql_str(x) for x in xs) + "]::text[]"
 
 
 def sql_str(v):
@@ -539,9 +607,29 @@ def write_imports(rows, offer_ids, per, prefix="stores_import", tail_extra=()):
         lines = [
             f"-- 由 fetch_stores.py 產生（{run_ts}），第 {n}/{len(parts)} 個檔，請依序全部貼完。",
             "-- 要先跑過 schema_v58_offer_stores.sql。可重複執行。",
+        ] + (["-- 這一組有營業時間（--hours），要先跑過 schema_v178_store_hours.sql。"] if HOURS else []) + [
             "begin;",
         ]
-        if chunk:
+        if chunk and HOURS:
+            lines += [
+                "insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,",
+                "  business_status, source, fetched_at, open_week, hours_text, hours_fetched_at)",
+                "select v.offer_id, v.place_id, v.name, v.address, v.county, v.lat, v.lng, v.business_status,",
+                f"  'google_places', timestamptz {sql_str(run_ts)}, v.open_week, v.hours_text, timestamptz {sql_str(run_ts)}",
+                "from (values",
+                ",\n".join(row_sql(r) for r in chunk),
+                ") as v(offer_id, place_id, name, address, county, lat, lng, business_status, open_week, hours_text)",
+                "join public.offers o on o.id = v.offer_id",
+                "on conflict (offer_id, place_id) do update set",
+                "  name = excluded.name, address = excluded.address, county = excluded.county,",
+                "  lat = excluded.lat, lng = excluded.lng, business_status = excluded.business_status,",
+                "  fetched_at = excluded.fetched_at,",
+                "  open_week = excluded.open_week, hours_text = excluded.hours_text,",
+                "  hours_fetched_at = excluded.hours_fetched_at,",
+                "  hidden = case when offer_stores.hidden_by = 'import' then false else offer_stores.hidden end,",
+                "  hidden_by = case when offer_stores.hidden_by = 'import' then null else offer_stores.hidden_by end;",
+            ]
+        elif chunk:
             lines += [
                 "insert into public.offer_stores (offer_id, place_id, name, address, county, lat, lng,",
                 "  business_status, source, fetched_at)",
@@ -636,11 +724,18 @@ def main():
     ap.add_argument("--fill-regions", action="store_true",
                     help="只跑「適用縣市」空白的優惠，全台一次查完、照找到的分店回推縣市"
                          "（輸出 stores_import_regions_*.sql，不會動到既有的 stores_import_*.sql）")
+    ap.add_argument("--hours", action="store_true",
+                    help="連營業時間一起抓（v178；Text Search 改用 Enterprise 計價，快取另存 .places_cache_hours）")
     ap.add_argument("--rows-per-file", type=int, default=ROWS_PER_FILE,
                     help=f"每個匯入檔幾家分店（預設 {ROWS_PER_FILE}；SQL Editor 報 request entity too large 就調小）")
     args = ap.parse_args()
-    global CACHE_ONLY
+    global CACHE_ONLY, HOURS, CACHE
     CACHE_ONLY = args.cache_only
+    if args.hours:
+        if args.fill_regions:
+            sys.exit("--hours 跟 --fill-regions 不能一起用：--hours 會照「適用縣市」把全部優惠重查一遍")
+        HOURS = True
+        CACHE = HERE / ".places_cache_hours"
 
     api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "")
     if not api_key and not args.dry_run and not args.cache_only:
@@ -669,6 +764,16 @@ def main():
               f"共 {n_queries} 個縣市查詢；每個查詢最多 {args.max_pages} 頁，"
               f"最多 {n_queries * args.max_pages} 次 API 呼叫（有結果不滿一頁就不會翻下一頁）。\n"
               f"大縣市被 60 筆上限截斷時會自動分區補抓，實際呼叫次數會比這個多一些。")
+    if args.dry_run and args.hours:
+        # 實際次數：每個縣市查詢至少 1 次，有翻頁、被 60 筆截斷要分區補抓的會更多。
+        # 上一輪（不含營業時間）全部跑完大約是查詢數的 1.3 倍。
+        lo, hi = n_queries, round(n_queries * 1.4)
+        cost = lambda n: max(0, n - ENTERPRISE_FREE_PER_MONTH) * ENTERPRISE_USD_PER_1000 / 1000
+        print(f"\n含營業時間 = Text Search Enterprise：每 1,000 次 US${ENTERPRISE_USD_PER_1000:.0f}，"
+              f"每月前 {ENTERPRISE_FREE_PER_MONTH:,} 次免費。")
+        print(f"估計 {lo:,}～{hi:,} 次 → 約 US${cost(lo):,.0f}～{cost(hi):,.0f}"
+              f"（這個月 Places 還沒用過免費額度的話）。")
+        print("想先試水溫：--hours --only 麥當勞（一個品牌，幾十次）")
     if args.dry_run:
         for o, q, _, c in planned:
             print(f"  #{o['id']} {o['brand']}  查「{'」「'.join(q)}」"
