@@ -5485,7 +5485,9 @@ function redirectTarget(){
 
 /* ---- v168 系統更新公告：日期內每次打開都看得到（✕ 只關這一次造訪），
    按「Google 登入」不去 Google，直接講登入暫停——反正登入回來也什麼都讀不到。 ---- */
-const MAINT={from:'2026-11-03', until:'2026-11-05', title:'11/3－11/5 系統更新！',
+/* v173：Supabase 11/4 新的計費週期一開始就恢復了，但這一則照日期擋登入擋到 11/5——celine：
+   「為甚麼我現在登入功能還未恢復」。until 收到 11/4；下面 maintActive() 也改成資料庫確定活著就讓開。 */
+const MAINT={from:'2026-11-03', until:'2026-11-04', title:'11/3－11/5 系統更新！',
   body:'這幾天正在進行系統升級作業，登入和排行榜功能將暫時無法使用，造成不便敬請見諒🙏'};
 /* v169 celine：「以後幫我注意，如果系統無法登入，都先自動掛個 banner 寫這幾天系統更新，預留我修改的時間」。
    不用等人發現、不用改日期：開站時問一下資料庫，連不上就自己掛這一則（沒有日期，因為不知道要多久）。
@@ -5498,9 +5500,14 @@ function maintDated(now=new Date()){
   const d=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   return d>=MAINT.from && d<=MAINT.until;
 }
+let MAINT_UP=false;        // probeBackend() 確定資料庫活著
 function maintActive(now=new Date()){
   if(window.__SXR_NO_MAINT) return false;          // 測試用：舊的登入測試不受這幾天影響
-  return MAINT_DOWN || maintDated(now);
+  if(MAINT_DOWN) return true;
+  /* 手動填的日期只是「預計停多久」。資料庫已經確定恢復的話，不要照日期繼續擋登入——
+     v168 就是這樣：Supabase 提早恢復，公告還照日期擋了一天多。 */
+  if(MAINT_UP) return false;
+  return maintDated(now);
 }
 function paintMaint(){
   const on=maintActive();
@@ -5554,7 +5561,7 @@ async function probeBackend(wait=3000){
   if(!CFG?.url || !CFG?.anonKey) return false;
   let st=await probeOnce();
   if(st==='flaky'){ await new Promise(r=>setTimeout(r, wait)); st=await probeOnce(); }
-  if(st==='up') return false;
+  if(st==='up'){ MAINT_UP=true; paintMaint(); return false; }
   if(st==='flaky' && !await internetOk()) return false;   // 是自己沒網路，不是我們停機
   MAINT_DOWN=true;
   paintMaint();

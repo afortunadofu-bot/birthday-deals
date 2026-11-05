@@ -50,6 +50,17 @@ const { boot, tick, makeAsserts } = require('./harness');
   win.eval('maintDated=()=>true; MAINT_DOWN=true; paintMaint();');
   t.eq('手動填了日期：用有日期的那一則', $('#maintTitle').textContent, '11/3－11/5 系統更新！');
 
+  /* v173：手動填的日期還沒過，但資料庫已經確定恢復 → 公告收掉、登入放行
+     （celine：「為甚麼我現在登入功能還未恢復」——Supabase 11/4 就恢復了，公告照日期擋到 11/5） */
+  win.eval('maintDated=()=>true; MAINT_DOWN=false; MAINT_UP=false; paintMaint();');
+  t.ok('日期內、還沒問過：照日期掛著', !$('#maintBanner').classList.contains('hidden'));
+  setNet([200], 200);
+  win.eval('sessionStorage.clear();');
+  await win.eval('probeBackend(1)');
+  t.ok('日期內、但資料庫確定活著：公告收掉', $('#maintBanner').classList.contains('hidden'));
+  t.ok('…登入放行', win.eval('maintActive()') === false);
+  win.eval('MAINT_UP=false; maintDated=()=>false;');
+
   /* v170：Supabase 被停掉時，畫面上不要出現「Service for this project is restricted…」那串英文——
      所有請求經過 sxFetch，402 換成一句人話，順便掛公告 */
   win.Response = global.Response;

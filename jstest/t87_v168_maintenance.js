@@ -12,11 +12,13 @@ const { boot, tick, makeAsserts } = require('./harness');
 
   const on = (iso) => win.eval(`maintActive(new Date('${iso}'))`);
   t.ok('11/3 開始', on('2026-11-03T00:05:00+08:00'));
-  t.ok('11/5 整天都還在', on('2026-11-05T23:50:00+08:00'));
+  t.ok('11/4 還在', on('2026-11-04T23:50:00+08:00'));
+  /* v173：Supabase 11/4 就恢復了，until 收到 11/4（原本 11/5，照日期多擋了一天登入） */
+  t.ok('11/5 已經收掉（資料庫提早恢復）', !on('2026-11-05T09:00:00+08:00'));
   t.ok('11/2 還沒', !on('2026-11-02T23:59:00+08:00'));
   t.ok('11/6 自己消失', !on('2026-11-06T00:01:00+08:00'));
 
-  win.eval("maintActive=()=>true; paintMaint();");
+  win.eval("maintDated=()=>true; maintActive=()=>true; paintMaint();");
   t.ok('那幾天：最上面的公告出現', !$('#maintBanner').classList.contains('hidden'));
   t.eq('標題照原文', $('#maintTitle').textContent, '11/3－11/5 系統更新！');
   t.eq('內文照原文', $('#maintBody').textContent, '這幾天正在進行系統升級作業，登入和排行榜功能將暫時無法使用，造成不便敬請見諒🙏');
