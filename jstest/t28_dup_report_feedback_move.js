@@ -19,7 +19,8 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.ok('按鈕在「我的」分頁裡', !!btn && !!btn.closest('#tab-mine'));
   t.ok('不在頁尾了', !btn.closest('footer'));
   t.ok('訪客也看得到（不在會員專屬區塊裡）', !btn.closest('#mineAuthedPanels'));
-  t.ok('頁尾還留著聯絡信箱', /celine\.fu@gmail\.com/.test(doc.querySelector('footer').textContent));
+  t.ok('頁尾還留著聯絡信箱', /dayscount\.tw@gmail\.com/.test(  // v177 換成品牌信箱
+    doc.querySelector('footer').textContent));
   t.ok('頁尾有指路到「我的」', /我的/.test(doc.querySelector('footer').textContent),
     doc.querySelector('footer').textContent.replace(/\s+/g, ' ').trim());
 

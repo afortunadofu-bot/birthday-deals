@@ -1510,6 +1510,11 @@
   .xsj-apps [aria-current="page"]{color:var(--xsj-amber)}
   .xsj-apps .xsj-sep{color:var(--xsj-dim)}
   .xsj-apps .xsj-soon{color:var(--xsj-muted)}
+  /* 品牌帳號（2026-11-05 開的 Threads @dayscount）。跟上面那排產品分開一行：
+     產品是「別的 app」，這一行是「去哪裡追」，混在一起會看不出差別。 */
+  .xsj-follow{font-size:13px;color:var(--xsj-muted);margin:0}
+  .xsj-follow a{color:var(--xsj-ink);text-decoration:none;border-bottom:1px solid var(--xsj-dim)}
+  .xsj-follow a:hover,.xsj-follow a:focus-visible{border-bottom-color:var(--xsj-amber)}
   .xsj-meta{font-size:12px;color:var(--xsj-muted);font-variant-numeric:tabular-nums;letter-spacing:.04em}
   @media (max-width:420px){ .xsj-name{font-size:15px} .xsj-line{font-size:14px} }
 
@@ -2981,7 +2986,7 @@
   <p id="footMode"></p>
   <!-- 嵐：「回報網站問題移到『我的』」——按鈕搬到「我的」分頁（#feedbackPanel），
        這裡只留聯絡信箱。頁尾那一顆沒人看得到，而「我的」本來就是出問題時會去翻的地方。 -->
-  <p>問題回報／合作聯絡：<a href="mailto:celine.fu@gmail.com">celine.fu@gmail.com</a>
+  <p>問題回報／合作聯絡：<a href="mailto:dayscount.tw@gmail.com">dayscount.tw@gmail.com</a>
     　（也可以到「我的」分頁用「回報網站問題」）</p>
   <!-- celine：「隱私權跟服務的呈現方式有點醜」。原本是夾在一堆灰字中間的兩條
        紅色底線連結，再用全形空白加「·」隔開——看起來像兩條沒收好的超連結，
@@ -3028,6 +3033,8 @@
       <a href="https://play.google.com/store/apps/details?id=com.relatestats.app" target="_blank" rel="noopener"
          data-flag="show_studio_relatestats">RelateStats</a>
     </nav>
+    <p class="xsj-follow">每月底整理下個月壽星能領什麼：<a id="xsjThreads"
+       href="https://www.threads.com/@dayscount" target="_blank" rel="noopener">Threads @dayscount</a></p>
     <div class="xsj-meta">© <span id="xsjYear"></span> 小數據所 · Celine Fu</div>
   </div>
 </section>
@@ -4210,6 +4217,7 @@ const OUT_LINKS=[
   {to:'brandpage',   re:/afortunadofu-bot\.github\.io\/celinefubrandpage/i},
   {to:'bandary',     re:/id=com\.bandary\.app|forms\.gle\/FhBJgWBWb72MCg5x5/i},
   {to:'relatestats', re:/id=com\.relatestats\.app|forms\.gle\/6HT4LzRSsPA76b6s7/i},
+  {to:'threads',     re:/threads\.(com|net)\/@dayscount/i},
 ];
 document.addEventListener('click', e=>{
   const a = e.target?.closest?.('a[href]');
@@ -6263,7 +6271,7 @@ async function loadCoffeeStats(){
 /* 頁尾那組「小數據所」連結的點擊（studio_click，meta.to 記點到哪一個）。
    跟咖啡那塊共用同一個區間選單——問的是同一件事：有多少人真的往外走。 */
 const LINK_LABEL={brandpage:'品牌頁 小數據所', bandary:'Bandary 聽團曆',
-  relatestats:'RelateStats', other:'其他連結',
+  relatestats:'RelateStats', threads:'Threads @dayscount', other:'其他連結',
   page_about:'關於這個網站', page_privacy:'隱私權政策', page_terms:'服務條款',
   page_updates:'更新紀錄', page_other:'其他頁面'};
 /* ---- 每個功能、每個區塊被用了幾次（celine）--------------------------

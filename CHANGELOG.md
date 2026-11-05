@@ -13,6 +13,21 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v177　頁尾連到小數據所的 Threads、聯絡信箱換成品牌信箱
+
+`template.html`、`about.html`、`privacy.html`、`terms.html`、`updates.json`。
+
+> celine：品牌帳號開好了——IG／Threads `dayscount`、信箱 dayscount.tw@gmail.com
+
+- 頁尾「小數據所」那塊在產品列下面多一行：「每月底整理下個月壽星能領什麼：Threads @dayscount」；跟著 `show_studio_footer` 一起開關
+- `about.html` 在「看看小數據所」旁邊多一顆 Threads 按鈕
+- 頁尾、關於、隱私權、服務條款的聯絡信箱全部從個人 Gmail 換成 dayscount.tw@gmail.com
+- 點擊統計（`OUT_LINKS`）多記 `to:'threads'`，後台「站外連結」顯示「Threads @dayscount」；不用改 SQL，`to` 本來就是自由字串
+
+測試：`jstest/t93_v177_threads_footer.js`；t28 的「頁尾還留著聯絡信箱」改看新信箱
+
+---
+
 ## v176　「系統已更新完成，可以登入了」公告
 
 只有 `template.html`。
