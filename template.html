@@ -441,6 +441,9 @@
     background:none;border:0;border-radius:var(--r-sm);
     cursor:pointer;text-align:left;font:inherit;color:var(--ink)}
   .vr-acts{display:flex;justify-content:flex-end;padding:0 6px 8px}
+  .praise-row{padding:10px 0;border-top:1px solid var(--line-soft)}
+  .praise-row:first-child{border-top:0;padding-top:2px}
+  .praise-msg{font-size:.92rem;white-space:pre-wrap;overflow-wrap:anywhere}
   .maint-banner{border-color:var(--alert-line);background:var(--alert-bg)}
   .maint-banner.flash{animation:maintFlash 1.2s ease 2}
   @keyframes maintFlash{50%{box-shadow:0 0 0 4px rgba(217,119,6,.35)}}
@@ -2790,6 +2793,14 @@
     <div id="fbBulkBar" class="hidden" style="margin:0 0 10px"></div>
     <div id="fbList"></div>
   </div>
+  <!-- v175 celine：「一句回饋要另外放，不能跟修改意見放在一起，且不一定要標示已完成」。
+       這是用很多次的人跳出來寫給網站的一句話（v164），不是要處理的事——
+       不算進上面的待處理數字，也沒有「修改中／標記已完成」。 -->
+  <div class="panel" id="pnlPraise">
+    <h2>💬 一句回饋<span class="n hidden" id="praiseCount"></span></h2>
+    <p class="sub">用過 5 次以上的人寫給壽星日的一句話。看看就好，不用處理。</p>
+    <div id="praiseList"></div>
+  </div>
   <div class="panel" id="pnlPending">
     <h2>待審佇列<span class="n hidden" id="pendQueueCount"></span></h2>
     <p class="sub">勾「已查證」代表你向品牌官方確認過。核可後才會出現在公開的「優惠」分頁。</p>
@@ -5118,7 +5129,10 @@ function renderWishlistBody(){
     // celine：「還不夠簡潔直觀好看」→ 每一筆改成一張小卡（樣式說明見 CSS 的 .wl-item）。
     // 不常用的動作收進「⋯」選單；class 名稱（wl-toggle／wl-map／wl-remove／wl-year-toggle／
     // wl-move／wl-tag／wl-note）都沿用原本的，下面綁事件的程式不用改。
-    const moveBtns = (manual && !done) ? `
+    /* v174 celine：「代辦清單要可以上下移順序」。本來只有排序選「自訂順序」才看得到 ▲▼，
+       預設是「最近加入」，等於藏起來了。現在一直都在；不是自訂順序時按下去，會用畫面上
+       現在的順序當起點、自動切成自訂順序（見 .wl-move 的 onclick）。 */
+    const moveBtns = !done ? `
       <button class="icon-btn wl-move" data-id="${w.offer_id}" data-dir="-1" type="button"
         ${upos<=0?'disabled':''} aria-label="往上移">▲</button>
       <button class="icon-btn wl-move" data-id="${w.offer_id}" data-dir="1" type="button"
@@ -5302,7 +5316,15 @@ function renderWishlistBody(){
     WISH.delete(String(b.dataset.id));
     renderMyWishlist(); render();
   });
-  $$('.wl-move').forEach(b=>b.onclick=()=>moveWishlistItem(b.dataset.id, Number(b.dataset.dir)));
+  $$('.wl-move').forEach(b=>b.onclick=()=>{
+    let base=null;
+    if($('#wlSort').value!=='manual'){
+      base=$$('#myWishlist [data-wl-row]').map(e=>e.dataset.wlRow);
+      $('#wlSort').value='manual'; savePref('wlSort','manual');
+      showToast('改成「自訂順序」了，之後就照你排的');
+    }
+    moveWishlistItem(b.dataset.id, Number(b.dataset.dir), base);
+  });
   $$('.wl-year-toggle').forEach(b=>b.onclick=async()=>{
     const curYear=Number(b.dataset.year), curCY=TODAY.getFullYear();
     const newYear = curYear>curCY ? curCY : curCY+1;
@@ -5327,7 +5349,7 @@ function renderWishlistBody(){
    改法：先照「畫面上真正的順序」排好（跟 renderWishlistBody 用同一個比較式），
    對調位置之後**整串重新發號 0..n-1**，再把有變動的那幾筆寫回去。
    重新發號保證每一筆都不一樣，之後每次移動就只會動到兩筆。 */
-async function moveWishlistItem(offerId, dir){
+async function moveWishlistItem(offerId, dir, baseIds){
   if(!LIVE||!me) return;
   const isDone=w=>MY_USED_OFFER_IDS.has(String(w.offer_id))||w.done;
   const undone=WL_ROWS.filter(w=>!isDone(w));
@@ -5335,6 +5357,13 @@ async function moveWishlistItem(offerId, dir){
   // 沒有值的排後面，同號的用加入時間新的在前
   undone.sort((a,b)=>(a.sort_order??999999)-(b.sort_order??999999)
     || (new Date(b.created_at)-new Date(a.created_at)));
+  /* v174：從別的排序切過來的第一次，起點是「畫面上現在的順序」（baseIds），不是舊的 sort_order——
+     不然按一下 ▲，整串突然換成另一個順序，根本不知道剛剛那一筆跑去哪。
+     畫面上沒有的（被篩選、搜尋藏起來的）接在後面，照原本的順序。 */
+  if(baseIds){
+    const at=id=>{ const i=baseIds.indexOf(String(id)); return i<0 ? Infinity : i; };
+    undone.sort((a,b)=>at(a.offer_id)-at(b.offer_id));
+  }
   const idx=undone.findIndex(w=>String(w.offer_id)===String(offerId));
   const swapIdx=idx+dir;
   if(idx<0||swapIdx<0||swapIdx>=undone.length) return;
@@ -15019,15 +15048,31 @@ async function loadFeedbackList(){
   FB_ROWS=data||[];
   renderFbList();
 }
+function renderPraiseList(){
+  const rows=FB_ROWS.filter(f=>f.type==='praise')
+    .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  const n=$('#praiseCount');
+  if(n){ n.textContent=rows.length; n.classList.toggle('hidden', !rows.length); }
+  const box=$('#praiseList'); if(!box) return;
+  box.innerHTML = rows.length ? rows.map(f=>`<div class="praise-row">
+      <div class="praise-msg">${esc(f.message)}</div>
+      <div class="meta"><span>${esc(fmtDT(f.created_at))}</span>
+        ${f.display_name?`<span>${esc(f.display_name)}</span>`:''}</div>
+    </div>`).join('')
+    : '<div style="color:var(--ink-3);font-size:.86rem">還沒有人寫。</div>';
+}
 function renderFbList(){
+  renderPraiseList();
   const filter=$('#fbTypeFilter').value;
   const sf=$('#fbStatusFilter')?.value||'active';
-  let data=filter==='all'?FB_ROWS:FB_ROWS.filter(f=>(f.type||'bug')===filter);
+  // 一句回饋另外一塊（v175），這裡只剩要處理的：問題回報、建議、重複
+  const FB_WORK=FB_ROWS.filter(f=>f.type!=='praise');
+  let data=filter==='all'?FB_WORK:FB_WORK.filter(f=>(f.type||'bug')===filter);
   // 狀態：未完成＝待處理（open），修改中＝in_progress（schema_v68），已完成＝resolved
   // active＝「還要做的事」＝未完成＋修改中，是預設值（celine）
   if(sf==='active') data=data.filter(f=>f.status!=='resolved');
   else if(sf!=='all') data=data.filter(f=>f.status===sf);
-  const open=FB_ROWS.filter(f=>f.status!=='resolved' && (filter==='all'||(f.type||'bug')===filter));
+  const open=FB_WORK.filter(f=>f.status!=='resolved' && (filter==='all'||(f.type||'bug')===filter));
   $('#fbCount').textContent=open.length; $('#fbCount').classList.toggle('hidden',!open.length);
   // 還沒處理完的「重複的優惠」回報，先算好各自要併哪幾筆（下面的按鈕跟上面那條都要用）
   const dupMap=new Map();
