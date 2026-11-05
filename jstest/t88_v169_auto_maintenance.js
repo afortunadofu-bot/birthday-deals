@@ -7,6 +7,7 @@ const { boot, tick, makeAsserts } = require('./harness');
   const doc = win.document;
   const $ = (s) => doc.querySelector(s);
   delete win.__SXR_NO_MAINT;
+  win.eval('doneNoticeActive=()=>false;');   // v176 的「已更新完成」照真實日期會出現，這一支只測停機那則
   win.eval("CFG={url:'https://x.supabase.co', anonKey:'anon'}; window.OFFERS_API='https://api.example';"
     + " maintDated=()=>false; MAINT_DOWN=false; paintMaint();");
   t.ok('平常（不在手動填的日期裡、資料庫活著）：沒有公告', $('#maintBanner').classList.contains('hidden'));

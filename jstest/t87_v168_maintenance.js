@@ -8,7 +8,8 @@ const { boot, tick, makeAsserts } = require('./harness');
   const { win } = await boot();
   const doc = win.document;
   const $ = (s) => doc.querySelector(s);
-  delete win.__SXR_NO_MAINT;            // 這一支要測的就是公告本身
+  delete win.__SXR_NO_MAINT;
+  win.eval('doneNoticeActive=()=>false;');   // v176 的「已更新完成」照真實日期會出現，這一支只測停機那則            // 這一支要測的就是公告本身
 
   const on = (iso) => win.eval(`maintActive(new Date('${iso}'))`);
   t.ok('11/3 開始', on('2026-11-03T00:05:00+08:00'));

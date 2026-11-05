@@ -445,6 +445,7 @@
   .praise-row:first-child{border-top:0;padding-top:2px}
   .praise-msg{font-size:.92rem;white-space:pre-wrap;overflow-wrap:anywhere}
   .maint-banner{border-color:var(--alert-line);background:var(--alert-bg)}
+  .maint-banner.done-banner{border-color:var(--free-line);background:var(--free-bg)}
   .maint-banner.flash{animation:maintFlash 1.2s ease 2}
   @keyframes maintFlash{50%{box-shadow:0 0 0 4px rgba(217,119,6,.35)}}
   /* v164 詳情的回報＋留言 */
@@ -5538,17 +5539,46 @@ function maintActive(now=new Date()){
   if(MAINT_UP) return false;
   return maintDated(now);
 }
+/* v176 celine：「不用登入就能看得到公告通知，然後幫我搞一個大家都看得到的公告，說系統已更新完成，可以登入了」。
+   後台「發送公告」要管理員登入才能發，所以這一則跟停機公告一樣寫死在頁面上、照日期開關，
+   用同一條橫幅（綠色）。不用登入就看得到；✕ 關掉就記在這台裝置上，不會每次打開都跳。
+   還在停機（maintActive）的時候不會出現——不然同時說「停機」又說「好了」。 */
+const DONE_NOTICE={id:'v176', from:'2026-11-05', until:'2026-11-08', title:'系統已更新完成！',
+  body:'登入和排行榜都恢復了，可以登入了。這幾天造成不便，謝謝大家的耐心🙏'};
+function doneNoticeActive(now=new Date()){
+  if(window.__SXR_NO_MAINT) return false;
+  const d=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  if(d<DONE_NOTICE.from || d>DONE_NOTICE.until) return false;
+  try{ if(localStorage.getItem('sxr_notice_closed_'+DONE_NOTICE.id)==='1') return false; }catch{}
+  return true;
+}
 function paintMaint(){
   const on=maintActive();
+  const box=$('#maintBanner');
+  if(!on && doneNoticeActive()){
+    $('#maintTitle').textContent=DONE_NOTICE.title;
+    $('#maintBody').textContent=DONE_NOTICE.body;
+    box.querySelector('.nb-icon').textContent='✅';
+    box.classList.add('done-banner');
+    box.classList.remove('hidden');
+    return false;
+  }
+  box.classList.remove('done-banner');
+  box.querySelector('.nb-icon').textContent='🛠';
   const txt=(!window.__SXR_NO_MAINT && maintDated()) ? MAINT : MAINT_AUTO;
   let gone=false; try{ gone=sessionStorage.getItem('sxr_maint_closed')==='1'; }catch{}
   $('#maintTitle').textContent=txt.title;
   $('#maintBody').textContent=txt.body;
-  $('#maintBanner').classList.toggle('hidden', !on || gone);
+  box.classList.toggle('hidden', !on || gone);
   return on;
 }
 $('#btnDismissMaint').onclick=()=>{
-  try{ sessionStorage.setItem('sxr_maint_closed','1'); }catch{}
+  // 「已更新完成」那則：關了就不用再看（記在這台裝置）；停機那則：只關這一次造訪
+  if($('#maintBanner').classList.contains('done-banner')){
+    try{ localStorage.setItem('sxr_notice_closed_'+DONE_NOTICE.id,'1'); }catch{}
+  } else {
+    try{ sessionStorage.setItem('sxr_maint_closed','1'); }catch{}
+  }
   $('#maintBanner').classList.add('hidden');
 };
 paintMaint();
