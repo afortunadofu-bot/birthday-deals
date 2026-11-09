@@ -51,5 +51,17 @@ check("keep_place 帶出營業時間", (k["open_week"], k["hours_text"]), ([(204
 fs.HOURS = False
 check("沒加 --hours 不帶", "open_week" in fs.keep_place(p, {"any": ["麥當勞"], "all": [], "none": []}, "台北市"), False)
 
+# --missing --dry-run 用 is_cached 估「真的要打的」：要跟 search() 寫進去的快取檔同一個
+import json as _json  # noqa: E402
+import tempfile  # noqa: E402
+fs.CACHE = Path(tempfile.mkdtemp())
+check("沒查過：不在快取", fs.is_cached("測試品牌 台北市"), False)
+fs.CACHE.mkdir(exist_ok=True)
+fs._request("測試品牌 台北市")[1].write_text(_json.dumps({"places": []}), encoding="utf-8")
+check("search() 走快取的那個檔＝is_cached 看的那個檔",
+      (fs.is_cached("測試品牌 台北市"), fs.search("", "測試品牌 台北市")), (True, ({"places": []}, False)))
+check("全台一次查（外框＝全台）跟逐縣市查（外框沒給）是同一個快取 key",
+      fs._request("測試品牌", None, fs.TAIWAN_RECT)[1] == fs._request("測試品牌")[1], True)
+
 print(f"[fetch_stores --hours] {'全部通過' if not fails else f'{fails} 個失敗'}")
 sys.exit(1 if fails else 0)

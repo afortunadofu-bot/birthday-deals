@@ -13,6 +13,20 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## fetch_stores.py --missing（不是網站版本，網站沒變）
+
+只有 `fetch_stores.py`。
+
+> celine 補抓一品花雕雞之後：「其他分店也跑一跑」
+
+- `--missing`：先問線上 offer_stores 哪些優惠一家分店都沒有（2026-11-09 是 230 筆），只跑那些。直接全部重跑雖然大多走快取，卻會把四萬多家店全部重新輸出成上百個匯入檔
+- 「適用縣市」空白的那幾筆在這個模式下全台一次查、匯入後照分店補縣市（同 `--fill-regions`）
+- `--dry-run` 現在會算「快取裡沒有、真的要打 Google 的」有幾個查詢，跟 Pro 計價（每月前 5,000 次免費）估錢：這次 1,162 個查詢，免費額度內
+
+測試：`jstest/test_fetch_stores_hours.py` 多三條（dry-run 看的快取檔＝真的查時用的快取檔）
+
+---
+
 ## v181　商圈地圖的地標也能直接記「用過了」
 
 只有 `template.html`、`updates.json`。

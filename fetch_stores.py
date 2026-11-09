@@ -29,6 +29,14 @@
   python fetch_stores.py --fill-regions       # 只跑「適用縣市」空白的那幾筆，照分店回推縣市
   python fetch_stores.py --hours --dry-run    # 連營業時間一起抓：先看要花多少
   python fetch_stores.py --hours              # 連營業時間一起抓（要先跑 schema_v178）
+  python fetch_stores.py --missing --dry-run  # 只跑線上「還沒有分店」的優惠：先看要打幾次
+  python fetch_stores.py --missing            # 只跑線上「還沒有分店」的優惠
+
+--missing（2026-11-09）：celine 補抓一品花雕雞之後「其他分店也跑一跑」。直接全部重跑雖然
+大多走快取不花錢，但會把四萬多家分店全部重新輸出成上百個匯入檔，貼到手軟。--missing 先問線上
+offer_stores 哪些優惠一家分店都沒有，只跑那些，輸出的 stores_import_*.sql 就只有新找到的店；
+最後一個檔的「沒再出現就隱藏」也只會碰這幾筆（它們本來就沒有分店，不會誤藏）。
+「適用縣市」空白的那幾筆在這個模式下一樣走全台一次查、再照分店回推縣市（同 --fill-regions）。
 
 --hours（v178）：celine「掃各家的營業時間，篩選多一個可以選時間」。多要 Google 的
 regularOpeningHours 這個欄位——Text Search 會從 Pro 升到 Enterprise 計價（每 1,000 次
@@ -118,6 +126,9 @@ HOURS_FIELD = "places.regularOpeningHours"
 # 來源：https://developers.google.com/maps/billing-and-pricing/pricing（2026-11 查）
 ENTERPRISE_USD_PER_1000 = 35.0
 ENTERPRISE_FREE_PER_MONTH = 1000
+# 一般分店查詢（不含營業時間）= Text Search Pro：每月前 5,000 次免費，之後每 1,000 次 US$32。
+PRO_USD_PER_1000 = 32.0
+PRO_FREE_PER_MONTH = 5000
 WEEK = 7 * 1440
 
 
@@ -370,13 +381,39 @@ def load_aliases():
     return data
 
 
-def search(api_key, query, page_token=None, refresh=False, rect=None):
+def _request(query, page_token=None, rect=None):
+    """回傳 (送給 Google 的 JSON 字串, 對應的快取檔)。"""
     body = {"textQuery": query, "languageCode": "zh-TW", "regionCode": "TW",
             "pageSize": 20, "locationRestriction": {"rectangle": rect or TAIWAN_RECT}}
     if page_token:
         body["pageToken"] = page_token
     raw = json.dumps(body, ensure_ascii=False, sort_keys=True)
-    cache_file = CACHE / (hashlib.sha1(raw.encode("utf-8")).hexdigest() + ".json")
+    return raw, CACHE / (hashlib.sha1(raw.encode("utf-8")).hexdigest() + ".json")
+
+
+def is_cached(query, rect=None):
+    """這個查詢的第一頁查過了沒（--dry-run 估「真的要花錢的有幾次」用）。"""
+    return _request(query, None, rect)[1].exists()
+
+
+def offers_with_stores():
+    """線上 offer_stores 裡至少有一家分店的優惠 id（--missing 用；anon 讀得到的才算）。"""
+    url, key = load_config()
+    have, off = set(), 0
+    while True:
+        req = urllib.request.Request(
+            f"{url}/rest/v1/offer_stores?select=offer_id&order=id&offset={off}&limit=1000",
+            headers={"apikey": key, "Authorization": f"Bearer {key}"})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            rows = json.loads(r.read().decode("utf-8"))
+        have |= {r["offer_id"] for r in rows}
+        if len(rows) < 1000:
+            return have
+        off += 1000
+
+
+def search(api_key, query, page_token=None, refresh=False, rect=None):
+    raw, cache_file = _request(query, page_token, rect)
     if cache_file.exists() and not refresh:
         return json.loads(cache_file.read_text(encoding="utf-8")), False
     if CACHE_ONLY:
@@ -726,6 +763,8 @@ def main():
                          "（輸出 stores_import_regions_*.sql，不會動到既有的 stores_import_*.sql）")
     ap.add_argument("--hours", action="store_true",
                     help="連營業時間一起抓（v178；Text Search 改用 Enterprise 計價，快取另存 .places_cache_hours）")
+    ap.add_argument("--missing", action="store_true",
+                    help="只跑線上還沒有任何分店的優惠（輸出的匯入檔只有新找到的店）")
     ap.add_argument("--rows-per-file", type=int, default=ROWS_PER_FILE,
                     help=f"每個匯入檔幾家分店（預設 {ROWS_PER_FILE}；SQL Editor 報 request entity too large 就調小）")
     args = ap.parse_args()
@@ -736,6 +775,8 @@ def main():
             sys.exit("--hours 跟 --fill-regions 不能一起用：--hours 會照「適用縣市」把全部優惠重查一遍")
         HOURS = True
         CACHE = HERE / ".places_cache_hours"
+    if args.missing and args.fill_regions:
+        sys.exit("--missing 已經包含「適用縣市」空白、還沒有分店的那幾筆，不用再加 --fill-regions")
 
     api_key = os.environ.get("GOOGLE_MAPS_API_KEY", "")
     if not api_key and not args.dry_run and not args.cache_only:
@@ -746,6 +787,12 @@ def main():
     if args.only:
         offers = [o for o in offers if args.only in o["brand"]]
     skip = set(aliases["skip"])
+    if args.missing:
+        have = offers_with_stores()
+        offers = [o for o in offers if o["id"] not in have]
+        if not offers:
+            print("每一筆上架的優惠都已經有分店了，不用跑。")
+            return
     if args.fill_regions:
         offers = [o for o in offers if not (o.get("regions") or [])]
         if not offers:
@@ -753,6 +800,11 @@ def main():
             return
 
     planned = [(o, *plan_for(o, aliases)) for o in offers if o["brand"] not in skip]
+    nationwide = lambda o: args.fill_regions or (args.missing and not (o.get("regions") or []))
+    if args.missing:
+        n_blank = sum(1 for o, *_ in planned if nationwide(o))
+        print(f"線上還沒有分店的優惠：{len(planned)} 筆"
+              + (f"（其中 {n_blank} 筆「適用縣市」空白，全台一次查、照分店回推縣市）" if n_blank else ""))
     if args.fill_regions:
         n_queries = sum(len(q) for _, q, _, _ in planned)
         print(f"{len(planned)} 筆「適用縣市」空白的優惠（略過 {len(offers) - len(planned)} 筆），"
@@ -775,9 +827,21 @@ def main():
               f"（這個月 Places 還沒用過免費額度的話）。")
         print("想先試水溫：--hours --only 麥當勞（一個品牌，幾十次）")
     if args.dry_run:
+        new = 0
         for o, q, _, c in planned:
+            texts = list(q) if nationwide(o) else [f"{x} {cc}" for x in q for cc in c]
+            fresh = sum(1 for t in texts if not is_cached(t))
+            new += fresh
             print(f"  #{o['id']} {o['brand']}  查「{'」「'.join(q)}」"
-                  + ("（全台一次）" if args.fill_regions else f" × {len(c)} 縣市"))
+                  + ("（全台一次）" if nationwide(o) else f" × {len(c)} 縣市")
+                  + (f"　新查詢 {fresh}" if fresh else "　（都查過了，走快取）"))
+        if not args.hours:
+            lo, hi = new, round(new * 1.4)
+            cost = lambda n: max(0, n - PRO_FREE_PER_MONTH) * PRO_USD_PER_1000 / 1000
+            print("")
+            print(f"快取裡沒有、真的要打 Google 的：{new:,} 個查詢，翻頁補抓估計共 {lo:,}～{hi:,} 次。")
+            print(f"分店查詢 = Text Search Pro：每月前 {PRO_FREE_PER_MONTH:,} 次免費，之後每 1,000 次 "
+                  f"US${PRO_USD_PER_1000:.0f} → 這個月還沒用過的話約 US${cost(lo):,.0f}～{cost(hi):,.0f}。")
         return
 
     rows, calls, per_offer, tiled_log, still_capped = [], 0, {}, [], []
@@ -794,7 +858,7 @@ def main():
 
         sweep = []              # 還要逐縣市查的 (查的字, 縣市)
         for query in queries:
-            if not args.fill_regions:
+            if not nationwide(o):
                 sweep += [(query, c) for c in counties]
                 continue
             found, c, capped = discover_nationwide(api_key, query, keys, args.refresh, args.max_pages)
@@ -819,13 +883,13 @@ def main():
         if args.fill_regions:
             found_regions.append((o, counties_found, offer_rows))
         print(f"  #{o['id']} {o['brand']}：{len(seen)} 家分店"
-              + (f"　{'、'.join(counties_found) or '（一家都沒找到）'}" if args.fill_regions else ""))
+              + (f"　{'、'.join(counties_found) or '（一家都沒找到）'}" if nationwide(o) else ""))
 
     out_json = (HERE / "stores_fetched_regions.json") if args.fill_regions else OUT_JSON
     out_json.write_text(json.dumps(rows, ensure_ascii=False, indent=1), encoding="utf-8")
 
     tail = []
-    if args.fill_regions:
+    if args.fill_regions or any(nationwide(o) for o, *_ in planned):
         tail = [
             "-- 分店匯進來之後，順手把「適用縣市」空白的那幾筆照實際分店所在的縣市補上",
             "-- （schema_v110_regions_from_stores.sql 裡的函式）。還沒跑過 v110 就只提醒一聲，",
