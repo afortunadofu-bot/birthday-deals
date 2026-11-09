@@ -7294,7 +7294,11 @@ async function paintVenueMap(v){
   const row=({o,st})=>`<div style="margin:2px 0"><b>${esc(o.brand)}</b>`
     +` <span style="font-size:.78rem;color:#6b6b6b">${esc(st.name)}</span>`
     +` <button type="button" class="btn sm map-open-offer" data-id="${esc(String(o.id))}"`
-    +` style="padding:1px 8px;font-size:.74rem">看優惠</button></div>`;
+    +` style="padding:1px 8px;font-size:.74rem">看優惠</button>`
+    /* v181 陳（10/07）：「點開地圖上的地標…有『我用過了』，就不用再另外打字搜尋店家才能紀錄」。
+       v139 只加在「附近」的地圖，商圈這張漏了 */
+    +` <button type="button" class="btn sm primary map-report" data-id="${esc(String(o.id))}"`
+    +` style="padding:1px 8px;font-size:.74rem">✓ 用過了</button></div>`;
   groups.forEach(g=>{
     const wished=g.rows.some(r=>WISH.has(String(r.o.id)));
     const c=wished ? PIN_STYLE.wished : PIN_STYLE.normal;
@@ -7312,6 +7316,8 @@ async function paintVenueMap(v){
   m.on('popupopen', e=>{
     e.popup.getElement()?.querySelectorAll('.map-open-offer')
       .forEach(b=>b.onclick=()=>openDetail(b.dataset.id));
+    e.popup.getElement()?.querySelectorAll('.map-report')
+      .forEach(b=>b.onclick=()=>openReport(b.dataset.id));
   });
 }
 /* 管理員就地編輯（嵐：「已經公開的就不用繼續寫在管理員這邊了，管理員可以去行程

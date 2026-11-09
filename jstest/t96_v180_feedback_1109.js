@@ -112,5 +112,10 @@ const OFFERS = [
   t.ok('待辦清單第一行可以換行（按鈕太多就整排換下去）', /\.wl-top\{[^}]*flex-wrap:wrap/.test(css));
   t.ok('店名至少留 7 個字寬，不會被擠成一個字一行', /\.wl-name\{flex:1 1 7em/.test(css));
 
+  /* ---- v181 陳（10/07）：商圈地圖的地標也能直接記「用過了」 ---- */
+  const venueSrc = win.eval('paintVenueMap.toString()');
+  t.ok('商圈地圖的小視窗：「看優惠」旁邊有「用過了」', /map-report/.test(venueSrc) && venueSrc.indexOf('map-report') > venueSrc.indexOf('map-open-offer'));
+  t.ok('按下去打開回報（不用再搜尋店家）', /\.map-report'\)[\s\S]{0,80}openReport\(b\.dataset\.id\)/.test(venueSrc));
+
   process.exit(t.done() ? 0 : 1);
 })().catch((e) => { console.error(e); process.exit(1); });
