@@ -17,6 +17,14 @@
  *   /stats   站台數據（site_stats_cached，沒跑 v78 就退回 site_stats）
  *   /board   排行榜那一頁要的 14 份公開統計，打包成一包
  *   /boot    每開一次網頁都要問的兩筆（公告、顯示開關），快取 60 秒
+ *   /spend   大家實際花多少（offer_spend_summary），快取 30 分鐘（v183）
+ *   POST /events  事件記錄轉送給 Supabase 的 site_events（v183，不快取）
+ *
+ * 為什麼加 /spend、/events（v183）：2026-11-09 Log Ingestion 一個帳單週期才 5 天就用掉
+ * 46%。Logs Explorer 一小時 15,302 個請求，最多的是事件記錄（POST＋瀏覽器先送的 OPTIONS
+ * 共 3,300 多次）、offer_spend_summary（每人開站一次，共 1,600 多次）。花費統計每個人拿到
+ * 的都一樣，該共用一份；事件記錄經過這裡，瀏覽器送的是 text/plain、沒有自訂標頭，就不會
+ * 先送 OPTIONS，這裡轉給 Supabase 是伺服器對伺服器，也沒有。
  *
  * 為什麼加 /boot：Log Ingestion 也超額了（1.5/1 GB）。那個計費看的是**請求次數**
  * 不是大小——每位新訪客開場至少三個請求（公告、顯示開關、記一筆 pageview），
@@ -62,7 +70,7 @@ const DEFAULTS = {
 const FRESH_TTL = 1800;       // 30 分鐘內算新鮮，直接回快取
 // 開場那兩筆只快取 60 秒：顯示開關是管理員即時在調的，關掉某個東西
 // 不該等十分鐘才在訪客那邊生效。
-const TTL = { offers: FRESH_TTL, offersFirst: FRESH_TTL, stats: FRESH_TTL, board: FRESH_TTL, boot: 60 };
+const TTL = { offers: FRESH_TTL, offersFirst: FRESH_TTL, stats: FRESH_TTL, board: FRESH_TTL, boot: 60, spend: FRESH_TTL };
 
 /* 開場先給幾筆。整包 482 筆是 91KB（gzip 後的真實流量）、未壓縮 671KB，手機要
    等它傳完＋解析完才看得到真的資料（在那之前畫面上是內建的示範資料，回報次數
@@ -101,7 +109,7 @@ const MAX_PAGES = 10;
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET,OPTIONS',
+  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
   'Access-Control-Allow-Headers': 'content-type',
   'Access-Control-Max-Age': '86400',
 };
@@ -149,6 +157,17 @@ async function fromSupabase(env, kind) {
   }
 
   if (kind === 'board') return await boardBundle(base, headers);
+
+  if (kind === 'spend') {
+    // 用 anon 身分問（schema_v164 只 grant 給 anon／authenticated，edge_reader 不一定有）
+    const r = await fetch(`${base}/rest/v1/rpc/offer_spend_summary`, {
+      method: 'POST',
+      headers: { apikey: key, authorization: `Bearer ${key}`, accept: 'application/json', 'content-type': 'application/json' },
+      body: JSON.stringify({ p_min: 1 }),
+    });
+    if (!r.ok) throw new Error(`offer_spend_summary ${r.status}`);
+    return await r.json();
+  }
 
   if (kind === 'boot') {
     const one = async (path) => {
@@ -254,6 +273,34 @@ async function boardBundle(base, headers) {
 }
 
 /**
+ * POST /events：網站的事件記錄（v183）。瀏覽器送 text/plain 的 JSON 陣列過來，這裡原樣
+ * 轉給 Supabase 的 site_events（RLS 本來就讓 anon 新增，跟網站直接送是同一把 anon key、
+ * 同一條政策，沒有多開任何權限）。只做最基本的形狀檢查，免得被拿來亂塞。
+ * 失敗回 502，網站那端會改成自己直接送。
+ */
+const EVENTS_MAX_BYTES = 64000;
+const EVENTS_MAX_ROWS = 50;
+async function relayEvents(request, env) {
+  const text = await request.text();
+  if (text.length > EVENTS_MAX_BYTES) return json({ error: 'too large' }, { status: 413, ttl: 0 });
+  let rows;
+  try { rows = JSON.parse(text); } catch { return json({ error: 'bad json' }, { status: 400, ttl: 0 }); }
+  const okRow = (r) => r && typeof r === 'object' && !Array.isArray(r) && typeof r.event_type === 'string';
+  if (!Array.isArray(rows) || !rows.length || rows.length > EVENTS_MAX_ROWS || !rows.every(okRow)) {
+    return json({ error: 'bad rows' }, { status: 400, ttl: 0 });
+  }
+  const base = cfg(env, 'SUPABASE_URL');
+  const key = cfg(env, 'SUPABASE_ANON_KEY');
+  const r = await fetch(`${base}/rest/v1/site_events`, {
+    method: 'POST',
+    headers: { apikey: key, authorization: `Bearer ${key}`, 'content-type': 'application/json', prefer: 'return=minimal' },
+    body: JSON.stringify(rows),
+  });
+  if (!r.ok) return json({ error: `site_events ${r.status}` }, { status: 502, ttl: 0 });
+  return new Response(null, { status: 204, headers: { ...CORS, 'cache-control': 'no-store' } });
+}
+
+/**
  * 快取讀寫。
  * 同一份資料存兩把 key：
  *   fresh（10 分鐘）命中就直接用；
@@ -307,13 +354,13 @@ async function statusPage(request) {
   const origin = new URL(request.url).origin;
   const cache = caches.default;
   const warm = {};
-  for (const kind of ['offers', 'offersFirst', 'stats', 'board', 'boot']) {
+  for (const kind of ['offers', 'offersFirst', 'stats', 'board', 'boot', 'spend']) {
     warm[kind] = !!(await cache.match(new Request(`${origin}/__cache/${kind}/fresh`, { method: 'GET' })));
   }
   const now = new Date().toISOString();
 
   if (!(request.headers.get('accept') || '').includes('text/html')) {
-    return json({ ok: true, service: '壽星日 edge cache', paths: ['/offers', '/offers/first', '/stats', '/board', '/boot', '/health'], cache: warm, now },
+    return json({ ok: true, service: '壽星日 edge cache', paths: ['/offers', '/offers/first', '/stats', '/board', '/boot', '/spend', '/events', '/health'], cache: warm, now },
       { ttl: 0 });
   }
 
@@ -347,6 +394,8 @@ p.note{font-size:.84rem;color:#8f8482;margin-top:22px}
 <div class="row"><code><a href="/stats">/stats</a></code>　站台數據　${mark(warm.stats)}</div>
 <div class="row"><code><a href="/board">/board</a></code>　排行榜統計　${mark(warm.board)}</div>
 <div class="row"><code><a href="/boot">/boot</a></code>　公告＋顯示開關　${mark(warm.boot)}</div>
+<div class="row"><code><a href="/spend">/spend</a></code>　大家實際花多少　${mark(warm.spend)}</div>
+<div class="row"><code>POST /events</code>　事件記錄轉送<span class="dim">不快取，網站送來的直接轉給資料庫</span></div>
 <div class="row"><code><a href="/health">/health</a></code>　健康檢查<span class="dim">不快取，拿來確認這支還活著</span></div>
 <p class="note">這個網址是給網站呼叫的，不是給人看的——看到這頁就代表一切正常。
 壽星日本體在 <a href="https://birthdaydeals.celine-fu-work.workers.dev">birthdaydeals.celine-fu-work.workers.dev</a>。</p>
@@ -365,6 +414,7 @@ const handler = {
     const path = url.pathname.replace(/^\/api(?=\/|$)/, '') || '/';
 
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+    if (request.method === 'POST' && path === '/events') return relayEvents(request, env);
 
     if (request.method === 'GET' || request.method === 'HEAD') {
       if (path === '/offers') return serve(request, env, ctx, 'offers');
@@ -372,6 +422,7 @@ const handler = {
       if (path === '/stats') return serve(request, env, ctx, 'stats');
       if (path === '/board') return serve(request, env, ctx, 'board');
       if (path === '/boot') return serve(request, env, ctx, 'boot');
+      if (path === '/spend') return serve(request, env, ctx, 'spend');
       if (path === '/health') return json({ ok: true, now: new Date().toISOString() }, { ttl: 0 });
     }
 
@@ -381,7 +432,7 @@ const handler = {
 
     if (path === '/' && (request.method === 'GET' || request.method === 'HEAD')) return statusPage(request);
 
-    return json({ error: 'not found', paths: ['/offers', '/offers/first', '/stats', '/board', '/boot', '/health'] }, { status: 404, ttl: 0 });
+    return json({ error: 'not found', paths: ['/offers', '/offers/first', '/stats', '/board', '/boot', '/spend', '/events', '/health'] }, { status: 404, ttl: 0 });
   },
 };
 

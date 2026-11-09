@@ -13,6 +13,29 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v183　少打 Supabase（Log Ingestion）
+
+`template.html`、`worker/offers-cache.js`（**要重新貼進 Cloudflare 的 birthdaydeals-api**，沒貼的話前端自動退回原本的做法，只是省不到那兩項）。
+
+> celine：「Supabase 後台的 log 才知道是誰在大量呼叫，查看能不能減少」——帳單週期 11/4 起算才 5 天，Log Ingestion 已經 46%（0.456 / 1 GB），寬限期 11/2 已經結束，超過就會被擋。
+
+Logs Explorer 查 11/9 16:29–17:29 一小時：**15,302 個請求、約 700 個 IP**。每個人開站固定打的四個，每個還各帶一個瀏覽器先送的 OPTIONS（preflight）：
+
+| 請求 | 一小時 | 改法 |
+| --- | --- | --- |
+| `site_events` 事件記錄 | POST 1,854＋OPTIONS 1,499 | pageview 不再單獨送，3 秒內跟其他事件合成一批；其他事件攢 30 秒／20 筆（原本 15 秒／10 筆）；改送到 Worker 的 `POST /events`（text/plain、沒有自訂標頭 → 沒有 OPTIONS），Worker 轉給 Supabase |
+| `site_settings?select=key&limit=1`（資料庫活著嗎） | 921＋OPTIONS 793 | 開站本來就會拿 Worker 的 `/boot`（Worker 每 60 秒跟 Supabase 重抓）；那包是 5 分鐘內抓的就代表資料庫活著，不用每個人再問（`maybeProbeBackend`）。402 停機仍由 `sxFetch` 在每個請求上接著 |
+| `offer_stores?open_week=not.is.null`（有沒有分店營業時間） | 915＋OPTIONS 約 740 | v178 加的探測，營業時間還沒爬、那一列又只在篩選裡——改成打開篩選才問（記住的篩選有營業時間的才開站就問） |
+| `rpc/offer_spend_summary`（大家實際花多少） | 925＋OPTIONS 745 | 每個人拿到的都一樣 → Worker 新增 `/spend`，快取 30 分鐘；Worker 沒更新就退回直接問 |
+
+估計一小時少 7,000 個左右（約一半）；Worker 沒貼的話只少前端那幾項（約 3,500）。
+
+沒動的：`offer_stores_in_bounds`（附近地圖的分店點，750 次、160 個 IP，是真的有人在用地圖）。
+
+測試：新增 t97（Worker 的 /spend、/events 含形狀檢查、前端退回路徑、探測、篩選才問營業時間）；t50 的 pageview、t88 的開站探測改成新做法
+
+---
+
 ## v182　附近：地圖拖到哪，清單就跟到哪
 
 只有 `template.html`、`updates.json`。

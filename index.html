@@ -3990,7 +3990,9 @@ function paintOffers(){
   buildControls();
   render();
   loadSpendSummary();
-  loadHoursAvail();
+  /* v183：「有沒有分店營業時間」本來每個人開站都問（一小時 915 次＋OPTIONS），可是那一列
+     只在篩選裡——打開篩選才問；上次有選營業時間（記住的篩選）的才一開站就問。 */
+  if(HOURS_F.mode) loadHoursAvail();
   renderA2hsPanel();
 }
 
@@ -4169,7 +4171,7 @@ async function connectLive(retry=0){
   $('#btnLogin').style.opacity = '';
 
   sb = window.supabase.createClient(CFG.url, CFG.anonKey, {global:{fetch:sxFetch}});
-  probeBackend();     // v169：資料庫被停掉的話自己掛「系統更新中」，不擋開站
+  maybeProbeBackend();     // v169：資料庫被停掉的話自己掛「系統更新中」，不擋開站（v183：先看 Worker）
   const slowTimer=setTimeout(()=>{
     note(mb,'alert','<b>資料庫回應比較慢</b>——不是網站壞了，資料庫偶爾會慢個幾秒，請再等一下下。');
   },3000);
@@ -4232,12 +4234,18 @@ const SESSION_ID = (()=>{
    送的時機：攢到 10 筆、或 15 秒後、或頁面要關／切到背景時。
    最後那個用 fetch 的 keepalive（跟 track.js 同一招）——supabase-js 在
    unload 的時候常常來不及送出去。 */
+/* v183 celine：「Supabase 後台的 log 才知道是誰在大量呼叫，查看能不能減少」。
+   2026-11-09 傍晚一小時 15,302 個請求、約 700 個 IP，最大宗就是這裡：
+   site_events 的 POST 1,854 次＋瀏覽器自己先送的 OPTIONS（preflight）1,499 次。
+   - pageview 也進佇列，3 秒內送（在線人數照樣即時），跟剛開站那幾筆合成一個請求
+   - 其他事件攢 30 秒或 20 筆（原本 15 秒、10 筆）
+   - 先送到我們自己的 Worker（/events）：用 text/plain、不帶自訂標頭，瀏覽器就不會先送
+     OPTIONS；Worker 那端轉給 Supabase 是伺服器對伺服器，也沒有 preflight。
+     Worker 還沒更新（沒有 /events）或失敗，這一批就直接送 Supabase，這次造訪之後都直接送。 */
 const EV_QUEUE=[];
-let EV_TIMER=null;
-function flushEvents(){
-  clearTimeout(EV_TIMER); EV_TIMER=null;
-  if(!EV_QUEUE.length || !LIVE || !CFG?.url) return;
-  const rows=EV_QUEUE.splice(0, EV_QUEUE.length);
+let EV_TIMER=null, EV_EDGE_OK=true;
+const EV_BATCH_MS=30000, EV_PAGEVIEW_MS=3000, EV_MAX=20;
+function postEventsDirect(rows){
   try{
     fetch(`${CFG.url}/rest/v1/site_events`, {
       method:'POST', keepalive:true,
@@ -4247,16 +4255,28 @@ function flushEvents(){
     }).catch(()=>{});
   }catch{}
 }
+function flushEvents(){
+  clearTimeout(EV_TIMER); EV_TIMER=null;
+  if(!EV_QUEUE.length || !LIVE || !CFG?.url) return;
+  const rows=EV_QUEUE.splice(0, EV_QUEUE.length);
+  const api=edgeApi();
+  if(api && EV_EDGE_OK){
+    const fallback=()=>{ EV_EDGE_OK=false; postEventsDirect(rows); };
+    try{
+      fetch(`${api}/events`, {method:'POST', keepalive:true,
+        headers:{'Content-Type':'text/plain'}, body:JSON.stringify(rows)})
+        .then(r=>{ if(!r.ok) fallback(); }, fallback);
+      return;
+    }catch{ EV_EDGE_OK=false; }
+  }
+  postEventsDirect(rows);
+}
 function logEvent(type, meta={}){
   if(!LIVE) return;
-  const row={event_type:type, session_id:SESSION_ID, user_id: me?.id||null, meta};
-  if(type==='pageview'){        // 在線人數靠它，不能排隊
-    try{ sb.from('site_events').insert(row).then(()=>{}, ()=>{}); }catch{}
-    return;
-  }
-  EV_QUEUE.push(row);
-  if(EV_QUEUE.length>=10) flushEvents();
-  else if(!EV_TIMER) EV_TIMER=setTimeout(flushEvents, 15000);
+  EV_QUEUE.push({event_type:type, session_id:SESSION_ID, user_id: me?.id||null, meta});
+  if(EV_QUEUE.length>=EV_MAX) flushEvents();
+  else if(type==='pageview'){ clearTimeout(EV_TIMER); EV_TIMER=setTimeout(flushEvents, EV_PAGEVIEW_MS); }
+  else if(!EV_TIMER) EV_TIMER=setTimeout(flushEvents, EV_BATCH_MS);
 }
 document.addEventListener('visibilitychange', ()=>{ if(document.hidden) flushEvents(); });
 addEventListener('pagehide', flushEvents);
@@ -4590,6 +4610,7 @@ function edgeApi(){
   const base=String(window.OFFERS_API||'').trim().replace(/\/+$/,'');
   return /^https?:\/\//.test(base) ? base : '';
 }
+const EDGE_AT={};   // 每個端點拿到的那份是 Worker 什麼時候從 Supabase 抓的（v183 判斷資料庫活著沒）
 async function edgeFetch(path){
   const base=edgeApi();
   if(!base) return null;
@@ -4597,6 +4618,7 @@ async function edgeFetch(path){
     const r=await fetch(`${base}${path}`);
     if(!r.ok) return null;
     const j=await r.json();
+    if(j && j.at) EDGE_AT[path]=j.at;
     return (j && j.data!=null) ? j.data : null;
   }catch{ return null; }
 }
@@ -5681,6 +5703,20 @@ async function internetOk(){
   const api=String(window.OFFERS_API||'').trim().replace(/\/+$/,'');
   if(!api) return true;                 // 沒有可以對照的，就相信瀏覽器說有網路
   try{ const r=await fetch(api+'/health',{cache:'no-store'}); return r.ok; }catch{ return false; }
+}
+/* v183：開站本來每個人都問一次 site_settings（一小時 921 次＋同樣多的 OPTIONS）。
+   開站時本來就會跟 Worker 拿 /boot（公告＋顯示開關，Worker 每 60 秒跟 Supabase 重抓一次）——
+   那一包是新的，就代表 Worker 剛剛才從 Supabase 拿到資料，資料庫活著，不用每個人再問一次。
+   Worker 拿不到、或給的是 5 分鐘以前的舊資料（Worker 問 Supabase 失敗時會拿舊的頂著）
+   才自己問。402 停機另外有 sxFetch 在每一個請求上接著，不會漏。 */
+const BOOT_FRESH_MS=5*60*1000;
+async function maybeProbeBackend(){
+  if(!edgeApi()) return probeBackend();
+  const b=await bootBundle();
+  const at=Date.parse(EDGE_AT['/boot']||'');
+  if(!b || !(at>0) || Date.now()-at>BOOT_FRESH_MS) return probeBackend();
+  MAINT_UP=true; paintMaint();
+  return false;
 }
 async function probeBackend(wait=3000){
   if(!CFG?.url || !CFG?.anonKey) return false;
@@ -8505,8 +8541,15 @@ function spendOf(o){ const x=SPEND.get(String(o.id)); return x && x.n>=SPEND_MIN
 async function loadSpendSummary(){
   if(SPEND_TRIED || !LIVE) return;
   SPEND_TRIED=true;
-  const {data,error}=await sb.rpc('offer_spend_summary',{p_min:1});
-  if(error || !Array.isArray(data)) return;      // v164 還沒跑：沒有這一組篩選，其他照常
+  /* v183：每個人開站都問一次（一小時 925 次＋同樣多的 OPTIONS），而每個人拿到的都一樣——
+     先拿 Worker 快取的（/spend，30 分鐘一份）；Worker 還沒更新或失敗才直接問。 */
+  let data=await edgeFetch('/spend');
+  if(!Array.isArray(data)){
+    const r=await sb.rpc('offer_spend_summary',{p_min:1});
+    if(r.error) return;                           // v164 還沒跑：沒有這一組篩選，其他照常
+    data=r.data;
+  }
+  if(!Array.isArray(data)) return;
   SPEND=new Map(data.map(r=>[String(r.offer_id), {n:Number(r.n), avg:Number(r.avg_spent),
     min:Number(r.min_spent), max:Number(r.max_spent)}]));
   buildControls(); render();
@@ -9142,6 +9185,7 @@ const isMobile=()=>window.matchMedia
   : window.innerWidth<=768;
 function openFilterSheet(){
   $('#filterSheet').classList.add('open'); $('#filterBackdrop').classList.add('open');
+  loadHoursAvail();     // v183：打開篩選才問有沒有分店營業時間（問過就不再問）
   // 只有手機的底部彈出視窗需要鎖背景捲動；桌機是就地展開的區塊，鎖了反而不能捲頁
   // 同理，也只有手機的彈出視窗需要「按返回鍵關視窗」——不然按返回鍵會被
   // 誤判成要離開網站／App，跳出「再按一次返回鍵可以離開」的提示，卻沒把

@@ -67,20 +67,23 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   await tick(win, 2);
   t.eq('沒東西就不要白打一次', posts.length, 0);
 
-  /* pageview 是例外：在線人數就是數它，不能排隊 */
+  /* pageview：在線人數就是數它，不能等太久——v183 起也進佇列，但 3 秒內就送（本來是馬上單獨送一筆） */
+  posts.length = 0;
   win.eval(`logEvent('pageview',{path:'/'});`);
   await tick(win, 2);
-  t.eq('pageview 馬上送', sb.__calls.write.filter((w) => w.table === 'site_events').length, 1);
-  t.eq('而且不是走批次那條', win.eval('EV_QUEUE.length'), 0);
-  t.ok('寫進去的就是 pageview',
-    sb.__calls.write.find((w) => w.table === 'site_events').args[0].event_type === 'pageview');
-
-  // 攢到 10 筆就先送一次，不用等那 15 秒
-  posts.length = 0;
-  win.eval(`for(let i=0;i<10;i++) logEvent('rate_nudge',{i});`);
+  t.eq('pageview 不再單獨走 supabase-js', sb.__calls.write.filter((w) => w.table === 'site_events').length, 0);
+  t.eq('pageview 在佇列裡', win.eval('EV_QUEUE.length'), 1);
+  t.eq('排的是 3 秒（不是 30 秒）', win.eval('EV_PAGEVIEW_MS'), 3000);
+  win.eval('flushEvents()');
   await tick(win, 2);
-  t.eq('滿 10 筆就送', posts.length, 1);
-  t.eq('一次 10 筆', posts[0].body.length, 10);
+  t.ok('送出去的就是 pageview', posts.length === 1 && posts[0].body[0].event_type === 'pageview');
+
+  // 攢到 20 筆就先送一次，不用等那 30 秒
+  posts.length = 0;
+  win.eval(`for(let i=0;i<20;i++) logEvent('rate_nudge',{i});`);
+  await tick(win, 2);
+  t.eq('滿 20 筆就送', posts.length, 1);
+  t.eq('一次 20 筆', posts[0].body.length, 20);
 
   t.ok('離線／示範模式不記事件', win.eval(`LIVE=false; EV_QUEUE.length=0; logEvent('wish'); EV_QUEUE.length`) === 0);
 

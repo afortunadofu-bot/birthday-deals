@@ -78,7 +78,8 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.ok('Supabase 的連線都走 sxFetch', /createClient\(CFG\.url, CFG\.anonKey, \{global:\{fetch:sxFetch\}\}\)/.test(
     require('fs').readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8')));
 
-  t.ok('開站就會去問（不擋開站）', /createClient\(CFG\.url, CFG\.anonKey, \{global:\{fetch:sxFetch\}\}\);\s*probeBackend\(\);/.test(
+  /* v183 起開站先看 Worker 的 /boot 新不新，舊了或拿不到才自己問（maybeProbeBackend，t97 有跑過行為） */
+  t.ok('開站就會去問（不擋開站）', /createClient\(CFG\.url, CFG\.anonKey, \{global:\{fetch:sxFetch\}\}\);\s*maybeProbeBackend\(\);/.test(
     require('fs').readFileSync(require('path').join(__dirname, '..', 'index.html'), 'utf8')));
 
   process.exit(t.done() ? 0 : 1);

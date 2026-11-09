@@ -175,7 +175,10 @@ const OFFERS = [
   t.ok('寫出用了幾次', /5 次/.test($('#oneLineTitle').textContent));
   $('#btnOneLineSend').click();
   await tick(win, 2);
-  t.ok('空白不能送', /一句/.test($('#oneLineErr').textContent) && !sb4.__calls.write.length);
+  // 只看這一張表：整包跑的時候前面段落排的計時器（問卷、事件…）可能剛好在這裡觸發、寫到別張表
+  const fbWrites = () => sb4.__calls.write.filter((w) => w.table === 'site_feedback');
+  t.ok('空白不能送', /一句/.test($('#oneLineErr').textContent) && !fbWrites().length,
+    JSON.stringify({ err: $('#oneLineErr').textContent, writes: sb4.__calls.write.map((w) => w.table) }));
   $('#oneLineMsg').value = '好用！朋友都在用';
   $('#btnOneLineSend').click();
   await tick(win, 4);
