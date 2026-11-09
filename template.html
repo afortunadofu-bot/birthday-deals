@@ -442,8 +442,6 @@
     cursor:pointer;text-align:left;font:inherit;color:var(--ink)}
   .vr-acts{display:flex;justify-content:flex-end;padding:0 6px 8px}
   .hours-box{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
-  #btnNearHere{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:500;
-    box-shadow:var(--shadow-md);background:var(--surface);white-space:nowrap}
   .he-day{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:7px 0;border-top:1px solid var(--line-soft)}
   .he-day:first-of-type{border-top:0}
   .he-dn{width:2.6em;font-weight:700;font-size:.88rem}
@@ -1981,9 +1979,6 @@
       </div>
       <div class="hidden" id="nearMapWrap" style="margin-top:8px;position:relative">
         <div id="nearMap" style="height:min(360px,55vh);border-radius:var(--r-sm);border:1px solid var(--line);overflow:hidden"></div>
-        <!-- v180 林彥華：「希望可以用清單顯示…而非地圖選擇地點附近列表」。點地圖本來就會換查詢位置，
-             可是拖地圖不會，下面的清單還停在原本的地方。拖開之後浮一顆「查這一區」。 -->
-        <button type="button" class="btn sm hidden" id="btnNearHere">🔍 查這一區的優惠</button>
       </div>
     </div>
     <div class="new-banner hidden" id="newOffersBanner">
@@ -6365,7 +6360,7 @@ const EVENT_LABEL={
   studio_click:'站外連結（細項看上面）', static_view:'靜態頁瀏覽（細項看上面）',
   updates_nudge:'更新紀錄的提示', updates_page_open:'打開更新紀錄那一頁',
   bday_cheer:'生日卡片跳出來', badge_unlock:'解鎖新徽章',
-  lean_home:'切換清單的簡易版', public_preview:'你自己切成民眾模式', near_here:'附近：查這一區',
+  lean_home:'切換清單的簡易版', public_preview:'你自己切成民眾模式', near_here:'附近：查這一區', near_follow:'附近：清單跟著地圖換',
 };
 /* 嵐：「功能被用了幾次可以分區塊寫嗎」。本來只分「功能」跟「區塊」兩大坨，
    幾十行混在一起看不出是哪一頁的事。改成照**頁面**分：優惠、排行榜、排行程、
@@ -8000,7 +7995,7 @@ function mapTileConfig(){
   return MAP_TILE_DEFAULT;
 }
 const NEAR={active:false, lat:null, lng:null, label:'', km:3, byOffer:null, loading:false,
-  reqSeq:0, sortTouched:false, wishOnly:false, usedOnly:false};
+  reqSeq:0, sortTouched:false, wishOnly:false, usedOnly:false, pickSeq:0, followLogged:false};
 try{ const k=Number(localStorage.getItem('sxr_near_km')); if([1,3,5,10,30].includes(k)) NEAR.km=k; }catch{}
 let NEAR_MAP=null, NEAR_MAP_CENTER=null, NEAR_MAP_CIRCLE=null, NEAR_MAP_PINS=null, NEAR_PIN_TIMER=null;
 /* 地圖上「有優惠的分店」那顆點。附近的地圖跟商圈的地圖（v159）共用，兩邊才不會
@@ -8074,28 +8069,30 @@ function startNear(){
   openNearMap();
   if(!navigator.geolocation){ renderNearBar(); $('#nearStatus').textContent='這個瀏覽器不能定位——在下面地圖上點一下你要查的地方就可以。'; return; }
   NEAR.loading=true; renderNearBar();
+  const pick0=NEAR.pickSeq;
   navigator.geolocation.getCurrentPosition(
-    pos=>setNearCenter(pos.coords.latitude, pos.coords.longitude, '你目前的位置'),
+    /* 定位慢的時候人可能已經先拖地圖、清單也跟過去了——這時候定位回來不要把地圖拉走 */
+    pos=>{ if(NEAR.pickSeq!==pick0){ NEAR.loading=false; renderNearBar(); return; }
+      setNearCenter(pos.coords.latitude, pos.coords.longitude, '你目前的位置'); },
     err=>{
       NEAR.loading=false; renderNearBar();
       // 被拒絕／逾時都不擋功能：直接打開地圖讓人點位置
       $('#nearStatus').innerHTML=esc(geoFailText(err))
-        +'<br>也可以直接在下面地圖上點一下你要查的地方，或拖到那裡按「查這一區」。';
+        +'<br>也可以把下面的地圖拖到你要查的地方，清單會跟著換。';
       openNearMap();
     },
     {enableHighAccuracy:false, timeout:8000, maximumAge:300000});
 }
 function stopNear(){
   NEAR.active=false; NEAR.byOffer=null; NEAR.lat=NEAR.lng=null; NEAR.loading=false;
-  NEAR.reqSeq++; NEAR.sortTouched=false; NEAR.wishOnly=false; NEAR.usedOnly=false;
+  NEAR.reqSeq++; NEAR.sortTouched=false; NEAR.wishOnly=false; NEAR.usedOnly=false; NEAR.pickSeq++;
   if($('#sort').value==='distance') $('#sort').value='value';
   closeNearMap();
   $('#nearMapHint').textContent='';
   renderNearBar(); render();
 }
 async function setNearCenter(lat, lng, label){
-  NEAR.lat=lat; NEAR.lng=lng; NEAR.label=label;
-  $('#btnNearHere')?.classList.add('hidden');
+  NEAR.lat=lat; NEAR.lng=lng; NEAR.label=label; NEAR.pickSeq++;
   syncNearMapCenter(true);
   await loadNear();
 }
@@ -8159,13 +8156,9 @@ async function openNearMap(){
   // 每次停下來都查一次分店，拖一下地圖就是一次查詢——地圖現在是預設開啟的，
   // 這個量會直接反映在資料庫的負擔上。等久一點（600ms）再查，而且畫面範圍
   // 沒有真的變（小數第三位以內，約 100 公尺）就不重查。
-  NEAR_MAP.on('moveend', ()=>{ clearTimeout(NEAR_PIN_TIMER); NEAR_PIN_TIMER=setTimeout(loadNearPins, 600); syncNearHereBtn(); });
-  $('#btnNearHere').onclick=()=>{
-    const c=NEAR_MAP.getCenter();
-    $('#btnNearHere').classList.add('hidden');
-    setNearCenter(c.lat, c.lng, '地圖中間');
-    logEvent('near_here',{});
-  };
+  // v182：清單也跟著地圖走（nearFollowMap），一樣等停下來 600ms 再查，跟分店點共用同一個計時器
+  NEAR_MAP.on('moveend', ()=>{ clearTimeout(NEAR_PIN_TIMER);
+    NEAR_PIN_TIMER=setTimeout(()=>{ loadNearPins(); nearFollowMap(); }, 600); });
   // Leaflet 的 popup 會擋掉 click 往外冒泡，所以按鈕要在 popup 打開時直接綁
   NEAR_MAP.on('popupopen', e=>{
     const el=e.popup.getElement();
@@ -8181,13 +8174,24 @@ async function openNearMap(){
   syncNearMapCenter(false);
   loadNearPins();
 }
-/* 地圖中間離查詢位置超過 300 公尺（或半徑的四分之一，取大的）才出現，小小拖一下不用 */
-function syncNearHereBtn(){
-  const b=$('#btnNearHere'); if(!b || !NEAR_MAP) return;
+/* v182 celine（林彥華 11/08 那則）：「地圖顯示位置希望可以用清單顯示，目前僅能依照最近列表，而非
+   地圖選擇地點附近列表，這個希望修得更直觀點，現在好像是按圖標才會切換成附近店家清單」。
+   v180 是拖開之後浮一顆「查這一區」，還是要多按一下，而且很多人沒注意到那顆。
+   改成地圖拖到哪、下面的清單就換成地圖中間附近的店（同一個距離範圍），不用按任何東西。
+   - 小小拖一下（200 公尺內，或半徑的十分之一）不重查，手指放開的回彈不會讓清單跳來跳去
+   - 有店家的小視窗開著的時候不跟：點橘點時地圖會自動捲一點讓小視窗露出來，那不是「換地方」
+   回傳有沒有換（測試用）。 */
+function nearFollowMap(){
+  if(!NEAR_MAP || !NEAR.active) return false;
+  if(NEAR_MAP._popup && NEAR_MAP.hasLayer(NEAR_MAP._popup)) return false;
   const c=NEAR_MAP.getCenter();
-  const far = NEAR.lat==null ? true
-    : NEAR_MAP.distance(c, L.latLng(NEAR.lat, NEAR.lng)) > Math.max(300, NEAR.km*1000/4);
-  b.classList.toggle('hidden', !far || NEAR.loading);
+  if(NEAR.lat!=null && NEAR_MAP.distance(c, L.latLng(NEAR.lat, NEAR.lng)) < Math.max(200, NEAR.km*100)) return false;
+  NEAR.lat=c.lat; NEAR.lng=c.lng; NEAR.label='地圖中間'; NEAR.pickSeq++;
+  syncNearMapCenter(false);
+  loadNear();
+  // 一次開啟只記一筆，拖十次不要記十筆
+  if(!NEAR.followLogged){ NEAR.followLogged=true; logEvent('near_follow',{}); }
+  return true;
 }
 function closeNearMap(){
   $('#nearMapWrap').classList.add('hidden');
@@ -8280,7 +8284,7 @@ function paintNearPins(){
                    : '這個畫面裡還沒有分店資料。'))
       + '再按一次「我用過的」就看得到全部。'
     : (n ? `這個畫面裡有 ${n} 家分店有優惠。` : '這個畫面裡還沒有分店資料。')
-      + '點地圖任一處可以改查那裡附近。'
+      + '拖動地圖，下面的清單就換成地圖中間附近的店；也可以直接點你要查的地方。'
       + (me && MY_USED_OFFER_IDS.size ? '綠色的是你用過的。' : '');
   /* 一定要講出來被篩掉幾家。不講的話，上面篩了「台北市＋餐飲」的人只會看到
      地圖上的點變少，以為是這一區真的沒有店——而篩選條件在另一個分頁上面，

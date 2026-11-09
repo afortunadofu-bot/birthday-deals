@@ -80,24 +80,42 @@ const OFFERS = [
   t.ok('重新打開還記得', win.eval('activeCatEx.has("火鍋") && document.querySelector("#fHideUsed").checked && document.querySelector("#fKeepUnknown").checked'));
   $('#btnClearFilters').click();
 
-  /* ---- 附近：查這一區 ---- */
-  win.eval(`L={latLng:(a,b)=>({lat:a,lng:b})}; NEAR.lat=25.04; NEAR.lng=121.51; NEAR.km=3; NEAR.loading=false;
-    NEAR_MAP={getCenter:()=>window.__c, distance:(a,b)=>Math.hypot((a.lat-b.lat)*111000,(a.lng-b.lng)*101000)};`);
+  /* ---- 附近：清單跟著地圖走（v182，原本 v180 是要按「查這一區」） ---- */
+  win.eval(`L={latLng:(a,b)=>({lat:a,lng:b})}; NEAR.active=true; NEAR.lat=25.04; NEAR.lng=121.51; NEAR.km=3; NEAR.loading=false;
+    window.__popup=null; window.__loads=0; loadNear=()=>{ window.__loads++; }; syncNearMapCenter=()=>{};
+    NEAR_MAP={getCenter:()=>window.__c, distance:(a,b)=>Math.hypot((a.lat-b.lat)*111000,(a.lng-b.lng)*101000),
+      get _popup(){ return window.__popup; }, hasLayer:(x)=>!!x };`);
+  const follow = () => win.eval('nearFollowMap()');
+  const near = () => JSON.parse(win.eval('JSON.stringify([NEAR.lat,NEAR.lng,NEAR.label])'));
+  t.ok('沒有「查這一區」那顆按鈕了', !$('#btnNearHere'));
   win.__c = { lat: 25.0401, lng: 121.5101 };
-  win.eval('syncNearHereBtn()');
-  t.ok('地圖只動一點點：不出現', $('#btnNearHere').classList.contains('hidden'));
+  t.ok('地圖只動一點點（回彈）：清單不換', follow() === false && win.__loads === 0);
   win.__c = { lat: 25.06, lng: 121.53 };
-  win.eval('syncNearHereBtn()');
-  t.ok('拖到 2 公里外：出現「查這一區的優惠」', !$('#btnNearHere').classList.contains('hidden') && /查這一區/.test($('#btnNearHere').textContent));
-  let called = null;
-  win.eval('setNearCenter=(a,b,l)=>{ window.__set=[a,b,l]; };');
-  win.eval(`document.querySelector('#btnNearHere').onclick=()=>{ const c=NEAR_MAP.getCenter(); document.querySelector('#btnNearHere').classList.add('hidden'); setNearCenter(c.lat,c.lng,'地圖中間'); };`);
-  // 上面是同一段 onclick（openNearMap 在 jsdom 裡跑不起來，Leaflet 沒載），確認原始碼真的這樣綁
-  const idx = win.document.documentElement.outerHTML.indexOf("$('#btnNearHere').onclick=()=>{");
-  t.ok('原始碼：按下去拿地圖中間當查詢位置', idx > 0);
-  $('#btnNearHere').click();
-  called = JSON.parse(win.eval('JSON.stringify(window.__set)'));
-  t.eq('按下去：用地圖中間重查', called, [25.06, 121.53, '地圖中間']);
+  t.ok('拖到 2 公里外：清單自己換', follow() === true && win.__loads === 1);
+  t.eq('查詢位置＝地圖中間', near(), [25.06, 121.53, '地圖中間']);
+  t.ok('沒換的那次不重查', follow() === false && win.__loads === 1);
+  win.__popup = {}; win.__c = { lat: 25.1, lng: 121.6 };
+  t.ok('店家小視窗開著（點橘點時地圖自己捲）：不換', follow() === false && near()[0] === 25.06);
+  win.__popup = null;
+  t.ok('小視窗關了再拖：換', follow() === true && near()[0] === 25.1);
+  win.eval('NEAR.active=false');
+  win.__c = { lat: 24.9, lng: 121.4 };
+  t.ok('關掉附近模式：不換', follow() === false);
+  win.eval('NEAR.active=true');
+  t.ok('原始碼：地圖停下來就跟（moveend 裡呼叫 nearFollowMap）',
+    /NEAR_MAP\.on\('moveend'[\s\S]{0,200}nearFollowMap\(\)/.test(win.eval('openNearMap.toString()')));
+
+  /* 定位慢、人先拖了地圖：定位回來不要把地圖拉走 */
+  win.eval(`window.__geo=null; Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition:(ok)=>{ window.__geo=ok; }},configurable:true});
+    LIVE=true; openNearMap=()=>{}; window.__set=null; setNearCenter=(a,b,l)=>{ window.__set=[a,b,l]; };`);
+  win.eval('startNear()');
+  win.__c = { lat: 22.6, lng: 120.3 };
+  follow();
+  win.eval('window.__geo({coords:{latitude:25,longitude:121.5}})');
+  t.ok('先拖了地圖：定位回來不搶', win.eval('window.__set') === null && near()[0] === 22.6);
+  win.eval('startNear(); window.__geo({coords:{latitude:25,longitude:121.5}})');
+  t.eq('沒拖：定位回來照常移過去', JSON.parse(win.eval('JSON.stringify(window.__set)')), [25, 121.5, '你目前的位置']);
+  win.eval('NEAR.active=false; NEAR_MAP=null;');
 
   /* ---- 定位失敗說清楚 ---- */
   const geo = (ua, code) => win.eval(`(()=>{ Object.defineProperty(navigator,'userAgent',{value:${JSON.stringify(ua)},configurable:true}); return geoFailText({code:${code}}); })()`);
