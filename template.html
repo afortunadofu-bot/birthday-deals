@@ -442,6 +442,8 @@
     cursor:pointer;text-align:left;font:inherit;color:var(--ink)}
   .vr-acts{display:flex;justify-content:flex-end;padding:0 6px 8px}
   .hours-box{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+  #btnNearHere{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:500;
+    box-shadow:var(--shadow-md);background:var(--surface);white-space:nowrap}
   .he-day{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:7px 0;border-top:1px solid var(--line-soft)}
   .he-day:first-of-type{border-top:0}
   .he-dn{width:2.6em;font-weight:700;font-size:.88rem}
@@ -906,10 +908,17 @@
     padding:12px 14px;margin:0 0 10px;transition:border-color .15s var(--ease)}
   #myWishlist .wl-item:hover{border-color:var(--accent-line)}
   #myWishlist .wl-item.compact{padding:8px 12px;margin-bottom:6px}
+  /* 簡易版：按鈕縮小一點，店名留 5 個字寬，短的店名跟按鈕還是同一行（不然簡易版反而比較高） */
+  #myWishlist .wl-item.compact .wl-name{flex-basis:5em}
+  #myWishlist .wl-item.compact .wl-actions{gap:4px}
+  #myWishlist .wl-item.compact .icon-btn{min-width:28px;height:30px;padding:0 6px}
   #myWishlist .wl-item.done{background:var(--free-bg);border-color:var(--free-line)}
-  .wl-top{display:flex;align-items:center;gap:10px;min-width:0}
+  /* v180 陳：「簡易版的代辦清單項目會一個字一行」。v174 讓 ▲▼ 一直顯示之後，右邊那排按鈕
+     （▲▼📍⋯ 加上簡易版的「已註冊／有券」）在手機上把店名擠到剩一個字寬。
+     店名至少留 7 個字的寬，不夠就讓按鈕整排換到下一行（靠右），不再擠店名。 */
+  .wl-top{display:flex;align-items:center;gap:10px;row-gap:6px;min-width:0;flex-wrap:wrap}
   .wl-top .wl-done{flex:none;width:18px;height:18px;margin:0;accent-color:var(--free);cursor:pointer}
-  .wl-name{flex:0 1 auto;min-width:0;background:none;border:0;padding:0;font:inherit;font-size:.92rem;
+  .wl-name{flex:1 1 7em;min-width:0;background:none;border:0;padding:0;font:inherit;font-size:.92rem;
     font-weight:700;color:var(--ink);text-align:left;cursor:pointer;overflow-wrap:anywhere;line-height:1.4}
   button.wl-name::after{content:"\203A";margin-left:6px;color:var(--ink-3);font-weight:400}
   button.wl-name:hover{color:var(--accent-dark)}
@@ -1843,6 +1852,8 @@
           <div class="filt-hint" id="hoursHint">只看「那個時間至少有一家分店開著」的；照 Google 上的平常營業時間，國定假日、臨時公休不算。</div>
         </div></div>
       <div class="filt-row"><span class="filt-label">分類</span><div class="row chipgrp" id="cats"></div></div>
+      <!-- v180 林彥華：「增加負向篩選，可以排除不想要哪種類型的」 -->
+      <div class="filt-row"><span class="filt-label">不看</span><div class="row chipgrp" id="catsEx"></div></div>
       <div class="row">
         <label class="toggle"><input type="checkbox" id="fVerified"> 已查證</label>
         <label class="toggle"><input type="checkbox" id="fLive" checked> 隱藏過期</label>
@@ -1859,6 +1870,12 @@
              （標題那行有寫「含全台」），但「全台」常常是個寬鬆的標記——很多連鎖
              其實沒有開到花蓮、台東。這顆勾起來就只看「真的有標到這個縣市」的，
              不含全台。 -->
+        <!-- v180 林彥華：「隱藏已去過，回報過的」。登入、而且回報過才出現 -->
+        <label class="toggle hidden" id="fHideUsedWrap"><input type="checkbox" id="fHideUsed"> 隱藏我回報用過的</label>
+        <!-- v180 林彥華：「正向篩選似乎會篩掉沒有完善資料的店家」。沒錯——「不用提前加入」「不用本人證件」
+             「實際花費」「營業時間」都只收資料寫清楚的，沒寫的被當成不符合。勾這個就把「沒寫」的留著，
+             只篩掉「寫了、而且不符合」的。只有用到這幾個篩選時才出現。 -->
+        <label class="toggle hidden" id="fKeepUnknownWrap"><input type="checkbox" id="fKeepUnknown"> 資料沒寫的也列出來</label>
         <label class="toggle hidden" id="fExactRegionWrap"><input type="checkbox" id="fExactRegion"> 只看有標這個縣市的（不含全台）</label>
         <button class="btn sm hidden" id="btnClearFilters" type="button">清除篩選</button>
       </div>
@@ -1962,8 +1979,11 @@
         位置只用來算距離，不會存起來。分店資料來自 Google 地圖，可能有遺漏或已歇業。
         <span id="nearMapHint"></span>
       </div>
-      <div class="hidden" id="nearMapWrap" style="margin-top:8px">
+      <div class="hidden" id="nearMapWrap" style="margin-top:8px;position:relative">
         <div id="nearMap" style="height:min(360px,55vh);border-radius:var(--r-sm);border:1px solid var(--line);overflow:hidden"></div>
+        <!-- v180 林彥華：「希望可以用清單顯示…而非地圖選擇地點附近列表」。點地圖本來就會換查詢位置，
+             可是拖地圖不會，下面的清單還停在原本的地方。拖開之後浮一顆「查這一區」。 -->
+        <button type="button" class="btn sm hidden" id="btnNearHere">🔍 查這一區的優惠</button>
       </div>
     </div>
     <div class="new-banner hidden" id="newOffersBanner">
@@ -3629,6 +3649,7 @@ let PREV_SEEN_AT=null;   // checkNewOffers() 覆蓋 last_seen_at 之前的舊值
 let activeCat=new Set(), activeFree=new Set(), activeTiming=new Set();   // 篩選改多選：可以同時勾「當月」+「當週」
 let activeRegion=new Set(), activeMemType=new Set();
 let HOURS_F={mode:'', dow:null, min:null};   // v178 營業時間篩選 mode: '' | 'now' | 'at'（要在 loadFilters 之前宣告）
+let activeCatEx=new Set();   // v180 不看的分類
 let activeSpend=new Set();   // v164 大家實際花多少（嵐：「統計花費金額，讓其他人有個概念這家會花多少」→「進到篩選」）   // 地區／會員也改多選，跟上面那組共用同一套 mkMulti chip 邏輯
 let deferredInstall = null;
 let WISH=new Set();          // 待辦清單（收藏的優惠 id，字串形式）
@@ -3656,6 +3677,7 @@ function saveFilters(){
     fNoCompanion:$('#fNoCompanion').checked, fTransferable:$('#fTransferable').checked,
     fNoAdvance:$('#fNoAdvance').checked, spend:[...activeSpend],
     hours:HOURS_F.mode?{...HOURS_F}:null,
+    catEx:[...activeCatEx], fHideUsed:$('#fHideUsed').checked, fKeepUnknown:$('#fKeepUnknown').checked,
     fExactRegion:$('#fExactRegion').checked,
     sort:$('#sort').value
   })); }catch{}
@@ -3671,6 +3693,8 @@ function loadFilters(){
   $('#fTransferable').checked=!!s.fTransferable;
   $('#fNoAdvance').checked=!!s.fNoAdvance;
   (s.spend||[]).filter(v=>SPEND_BUCKETS.includes(v)).forEach(v=>activeSpend.add(v));
+  (s.catEx||[]).forEach(v=>activeCatEx.add(v));
+  $('#fHideUsed').checked=!!s.fHideUsed; $('#fKeepUnknown').checked=!!s.fKeepUnknown;
   const h=s.hours;
   if(h && (h.mode==='now' || (h.mode==='at' && h.dow>=0 && h.dow<=6 && h.min>=0 && h.min<1440 && h.min%30===0)))
     HOURS_F={mode:h.mode, dow:h.mode==='at'?h.dow:null, min:h.mode==='at'?h.min:null};
@@ -6341,7 +6365,7 @@ const EVENT_LABEL={
   studio_click:'站外連結（細項看上面）', static_view:'靜態頁瀏覽（細項看上面）',
   updates_nudge:'更新紀錄的提示', updates_page_open:'打開更新紀錄那一頁',
   bday_cheer:'生日卡片跳出來', badge_unlock:'解鎖新徽章',
-  lean_home:'切換清單的簡易版', public_preview:'你自己切成民眾模式',
+  lean_home:'切換清單的簡易版', public_preview:'你自己切成民眾模式', near_here:'附近：查這一區',
 };
 /* 嵐：「功能被用了幾次可以分區塊寫嗎」。本來只分「功能」跟「區塊」兩大坨，
    幾十行混在一起看不出是哪一頁的事。改成照**頁面**分：優惠、排行榜、排行程、
@@ -7857,6 +7881,7 @@ function buildControls(){
   mkMulti($('#cats'),
     [['全部類別','']].concat(catOrder.map(c=>[`${c}（${cnt('category',c)}）`,c])),
     activeCat);
+  mkMulti($('#catsEx'), [['都看','']].concat(catOrder.map(c=>[c,c])), activeCatEx);
   // 地區固定列出全部 22 個縣市（不像上面幾組只列「目前資料裡有出現的」），
   // 這樣「全台」的比對邏輯才不會因為某個縣市剛好目前沒有優惠資料就選不到；
   // 另外加一個「未輸入」給還沒填地區的優惠用。
@@ -8023,21 +8048,33 @@ function renderNearBar(){
       + (NEAR.wishOnly && !n && WISH.size ? '（附近沒有你收藏的店，可以把距離調遠一點）' : '')
       + (NEAR.wishOnly && !WISH.size ? '——待辦清單還是空的，在優惠卡片右上角按一下書籤就會收藏起來。' : '');
 }
+/* v180 襪子：「無法定位」。原本只說「沒有定位權限」，沒說要去哪裡開。
+   在 LINE／IG／Threads／FB 裡面開的網頁（in-app 瀏覽器）很多根本不給定位，最常見。 */
+function geoFailText(err){
+  const ua=navigator.userAgent||'';
+  if(/\bLine\/|FBAN|FBAV|Instagram|Barcelona|Threads|MicroMessenger/i.test(ua))
+    return '在 LINE／IG／Threads／FB 裡面打開的網頁常常拿不到定位——按右上角「⋯」選「用瀏覽器開啟」再試一次。';
+  if(err && err.code===1) return /iPhone|iPad|iPod/.test(ua)
+    ? '沒有定位權限：到「設定 → 隱私權與安全性 → 定位服務」打開，往下找 Safari 網站（或你用的瀏覽器）選「使用 App 期間」，再回來重新整理。'
+    : '沒有定位權限：按網址列左邊的鎖頭（或設定圖示）→「權限」→ 打開「位置」，再重新整理。手機本身的定位也要開著。';
+  if(err && err.code===3) return '找位置找太久了（室內或訊號不好常常這樣），可以再按一次「附近」。';
+  return '這次抓不到你的位置（手機的定位可能關著）。';
+}
 function startNear(){
   if(!LIVE){ alert(offlineMsg('查不到分店位置')); return; }
   NEAR.active=true;
   // celine：「地圖預設開啟」——開了「附近」就直接把地圖打開，不用再按一次「地圖」。
   // 抓得到定位就把中心點移過去，抓不到也已經開著，可以直接點你要查的地方。
   openNearMap();
-  if(!navigator.geolocation){ renderNearBar(); return; }
+  if(!navigator.geolocation){ renderNearBar(); $('#nearStatus').textContent='這個瀏覽器不能定位——在下面地圖上點一下你要查的地方就可以。'; return; }
   NEAR.loading=true; renderNearBar();
   navigator.geolocation.getCurrentPosition(
     pos=>setNearCenter(pos.coords.latitude, pos.coords.longitude, '你目前的位置'),
     err=>{
       NEAR.loading=false; renderNearBar();
       // 被拒絕／逾時都不擋功能：直接打開地圖讓人點位置
-      $('#nearStatus').innerHTML=(err&&err.code===1?'沒有定位權限':'暫時抓不到你的位置')
-        +'——在下面地圖上點一下你要查的地方就可以。';
+      $('#nearStatus').innerHTML=esc(geoFailText(err))
+        +'<br>也可以直接在下面地圖上點一下你要查的地方，或拖到那裡按「查這一區」。';
       openNearMap();
     },
     {enableHighAccuracy:false, timeout:8000, maximumAge:300000});
@@ -8052,6 +8089,7 @@ function stopNear(){
 }
 async function setNearCenter(lat, lng, label){
   NEAR.lat=lat; NEAR.lng=lng; NEAR.label=label;
+  $('#btnNearHere')?.classList.add('hidden');
   syncNearMapCenter(true);
   await loadNear();
 }
@@ -8115,7 +8153,13 @@ async function openNearMap(){
   // 每次停下來都查一次分店，拖一下地圖就是一次查詢——地圖現在是預設開啟的，
   // 這個量會直接反映在資料庫的負擔上。等久一點（600ms）再查，而且畫面範圍
   // 沒有真的變（小數第三位以內，約 100 公尺）就不重查。
-  NEAR_MAP.on('moveend', ()=>{ clearTimeout(NEAR_PIN_TIMER); NEAR_PIN_TIMER=setTimeout(loadNearPins, 600); });
+  NEAR_MAP.on('moveend', ()=>{ clearTimeout(NEAR_PIN_TIMER); NEAR_PIN_TIMER=setTimeout(loadNearPins, 600); syncNearHereBtn(); });
+  $('#btnNearHere').onclick=()=>{
+    const c=NEAR_MAP.getCenter();
+    $('#btnNearHere').classList.add('hidden');
+    setNearCenter(c.lat, c.lng, '地圖中間');
+    logEvent('near_here',{});
+  };
   // Leaflet 的 popup 會擋掉 click 往外冒泡，所以按鈕要在 popup 打開時直接綁
   NEAR_MAP.on('popupopen', e=>{
     const el=e.popup.getElement();
@@ -8130,6 +8174,14 @@ async function openNearMap(){
   NEAR_MAP.on('popupclose', ()=>{ NEAR_POPUP_KEY=''; });
   syncNearMapCenter(false);
   loadNearPins();
+}
+/* 地圖中間離查詢位置超過 300 公尺（或半徑的四分之一，取大的）才出現，小小拖一下不用 */
+function syncNearHereBtn(){
+  const b=$('#btnNearHere'); if(!b || !NEAR_MAP) return;
+  const c=NEAR_MAP.getCenter();
+  const far = NEAR.lat==null ? true
+    : NEAR_MAP.distance(c, L.latLng(NEAR.lat, NEAR.lng)) > Math.max(300, NEAR.km*1000/4);
+  b.classList.toggle('hidden', !far || NEAR.loading);
 }
 function closeNearMap(){
   $('#nearMapWrap').classList.add('hidden');
@@ -8352,6 +8404,7 @@ const FILTER_SETS={
   free:  {set:()=>activeFree,    sel:'#freeChips'},
   timing:{set:()=>activeTiming,  sel:'#timingChips'},
   spend: {set:()=>activeSpend,   sel:'#spendChips'},
+  catEx: {set:()=>activeCatEx,   sel:'#catsEx', label:v=>`不看${v}`},
 };
 /* 拿掉一個值，面板裡對應的 chip 也要跟著彈起來——不然重新打開面板會看到
    「這裡還按著，但列表已經沒在篩了」。整組空掉時把「全部」那顆按下去。 */
@@ -8369,7 +8422,7 @@ function activeFilterChips(){
   if(q) out.push({label:`搜尋「${q}」`, drop:()=>{ $('#q').value=''; }});
   for(const kind of Object.keys(FILTER_SETS))
     for(const v of FILTER_SETS[kind].set())
-      out.push({label:v, drop:()=>dropFilterValue(kind, v)});
+      out.push({label:(FILTER_SETS[kind].label||(x=>x))(v), drop:()=>dropFilterValue(kind, v)});
   const box=(id,label,on=true)=>{
     if($(id).checked!==on) return;
     out.push({label, drop:()=>{ $(id).checked=!on; }});
@@ -8381,6 +8434,7 @@ function activeFilterChips(){
   box('#fNoCompanion','一人也能用');
   box('#fTransferable','不用本人證件');
   box('#fNoAdvance','不用提前加入');
+  if($('#fHideUsed').checked && hideUsedAvail()) out.push({label:'隱藏我用過的', drop:()=>{ $('#fHideUsed').checked=false; }});
   if(hoursOn()) out.push({label:hoursLabel(), drop:()=>{ HOURS_F.mode=''; buildHoursControls(); }});
   if($('#fExactRegion').checked && activeRegion.size)
     out.push({label:'不含全台', drop:()=>{ $('#fExactRegion').checked=false; }});
@@ -8413,6 +8467,16 @@ function renderActiveFilters(){
    每個點都重讀八九個 DOM 值的話，拖動地圖就會頓。 ---- */
 /* 「不用提前加入」：資料講得清楚的才算。三商巧福那種「需提前：0 天」但說明寫
    「需提前加入 APP」的，照說明——說明是人寫的、天數常常是預設值。 */
+/* v180：「沒寫」跟「寫了但不符合」分開——「資料沒寫的也列出來」只放行前者 */
+function advanceUnknown(o){
+  return o.advanceDays==null && o.membershipType!=='none' && !/(需|須)(提前|先)/.test(String(o.advanceNote||''));
+}
+const hideUsedAvail=()=>!!me && MY_USED_OFFER_IDS.size>0;
+function syncFilterExtras(){
+  $('#fHideUsedWrap')?.classList.toggle('hidden', !hideUsedAvail());
+  const strictOn=$('#fNoAdvance').checked || $('#fTransferable').checked || activeSpend.size>0 || hoursOn();
+  $('#fKeepUnknownWrap')?.classList.toggle('hidden', !strictOn);
+}
 function noAdvanceOk(o){
   const note=String(o.advanceNote||'');
   if(/(需|須)(提前|先)/.test(note)) return false;
@@ -8533,7 +8597,8 @@ function hoursCountNote(base){
   if(st.loading) return `　🕒 ${hoursLabel()}（查營業時間中…）`;
   if(st.err) return `　🕒 營業時間讀不到：${st.err}`;
   const unknown=OFFERS.filter(o=>base(o) && !isWeekHours(o.hours) && !st.map.has(String(o.id))).length;
-  return `　🕒 ${hoursLabel()}`+(unknown?`（另有 ${unknown} 筆查不到營業時間，沒列出）`:'');
+  return `　🕒 ${hoursLabel()}`+(!unknown?'':$('#fKeepUnknown').checked
+    ?`（含 ${unknown} 筆沒寫營業時間的）`:`（另有 ${unknown} 筆查不到營業時間，沒列出）`);
 }
 
 function filterPredicate(opts={}){
@@ -8546,16 +8611,26 @@ function filterPredicate(opts={}){
   const spend=activeSpend;
   const hrs=opts.skipHours?null:hoursState();
   const hrsMap=hrs&&hrs.map, hrsMow=hrsMap?hoursMow():null;
+  const keepUnknown=$('#fKeepUnknown').checked;
+  const hideUsed=$('#fHideUsed').checked && hideUsedAvail(), catEx=activeCatEx;
   return o=>{
-    if(hrsMap && !(isWeekHours(o.hours) ? weekOpen(o.hours, hrsMow) : hrsMap.get(String(o.id))===true)) return false;
-    if(noAdvance&&!noAdvanceOk(o)) return false;
-    if(spend.size){ const x=spendOf(o); if(!x||!spend.has(spendBucket(x.avg))) return false; }
+    if(hrsMap){
+      const id=String(o.id);
+      if(isWeekHours(o.hours)){ if(!weekOpen(o.hours, hrsMow)) return false; }
+      else if(hrsMap.has(id)){ if(hrsMap.get(id)!==true) return false; }
+      else if(!keepUnknown) return false;
+    }
+    if(hideUsed && MY_USED_OFFER_IDS.has(String(o.id))) return false;
+    if(catEx.size && catEx.has(o.category)) return false;
+    if(noAdvance && !noAdvanceOk(o) && !(keepUnknown && advanceUnknown(o))) return false;
+    if(spend.size){ const x=spendOf(o);
+      if(x ? !spend.has(spendBucket(x.avg)) : !keepUnknown) return false; }
     if(cat.size&&!cat.has(o.category)) return false;
     if(free.size&&!free.has(o.freeTier)) return false;
     if(timing.size&&!timing.has(o.timing)) return false;
     if(mem.size&&!mem.has(o.membershipType)) return false;
     if(noCompanion&&o.requiresCompanion) return false;
-    if(onlyTransferable&&o.transferable!=='yes') return false;
+    if(onlyTransferable && o.transferable!=='yes' && !(keepUnknown && (o.transferable||'unknown')==='unknown')) return false;
     if(region.size){
       const ok=[...region].some(r=>r==='__none__'
         ? !o.regions.length
@@ -8586,6 +8661,7 @@ function render(){
 
   const activeCount = (q?1:0)+activeRegion.size+activeMemType.size+activeCat.size+activeFree.size+activeTiming.size
     +activeSpend.size+($('#fNoAdvance').checked?1:0)+(hoursOn()?1:0)
+    +activeCatEx.size+($('#fHideUsed').checked&&hideUsedAvail()?1:0)
     +(onlyV?1:0)+(!hideX?1:0)+(onlyR?1:0)+(onlyC?1:0)+(noCompanion?1:0)+(onlyTransferable?1:0)
     +(exactRegion?1:0);
   $('#btnClearFilters').classList.toggle('hidden',!activeCount);
@@ -8637,6 +8713,7 @@ function render(){
   });
 
   syncExactRegionToggle();
+  syncFilterExtras();
   const sum=list.filter(o=>o.valueTwd).reduce((a,o)=>a+o.valueTwd,0);
   $('#count').textContent=`${list.length} / ${OFFERS.length} 筆`
     +(activeRegion.size?`　${[...activeRegion].filter(r=>r!=='__none__').join('、')}${
@@ -8985,7 +9062,8 @@ function renderReminders(){
   });
 }
 
-['#fVerified','#fLive','#fReported','#fHasComments','#fNoCompanion','#fTransferable','#fNoAdvance','#fExactRegion','#sort']
+['#fVerified','#fLive','#fReported','#fHasComments','#fNoCompanion','#fTransferable','#fNoAdvance','#fExactRegion','#sort',
+ '#fHideUsed','#fKeepUnknown']
   .forEach(s=>$(s).addEventListener('input',render));
 // 搜尋框單獨處理：勾選框一次只觸發一次沒差，但打字是每個按鍵都觸發一次
 // render()（整個卡片格線重建 + 存一次篩選狀態到 localStorage），品牌名稱
@@ -9013,10 +9091,11 @@ $('#btnClearFilters').onclick=()=>{
   $('#fVerified').checked=false; $('#fLive').checked=true; $('#fReported').checked=false;
   $('#fHasComments').checked=false; $('#fNoCompanion').checked=false; $('#fTransferable').checked=false;
   $('#fExactRegion').checked=false; $('#fNoAdvance').checked=false;
+  $('#fHideUsed').checked=false; $('#fKeepUnknown').checked=false; activeCatEx.clear();
   activeCat.clear(); activeFree.clear(); activeTiming.clear(); activeRegion.clear(); activeMemType.clear();
   activeSpend.clear();
   HOURS_F.mode=''; buildHoursControls();
-  $$('#timingChips .chip, #freeChips .chip, #cats .chip, #regionChips .chip, #memChips .chip, #spendChips .chip')
+  $$('#timingChips .chip, #freeChips .chip, #cats .chip, #regionChips .chip, #memChips .chip, #spendChips .chip, #catsEx .chip')
     .forEach(c=>c.setAttribute('aria-pressed',c.dataset.v===''));
   render();
 };
@@ -9027,10 +9106,11 @@ $('#btnEmptyClearFilters').onclick=()=>{
   $('#fVerified').checked=false; $('#fLive').checked=true; $('#fReported').checked=false;
   $('#fHasComments').checked=false; $('#fNoCompanion').checked=false; $('#fTransferable').checked=false;
   $('#fExactRegion').checked=false; $('#fNoAdvance').checked=false;
+  $('#fHideUsed').checked=false; $('#fKeepUnknown').checked=false; activeCatEx.clear();
   activeCat.clear(); activeFree.clear(); activeTiming.clear(); activeRegion.clear(); activeMemType.clear();
   activeSpend.clear();
   HOURS_F.mode=''; buildHoursControls();
-  $$('#timingChips .chip, #freeChips .chip, #cats .chip, #regionChips .chip, #memChips .chip, #spendChips .chip')
+  $$('#timingChips .chip, #freeChips .chip, #cats .chip, #regionChips .chip, #memChips .chip, #spendChips .chip, #catsEx .chip')
     .forEach(c=>c.setAttribute('aria-pressed',c.dataset.v===''));
   render();
 };
