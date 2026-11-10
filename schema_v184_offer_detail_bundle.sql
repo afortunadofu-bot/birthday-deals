@@ -91,3 +91,6 @@ grant execute on function public.offer_detail_bundle(bigint) to anon, authentica
 -- select jsonb_array_length(b->'comments') as 留言, jsonb_array_length(b->'reports') as 回報,
 --        jsonb_array_length(b->'history') as 修改歷史, jsonb_array_length(b->'names') as 暱稱
 --   from (select public.offer_detail_bundle((select offer_id from public.comments limit 1)) as b) t;
+
+-- 叫 API 馬上認得這支新的（Supabase 通常會自己做，保險起見）
+notify pgrst, 'reload schema';
