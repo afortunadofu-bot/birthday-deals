@@ -47,12 +47,20 @@ function loadWorker() {
 
   const rows = [{ event_type: 'pageview', session_id: 's1', user_id: null, meta: { tab: '#offers' } },
     { event_type: 'wish', session_id: 's1', user_id: null, meta: { id: 3 } }];
+  /* v185 起 Worker 先攢著（很多人的合成一批），測試把攢的時間設成 1ms，等它送出去 */
+  const pending = [];
+  const ctxEv = { waitUntil: (p) => { pending.push(p); } };
+  const envEv = { EVENTS_HOLD_MS: '1' };
+  const callEv = (body) => worker.fetch(new Request('https://api.test/events', { method: 'POST', headers: { 'content-type': 'text/plain' }, body }), envEv, ctxEv);
   up = [];
-  res = await call('/events', { method: 'POST', headers: { 'content-type': 'text/plain' }, body: JSON.stringify(rows) });
+  res = await callEv(JSON.stringify(rows));
   t.eq('/events：成功回 204', res.status, 204);
-  t.ok('轉給 site_events（一次一個請求）', up.length === 1 && /\/rest\/v1\/site_events$/.test(up[0].url)
+  t.eq('先攢著，還沒送', up.length, 0);
+  await callEv(JSON.stringify([{ event_type: 'wish', session_id: 's2', user_id: null, meta: {} }]));
+  await Promise.all(pending.splice(0));
+  t.ok('兩個人的事件合成一個請求送給 site_events', up.length === 1 && /\/rest\/v1\/site_events$/.test(up[0].url)
     && up[0].init.method === 'POST');
-  t.eq('內容原樣轉過去', JSON.parse(up[0].init.body), rows);
+  t.eq('內容原樣轉過去', JSON.parse(up[0].init.body), [...rows, { event_type: 'wish', session_id: 's2', user_id: null, meta: {} }]);
   t.ok('用 JSON、不要回傳內容', up[0].init.headers['content-type'] === 'application/json'
     && up[0].init.headers.prefer === 'return=minimal');
   t.ok('網站讀得到結果（CORS）', res.headers.get('access-control-allow-origin') === '*');
@@ -66,10 +74,20 @@ function loadWorker() {
   t.eq('一次超過 50 筆：400', await bad(JSON.stringify(Array.from({ length: 51 }, () => ({ event_type: 'x' })))), 400);
   t.eq('太大：413', await bad(JSON.stringify([{ event_type: 'x', meta: { s: 'a'.repeat(70000) } }])), 413);
   t.eq('上面這些都沒轉給 Supabase', up.length, 0);
+  /* v185 起是攢著送：Supabase 失敗時網站那端已經拿到 204，事件就掉了（只是統計），Worker 不能因此壞掉 */
   upStatus = 402;
-  t.eq('Supabase 失敗：回 502（網站會改成自己直接送）',
-    (await call('/events', { method: 'POST', body: JSON.stringify(rows) })).status, 502);
+  t.eq('Supabase 失敗：網站照樣拿到 204', (await callEv(JSON.stringify(rows))).status, 204);
+  let threw = false;
+  try { await Promise.all(pending.splice(0)); } catch { threw = true; }
+  t.ok('送失敗也不會讓 Worker 丟錯', !threw);
   upStatus = 201;
+  up = [];
+  await callEv(JSON.stringify(Array.from({ length: 50 }, (_, i) => ({ event_type: 'x', i }))));
+  await callEv(JSON.stringify(Array.from({ length: 50 }, (_, i) => ({ event_type: 'x', i }))));
+  await callEv(JSON.stringify(Array.from({ length: 50 }, (_, i) => ({ event_type: 'x', i }))));
+  await callEv(JSON.stringify(Array.from({ length: 50 }, (_, i) => ({ event_type: 'x', i }))));
+  await Promise.all(pending.splice(0));
+  t.ok('滿 200 筆就先送，不用等', up.length >= 1 && JSON.parse(up[0].init.body).length === 200);
   t.eq('GET /events 不是端點', (await call('/events')).status, 404);
 
   /* ================= 網站 ================= */

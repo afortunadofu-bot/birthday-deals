@@ -4176,13 +4176,13 @@ async function connectLive(retry=0){
     note(mb,'alert','<b>資料庫回應比較慢</b>——不是網站壞了，資料庫偶爾會慢個幾秒，請再等一下下。');
   },3000);
   try{
-    sb.auth.onAuthStateChange((_e,s)=>onSession(s));
+    sb.auth.onAuthStateChange((ev,s)=>{ if(ev==='USER_UPDATED') SESSION_UID=undefined; onSessionOnce(s); });
     // 優惠清單不需要先知道「你是誰」，所以跟登入狀態同時去拿，不要排隊等——
     // 手機上這兩趟各要好幾百毫秒，排隊就是多等一趟。
     const offersP = loadOffers();
     offersP.catch(()=>{});          // 先接住，真正的處理在下面的 await
     const {data:{session}} = await sb.auth.getSession();
-    await onSession(session);
+    await onSessionOnce(session);
     await offersP;
     await checkNewOffers();         // 要先有 OFFERS 跟登入狀態才算得出「上次來訪之後新增的」
     renderSavingsSinceVisit();
@@ -4408,6 +4408,18 @@ function cacheProfile(uid, row){
   }catch{}
 }
 function forgetProfile(){ cacheProfile(null, null); }
+/* v185：supabase-js 一開站就會自己發一次 INITIAL_SESSION（加上我們自己 getSession 之後再叫一次），
+   之後每次切回這個分頁、每小時換 token 也會再發 SIGNED_IN／TOKEN_REFRESHED——同一個人的話，
+   收藏、用過的、評分、通知都一樣，不用整套重載（每次 4 個請求＋4 個 OPTIONS）。
+   Logs Explorer 11/10：登入的人一小時每人 8～9 次 wishlist、7 次 offer_ratings，就是這個。
+   換了人（登入／登出）、或帳號資料改了（USER_UPDATED）才重跑。 */
+let SESSION_UID, SESSION_P=null;
+function onSessionOnce(s){
+  const uid=s?.user?.id||null;
+  if(SESSION_P && uid===SESSION_UID){ if(s?.user) me=s.user; return SESSION_P; }
+  SESSION_UID=uid;
+  return (SESSION_P=onSession(s));
+}
 async function onSession(s){
   me = s?.user || null;
   PROFILE_ERROR=false;
@@ -4548,7 +4560,11 @@ function paintAuth(){
   // 不然手機版名字一長，「管理員」三個字常被切成「管…」，看起來很怪。
   $('#uName').textContent = on ? (myProfile?.display_name||'壽星') : '';
   $('#uAdminBadge').classList.toggle('hidden', !(on&&myProfile?.is_admin));
-  if(on&&myProfile?.avatar_url) $('#uAvatar').src=myProfile.avatar_url;
+  if(on&&myProfile?.avatar_url){
+    const ua=$('#uAvatar'), s=avatarSrc(myProfile.avatar_url);
+    if(s!==myProfile.avatar_url) ua.dataset.orig=myProfile.avatar_url; else delete ua.dataset.orig;
+    ua.src=s;
+  }
   renderAvatarEditor();
   $$('.tab[data-tab="admin"]').forEach(t=>t.classList.toggle('hidden',!myProfile?.is_admin));
   if(myProfile){
@@ -4610,6 +4626,25 @@ function edgeApi(){
   const base=String(window.OFFERS_API||'').trim().replace(/\/+$/,'');
   return /^https?:\/\//.test(base) ? base : '';
 }
+/* v185：排行榜上每個人的頭像都是直接跟 Supabase Storage 拿——每位看排行榜的人、每一張各算一個請求
+   （11/10 一小時 190 次）。頭像檔名每次上傳都不一樣（內容不會變），改走 Worker 的 /img/，
+   Cloudflare 存一份，大家共用。Worker 還沒更新（/img/ 404）就換回原本的網址（下面的 error 監聽）。 */
+function avatarSrc(u){
+  const api=edgeApi(), pre=CFG?.url ? `${CFG.url}/storage/v1/object/public/` : '';
+  if(!api || !pre || typeof u!=='string' || !u.startsWith(pre)) return u;
+  const rel=u.slice(pre.length);
+  return /^avatars\/[0-9a-f-]{36}\/[\w.-]{1,100}$/i.test(rel) ? `${api}/img/${rel}` : u;
+}
+function avatarImgAttrs(u){
+  const s=avatarSrc(u);
+  return `src="${esc(s)}"${s!==u?` data-orig="${esc(u)}"`:''}`;
+}
+document.addEventListener('error', e=>{
+  const t=e.target;
+  if(t && t.tagName==='IMG' && t.dataset && t.dataset.orig && t.getAttribute('src')!==t.dataset.orig){
+    t.src=t.dataset.orig; delete t.dataset.orig;
+  }
+}, true);
 const EDGE_AT={};   // 每個端點拿到的那份是 Worker 什麼時候從 Supabase 抓的（v183 判斷資料庫活著沒）
 async function edgeFetch(path){
   const base=edgeApi();
@@ -8044,6 +8079,10 @@ const PIN_STYLE={wished:{color:'#7c2d12', fill:'#f59e0b', r:10}, normal:{color:'
    跟著不見——重畫完照這個 key 把它開回來，使用者才不會「看到一半就沒了」。 */
 let NEAR_POPUP_KEY='';
 let NEAR_PIN_KEY='';   // 上一次查分店的畫面範圍，範圍沒變就不重查
+/* v185：上一次實際抓的範圍（比畫面大一圈）。畫面還在這個範圍裡面（拖一點點、放大）就不重查，
+   直接用手上的分店重畫。被 1000 家上限截斷的那一次（full=false）不算數，照舊每次查。 */
+let NEAR_PIN_BOX=null;
+const NEAR_PIN_PAD=0.35, NEAR_PIN_LIMIT=1000;
 let NEAR_PIN_ROWS=[];  // 上一次查回來的分店，切「只看收藏」時直接重畫，不用再查一次
 
 function fmtDistance(m){
@@ -8221,7 +8260,8 @@ function nearFollowMap(){
   if(!NEAR_MAP || !NEAR.active) return false;
   if(NEAR_MAP._popup && NEAR_MAP.hasLayer(NEAR_MAP._popup)) return false;
   const c=NEAR_MAP.getCenter();
-  if(NEAR.lat!=null && NEAR_MAP.distance(c, L.latLng(NEAR.lat, NEAR.lng)) < Math.max(200, NEAR.km*100)) return false;
+  // v185：200 公尺／半徑十分之一 → 300 公尺／半徑五分之一。3 公里的圈拖 300 公尺，清單幾乎不變，卻是一次查詢
+  if(NEAR.lat!=null && NEAR_MAP.distance(c, L.latLng(NEAR.lat, NEAR.lng)) < Math.max(300, NEAR.km*200)) return false;
   NEAR.lat=c.lat; NEAR.lng=c.lng; NEAR.label='地圖中間'; NEAR.pickSeq++;
   syncNearMapCenter(false);
   loadNear();
@@ -8248,7 +8288,7 @@ async function loadNearPins(){
   const hint=$('#nearMapHint');
   // 縮到整個縣市以上的大小，一次畫幾千個點手機會卡，也看不出什麼
   if(NEAR_MAP.getZoom()<13){
-    NEAR_MAP_PINS.clearLayers(); NEAR_PIN_KEY='';   // 點清掉了，放大回來要重查
+    NEAR_MAP_PINS.clearLayers(); NEAR_PIN_KEY=''; NEAR_PIN_BOX=null;   // 點清掉了，放大回來要重查
     hint.textContent='放大地圖一點，才會顯示有優惠的分店。'; return;
   }
   const b=NEAR_MAP.getBounds();
@@ -8256,10 +8296,16 @@ async function loadNearPins(){
   const key=[b.getSouth(),b.getWest(),b.getNorth(),b.getEast()].map(v=>v.toFixed(3)).join(',');
   if(key===NEAR_PIN_KEY) return;
   NEAR_PIN_KEY=key;
+  const v={s:b.getSouth(), w:b.getWest(), n:b.getNorth(), e:b.getEast()};
+  const box=NEAR_PIN_BOX;
+  if(box && box.full && v.s>=box.s && v.n<=box.n && v.w>=box.w && v.e<=box.e){ paintNearPins(); return; }
+  const dLat=(v.n-v.s)*NEAR_PIN_PAD, dLng=(v.e-v.w)*NEAR_PIN_PAD;
+  const want={s:v.s-dLat, n:v.n+dLat, w:v.w-dLng, e:v.e+dLng};
   const {data,error}=await sb.rpc('offer_stores_in_bounds',
-    {p_south:b.getSouth(), p_west:b.getWest(), p_north:b.getNorth(), p_east:b.getEast(), p_limit:500});
-  if(error){ hint.textContent='分店載入失敗：'+zhErr(error); return; }
+    {p_south:want.s, p_west:want.w, p_north:want.n, p_east:want.e, p_limit:NEAR_PIN_LIMIT});
+  if(error){ hint.textContent='分店載入失敗：'+zhErr(error); NEAR_PIN_BOX=null; return; }
   NEAR_PIN_ROWS=data||[];
+  NEAR_PIN_BOX={...want, full:NEAR_PIN_ROWS.length<NEAR_PIN_LIMIT};
   paintNearPins();
 }
 /* 畫面範圍沒變、只是切了「只看收藏」的話不用再查一次資料庫——上一次查回來的
@@ -8272,7 +8318,13 @@ function paintNearPins(){
   NEAR_MAP_PINS.clearLayers();
   let hidden=0, filtered=0, n=0;
   const pass=filterPredicate();
+  // v185：手上的分店比畫面大一圈（拖一點點不用重查），只畫畫面裡的，數字也只算畫面裡的
+  const vb=typeof NEAR_MAP.getBounds==='function' ? NEAR_MAP.getBounds() : null;
+  const inView = vb ? (()=>{ const s=vb.getSouth(), w=vb.getWest(), nn=vb.getNorth(), e=vb.getEast();
+    const my=(nn-s)*0.05, mx=(e-w)*0.05;
+    return st=>st.lat>=s-my && st.lat<=nn+my && st.lng>=w-mx && st.lng<=e+mx; })() : ()=>true;
   NEAR_PIN_ROWS.forEach(st=>{
+    if(!inView(st)) return;
     const o=OFFERS.find(x=>String(x.id)===String(st.offer_id));
     if(!o) return;
     // 上面篩了什麼，地圖就只畫那些
@@ -12693,7 +12745,7 @@ function renderLbBody(){
     return pr==null ? String(r.rank) : `<span class="pr" title="贏過 ${pr}% 的人">PR ${pr}</span>`;
   };
   const lbEntries=rows.map((r,i)=>`<tr class="lb-row" data-lb="${i}"><td class="rk ${r.rank<=3?'top':''}">${rkText(r)}${LB_HAS_PREV?`<br>${rankChangeHtml(r)}`:''}</td>
-      <td><div class="who"><div class="who-main">${r.avatar_url?`<img class="avatar who-avatar" ${r.email?'data-email="1"':''} src="${esc(r.avatar_url)}" alt="">`
+      <td><div class="who"><div class="who-main">${r.avatar_url?`<img class="avatar who-avatar" ${r.email?'data-email="1"':''} ${avatarImgAttrs(r.avatar_url)} alt="">`
         :`<span class="initial who-avatar" ${r.email?'data-email="1"':''}>${esc((r.display_name||'壽')[0])}</span>`}
         <span class="who-name">${esc(r.display_name||'壽星')}</span></div>${r.email?`<span class="who-email hidden">（${esc(r.email)}）</span>`:''}</div></td>
       <td class="amt${sortByCount?' lb-primary':''}">${r.success_count} 次</td>
@@ -12873,7 +12925,7 @@ function renderContribBody(){
   const climb=$('#contribSortBy')?.value==='climb';
   const rows=climb ? rankClimbRows(CONTRIB_ROWS) : CONTRIB_ROWS;
   const entries=rows.map(r=>`<tr><td class="rk ${r.rank<=3?'top':''}">${r.rank}${CONTRIB_HAS_PREV?`<br>${rankDeltaHtml(CONTRIB_HAS_PREV,r.prevRank,r.rank)}`:''}</td>
-      <td><div class="who"><div class="who-main">${r.avatar_url?`<img class="avatar who-avatar" ${r.email?'data-email="1"':''} src="${esc(r.avatar_url)}" alt="">`
+      <td><div class="who"><div class="who-main">${r.avatar_url?`<img class="avatar who-avatar" ${r.email?'data-email="1"':''} ${avatarImgAttrs(r.avatar_url)} alt="">`
         :`<span class="initial who-avatar" ${r.email?'data-email="1"':''}>${esc((r.display_name||'壽')[0])}</span>`}
         <span class="who-name">${esc(r.display_name||'壽星')}</span></div>${r.email?`<span class="who-email hidden">（${esc(r.email)}）</span>`:''}</div></td>
       <td class="amt">${r.submitted_count}</td>

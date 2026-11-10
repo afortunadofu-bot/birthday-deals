@@ -13,6 +13,24 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v185　再少打 Supabase：登入事件、頭像、地圖、事件記錄
+
+`template.html`、`worker/offers-cache.js`（**要重貼**；沒貼的話頭像會先試 Worker、失敗自動換回原本網址，事件記錄照 v183 一批批轉送）。不用跑 SQL。
+
+> celine：「能先繼續砍嗎」
+
+同一份 Logs Explorer（11/10 早上一小時）裡，v184 之外的大宗：
+
+- **登入的人重複載入**：wishlist 103、offer_ratings 83、profiles 77、notifications 64——十幾個登入的人，每人一小時 7～9 次。原因是 supabase-js 一開站發 INITIAL_SESSION、我們自己 getSession 又叫一次，之後每次切回分頁發 SIGNED_IN、每小時換 token 發 TOKEN_REFRESHED，每一次都整套重載（收藏、用過的、評分、通知，各帶 OPTIONS）。新增 `onSessionOnce`：同一個人只載一次，換人（登入／登出）或 `USER_UPDATED` 才重跑
+- **排行榜頭像**：Storage 一小時 190 次（10 個 IP）——每位看排行榜的人、每一張頭像各一次。Worker 新增 `/img/avatars/…`，Cloudflare 存 7 天（頭像每次上傳檔名都不同，內容不會變）；路徑格式寫死只收 avatars。Worker 還沒更新時 `<img>` 載入失敗就換回原本網址（`data-orig`＋全域 error 監聽）
+- **附近地圖的分店點**：`offer_stores_in_bounds` 283 次。改成多抓畫面四周 35%（上限 1000 家），畫面還在抓過的範圍裡（拖一點點、放大）就不重查、只重畫畫面裡的點；被上限截斷的那次不算數
+- **清單跟著地圖**（v182）：重查門檻 200 公尺／半徑 1/10 → 300 公尺／半徑 1/5（3 公里的圈要拖 600 公尺才重查）
+- **事件記錄**：Worker 轉送一小時 314 次（一個訪客一批）。Worker 改成先攢在記憶體，20 秒或滿 200 筆才一次送，很多人的合成一批。代價：Worker 剛好被回收時最後 20 秒的事件會掉；在線人數最多晚 20 秒
+
+測試：新增 t99（Worker /img 快取與路徑檢查、登入事件只載一次、頭像換網址與退回、地圖多抓一圈、門檻）；t97 的 /events 改成攢著送
+
+---
+
 ## v184　詳情一次拿齊（再少打 Supabase）
 
 `schema_v184_offer_detail_bundle.sql`（要跑）、`template.html`、`worker/offers-cache.js`（要重貼）。

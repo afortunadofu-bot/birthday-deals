@@ -18,7 +18,8 @@
  *   /board   排行榜那一頁要的 14 份公開統計，打包成一包
  *   /boot    每開一次網頁都要問的兩筆（公告、顯示開關），快取 180 秒（v184 前是 60 秒）
  *   /spend   大家實際花多少（offer_spend_summary），快取 30 分鐘（v183）
- *   POST /events  事件記錄轉送給 Supabase 的 site_events（v183，不快取）
+ *   POST /events  事件記錄轉送給 Supabase 的 site_events（v183；v185 起在這裡攢 20 秒、很多人的合成一批送）
+ *   /img/avatars/…  使用者頭像（Supabase Storage 的公開檔），Cloudflare 存 7 天（v185）
  *
  * 為什麼加 /spend、/events（v183）：2026-11-09 Log Ingestion 一個帳單週期才 5 天就用掉
  * 46%。Logs Explorer 一小時 15,302 個請求，最多的是事件記錄（POST＋瀏覽器先送的 OPTIONS
@@ -282,7 +283,41 @@ async function boardBundle(base, headers) {
  */
 const EVENTS_MAX_BYTES = 64000;
 const EVENTS_MAX_ROWS = 50;
-async function relayEvents(request, env) {
+/* v185：不再一個訪客一批就轉一次——11/10 一小時 314 次。同一台 Worker（isolate）同時接很多人，
+   先攢在記憶體裡，20 秒或滿 200 筆才一次送給 Supabase。代價：Worker 剛好被回收的話，最後那
+   20 秒的事件會掉（這些只是統計，可以接受）；「即時在線人數」最多晚 20 秒。 */
+const EV_HOLD_MS_DEFAULT = 20000;
+const EV_BUF_MAX = 200;
+let EV_BUF = [];
+let EV_FLUSH = null;
+async function postEvents(env, rows) {
+  const base = cfg(env, 'SUPABASE_URL');
+  const key = cfg(env, 'SUPABASE_ANON_KEY');
+  return fetch(`${base}/rest/v1/site_events`, {
+    method: 'POST',
+    headers: { apikey: key, authorization: `Bearer ${key}`, 'content-type': 'application/json', prefer: 'return=minimal' },
+    body: JSON.stringify(rows),
+  });
+}
+async function flushEventBuf(env) {
+  const rows = EV_BUF;
+  EV_BUF = [];
+  for (let i = 0; i < rows.length; i += EV_BUF_MAX) {
+    try { await postEvents(env, rows.slice(i, i + EV_BUF_MAX)); } catch { /* 統計而已，掉了就算了 */ }
+  }
+}
+function scheduleEventFlush(env, ctx) {
+  if (EV_BUF.length >= EV_BUF_MAX) {
+    ctx.waitUntil(flushEventBuf(env));
+    return;
+  }
+  if (!EV_FLUSH) {
+    const hold = Number(cfg(env, 'EVENTS_HOLD_MS') ?? EV_HOLD_MS_DEFAULT);
+    EV_FLUSH = new Promise((r) => setTimeout(r, hold)).then(() => { EV_FLUSH = null; return flushEventBuf(env); });
+  }
+  ctx.waitUntil(EV_FLUSH);    // 每一個進來的請求都把 Worker 撐到這一批送出去為止
+}
+async function relayEvents(request, env, ctx) {
   const text = await request.text();
   if (text.length > EVENTS_MAX_BYTES) return json({ error: 'too large' }, { status: 413, ttl: 0 });
   let rows;
@@ -291,15 +326,41 @@ async function relayEvents(request, env) {
   if (!Array.isArray(rows) || !rows.length || rows.length > EVENTS_MAX_ROWS || !rows.every(okRow)) {
     return json({ error: 'bad rows' }, { status: 400, ttl: 0 });
   }
-  const base = cfg(env, 'SUPABASE_URL');
-  const key = cfg(env, 'SUPABASE_ANON_KEY');
-  const r = await fetch(`${base}/rest/v1/site_events`, {
-    method: 'POST',
-    headers: { apikey: key, authorization: `Bearer ${key}`, 'content-type': 'application/json', prefer: 'return=minimal' },
-    body: JSON.stringify(rows),
-  });
-  if (!r.ok) return json({ error: `site_events ${r.status}` }, { status: 502, ttl: 0 });
+  EV_BUF.push(...rows);
+  scheduleEventFlush(env, ctx);
   return new Response(null, { status: 204, headers: { ...CORS, 'cache-control': 'no-store' } });
+}
+
+/**
+ * /img/avatars/<使用者 id>/<檔名>：使用者頭像（v185）。
+ * 排行榜上每一張頭像，每位看的人都各跟 Supabase Storage 要一次（11/10 一小時 190 次）。
+ * 頭像每次上傳檔名都不一樣（內容不會變），可以放心存久一點：Cloudflare 存 7 天，大家共用。
+ * 只收 avatars 這個公開 bucket、路徑格式寫死，不能拿來代理別的東西。
+ */
+const IMG_TTL = 7 * 86400;
+async function serveImage(request, env, ctx, rel) {
+  if (!/^avatars\/[0-9a-f-]{36}\/[\w.-]{1,100}$/i.test(rel)) return json({ error: 'bad path' }, { status: 400, ttl: 0 });
+  const cache = caches.default;
+  const key = new Request(`${new URL(request.url).origin}/__cache/img/${rel}`, { method: 'GET' });
+  const hit = await cache.match(key);
+  if (hit) {
+    const res = new Response(hit.body, hit);
+    res.headers.set('x-cache', 'HIT');
+    return res;
+  }
+  const up = await fetch(`${cfg(env, 'SUPABASE_URL')}/storage/v1/object/public/${rel}`);
+  if (!up.ok) return new Response(null, { status: up.status === 404 ? 404 : 502, headers: { ...CORS, 'cache-control': 'no-store' } });
+  const res = new Response(up.body, {
+    status: 200,
+    headers: {
+      'content-type': up.headers.get('content-type') || 'image/jpeg',
+      'cache-control': `public, max-age=${IMG_TTL}, immutable`,
+      ...CORS,
+      'x-cache': 'MISS',
+    },
+  });
+  ctx.waitUntil(cache.put(key, res.clone()));
+  return res;
 }
 
 /**
@@ -416,7 +477,7 @@ const handler = {
     const path = url.pathname.replace(/^\/api(?=\/|$)/, '') || '/';
 
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
-    if (request.method === 'POST' && path === '/events') return relayEvents(request, env);
+    if (request.method === 'POST' && path === '/events') return relayEvents(request, env, ctx);
 
     if (request.method === 'GET' || request.method === 'HEAD') {
       if (path === '/offers') return serve(request, env, ctx, 'offers');
@@ -425,6 +486,7 @@ const handler = {
       if (path === '/board') return serve(request, env, ctx, 'board');
       if (path === '/boot') return serve(request, env, ctx, 'boot');
       if (path === '/spend') return serve(request, env, ctx, 'spend');
+      if (path.startsWith('/img/')) return serveImage(request, env, ctx, path.slice(5));
       if (path === '/health') return json({ ok: true, now: new Date().toISOString() }, { ttl: 0 });
     }
 
