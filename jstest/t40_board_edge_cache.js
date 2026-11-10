@@ -117,8 +117,8 @@ const KEYS = ['lbAll', 'pop', 'lbAllPrev', 'savedAll', 'popPrev', 'wish', 'wishP
   t.eq('公告拿得到', body.data.announcement && body.data.announcement.id, 9);
   t.ok('開關也拿得到', Array.isArray(body.data.flags) && body.data.flags.length === 1);
   t.eq('只打兩筆', upstream.length, 2);
-  t.eq('只快取 60 秒（開關是管理員即時在調的）',
-    res.headers.get('cache-control'), 'public, max-age=60');
+  t.eq('只快取 180 秒（開關是管理員在調的；v184 從 60 秒拉長，少打 Supabase）',
+    res.headers.get('cache-control'), 'public, max-age=180');
   upstream = [];
   res = await get('/boot');
   t.eq('第二次命中快取', res.headers.get('x-cache'), 'HIT');

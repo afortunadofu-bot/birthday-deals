@@ -5709,7 +5709,7 @@ async function internetOk(){
    那一包是新的，就代表 Worker 剛剛才從 Supabase 拿到資料，資料庫活著，不用每個人再問一次。
    Worker 拿不到、或給的是 5 分鐘以前的舊資料（Worker 問 Supabase 失敗時會拿舊的頂著）
    才自己問。402 停機另外有 sxFetch 在每一個請求上接著，不會漏。 */
-const BOOT_FRESH_MS=5*60*1000;
+const BOOT_FRESH_MS=10*60*1000;   // v184：Worker 的 /boot 改快取 3 分鐘，瀏覽器也留 3 分鐘，最舊大約 6 分鐘
 async function maybeProbeBackend(){
   if(!edgeApi()) return probeBackend();
   const b=await bootBundle();
@@ -6794,7 +6794,7 @@ function renderSiteFlagsPanel(){
     applySiteFlags();
     // 自己改的要馬上在自己這邊是對的，所以跳過共用快取重讀一次
     BOOT_BUNDLE=null; BOOT_AT=0;
-    note($('#siteFlagsMsg'),'good',`✓ 已${on?'打開':'關掉'}「${esc(FLAG_LABEL[k].trim().replace(/^└\s*/,''))}」，訪客最慢一分鐘內會看到。`);
+    note($('#siteFlagsMsg'),'good',`✓ 已${on?'打開':'關掉'}「${esc(FLAG_LABEL[k].trim().replace(/^└\s*/,''))}」，訪客最慢 6 分鐘內會看到（共用快取 3 分鐘＋瀏覽器自己留 3 分鐘）。`);
   });
 }
 
@@ -9459,10 +9459,11 @@ function setLikeBtn(b, n, mine){
   b.classList.toggle('on', mine);
   b.title = b.dataset.owner ? '不能幫自己按愛心' : mine ? '收回愛心' : '這則很有幫助';
 }
-async function loadHelpfulLikes(root, reports, comments){
+async function loadHelpfulLikes(root, reports, comments, pre){
   const rIds=(reports||[]).map(x=>x.id), cIds=(comments||[]).map(x=>x.id);
   const none=Promise.resolve({data:[],error:null});
-  const [rl,cl]=await Promise.all([
+  // v184：詳情一次拿齊（offer_detail_bundle）的話愛心已經在裡面了，不用再問兩次
+  const [rl,cl]=pre ? [{data:pre.rl,error:null},{data:pre.cl,error:null}] : await Promise.all([
     rIds.length ? sb.from('report_likes').select('report_id,user_id').in('report_id',rIds) : none,
     cIds.length ? sb.from('comment_likes').select('comment_id,user_id').in('comment_id',cIds) : none]);
   if(rl.error || cl.error) return;
@@ -9513,6 +9514,22 @@ function flashRateBox(root){
   box.classList.add('rate-highlight');
   setTimeout(()=>box.classList.remove('rate-highlight'),1600);
 }
+/* v184：詳情要的東西一次拿齊。這支叫不到（schema_v184 還沒跑）的話，這次造訪之後都不再試，
+   直接走原本分開查的路；其他錯誤（網路一時不通）只是這一次退回去。 */
+let DETAIL_BUNDLE_OK=true;
+async function loadDetailBundle(id){
+  if(!DETAIL_BUNDLE_OK || !/^\d+$/.test(String(id))) return null;
+  try{
+    const {data,error}=await sb.rpc('offer_detail_bundle',{p_offer_id:Number(id)});
+    if(error){
+      if(/offer_detail_bundle|PGRST202|42883|does not exist|schema cache/i.test(`${error.code||''} ${error.message||''}`))
+        DETAIL_BUNDLE_OK=false;
+      return null;
+    }
+    const ok=data && ['comments','reports','history','names','report_likes','comment_likes'].every(k=>Array.isArray(data[k]));
+    return ok ? data : null;
+  }catch{ return null; }
+}
 async function openDetail(id, fallback=null, focusRate=false){
   if(!LIVE){ alert(offlineMsg('讀不到留言')); return; }
   dtlId=id;
@@ -9552,7 +9569,19 @@ async function openDetail(id, fallback=null, focusRate=false){
   body.innerHTML=offerFactsHtml(o)+'<div class="thread" style="min-height:min(260px,40vh)">載入中…</div>';
   $('#dlgDetail').showModal(); pushDlgHistory();
   const isAdmin=!!myProfile?.is_admin;
-  const [{data:c},{data:r},{data:myR},{data:eh},{data:pe}]=await Promise.all([
+  /* v184：點開一筆詳情原本要分開問 6 張表（留言、回報、修改歷史、暱稱、兩種愛心），每個再加
+     一個 OPTIONS——11/10 早上一小時 2,968 個請求裡佔了約 1,090 個。有 offer_detail_bundle
+     （schema_v184）就一次拿齊；叫不到（SQL 還沒跑、或這次失敗）就照原本分開查。
+     待審的修改建議只有登入的人看得到（那張 view 只給 authenticated），還是另外問。 */
+  const bundle=await loadDetailBundle(id);
+  if(dtlId!==id) return;
+  let c, r, myR, eh, pe, preNames=null, preLikes=null;
+  if(bundle){
+    c=bundle.comments; r=bundle.reports; eh=bundle.history; myR={score:bundle.my_score};
+    preNames=bundle.names; preLikes={rl:bundle.report_likes, cl:bundle.comment_likes};
+    pe=me ? (await sb.from('offer_edits_pending_preview').select('*').eq('offer_id',id)
+      .order('created_at',{ascending:false})).data : null;
+  } else [{data:c},{data:r},{data:myR},{data:eh},{data:pe}]=await Promise.all([
     sb.from('comments').select('id,body,created_at,is_hidden,user_id')
       .eq('offer_id',id).order('created_at',{ascending:false}).limit(50),
     // spent_twd（實際花多少，v81）用 select('*') 帶回來——明列欄位的話，
@@ -9580,7 +9609,8 @@ async function openDetail(id, fallback=null, focusRate=false){
   // 再自己 merge 回去，下面渲染邏輯（x.profiles?.display_name）維持不變。
   const uids=[...new Set([...(c||[]).map(x=>x.user_id),...(r||[]).map(x=>x.user_id)].filter(Boolean))];
   let nameMap={};
-  if(uids.length){
+  if(preNames) nameMap=Object.fromEntries(preNames.map(p=>[p.id,p]));
+  else if(uids.length){
     const {data:pp}=await sb.from('profiles_public').select('id,display_name').in('id',uids);
     nameMap=Object.fromEntries((pp||[]).map(p=>[p.id,p]));
   }
@@ -9702,7 +9732,7 @@ async function openDetail(id, fallback=null, focusRate=false){
   // DORIS 回饋：「送出後沒辦法修改再補充內容」。其實「我的」分頁的「我的使用回報」
   // 點進去就能編輯／刪除，但那個 panel 預設收合，大家又是在詳情頁看到自己的回報，
   // 自然會想在這裡改。自己的那幾筆直接給一顆「編輯」，開的是同一個回報視窗。
-  loadHelpfulLikes(body, r, cmts);
+  loadHelpfulLikes(body, r, cmts, preLikes);
   body.querySelectorAll('.dtl-rep-edit').forEach(btn=>btn.onclick=()=>{
     const x=(r||[]).find(v=>String(v.id)===btn.dataset.rid);
     if(x) openReport(id, {...x, offers:{brand:o?.brand, offer:o?.offer}});

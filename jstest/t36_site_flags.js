@@ -194,10 +194,10 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   t.eq('存的是 upsert（第一次還沒有那一列）', writes[0].op, 'upsert');
   t.eq('存對 key 跟值', [writes[0].args[0].key, writes[0].args[0].enabled], ['show_coffee', false]);
   t.eq('畫面馬上跟著變', flags().show_coffee, false);
-  /* 開關現在走邊緣快取（60 秒），所以訊息也要照實說「最慢一分鐘」，
+  /* 開關現在走邊緣快取（v184 起 180 秒，加上瀏覽器自己留的 180 秒），所以訊息也要照實說「最慢 6 分鐘」，
      不能再講成「重新整理就會看到」——那會變成一句不準的話。 */
   t.ok('而且講清楚是對所有訪客生效', /訪客/.test($('#siteFlagsMsg').textContent), $('#siteFlagsMsg').textContent);
-  t.ok('而且說得出大概多久', /一分鐘/.test($('#siteFlagsMsg').textContent), $('#siteFlagsMsg').textContent);
+  t.ok('而且說得出大概多久', /6 分鐘/.test($('#siteFlagsMsg').textContent), $('#siteFlagsMsg').textContent);
   t.ok('自己改完要跳過共用快取重讀', /BOOT_BUNDLE=null; BOOT_AT=0;/.test(index));
 
   // 存檔失敗：勾勾要彈回去，不能讓畫面說成功、資料庫其實沒存

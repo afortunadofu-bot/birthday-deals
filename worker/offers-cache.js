@@ -16,7 +16,7 @@
  *   /offers/first  開場先畫的前 60 筆（照「依省最多」排，跟網站的預設排序同一套）
  *   /stats   站台數據（site_stats_cached，沒跑 v78 就退回 site_stats）
  *   /board   排行榜那一頁要的 14 份公開統計，打包成一包
- *   /boot    每開一次網頁都要問的兩筆（公告、顯示開關），快取 60 秒
+ *   /boot    每開一次網頁都要問的兩筆（公告、顯示開關），快取 180 秒（v184 前是 60 秒）
  *   /spend   大家實際花多少（offer_spend_summary），快取 30 分鐘（v183）
  *   POST /events  事件記錄轉送給 Supabase 的 site_events（v183，不快取）
  *
@@ -70,7 +70,9 @@ const DEFAULTS = {
 const FRESH_TTL = 1800;       // 30 分鐘內算新鮮，直接回快取
 // 開場那兩筆只快取 60 秒：顯示開關是管理員即時在調的，關掉某個東西
 // 不該等十分鐘才在訪客那邊生效。
-const TTL = { offers: FRESH_TTL, offersFirst: FRESH_TTL, stats: FRESH_TTL, board: FRESH_TTL, boot: 60, spend: FRESH_TTL };
+/* v184：/boot 60 → 180 秒。11/10 一小時裡 Worker 為了 /boot 去問 Supabase 170 次（公告＋顯示開關各 85，
+   不同機房各算各的）；拉長到 3 分鐘大約剩三分之一。代價是管理員關掉某個顯示開關，訪客最多 3 分鐘後才看到。 */
+const TTL = { offers: FRESH_TTL, offersFirst: FRESH_TTL, stats: FRESH_TTL, board: FRESH_TTL, boot: 180, spend: FRESH_TTL };
 
 /* 開場先給幾筆。整包 482 筆是 91KB（gzip 後的真實流量）、未壓縮 671KB，手機要
    等它傳完＋解析完才看得到真的資料（在那之前畫面上是內建的示範資料，回報次數

@@ -13,6 +13,35 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v184　詳情一次拿齊（再少打 Supabase）
+
+`schema_v184_offer_detail_bundle.sql`（要跑）、`template.html`、`worker/offers-cache.js`（要重貼）。
+
+> celine 11/10 截圖：Log Ingestion 0.572 / 1 GB（57%），每天的量 11/8 約 110MB、11/9 約 189MB。剩 24 天、0.43 GB，平均一天要壓在 18MB 以內。
+
+v183 上線後再查 Logs Explorer（11/10 09:35–10:35，一小時 2,968 個請求、85 個 IP）：開站固定那四個已經不見了，site_events 也改成從 Worker（1 個 IP）送。剩下最大的是**點開一筆優惠的詳情**：
+
+| 請求 | 一小時（含 OPTIONS） |
+| --- | --- |
+| `usage_reports` | 297（101） |
+| `comments` | 210（84） |
+| `offer_edit_history` | 208（84） |
+| `profiles_public` | 189（79） |
+| `report_likes`＋`comment_likes` | 236（98） |
+
+都是 24 個 IP 點詳情來的，合計約 1,090（37%）。
+
+- 新增 `offer_detail_bundle(p_offer_id)`：留言 50、回報 30、修改歷史 10、出現過的暱稱、兩種愛心、自己的星等，一個 RPC 拿齊。security invoker，每張表的 RLS 照常，拿到的跟分開查一模一樣
+- 前端先叫它；叫不到（`PGRST202`／SQL 還沒跑）這次造訪之後都走原本分開查，一時失敗只這一次退回；回來的缺一塊也退回
+- 待審的修改建議（只有登入的人看得到那張 view）還是另外問
+- Worker 的 `/boot` 60 → 180 秒（Worker 為它一小時問 Supabase 170 次）；管理員改顯示開關的提示改成「最慢 6 分鐘」；前端判斷 `/boot` 新不新的門檻 5 → 10 分鐘
+
+點開一次詳情：10～12 個請求 → 2 個（登入的人 4 個）。
+
+測試：新增 t98（一次拿齊時其他表都不問、退回時畫面一模一樣、找不到函式之後不再試、一時失敗下次還試、缺一塊退回、SQL 是 invoker／grant／上限）；t36、t40 的 /boot 秒數
+
+---
+
 ## v183　少打 Supabase（Log Ingestion）
 
 `template.html`、`worker/offers-cache.js`（**要重新貼進 Cloudflare 的 birthdaydeals-api**，沒貼的話前端自動退回原本的做法，只是省不到那兩項）。
