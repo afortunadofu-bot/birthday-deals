@@ -73,7 +73,12 @@ const FRESH_TTL = 1800;       // 30 分鐘內算新鮮，直接回快取
 // 不該等十分鐘才在訪客那邊生效。
 /* v184：/boot 60 → 180 秒。11/10 一小時裡 Worker 為了 /boot 去問 Supabase 170 次（公告＋顯示開關各 85，
    不同機房各算各的）；拉長到 3 分鐘大約剩三分之一。代價是管理員關掉某個顯示開關，訪客最多 3 分鐘後才看到。 */
-const TTL = { offers: FRESH_TTL, offersFirst: FRESH_TTL, stats: FRESH_TTL, board: FRESH_TTL, boot: 180, spend: FRESH_TTL };
+/* v187：/boot 180 → 600 秒（celine：「先繼續砍」）。11/11 中午一小時 Worker 還是為了 /boot 問了 Supabase 80 次
+   （公告＋顯示開關各 40，機房各算各的）。代價：管理員關掉某個顯示開關、發公告，訪客最多 11 分鐘後才看到
+   ——所以瀏覽器那邊只留 60 秒（BROWSER_TTL），不要再疊上 10 分鐘。 */
+const TTL = { offers: FRESH_TTL, offersFirst: FRESH_TTL, stats: FRESH_TTL, board: FRESH_TTL, boot: 600, spend: FRESH_TTL };
+// 給瀏覽器的 max-age 跟 Worker 自己存的不一樣時寫在這裡（沒寫就一樣）
+const BROWSER_TTL = { boot: 60 };
 
 /* 開場先給幾筆。整包 482 筆是 91KB（gzip 後的真實流量）、未壓縮 671KB，手機要
    等它傳完＋解析完才看得到真的資料（在那之前畫面上是內建的示範資料，回報次數
@@ -286,7 +291,8 @@ const EVENTS_MAX_ROWS = 50;
 /* v185：不再一個訪客一批就轉一次——11/10 一小時 314 次。同一台 Worker（isolate）同時接很多人，
    先攢在記憶體裡，20 秒或滿 200 筆才一次送給 Supabase。代價：Worker 剛好被回收的話，最後那
    20 秒的事件會掉（這些只是統計，可以接受）；「即時在線人數」最多晚 20 秒。 */
-const EV_HOLD_MS_DEFAULT = 20000;
+/* v187：20 → 25 秒。不能再長：ctx.waitUntil 在回應送出後最多只撐 30 秒，超過的話那一批可能來不及送。 */
+const EV_HOLD_MS_DEFAULT = 25000;
 const EV_BUF_MAX = 200;
 let EV_BUF = [];
 let EV_FLUSH = null;
@@ -370,28 +376,35 @@ async function serveImage(request, env, ctx, rel) {
  *   stale（24 小時）只有在上游出事時才拿出來頂。
  */
 async function serve(request, env, ctx, kind) {
+  return cached(request, ctx, kind, TTL[kind] || FRESH_TTL, () => fromSupabase(env, kind), BROWSER_TTL[kind]);
+}
+async function cached(request, ctx, name, ttl, load, browserTtl) {
   const cache = caches.default;
   const origin = new URL(request.url).origin;
-  const freshKey = new Request(`${origin}/__cache/${kind}/fresh`, { method: 'GET' });
-  const staleKey = new Request(`${origin}/__cache/${kind}/stale`, { method: 'GET' });
+  const freshKey = new Request(`${origin}/__cache/${name}/fresh`, { method: 'GET' });
+  const staleKey = new Request(`${origin}/__cache/${name}/stale`, { method: 'GET' });
+  const forBrowser = (res) => {
+    if (browserTtl != null) res.headers.set('cache-control', `public, max-age=${browserTtl}`);
+    return res;
+  };
 
   const hit = await cache.match(freshKey);
   if (hit) {
     const res = new Response(hit.body, hit);
     res.headers.set('x-cache', 'HIT');
-    return res;
+    return forBrowser(res);
   }
 
   try {
-    const data = await fromSupabase(env, kind);
+    const data = await load();
     const body = JSON.stringify({ at: new Date().toISOString(), data });
-    const fresh = json(body, { ttl: TTL[kind] || FRESH_TTL, extra: { 'x-cache': 'MISS' } });
+    const fresh = json(body, { ttl, extra: { 'x-cache': 'MISS' } });
     const stale = json(body, { ttl: STALE_TTL });
     ctx.waitUntil(Promise.all([
       cache.put(freshKey, fresh.clone()),
       cache.put(staleKey, stale.clone()),
     ]));
-    return fresh;
+    return forBrowser(fresh);
   } catch (err) {
     // 上游掛了：有舊的就先頂著，總比整頁沒資料好
     const old = await cache.match(staleKey);
@@ -399,10 +412,41 @@ async function serve(request, env, ctx, kind) {
       const res = new Response(old.body, old);
       res.headers.set('x-cache', 'STALE');
       res.headers.set('x-upstream-error', String(err && err.message || err).slice(0, 120));
-      return res;
+      return forBrowser(res);
     }
     return json({ error: String(err && err.message || err) }, { status: 502, ttl: 0 });
   }
+}
+
+/**
+ * /tile?y=<整數>&x=<整數>：附近地圖的分店，一格 0.025 度（約 2.5 公里）見方（v187）。
+ * 11/11 中午一小時，地圖拖動跟「清單跟著地圖」直接問了 Supabase 約 120 次（加上 OPTIONS），
+ * 每個人各問各的。切成固定的格子之後，同一格在同一個機房 30 分鐘內只問一次，大家共用。
+ * y = floor(緯度 / 0.025)、x = floor(經度 / 0.025)；只收台灣附近（含金馬）的格子。
+ * 台北最密的一格約 450 家，離上限 1000 還遠；真的滿了網站會自己改回直接查。
+ */
+const TILE_DEG = 0.025;
+const TILE_LIMIT = 1000;
+function serveTile(request, env, ctx, url) {
+  const y = Number(url.searchParams.get('y'));
+  const x = Number(url.searchParams.get('x'));
+  if (!Number.isInteger(y) || !Number.isInteger(x) || y < 800 || y > 1120 || x < 4640 || x > 4960) {
+    return json({ error: 'bad tile' }, { status: 400, ttl: 0 });
+  }
+  return cached(request, ctx, `tile/${y}_${x}`, FRESH_TTL, async () => {
+    const base = cfg(env, 'SUPABASE_URL');
+    const key = cfg(env, 'SUPABASE_ANON_KEY');
+    const r = await fetch(`${base}/rest/v1/rpc/offer_stores_in_bounds`, {
+      method: 'POST',
+      headers: { apikey: key, authorization: `Bearer ${key}`, accept: 'application/json', 'content-type': 'application/json' },
+      body: JSON.stringify({
+        p_south: y * TILE_DEG, p_west: x * TILE_DEG, p_north: (y + 1) * TILE_DEG, p_east: (x + 1) * TILE_DEG,
+        p_limit: TILE_LIMIT,
+      }),
+    });
+    if (!r.ok) throw new Error(`offer_stores_in_bounds ${r.status}`);
+    return await r.json();
+  });
 }
 
 /**
@@ -423,7 +467,7 @@ async function statusPage(request) {
   const now = new Date().toISOString();
 
   if (!(request.headers.get('accept') || '').includes('text/html')) {
-    return json({ ok: true, service: '壽星日 edge cache', paths: ['/offers', '/offers/first', '/stats', '/board', '/boot', '/spend', '/events', '/health'], cache: warm, now },
+    return json({ ok: true, service: '壽星日 edge cache', paths: ['/offers', '/offers/first', '/stats', '/board', '/boot', '/spend', '/tile', '/events', '/health'], cache: warm, now },
       { ttl: 0 });
   }
 
@@ -458,6 +502,7 @@ p.note{font-size:.84rem;color:#8f8482;margin-top:22px}
 <div class="row"><code><a href="/board">/board</a></code>　排行榜統計　${mark(warm.board)}</div>
 <div class="row"><code><a href="/boot">/boot</a></code>　公告＋顯示開關　${mark(warm.boot)}</div>
 <div class="row"><code><a href="/spend">/spend</a></code>　大家實際花多少　${mark(warm.spend)}</div>
+<div class="row"><code>/tile?y=…&amp;x=…</code>　附近地圖的分店<span class="dim">一格約 2.5 公里，每格各快取 30 分鐘</span></div>
 <div class="row"><code>POST /events</code>　事件記錄轉送<span class="dim">不快取，網站送來的直接轉給資料庫</span></div>
 <div class="row"><code><a href="/health">/health</a></code>　健康檢查<span class="dim">不快取，拿來確認這支還活著</span></div>
 <p class="note">這個網址是給網站呼叫的，不是給人看的——看到這頁就代表一切正常。
@@ -487,6 +532,7 @@ const handler = {
       if (path === '/boot') return serve(request, env, ctx, 'boot');
       if (path === '/spend') return serve(request, env, ctx, 'spend');
       if (path.startsWith('/img/')) return serveImage(request, env, ctx, path.slice(5));
+      if (path === '/tile') return serveTile(request, env, ctx, url);
       if (path === '/health') return json({ ok: true, now: new Date().toISOString() }, { ttl: 0 });
     }
 
@@ -496,7 +542,7 @@ const handler = {
 
     if (path === '/' && (request.method === 'GET' || request.method === 'HEAD')) return statusPage(request);
 
-    return json({ error: 'not found', paths: ['/offers', '/offers/first', '/stats', '/board', '/boot', '/spend', '/events', '/health'] }, { status: 404, ttl: 0 });
+    return json({ error: 'not found', paths: ['/offers', '/offers/first', '/stats', '/board', '/boot', '/spend', '/tile', '/events', '/health'] }, { status: 404, ttl: 0 });
   },
 };
 

@@ -5744,7 +5744,7 @@ async function internetOk(){
    那一包是新的，就代表 Worker 剛剛才從 Supabase 拿到資料，資料庫活著，不用每個人再問一次。
    Worker 拿不到、或給的是 5 分鐘以前的舊資料（Worker 問 Supabase 失敗時會拿舊的頂著）
    才自己問。402 停機另外有 sxFetch 在每一個請求上接著，不會漏。 */
-const BOOT_FRESH_MS=10*60*1000;   // v184：Worker 的 /boot 改快取 3 分鐘，瀏覽器也留 3 分鐘，最舊大約 6 分鐘
+const BOOT_FRESH_MS=15*60*1000;   // v187：Worker 的 /boot 改快取 10 分鐘，瀏覽器留 1 分鐘，正常最舊約 11 分鐘
 async function maybeProbeBackend(){
   if(!edgeApi()) return probeBackend();
   const b=await bootBundle();
@@ -6829,7 +6829,7 @@ function renderSiteFlagsPanel(){
     applySiteFlags();
     // 自己改的要馬上在自己這邊是對的，所以跳過共用快取重讀一次
     BOOT_BUNDLE=null; BOOT_AT=0;
-    note($('#siteFlagsMsg'),'good',`✓ 已${on?'打開':'關掉'}「${esc(FLAG_LABEL[k].trim().replace(/^└\s*/,''))}」，訪客最慢 6 分鐘內會看到（共用快取 3 分鐘＋瀏覽器自己留 3 分鐘）。`);
+    note($('#siteFlagsMsg'),'good',`✓ 已${on?'打開':'關掉'}「${esc(FLAG_LABEL[k].trim().replace(/^└\s*/,''))}」，訪客最慢 11 分鐘內會看到（共用快取 10 分鐘＋瀏覽器自己留 1 分鐘）。`);
   });
 }
 
@@ -8171,11 +8171,71 @@ async function setNearCenter(lat, lng, label){
   syncNearMapCenter(true);
   await loadNear();
 }
+/* v187：附近的分店改成按格子跟 Worker 拿（/tile，一格 0.025 度、約 2.5 公里）。
+   11/11 中午一小時，地圖拖動＋清單跟著地圖直接問了 Supabase 約 120 次（加上 OPTIONS），每個人各問各的；
+   切成固定的格子之後，同一格 Cloudflare 存 30 分鐘大家共用，自己拖回看過的地方也不用再拿。
+   哪一格拿不到、店多到被截斷（一格 1000 家）、或要的範圍超過 16 格（例如 5 公里以上），
+   就照原本直接問資料庫——結果一樣，只是比較費。代價：剛加的分店最多晚 30 分鐘才出現在地圖上。 */
+const TILE_DEG=0.025, TILE_MAX=16, TILE_LIMIT=1000;
+const TILE_CACHE=new Map();   // 'y_x' → Promise<分店陣列|null>
+let TILE_OK=true;             // Worker 還沒更新到有 /tile 的版本（404）就這次造訪不再試
+const tileIdx=v=>Math.floor(v/TILE_DEG);
+function fetchTile(y,x){
+  const k=`${y}_${x}`;
+  if(TILE_CACHE.has(k)) return TILE_CACHE.get(k);
+  const p=(async()=>{
+    try{
+      const r=await fetch(`${edgeApi()}/tile?y=${y}&x=${x}`);
+      if(r.status===404) TILE_OK=false;
+      if(!r.ok) return null;
+      const j=await r.json();
+      return Array.isArray(j?.data) ? j.data : null;
+    }catch{ return null; }
+  })();
+  TILE_CACHE.set(k,p);
+  p.then(v=>{ if(!v && TILE_CACHE.get(k)===p) TILE_CACHE.delete(k); });   // 失敗的不留，下次再試
+  if(TILE_CACHE.size>400) TILE_CACHE.delete(TILE_CACHE.keys().next().value);
+  return p;
+}
+async function storesFromTiles(s,w,n,e){
+  if(!edgeApi() || !TILE_OK) return null;
+  const y0=tileIdx(s), y1=tileIdx(n), x0=tileIdx(w), x1=tileIdx(e);
+  if((y1-y0+1)*(x1-x0+1)>TILE_MAX) return null;
+  const jobs=[];
+  for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++) jobs.push(fetchTile(y,x));
+  const got=await Promise.all(jobs);
+  if(got.some(g=>!g || g.length>=TILE_LIMIT)) return null;
+  // 剛好壓在格線上的店兩格都有，用 store_id 去重
+  const seen=new Set(), rows=[];
+  got.forEach(g=>g.forEach(r=>{ const id=String(r.store_id); if(!seen.has(id)){ seen.add(id); rows.push(r); } }));
+  return {rows, box:{s:y0*TILE_DEG, n:(y1+1)*TILE_DEG, w:x0*TILE_DEG, e:(x1+1)*TILE_DEG}};
+}
+// 跟 nearest_offer_stores（schema_v58）同一套：同一個方框先篩、半徑內每筆優惠留最近的一家、數半徑內共幾家
+async function nearestFromTiles(lat,lng,km){
+  if(!(km<=3)) return null;
+  const rad=Math.PI/180, dLat=km/111, dLng=km/(111*Math.max(Math.cos(lat*rad),0.01));
+  const t=await storesFromTiles(lat-dLat, lng-dLng, lat+dLat, lng+dLng);
+  if(!t) return null;
+  const best=new Map(), cnt=new Map();
+  t.rows.forEach(r=>{
+    const a=Math.sin((r.lat-lat)*rad/2)**2 + Math.cos(lat*rad)*Math.cos(r.lat*rad)*Math.sin((r.lng-lng)*rad/2)**2;
+    const d=2*6371000*Math.asin(Math.min(1, Math.sqrt(a)));
+    if(d>km*1000) return;
+    const k=String(r.offer_id);
+    cnt.set(k,(cnt.get(k)||0)+1);
+    const b=best.get(k);
+    if(!b || d<b.distance_m) best.set(k,{...r, distance_m:d});
+  });
+  return [...best.values()].map(r=>({...r, stores_within:cnt.get(String(r.offer_id))}));
+}
 async function loadNear(){
   if(!NEAR.active||NEAR.lat==null) return;
   const seq=++NEAR.reqSeq;
   NEAR.loading=true; renderNearBar();
-  const {data,error}=await sb.rpc('nearest_offer_stores',{p_lat:NEAR.lat, p_lng:NEAR.lng, p_km:NEAR.km});
+  const lat=NEAR.lat, lng=NEAR.lng, km=NEAR.km;   // 先記下來：等格子的時候使用者可能又換了距離
+  const viaTiles=await nearestFromTiles(lat, lng, km);
+  const {data,error}=viaTiles ? {data:viaTiles, error:null}
+    : await sb.rpc('nearest_offer_stores',{p_lat:lat, p_lng:lng, p_km:km});
   if(seq!==NEAR.reqSeq) return;   // 使用者手快又換了位置／距離，舊結果丟掉
   NEAR.loading=false;
   if(error){
@@ -8299,6 +8359,12 @@ async function loadNearPins(){
   const v={s:b.getSouth(), w:b.getWest(), n:b.getNorth(), e:b.getEast()};
   const box=NEAR_PIN_BOX;
   if(box && box.full && v.s>=box.s && v.n<=box.n && v.w>=box.w && v.e<=box.e){ paintNearPins(); return; }
+  const t=await storesFromTiles(v.s, v.w, v.n, v.e);   // v187：先跟 Worker 拿格子
+  if(t){
+    if(key!==NEAR_PIN_KEY || !NEAR_MAP) return;          // 等的時候又拖走了，交給新的那一次
+    NEAR_PIN_ROWS=t.rows; NEAR_PIN_BOX={...t.box, full:true};
+    paintNearPins(); return;
+  }
   const dLat=(v.n-v.s)*NEAR_PIN_PAD, dLng=(v.e-v.w)*NEAR_PIN_PAD;
   const want={s:v.s-dLat, n:v.n+dLat, w:v.w-dLng, e:v.e+dLng};
   const {data,error}=await sb.rpc('offer_stores_in_bounds',

@@ -103,7 +103,9 @@ function loadWorker() {
   t.eq('原本的也壞了：不會一直換來換去', im.getAttribute('src'), sbUrl);
   box.remove();
 
-  /* ---- 附近地圖：多抓一圈，小幅拖動不重查 ---- */
+  /* ---- 附近地圖：多抓一圈，小幅拖動不重查 ----
+     （v187 起有 Worker 會先拿格子；這裡測的是沒有 Worker／格子拿不到時的直接查詢） */
+  win.eval(`window.OFFERS_API='';`);
   const calls = [];
   win.__calls = calls;
   win.__rows = [];
