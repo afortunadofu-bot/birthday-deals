@@ -1,0 +1,123 @@
+# 壽星日 iOS 建置管線（Codemagic）
+#
+# 為什麼放在 repo 根目錄而不是 app/：Codemagic 只讀 repo 根目錄的 codemagic.yaml，
+# 沒有「指定設定檔路徑」的選項。這個 repo 的根目錄就是 claude/，所以就是這裡。
+# 下面所有路徑都是從 repo 根目錄算起（Codemagic 的 clone 根目錄 = $CM_BUILD_DIR）。
+#
+# ⚠️ 這份檔案**沒有在真的 macOS 上跑過**（開發機是 Windows，沒有 Mac）。
+#    內容是照 Codemagic 與 Capacitor 的文件寫的，第一次按 Start new build
+#    八成會在某一步停下來，看 log 修就好。要補的設定見 app/README.md 的「iOS 怎麼建」。
+#
+# 沒有 `pod install` 這一步，不是漏寫的：Capacitor 8 的 `cap add ios` 產生的是
+# Swift Package Manager 專案（ios/App/CapApp-SPM/Package.swift），整個專案裡
+# 沒有 Podfile。SPM 的依賴由 xcodebuild 自己解析，不需要 CocoaPods。
+# 真要走 CocoaPods 的話是 `npx cap add ios --packagemanager CocoaPods` 重新產生，
+# 然後這裡才需要 `cd app/ios/App && pod install`。
+
+workflows:
+  ios-testflight:
+    name: 壽星日 iOS → TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 45          # 免費額度是 500 分鐘／月，別讓卡住的 build 吃光
+
+    # Codemagic UI → Teams/App settings → Integrations → App Store Connect
+    # 加好 API key 之後，把這裡改成你給那把 key 取的名字。
+    integrations:
+      app_store_connect: shouxing-asc-key
+
+    environment:
+      # 自動簽章：Codemagic 拿上面那把 API key 去 App Store Connect
+      # 抓（沒有就建）憑證與 provisioning profile，不用自己上傳 .p12。
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: work.celinefu.shouxing
+      vars:
+        XCODE_PROJECT: "app/ios/App/App.xcodeproj"
+        XCODE_SCHEME: "App"
+        # 商店上顯示的版號。要發 1.1 就改這裡（CHANGELOG 的 vN 是網站版號，兩套不一樣）。
+        MARKETING_VERSION: "1.0.0"
+      node: latest                  # 本機是 24.18；要鎖版本就寫成 "24.18.0"
+      xcode: latest
+
+    # 刻意不設 triggering。網站一天會改好幾次，每次 push 都跑 macOS 會把
+    # 免費的 500 分鐘燒光。要出 TestFlight 版的時候自己按 Start new build。
+
+    cache:
+      cache_paths:
+        - ~/.npm
+
+    scripts:
+      - name: 裝 npm 依賴
+        script: |
+          # 一定要在 app/ 裝：CapApp-SPM/Package.swift 用相對路徑
+          # ../../../node_modules/@capgo/capacitor-social-login 指進去，
+          # 少了 node_modules，xcodebuild 解析 SPM 依賴時就會失敗。
+          cd app
+          npm ci
+
+      - name: 組 www/（跑 build.py）
+        script: |
+          # sync_www.py 會先跑上一層的 build.py 產生 index.html + main.js，
+          # 再照 publish.py 的 SITE_FILES 把網站用得到的檔案複製進 app/www/。
+          # 只用到 Python 標準函式庫，不需要 pip install。
+          cd app
+          python3 sync_www.py
+
+      - name: cap sync ios
+        script: |
+          # 把 www/ 複製進 ios/App/App/public，並重新產生 capacitor.config.json
+          # 與 config.xml（這三個都不進 git，所以每次 CI 都要重跑這步）。
+          cd app
+          npx cap sync ios
+
+      - name: 套用簽章設定
+        script: |
+          # 把上面抓下來的 provisioning profile 寫進 Xcode 專案，
+          # 同時產生 $HOME/export_options.plist 給 -exportArchive 用。
+          xcode-project use-profiles --project "$XCODE_PROJECT"
+
+      - name: xcodebuild archive
+        script: |
+          # $BUILD_NUMBER 是 Codemagic 的建置計數器，每跑一次 +1。
+          # TestFlight 要求 CFBundleVersion 一直往上長，這個剛好符合。
+          # 如果以後有人用別的方式傳過版本上去、號碼撞到，改成
+          #   app-store-connect get-latest-testflight-build-number <APP_ID>
+          # 取線上最大值再 +1。
+          xcodebuild \
+            -project "$XCODE_PROJECT" \
+            -scheme "$XCODE_SCHEME" \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$CM_BUILD_DIR/build/App.xcarchive" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            MARKETING_VERSION="$MARKETING_VERSION" \
+            archive
+
+      - name: 匯出 ipa
+        script: |
+          xcodebuild -exportArchive \
+            -archivePath "$CM_BUILD_DIR/build/App.xcarchive" \
+            -exportOptionsPlist "$HOME/export_options.plist" \
+            -exportPath "$CM_BUILD_DIR/build/ipa"
+
+    artifacts:
+      - build/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log    # build 掛掉的時候就看這個
+
+    publishing:
+      app_store_connect:
+        auth: integration             # 用上面 integrations 那把 key，不用再填帳密
+        submit_to_testflight: true
+        # 想自動丟給特定測試群組就把下面兩行打開，名字要跟 App Store Connect
+        # 裡的測試群組一字不差。沒有的話 build 只會躺在 TestFlight 等你手動指派。
+        # beta_groups:
+        #   - 內部測試
+        submit_to_app_store: false    # 正式送審一律手動，兩邊商店要同一天發布
+
+      # 想收建置結果通知的話把下面打開，填自己的收件地址。
+      # email:
+      #   recipients:
+      #     - you@example.com
+      #   notify:
+      #     success: false
+      #     failure: true

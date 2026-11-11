@@ -20,8 +20,26 @@ app/android/build/
 app/android/.gradle/
 app/android/local.properties
 app/android/app/release/
-app/ios/App/Pods/
+# ios/ 本身要進 git（Info.plist、PrivacyInfo.xcprivacy、共用 scheme、簽章設定都在裡面）。
+# app/ios/.gitignore 是 Capacitor 樣板自帶的，內容跟下面重疊、也跟著進 git；
+# git 兩份都會讀，要改的話改這裡就好。
 app/ios/App/build/
+app/ios/App/output/
+app/ios/App/Pods/
+app/ios/DerivedData/
+# cap sync ios 的產物（www/ 的複本與產生的設定檔）。
+# 跟 android 那三條同一個理由：留著會以未追蹤檔案躺在那裡，很容易被 git add . 帶進去。
+app/ios/App/App/public/
+app/ios/App/App/capacitor.config.json
+app/ios/App/App/config.xml
+app/ios/capacitor-cordova-ios-plugins/
+# SPM 的解析結果與 Xcode 的個人設定（誰開過、開在哪個模擬器）。
+app/ios/App/CapApp-SPM/.build/
+app/ios/App/CapApp-SPM/.swiftpm/
+*.xcuserdatad/
+xcuserdata/
+# codemagic.yaml 的 archive／ipa 輸出位置（只有 CI 跟 Mac 上會出現）。
+/build/
 
 # repo 已公開（2026-10-30），預防性擋掉常見的祕密檔。
 # 目前這些檔都不存在，也從沒進過版控；純粹是防以後手滑。

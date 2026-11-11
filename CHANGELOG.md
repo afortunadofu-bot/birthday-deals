@@ -13,6 +13,64 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v189　接上 iOS 建置：Capacitor iOS 平台 ＋ Codemagic 管線
+
+**沒有資料庫變更，也沒有動 `template.html`——網站一個位元都沒變。**
+新增 `app/ios/`（Capacitor 產生的 Xcode 專案）、`codemagic.yaml`（repo 根目錄），
+改 `app/package.json`、`app/README.md`、`.gitignore`。
+
+### 這一版做完了什麼、沒做完什麼
+
+| | |
+|---|---|
+| **跑過** | `npm i @capacitor/ios && npx cap add ios`、`cap sync ios`（Windows 上可以跑，只是複製檔案） |
+| **寫了但沒驗證** | `codemagic.yaml` 的 `xcodebuild`、簽章、上傳 TestFlight——這台沒有 Mac |
+
+所以這一版的交付是「管線備好了」，不是「出過一個 build」。
+第一次在 Codemagic 按下去很可能會停在某一步，那是預期的。
+
+### 沒有 `pod install` 這一步
+
+Capacitor 8 的 `cap add ios` 產生的是 **Swift Package Manager** 專案
+（`ios/App/CapApp-SPM/Package.swift`），整個專案裡沒有 Podfile，
+依賴由 xcodebuild 自己解析。規劃當初寫的 `pod install` 在這個版型下不存在。
+
+連帶的一件事：`Package.swift` 用相對路徑指向 `node_modules/@capgo/capacitor-social-login`，
+所以 **CI 一定要先在 `app/` 跑 `npm ci`**，不然 SPM 解析會失敗。
+
+### 補了一個 Capacitor 樣板沒附的檔
+
+`ios/App/App.xcodeproj/xcshareddata/xcschemes/App.xcscheme`。
+Xcode 開專案時會自己生一份 scheme，但那份在 `xcuserdata/`（不進 git），
+CI 上 `xcodebuild -scheme App` 會找不到。手寫一份共用的補上。
+
+### 兩個為了過審的 iOS 專屬設定
+
+**`Info.plist`**
+
+- `NSLocationWhenInUseUsageDescription`——「附近」要定位。WKWebView 的
+  `navigator.geolocation` 跟原生定位都吃這個鍵，缺了 iOS **直接不問權限**
+  （功能等於壞掉），而且會被退件。
+- `ITSAppUsesNonExemptEncryption = false`——沒有它，每一版上傳 TestFlight
+  都要手動回答一次出口合規問題。
+
+**`PrivacyInfo.xcprivacy`**（PLAN-APP.md 第 6 階段那一項）
+
+Apple 2024-05 起強制，缺了會收到 `ITMS-91053`。內容照 `privacy.html` 翻的，
+檔案裡有逐項對照。**定位沒有宣告為「收集」**：政策寫的是座標只在裝置上排序、
+不會傳給我們，沒離開裝置就不算 collected。
+App Store Connect 的隱私問卷要跟這個檔對得起來，審核是比對兩邊。
+
+### 還要你自己做的四件事
+
+寫在 [`app/README.md`](app/README.md) 的「iOS 怎麼建」：Apple Developer 帳號
+（**要等 1–3 週，今天就該辦**）、App Store Connect 建 App 記錄、
+Codemagic 連 GitHub ＋ App Store Connect API key、Google 登入的 iOS 用戶端。
+
+bundle id 跟 Android 同一個：`work.celinefu.shouxing`。
+
+---
+
 ## v188　App 的 Google 登入（原生），網頁版零變化
 
 **沒有資料庫變更。** 動 `template.html`、`config.js`、`config.example.js`、
