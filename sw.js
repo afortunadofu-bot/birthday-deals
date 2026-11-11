@@ -7,14 +7,16 @@
    - Supabase API：完全不攔截。優惠資料必須是最新的，
      快取住反而會給人過期的優惠資訊，那比開不了還糟。
 */
-const CACHE = 'shouxing-v8';
+const CACHE = 'shouxing-v9';
 /* v138：Supabase SDK 也一起預先快取。本來它是跟 CDN 拿的，CDN 一慢或被擋就整個
    降級成離線模式（使用者 tomoe_hot 連續兩天回報）。放自己站上＋預先快取之後，
    連沒網路都還能用快取那一份把畫面跑起來。
 
    v152：SDK 列兩個位置。上傳時 vendor/ 那層資料夾被攤平了，檔案實際上在根目錄，
    所以 './vendor/supabase.min.js' 線上是 404。兩個都列，有哪個就快取哪個。 */
-const ASSETS = ['./', './index.html', './manifest.json', './icon.svg',
+/* v186：主程式從 index.html 抽成 main.js 了，一定要一起預先快取——
+   少了它，離線開啟會拿到一個「畫得出來但什麼都不會動」的頁面。 */
+const ASSETS = ['./', './index.html', './main.js', './manifest.json', './icon.svg',
                 './icon-192.png', './icon-512.png'];
 const ASSETS_MAYBE = ['./vendor/supabase.min.js', './supabase.min.js'];
 

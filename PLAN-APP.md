@@ -22,6 +22,83 @@
 
 ---
 
+## 階段 1 做完了（2026-11-11 實測）
+
+APK 跑得起來、裝得上去、網頁內容在 WebView 裡正常顯示。
+
+| 量到的 | 數字 |
+|---|---|
+| APK 大小 | **5.11 MB** |
+| 打包進去的 `index.html` | **1.15 MB**（10 月規劃時是 0.86 MB） |
+| Activity 冷啟動 | 3.5 秒 |
+| DOMContentLoaded（模擬器） | 5.8 秒／14.5 秒（兩次差很多） |
+| 首次繪製（模擬器） | 9.7 秒 |
+| **同一份檔在桌機 Chromium** | **DOMContentLoaded 1.2 秒** |
+
+⚠️ **模擬器的數字不能當真。** 那台機器當下只剩 0.5 GB 可用記憶體，Android 的
+lowmemorykiller 一路在殺背景程式，最後連壽星日自己的程序都被殺掉
+（`work.celinefu.shouxing has died: fg TOP`）。真正的數字要裝到實機才算數。
+
+但方向是確定的：桌機 Chromium 解析＋執行這份 1.15 MB 單檔要 1.2 秒，
+中階手機一般是桌機的 3–6 倍，**實機大概落在 4–7 秒**——跟模擬器狀況好的那次
+（5.8 秒）對得起來。
+
+### 三個實際發現
+
+**1. 網頁本身在 WebView 裡完全正常。** console 零 JS 錯誤，560 筆優惠、篩選、
+附近、Google 登入鈕、底部四個分頁全都在。沒有 CDN、CORS、localStorage 的問題。
+
+**2. Capacitor 自己噴了一個錯，連噴三次：**
+
+```
+Error injecting safe area CSS: TypeError: Cannot read properties of null (reading 'style')
+```
+
+Capacitor 要在 `document.body` 上設安全區 CSS，但 1.15 MB 的 HTML 解析太慢，
+那個時間點 `body` 還是 null。**這是單檔太大的直接症狀**，不是設定錯了。
+
+**3. `sync_www.py` 的檔案清單會過期。** 第一版自己抄了一份 11 個檔的清單，
+一個月後就漏了 `whatsnew-*.jpg`（v162 的更新動畫）——在 App 裡會是 10 個 404。
+現在改成直接讀 `publish.py` 的 `SITE_FILES`，跟上線用同一份清單。
+
+### 減肥：第一步做完了（v186）
+
+先把 1.16 MB 拆開來看，才知道該砍哪裡：
+
+| | bytes | 佔比 |
+|---|---|---|
+| 那一包 `<script>` 裡的 JS | 811,408 | **68%** |
+| build.py 注入的種子資料 | 128,842 | 11% |
+| `<style>` | 123,432 | 10% |
+| 真正的 HTML 標記 | 122,518 | 10% |
+
+**所以「App 版不內嵌種子資料」只省得到 11%，不是重點；JS 本身才是。**
+（原本以為種子資料是大宗，量完才發現不是——這就是為什麼要先量。）
+
+v186 把最大的那包 `<script>` 抽成 `main.js`，`</head>` 前改用
+`<script src="main.js" defer>`。`template.html` 一個字都沒改，全部在 `build.py` 做。
+
+| 桌機 Chromium，同一份檔案 | 之前 | 之後 |
+|---|---|---|
+| index.html | 1,187,043 bytes | **250,365 bytes** |
+| `domInteractive` | 1,171 ms | **440 ms** |
+| `DOMContentLoaded` | 1,172 ms | **631 ms** |
+
+手機上差距會更大：解析＋編譯是 CPU 的工作，而且外部檔案的編譯結果會被存起來，
+第二次之後開啟不用重編——內嵌的 `<script>` 沒有這個待遇。
+
+這同時也修掉了上面那個 `document.body === null` 的 Capacitor 錯誤：
+HTML 只剩 244 KB，`body` 很快就存在了。
+
+**還可以再做的**（還沒做）：
+- `<style>` 那 123 KB 同樣可以抽成 `.css`，手法一樣，風險更低
+- 「開場先畫前 60 筆」（v117）可以再往前推
+- App 版不內嵌種子資料——省 11%，等前兩項做完再看值不值得
+
+這件事做不做，決定 App 給人的第一印象是「秒開」還是「又在轉」。
+
+---
+
 ## 現況盤點
 
 | 項目 | 狀態 | 對上架的影響 |

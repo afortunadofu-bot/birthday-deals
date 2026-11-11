@@ -16,6 +16,10 @@
 | `www/` | **產物**，不進 git，不要手改 |
 | `android/` | Capacitor 產生的原生專案，**要進 git**（AndroidManifest、圖示、簽章設定都在裡面） |
 
+**檔案清單不寫在這裡**，`sync_www.py` 直接讀 `../publish.py` 的 `SITE_FILES`。
+那份清單是「網站需要哪些檔」的唯一來源，上線跟 App 共用。
+以後要新增圖片或頁面，加進 `publish.py` 就好，App 這邊會自動跟上。
+
 ---
 
 ## 環境
@@ -54,6 +58,22 @@ $env:ANDROID_HOME="$env:LOCALAPPDATA\Android\Sdk"
 
 APK 會在 `android\app\build\outputs\apk\debug\app-debug.apk`。
 裝到手機上：`adb install -r <那個路徑>`。
+
+### 量載入速度
+
+```bash
+python sync_www.py --perf && npx cap sync android
+```
+
+`--perf` 會在 `www/index.html` 插一段只有量測用的 script（DOMContentLoaded、
+first-paint、LCP），結果透過 `console.log` 進 logcat：
+
+```powershell
+adb logcat -s Capacitor/Console:V
+```
+
+那段只進 `www/`（產物），**不會動到 `template.html`**，正式版永遠沒有它。
+量完記得跑一次不帶 `--perf` 的 `sync_www.py` 把它清掉。
 
 ---
 

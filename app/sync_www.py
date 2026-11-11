@@ -4,7 +4,11 @@
 
 為什麼不直接讓 Capacitor 指向上一層：那個資料夾裡有 offers.json、schema_*.sql、
 stores_import_*.sql（加起來幾十 MB）跟一堆 Python 腳本，全部都會被打包進 APK。
-www/ 只放手機真的需要的那幾個檔。
+
+**檔案清單不寫在這裡**，直接讀 `publish.py` 的 `SITE_FILES`。
+那份清單是「網站需要哪些檔」的唯一來源，上線跟 App 共用同一份，
+以後新增圖片或頁面只要加進 publish.py，App 這邊自動跟上。
+（第一版這裡自己抄了一份清單，一個月後就漏了 whatsnew-*.jpg——所以不抄了。）
 
 用法：
     python sync_www.py            # 先跑 build.py，再組 www/
@@ -14,58 +18,67 @@ www/ 是產物，不要進 git，也不要手改。
 """
 
 import argparse
+import importlib.util
 import shutil
 import subprocess
 import sys
-import urllib.request
 from pathlib import Path
 
 APP = Path(__file__).parent
 SRC = APP.parent
 WWW = APP / "www"
 
-# 手機上真的會用到的檔案。少一個會 404，多一個只是讓 APK 變大。
-FILES = [
-    "index.html",      # build.py 產物
-    "updates.html",    # build.py 產物
-    "about.html",
-    "privacy.html",
-    "terms.html",
-    "config.js",       # Supabase 金鑰（anon key，公開的，靠 RLS 把關）
-    "track.js",
-    "manifest.json",
-    "icon.svg",
-    "icon-192.png",
-    "icon-512.png",
-]
+# App 裡不要的：service worker。Capacitor 的資產本來就在手機本機，再疊一層快取
+# 只會讓改版後「到底是哪一份在跑」變難查。template.html 的 registerSW() 已經靠
+# IN_APP 跳過註冊，這裡連檔案都不複製，雙重保險。
+EXCLUDE = {"sw.js"}
 
-# 刻意不複製的：
-#   sw.js       —— Capacitor 的資產本來就在本機，再疊一層 service worker
-#                  只會讓快取更難除錯。template.html 已經在 App 裡跳過註冊。
-#   og-image.png—— 只有社群分享的爬蟲會抓，手機版面上用不到（62KB）。
-#   sitemap.xml / robots.txt / google*.html —— 搜尋引擎用的，App 裡沒有意義。
+# supabase.min.js 在網站上是攤平放在根目錄的（上傳時子資料夾會被攤平），
+# 但 App 自己控制資產路徑，沒有那個限制。index.html 的載入器是先找
+# vendor/ 再找根目錄，所以 App 版放回 vendor/ 可以少一次 404。
+KEEP_IN_VENDOR = {"supabase.min.js": "vendor/supabase.min.js"}
 
-# Supabase SDK 改成打包進 App。原因是 index.html 的載入器對 CDN 只等 10 秒，
-# 逾時就整頁降級成「離線示範模式」——手機網路下這件事會真的發生。
-# 本機檔案永遠不會逾時，CDN 留著當備援。
-SDK_URL = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"
-SDK_LOCAL = "vendor/supabase.min.js"
+# 刻意沒有「字串替換」這一段了。
+# 第一版曾經在這裡把 SDK_URLS 改成本機優先，但 v128／v152 之後
+# template.html 自己就是「先找 vendor/、再找根目錄、最後才 CDN」，
+# 所有人（含網頁版）都一樣，App 不需要特別待遇了。
 
-# Leaflet 刻意留在 CDN：地圖圖磚本來就要連網才看得到，而且那一顆
-# L.marker 用的是 Leaflet 的預設圖示，路徑是從 leaflet.css 的位置推算出來的，
-# 搬到本機還要一起搬 images/，換來的好處是零。
 
-# 字串替換：每一條都必須真的命中，沒命中就是上游改過了，要吵出來而不是默默產出壞檔。
-REPLACEMENTS = [
-    (
-        "SDK_URLS 最前面插入本機檔案",
-        "const SDK_URLS=[\n"
-        "  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',",
-        "const SDK_URLS=[\n"
-        f"  '{SDK_LOCAL}',\n"
-        "  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',",
-    ),
-]
+def load_site_files() -> dict:
+    """讀 publish.py 的 SITE_FILES（import 不會跑 main()）。"""
+    path = SRC / "publish.py"
+    if not path.exists():
+        sys.exit(f"找不到 {path}——SITE_FILES 清單在那裡，沒有它不知道要複製什麼。")
+    spec = importlib.util.spec_from_file_location("publish", path)
+    mod = importlib.util.module_from_spec(spec)
+    sys.path.insert(0, str(SRC))
+    try:
+        spec.loader.exec_module(mod)
+    finally:
+        sys.path.pop(0)
+    if not getattr(mod, "SITE_FILES", None):
+        sys.exit("publish.py 裡找不到 SITE_FILES，清單的格式應該改過了。")
+    return dict(mod.SITE_FILES)
+
+
+# --perf 用的量測片段。只動 www/（產物），不動 template.html，所以正式版永遠沒有這段。
+# console.log 會被 Capacitor 轉進 logcat（tag: Capacitor/Console），
+# 所以手機上可以用 `adb logcat -s Capacitor/Console` 直接讀到數字。
+PERF_SNIPPET = """<script>
+/* 量測用，只有 sync_www.py --perf 會放進來 */
+(function(){
+  function log(n,v){ console.log('[PERF] '+n+'='+Math.round(v)+'ms'); }
+  document.addEventListener('DOMContentLoaded',function(){ log('DOMContentLoaded',performance.now()); });
+  window.addEventListener('load',function(){ log('load',performance.now()); });
+  try{
+    new PerformanceObserver(function(l){ l.getEntries().forEach(function(e){ log(e.name,e.startTime); }); })
+      .observe({type:'paint',buffered:true});
+    new PerformanceObserver(function(l){ var e=l.getEntries().pop(); if(e) log('LCP',e.startTime); })
+      .observe({type:'largest-contentful-paint',buffered:true});
+  }catch(e){}
+})();
+</script>
+"""
 
 
 def run_build() -> None:
@@ -74,59 +87,51 @@ def run_build() -> None:
         sys.exit("build.py 失敗，www/ 沒有重建。")
 
 
-def fetch_sdk(dest: Path) -> None:
-    if dest.exists():
-        print(f"  vendor/supabase.min.js 已存在（{dest.stat().st_size // 1024} KB），跳過下載")
-        return
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    print(f"  下載 Supabase SDK → {dest.name}")
-    with urllib.request.urlopen(SDK_URL, timeout=60) as r:
-        dest.write_bytes(r.read())
-    print(f"  完成（{dest.stat().st_size // 1024} KB）")
-
-
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-build", action="store_true", help="不跑 build.py，直接用現有成品")
+    ap.add_argument("--perf", action="store_true",
+                    help="在 www/index.html 插入量測片段（DOMContentLoaded／paint／LCP），只給測速用")
     args = ap.parse_args()
 
     if not args.no_build:
         run_build()
 
-    # vendor/ 要保留（裡面是下載來的 SDK，不想每次重抓），其餘清掉重組。
-    if WWW.exists():
-        for p in WWW.iterdir():
-            if p.name == "vendor":
-                continue
-            shutil.rmtree(p) if p.is_dir() else p.unlink()
-    WWW.mkdir(parents=True, exist_ok=True)
+    site_files = load_site_files()
 
-    missing = [f for f in FILES if not (SRC / f).exists()]
+    # 哪些要複製、複製到 www/ 的哪個名字
+    plan = {}
+    for dest, src in site_files.items():
+        if dest in EXCLUDE:
+            continue
+        plan[KEEP_IN_VENDOR.get(dest, dest)] = src
+
+    missing = [s for s in plan.values() if not (SRC / s).exists()]
     if missing:
-        sys.exit("上一層找不到這些檔案：" + "、".join(missing))
+        sys.exit("上一層找不到這些檔案（先跑 build.py 或補檔）：" + "、".join(missing))
+
+    if WWW.exists():
+        shutil.rmtree(WWW)
+    WWW.mkdir(parents=True)
 
     total = 0
-    for f in FILES:
-        src, dst = SRC / f, WWW / f
-        shutil.copy2(src, dst)
-        total += dst.stat().st_size
+    for dest, src in sorted(plan.items()):
+        d = WWW / dest
+        d.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(SRC / src, d)
+        total += d.stat().st_size
 
-    fetch_sdk(WWW / "vendor" / "supabase.min.js")
-
-    # 針對 App 版做的字串替換（不動 template.html，網頁版完全不受影響）
     idx = WWW / "index.html"
-    html = idx.read_text(encoding="utf-8")
-    for label, old, new in REPLACEMENTS:
-        if old not in html:
-            sys.exit(
-                f"替換失敗：{label}。\n"
-                "index.html 裡找不到預期的那段字，應該是 template.html 改過了。\n"
-                "請同步更新 app/sync_www.py 的 REPLACEMENTS，不要讓它默默產出壞檔。"
-            )
-        html = html.replace(old, new, 1)
-    idx.write_text(html, encoding="utf-8")
+    if args.perf:
+        html = idx.read_text(encoding="utf-8")
+        if "<head>" not in html:
+            sys.exit("index.html 裡找不到 <head>，量測片段插不進去。")
+        html = html.replace("<head>", "<head>\n" + PERF_SNIPPET, 1)
+        idx.write_text(html, encoding="utf-8")
+        print("  ⚠️ 已插入量測片段（--perf）——這份 www/ 只能用來測速，不要拿去送審")
 
-    print(f"www/ 已組好：{len(FILES)} 個檔案，共 {total / 1024 / 1024:.1f} MB")
+    print(f"www/ 已組好：{len(plan)} 個檔案，共 {total / 1024 / 1024:.1f} MB"
+          f"（清單來自 publish.py，跳過 {'、'.join(sorted(EXCLUDE))}）")
     print(f"  index.html {idx.stat().st_size / 1024 / 1024:.2f} MB ← 這就是 WebView 要吃下去的量")
 
 

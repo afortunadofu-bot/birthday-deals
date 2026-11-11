@@ -27,6 +27,7 @@ ASIDE = os.path.normpath(os.path.join(HERE, '..', 'birthday-deals-不上傳',
 # 上傳後的檔名 → repo 裡的來源
 SITE_FILES = {
     'index.html': 'index.html',
+    'main.js': 'main.js',                  # build.py 從 index.html 抽出來的主程式
     'updates.html': 'updates.html',
     'about.html': 'about.html',
     'privacy.html': 'privacy.html',

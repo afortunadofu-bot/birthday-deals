@@ -34,3 +34,7 @@ keystore.properties
 *.keystore
 *-service-account*.json
 app/android/keystore.properties
+# cap sync 的產物（www/ 的複本）。沒有這行的話，--perf 那種量測版的
+# index.html 會以「未追蹤檔案」躺在這裡，很容易被 git add . 一起帶進去。
+app/android/app/src/main/assets/public/
+app/android/app/src/main/assets/capacitor.config.json

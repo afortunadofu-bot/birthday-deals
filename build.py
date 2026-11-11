@@ -3,6 +3,7 @@
 """把 offers.json 注入 template.html，產生可直接雙擊開啟的 index.html。"""
 
 import json
+import re
 from datetime import date
 from pathlib import Path
 
@@ -84,23 +85,50 @@ def updates_page() -> str:
     return tpl.replace("<!--__UPDATES_BODY__-->", body)
 
 
-def check_js(page: str) -> None:
-    """產生出來的 index.html 裡那包 JS 必須語法正確才算數。
+def split_main_js(page: str) -> tuple:
+    """把最大的那包 <script> 抽成獨立的 main.js，HTML 裡改用 defer 載入。
+
+    為什麼要抽：那包 JS 有 81 萬字元，佔 index.html 的 68%。塞在 <script> 裡的話
+
+      · 每次冷啟動都要重新解析＋編譯一次（V8 的 code cache 對外部檔案才有效）
+      · HTML 要等整包讀完才算解析完——2026-11-11 在 Android WebView 上實測，
+        Capacitor 的安全區注入因此拿到 document.body === null，連噴三次錯誤
+
+    抽出去之後瀏覽器可以一邊下載一邊編譯，HTML 本身只剩 25 萬字元，
+    版面（CSS ＋ 標記）會先畫出來。
+
+    `defer` 的執行時機跟原本「放在 </body> 前」幾乎一樣：都是文件解析完、
+    DOMContentLoaded 之前才跑，所以那包程式碼一個字都不用改。
+    """
+    blocks = list(re.finditer(r"<script>(.*?)</script>", page, re.S))
+    if not blocks:
+        raise SystemExit("找不到任何沒有屬性的 <script>，template.html 的結構變了。")
+    m = max(blocks, key=lambda b: len(b.group(1)))
+    js = m.group(1)
+    # 抓錯區塊的話寧可停下來，也不要產生一個「HTML 完好但程式全不見」的首頁。
+    if len(js) < 100_000:
+        raise SystemExit(
+            f"最大的 <script> 只有 {len(js):,} 字元，看起來抓錯區塊了，停下來。")
+    page = page[:m.start()] + "<!-- 主程式在 main.js，build.py 抽出來的 -->" + page[m.end():]
+    if "</head>" not in page:
+        raise SystemExit("找不到 </head>，main.js 的 script 標籤插不進去。")
+    page = page.replace("</head>", '<script src="main.js" defer></script>\n</head>', 1)
+    return page, js
+
+
+def check_js(big: str) -> None:
+    """抽出來的那包 JS 必須語法正確才算數。
 
     踩過一次：編輯時不小心多留了一行 `if(...){`，整包腳本從那裡開始就解析失敗，
     網站變成「畫得出來但什麼都不會動」——登入鈕沒反應、優惠永遠是內建種子資料。
     瀏覽器只在 console 裡講一句，不看 console 根本不知道。
     有 node 就用 `node --check` 擋下來，沒有就只提醒一句，不擋住建置。
     """
-    import re, shutil, subprocess, tempfile
-    scripts = re.findall(r"<script>(.*?)</script>", page, re.S)
-    if not scripts:
-        return
+    import shutil, subprocess, tempfile
     node = shutil.which("node")
     if not node:
         print("（找不到 node，跳過 JS 語法檢查）")
         return
-    big = max(scripts, key=len)
     with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as f:
         f.write(big)
         path = f.name
@@ -116,9 +144,13 @@ def check_js(page: str) -> None:
         raise SystemExit("JS 語法錯誤，index.html 沒有產生：\n" + msg)
 
 
-check_js(html)
+html, main_js = split_main_js(html)
+check_js(main_js)
+(HERE / "main.js").write_text(main_js, encoding="utf-8")
 (HERE / "index.html").write_text(html, encoding="utf-8")
 (HERE / "updates.html").write_text(updates_page(), encoding="utf-8")
 
+kb = lambda p: (HERE / p).stat().st_size / 1024
 print(f"index.html 已產生，共 {len(payload['offers'])} 筆優惠。")
 print(f"updates.html 已產生，共 {len(updates)} 筆更新。")
+print(f"主程式抽成 main.js：index.html {kb('index.html'):.0f} KB ＋ main.js {kb('main.js'):.0f} KB")

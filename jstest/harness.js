@@ -28,9 +28,65 @@ const path = require('path');
 const { JSDOM } = require('jsdom');
 
 const INDEX = path.join(__dirname, '..', 'index.html');
+const MAIN_JS = path.join(__dirname, '..', 'main.js');
+
+/* v186：主程式被 build.py 抽成 main.js 了，但下面 beforeParse 會把每一個帶 src
+   的 <script> 都當成載入失敗（那是為了 config.js 跟 CDN 不要真的打網路）。
+   照這樣下去 main.js 永遠不會執行，整包測試等於在測一個沒有程式的頁面。
+
+   所以這裡先把 main.js 貼回它原本的位置——也就是 build.py 留下的那行註解，
+   在 </body> 前面，不是 <head> 裡那行 defer。位置錯了的話，程式會在
+   body 還沒解析完就跑，整頁抓不到任何元素。
+
+   貼回去之後 jsdom 看到的就跟 v185 以前一模一樣，測的仍然是 build.py
+   產生出來的那一份 index.html ＋ main.js。 */
+const realReadFileSync = fs.readFileSync;
+const readRawIndex = () => realReadFileSync(INDEX, 'utf8');
+
+const DEFER_TAG = '<script src="main.js" defer></script>';
+const PLACEHOLDER = /<!-- 主程式在 main\.js[^>]*-->/;
+
+function inlineMainJs(html) {
+  const hasTag = html.includes(DEFER_TAG);
+  const hasPlaceholder = PLACEHOLDER.test(html);
+  if (!hasTag && !hasPlaceholder) return html;   // 已經貼回去過了，不要貼第二次
+  if (!hasTag || !hasPlaceholder) {
+    throw new Error(
+      'index.html 裡找不到 main.js 的 script 標籤或那行註解——build.py 的 split_main_js() 改過了？\n' +
+      '請同步更新 jstest/harness.js 的 inlineMainJs()。');
+  }
+  const js = realReadFileSync(MAIN_JS, 'utf8');
+  // 用函式當取代值：main.js 裡到處都是 $（`const $ = ...`、`${}`），
+  // 如果傳字串，$& / $` / $1 這些會被當成取代樣式吃掉。
+  return html
+    .replace(DEFER_TAG + '\n', '')
+    .replace(DEFER_TAG, '')
+    .replace(PLACEHOLDER, () => '<script>' + js + '</script>');
+}
+
+/* 還有二十幾支測試是直接 `fs.readFileSync('../index.html')` 拿原始碼做字串檢查
+   （「某某函式裡有沒有帶上這個參數」那種）。主程式搬去 main.js 之後，那些
+   regex 全部會抓不到東西——而且不是紅燈，是「找不到所以斷言失敗」，一次壞二十幾支。
+
+   那些測試要的是「前端的原始碼」。拆分之後那份原始碼就是 index.html ＋ main.js，
+   所以這個約定補在這裡一次就好，不用每支測試各自記得，新增的測試也自動適用：
+   **讀 index.html 的時候，把 main.js 貼回它原本的位置再回傳**（貼回原位而不是
+   接在後面，是為了那些會比對前後順序的斷言還成立）。
+
+   只攔 index.html 這一個路徑，其他檔案原封不動。
+   要拿「真正的、沒有被貼回去的」index.html（例如想斷言它現在有多小、
+   或是有沒有正確引用 main.js），用 readRawIndex()。 */
+fs.readFileSync = function (file, ...rest) {
+  const out = realReadFileSync.call(fs, file, ...rest);
+  if (typeof out === 'string' && typeof file === 'string'
+      && path.resolve(file) === path.resolve(INDEX)) {
+    return inlineMainJs(out);
+  }
+  return out;
+};
 
 async function boot() {
-  const html = fs.readFileSync(INDEX, 'utf8');
+  const html = inlineMainJs(readRawIndex());
   const dom = new JSDOM(html, {
     url: 'http://localhost/',
     runScripts: 'dangerously',
@@ -231,4 +287,4 @@ function makeAsserts(title) {
   return { ok, eq, done, results };
 }
 
-module.exports = { boot, tick, makeSb, makeAsserts, stubHeavy, INDEX };
+module.exports = { boot, tick, makeSb, makeAsserts, stubHeavy, INDEX, MAIN_JS, readRawIndex };

@@ -43,7 +43,13 @@ const read = (f) => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
   /* sw.js：addAll 是全有全無的，清單裡有一個 404 就一個都不會被快取——
      原本後面還接 .catch(()=>{})，所以連失敗都看不出來。 */
   const sw = read('sw.js');
-  t.ok('離線快取換版本了（不換的話舊的空快取不會被丟掉）', /shouxing-v8/.test(sw));
+  t.ok('離線快取換版本了（不換的話舊的空快取不會被丟掉）', /shouxing-v9/.test(sw));
+  /* v186：主程式從 index.html 搬到 main.js 了。沒有一起預先快取的話，
+     離線開啟會拿到一個「畫得出來但什麼都不會動」的頁面——跟上面那個
+     addAll 全有全無的坑是同一類問題，所以一起在這裡擋住。 */
+  t.ok('main.js 也在預先快取清單裡',
+    /const ASSETS\s*=\s*\[[^\]]*['"]\.\/main\.js['"]/.test(sw),
+    (sw.match(/const ASSETS[\s\S]*?\];/) || [''])[0]);
   t.ok('不再呼叫 addAll（註解裡講原因的那幾個字不算）', !/\.addAll\(/.test(sw));
   t.ok('一個一個加，單獨吃掉失敗', /\.map\(a => c\.add\(a\)\.catch\(\(\) => \{\}\)\)/.test(sw));
   t.ok('兩個位置都列', /'\.\/vendor\/supabase\.min\.js', '\.\/supabase\.min\.js'/.test(sw));

@@ -13,6 +13,60 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v186　主程式抽成 main.js：首頁從 1.16 MB 變 244 KB
+
+**沒有資料庫變更。** 動 `build.py`、`publish.py`、`sw.js`（快取版號跳 v9）。
+`template.html` 一個字都沒改——這是建置階段的改動。
+
+**新增一個要上傳的檔案：`main.js`**（`publish.py` 的 `SITE_FILES` 已經加了，
+發版照常跑 `publish.py` 就會一起複製過去）。
+
+### 起因：Android WebView 上的實測
+
+包成 App 之後量到的（見 `PLAN-APP.md`）：`index.html` 1.16 MB 裡面，
+**68% 是那一包 81 萬字元的 JS**，CSS 10%，真正的 HTML 標記只有 10%。
+
+症狀不只是慢。Capacitor 在 App 裡要注入安全區 CSS，連噴三次
+
+```
+Error injecting safe area CSS: TypeError: Cannot read properties of null (reading 'style')
+```
+
+——因為 HTML 解析太久，那個時間點 `document.body` 還是 `null`。
+
+### 做法
+
+`build.py` 在注入資料之後，把最大的那包 `<script>` 整個抽出來寫成 `main.js`，
+原位置換成註解，`</head>` 前插一行 `<script src="main.js" defer></script>`。
+
+`defer` 的執行時機跟原本「放在 `</body>` 前」幾乎一樣（都是文件解析完、
+`DOMContentLoaded` 之前），所以那包程式碼不用改。差別在於：
+
+- 瀏覽器可以一邊下載一邊編譯，不用等整份 HTML 讀完
+- 編譯結果會被存起來，第二次之後開啟不用重編（內嵌的 `<script>` 沒有這個待遇）
+- HTML 只剩 244 KB，版面先畫出來
+
+抓錯區塊會直接中止（`< 100,000` 字元就報錯），不會產生一個
+「畫得出來但什麼都不會動」的首頁——那正是 `check_js()` 當初要擋的事故。
+
+### 前後（桌機 Chromium，同一份檔案）
+
+| | 之前 | 之後 |
+|---|---|---|
+| index.html | 1,187,043 bytes | **250,365 bytes** |
+| `domInteractive` | 1,171 ms | **440 ms** |
+| `DOMContentLoaded` | 1,172 ms | **631 ms** |
+
+手機上差距會更明顯（解析＋編譯是 CPU 的工作，手機慢 3–6 倍）。
+
+### 沒驗到的
+
+`file://` 直接雙擊開啟 `index.html` 沒有實測過（預覽窗開不了 `file://`）。
+外部 classic script 從 `file://` 同目錄載入照規格是可以的，但 README 有承諾
+「直接雙擊就能跑」，**下次發版前請手動雙擊確認一次**。
+
+---
+
 ## v185　再少打 Supabase：登入事件、頭像、地圖、事件記錄
 
 `template.html`、`worker/offers-cache.js`（**要重貼**；沒貼的話頭像會先試 Worker、失敗自動換回原本網址，事件記錄照 v183 一批批轉送）。不用跑 SQL。
