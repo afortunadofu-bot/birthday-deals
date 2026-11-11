@@ -13,6 +13,57 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v188　App 的 Google 登入（原生），網頁版零變化
+
+**沒有資料庫變更。** 動 `template.html`、`config.js`、`config.example.js`、
+`jstest/t52`、`jstest/t54`，以及 `app/`（多裝一個 plugin）。
+
+**網頁版的登入流程一個字都沒改**，全部走 `IN_APP` 分流。
+
+### 為什麼非做不可
+
+包成 App 之後，現在這套 `signInWithOAuth` 轉址是**一定會失敗**的：
+Google 不准在內嵌 WebView 裡做 OAuth，直接回 `403 disallowed_useragent`。
+改 user agent 沒用，把網域加進允許清單也沒用——那是 Google 的政策。
+
+### 做法
+
+App 裡改走原生：`@capgo/capacitor-social-login` 叫出手機系統的帳號選擇畫面，
+拿回一張 id token，再交給 `sb.auth.signInWithIdToken()` 換成我們自己的 session。
+使用者不會跳出 App，也不會看到網頁。程式在 `googleNativeSignIn()`。
+
+**登出也一起改了**：只清掉 Supabase 的 session 不夠，原生端還記著上次那個
+Google 帳號，下次按登入會靜默登入同一個人——使用者會覺得「登出根本沒有用」。
+所以 App 裡多叫一次 `SocialLogin.logout()`，失敗不擋登出。
+
+### 還需要在後台填的東西（程式這邊已經備好）
+
+現在按下去會說「這個 App 還沒設定好 Google 登入」，因為少了用戶端 ID。
+完整步驟在 `app/README.md`，摘要：
+
+1. Google Cloud 建一個 **Android** OAuth 用戶端，套件名稱 `work.celinefu.shouxing`，
+   SHA-1 用開發機的 debug 金鑰（README 裡有）；上架後還要補 Play 重簽那組
+2. 把**現有的 Web 用戶端 ID**（網頁版在用的那個）填進 `config.js` 的
+   `GOOGLE_WEB_CLIENT_ID`——Android 拿回來的 token，`aud` 是 Web 那一個，
+   填成 Android 的會是 invalid audience
+3. 確認 Supabase 的 Google provider 填的是同一個
+
+### 兩支測試的斷言改成驗行為
+
+兩條都是在比對原始碼字串，被這次的改動誤報——行為其實沒變：
+
+- `t52`「登出也丟掉」釘著 `forgetProfile(); await sb.auth.signOut()` 這一串字。
+  原生登出要插在那兩行中間，字串就對不上。改成**真的按下登出，看快取有沒有消失**。
+- `t54`「所有人都先試本站那一份」寫的是「整份原始碼都不准出現 `if(IN_APP)`」。
+  範圍開到全檔，連不相干的登入分流都會被擋。縮到只看 `loadSupabaseSdk()` 那一段。
+
+### 順帶一提
+
+APK 從 5.21 MB 變 **9.13 MB**——Google 登入的原生程式庫就是這個量級，
+沒有辦法再小。測試 101 支全綠。
+
+---
+
 ## v187　再少打 Supabase：附近地圖改按格子共用、公告／顯示開關 10 分鐘
 
 **沒有資料庫變更。** 動 `template.html`、`worker/offers-cache.js`（**要重貼 Worker**）。

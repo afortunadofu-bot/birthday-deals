@@ -99,9 +99,74 @@ Leaflet 預設圖示，路徑是從 `leaflet.css` 的位置推算的，搬到本
 
 ---
 
-## 還沒做（見 PLAN-APP.md）
+## Google 登入：程式寫好了，剩下你要在兩個後台填的東西
 
-- Google 原生登入（現在的 `signInWithOAuth` 在 WebView 會回 `403 disallowed_useragent`）
+App 裡不能用網頁那套 OAuth 轉址——Google 不准在內嵌 WebView 做 OAuth，
+會直接回 `403 disallowed_useragent`。改 user agent 沒用，加允許清單也沒用。
+
+所以 App 走另一條路：原生端去跟 Google 要一張識別碼（id token），
+再交給 Supabase 換成我們自己的 session。使用者看到的是手機系統原生的
+帳號選擇畫面，不會跳出 App。程式在 `template.html` 的 `googleNativeSignIn()`，
+網頁版完全不受影響（靠 `IN_APP` 分流）。
+
+**但是現在按下去會說「這個 App 還沒設定好 Google 登入」**，因為少了用戶端 ID。
+下面三步要用你的帳號做，我沒辦法代勞：
+
+### 1. Google Cloud → 建一個 Android 用戶端
+
+憑證頁面：<https://console.cloud.google.com/apis/credentials>
+（選到網頁版 Google 登入現在用的那個專案，不要另外開新的）
+
+**建立憑證 → OAuth 用戶端 ID → Android**
+
+| 欄位 | 填什麼 |
+|---|---|
+| 套件名稱 | `work.celinefu.shouxing` |
+| SHA-1（開發用） | `6F:15:1A:87:ED:C0:FA:F5:00:1D:7B:DD:87:AA:11:52:B6:6B:20:A3` |
+
+那組 SHA-1 是這台電腦的 `~/.android/debug.keystore`，**只對 debug APK 有效**。
+上架之後 Google Play 會用自己的金鑰重簽，所以正式版還要再加一組：
+Play Console →「測試及發布 → 應用程式完整性」裡那組 SHA-1，
+回到同一個 Android 用戶端補上去。
+
+### 2. 把 Web 用戶端 ID 填進 `config.js`
+
+**不要新建**，用現在網頁版登入在用的那一個（憑證頁面裡類型是「Web 應用程式」的）。
+打開 `claude/config.js`，把這行取消註解並填入：
+
+```js
+window.GOOGLE_WEB_CLIENT_ID = "……-…….apps.googleusercontent.com";
+```
+
+為什麼 Android 要填 Web 的那一個：Android 端拿回來的識別碼，
+它的 `aud` 會是 Web 用戶端 ID，Supabase 是照這個欄位驗的。
+填成 Android 那一個會收到 invalid audience。
+
+### 3. 確認 Supabase 那邊對得上
+
+Supabase → Authentication → Providers → Google，裡面那個 Client ID
+要跟第 2 步填的是同一個。網頁版本來就在用，所以通常不用改——
+**但還是去看一眼**，不一樣的話 App 登入會失敗而網頁版照常，很難查。
+
+做 iOS 版的時候還要再建一個 iOS 用戶端、填 `window.GOOGLE_IOS_CLIENT_ID`，
+並且把那個 iOS 用戶端 ID 加進 Supabase 的 Authorized Client IDs。
+
+### 填完怎麼驗
+
+```bash
+cd app && python sync_www.py && npx cap sync android
+```
+
+重建 APK 裝上去，按登入應該要跳出**系統原生的 Google 帳號選單**（不是網頁）。
+選完就直接登入，不會跳出 App。失敗的話看 logcat：
+
+```powershell
+adb logcat -s Capacitor/Console:V
+```
+
+---
+
+## 還沒做（見 PLAN-APP.md）
 - Sign in with Apple
 - 本地通知（生日提醒）
 - 留言檢舉／封鎖

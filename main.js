@@ -2271,6 +2271,45 @@ async function probeBackend(wait=3000){
   paintMaint();
   return true;
 }
+/* ---- App 裡的 Google 登入 ------------------------------------------------
+   網頁版用 signInWithOAuth 就好，但在 App 裡那條路走不通：Google 不准在內嵌
+   WebView 裡做 OAuth，會直接回 403 disallowed_useragent。改 user agent 沒用、
+   把網域加進允許清單也沒用，那是 Google 那邊的政策，不是設定錯。
+
+   App 走另一條路：請原生端去跟 Google 要一張識別碼（id token），再把那張
+   交給 Supabase 換成我們自己的 session。使用者看到的是手機系統原生的帳號
+   選擇畫面，不是網頁，所以不會被擋，也不用跳出 App 再跳回來。
+
+   webClientId 要填 Google Cloud 裡「Web」那一個（不是 Android 那一個），
+   而且必須跟 Supabase 的 Google provider 設定裡那一個完全一樣，
+   不一樣的話會收到 invalid audience。設定步驟寫在 app/README.md。 */
+let socialLoginReady = false;
+async function googleNativeSignIn(){
+  const plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.SocialLogin;
+  if(!plugin) throw new Error('這個版本的 App 還沒有內建 Google 登入，請更新 App。');
+  const webClientId = window.GOOGLE_WEB_CLIENT_ID;
+  if(!webClientId) throw new Error('這個 App 還沒設定好 Google 登入（少了 Web 用戶端 ID）。');
+  if(!socialLoginReady){
+    const google = { webClientId };
+    if(window.GOOGLE_IOS_CLIENT_ID){
+      google.iOSClientId = window.GOOGLE_IOS_CLIENT_ID;
+      google.iOSServerClientId = webClientId;   // iOS 要拿 idToken 的話這個要等於 webClientId
+    }
+    await plugin.initialize({ google });
+    socialLoginReady = true;
+  }
+  // mode:'online' 才會給 idToken；offline 給的是 serverAuthCode，那個要後端再換一手。
+  const res = await plugin.login({ provider:'google',
+    options:{ scopes:['email','profile'], mode:'online' } });
+  const idToken = res && res.result && res.result.idToken;
+  if(!idToken) throw new Error('Google 沒有回傳識別碼，請再試一次。');
+  const { error } = await sb.auth.signInWithIdToken({ provider:'google', token:idToken });
+  if(error) throw error;
+  /* 網頁版 OAuth 轉回來的時候整頁本來就是重載的，App 這邊手動重載一次，
+     讓「登入之後才有的畫面」全部走同一條既有路徑長出來，不用另外維護一份。 */
+  location.reload();
+}
+
 $('#btnLogin').onclick = async()=>{
   if(maintActive()){
     // 關掉過的也再叫出來，捲到最上面讓人看到
@@ -2295,6 +2334,7 @@ $('#btnLogin').onclick = async()=>{
     return;
   }
   try{
+    if(IN_APP){ await googleNativeSignIn(); return; }
     const {error} = await sb.auth.signInWithOAuth({provider:'google',
       options:{redirectTo: redirectTarget()}});
     if(error) throw error;
@@ -2311,7 +2351,17 @@ $('#btnLogin').onclick = async()=>{
 // 按鈕的登入邏輯，不用重複寫一次 OAuth 流程。
 $('#btnMineLogin').onclick = ()=>$('#btnLogin').click();
 $('#btnLbLogin').onclick = ()=>$('#btnLogin').click();
-$('#btnLogout').onclick = async()=>{ forgetProfile(); await sb.auth.signOut(); location.reload(); };
+$('#btnLogout').onclick = async()=>{
+  forgetProfile();
+  /* App 裡光是清掉 Supabase 的 session 不夠：原生端還記著上次那個 Google 帳號，
+     下次按登入會直接靜默登入同一個人，使用者會覺得「登出根本沒有用」。
+     失敗不擋登出——本來就是要把人登出，不該因為這一步卡住。 */
+  if(IN_APP){
+    try{ await window.Capacitor.Plugins.SocialLogin.logout({provider:'google'}); }catch{}
+  }
+  await sb.auth.signOut();
+  location.reload();
+};
 
 /* OAuth 失敗時 Supabase 會把原因塞在網址的 # 後面帶回來。
    不主動讀出來的話，使用者只會看到「按了沒反應、回到首頁」。 */

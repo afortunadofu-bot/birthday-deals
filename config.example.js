@@ -21,5 +21,13 @@ window.SUPABASE_CONFIG = {
 //   maxZoom: 20,
 // };
 
+// App（Capacitor）裡的 Google 登入要用的用戶端 ID。網頁版用不到，不填也不影響網站。
+// App 裡不能用一般的 OAuth 轉址——Google 不准在內嵌 WebView 做 OAuth，會回
+// 403 disallowed_useragent——所以改成由原生端拿 id token 再交給 Supabase。
+// 要填「Web 應用程式」那一個，且必須跟 Supabase 的 Google provider 設定一致。
+// 完整步驟（含 Android 要登記的 SHA-1）寫在 app/README.md。
+// window.GOOGLE_WEB_CLIENT_ID = "……-…….apps.googleusercontent.com";
+// window.GOOGLE_IOS_CLIENT_ID = "……-…….apps.googleusercontent.com";   // iOS 版才要
+
 // ⚠️ 絕對不要把 service_role key 放進這裡。
 //    那把鑰匙可以繞過所有 RLS 規則，只能用在後端腳本（例如 seed.py）。

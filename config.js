@@ -11,5 +11,13 @@ window.SUPABASE_CONFIG = {
 // 一份好資料頂出來。要暫時停用就把這一行註解掉，網站會變回直接問 Supabase。
 window.OFFERS_API = "https://birthdaydeals-api.celine-fu-work.workers.dev";
 
+// App（Capacitor）裡的 Google 登入要用的用戶端 ID。網頁版完全用不到這兩行，
+// 留白也不影響網站——只有在 App 裡按登入才會讀。
+// 要填的是 Google Cloud → API 和服務 → 憑證 裡「Web 應用程式」那一個，
+// 而且必須跟 Supabase → Authentication → Google provider 裡填的那一個一模一樣。
+// 取得步驟寫在 app/README.md。
+// window.GOOGLE_WEB_CLIENT_ID = "……-…….apps.googleusercontent.com";
+// window.GOOGLE_IOS_CLIENT_ID = "……-…….apps.googleusercontent.com";   // 之後做 iOS 版才要
+
 // ⚠️ 絕對不要把 service_role key 放進這裡。
 //    那把鑰匙可以繞過所有 RLS 規則，只能用在後端腳本（例如 seed.py）。

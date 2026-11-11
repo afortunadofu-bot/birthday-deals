@@ -36,7 +36,18 @@ const sql = fs.readFileSync(path.join(root, 'schema_v124_my_dashboard.sql'), 'ut
     && !/localStorage[\s\S]{0,40}sxr_profile/.test(index));
   t.ok('改過自己的暱稱／頭像／生日／上榜設定就把快取丟掉',
     (index.match(/forgetProfile\(\);/g) || []).length >= 5);
-  t.ok('登出也丟掉', /forgetProfile\(\); await sb\.auth\.signOut\(\)/.test(index));
+  /* 這條本來是比對原始碼裡有沒有 `forgetProfile(); await sb.auth.signOut()`
+     這一串字。App 版的 Google 登出要插在那兩行中間（不然下次按登入會靜默用
+     同一個帳號回來），字串就對不上了——但行為完全沒變。
+
+     所以改成直接按下去看：快取有沒有真的消失。離線模式下 sb 是空的，
+     signOut() 會丟錯，但那是在 forgetProfile() 之後才發生的，不影響這條要驗的事。 */
+  win.eval(`cacheProfile('u-9', {id:'u-9', display_name:'阿明', is_admin:false});`);
+  t.ok('（前置）快取先進得去', !!win.eval(`cachedProfile('u-9')`));
+  try { Object.defineProperty(win.location, 'reload', { value: () => {}, configurable: true }); } catch {}
+  await win.eval(`(async()=>{ try{ await $('#btnLogout').onclick(); }catch(e){} })()`);
+  await tick(win, 2);
+  t.eq('登出也丟掉', win.eval(`cachedProfile('u-9')`), null);
   t.ok('讀不到個人檔案時不要把壞的那份存起來', /PROFILE_ERROR=true; forgetProfile\(\)/.test(index));
 
   /* ========== 2.「我的」一次問完 ========== */

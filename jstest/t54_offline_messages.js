@@ -65,7 +65,14 @@ const sync = fs.readFileSync(path.join(root, 'app', 'sync_www.py'), 'utf8');
      多一個 404」。那個判斷就是 10/22 再次回報的原因——tomoe_hot 用的是「加到主
      畫面」的網頁版、不是 APK，所以那條路對他完全沒生效。v138 改成所有人都先試，
      vendor/ 也放到網站上了。這條斷言留著只會再擋一次正確的修法。 */
-  t.ok('v138：所有人都先試本站那一份，不是只有 App', !/if\(IN_APP\)/.test(index));
+  /* 本來這條是「整份原始碼裡都不准出現 if(IN_APP)」。範圍開得太大：
+     v188 的 App 版 Google 登入本來就要用 IN_APP 分流（網頁版不能動），
+     跟 SDK 從哪裡載完全是兩回事，卻會被這條擋下來。
+     縮到只看 loadSupabaseSdk() 那一段——那才是這條原本要守的東西。 */
+  const sdkFn = (index.match(/async function loadSupabaseSdk\(\)[\s\S]*?\n\}/) || [''])[0];
+  t.ok('（前置）找得到 loadSupabaseSdk()', !!sdkFn);
+  t.ok('v138：所有人都先試本站那一份，不是只有 App',
+    !!sdkFn && !/IN_APP/.test(sdkFn), sdkFn);
   t.ok('試完還是會退回 CDN（打包的那份壞掉也不能整個死掉）',
     /vendor\/supabase\.min\.js[\s\S]{0,200}for\(const url of SDK_URLS\)/.test(index));
 
