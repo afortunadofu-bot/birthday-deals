@@ -3082,6 +3082,12 @@
     <nav class="xsj-apps" aria-label="小數據所的產品">
       <a href="./" aria-current="page">壽星日</a>
       <span class="xsj-sep">·</span>
+      <!-- v192 celine：「品牌頁把台灣優惠整理也放上去」。品牌頁 11/10 就有了，壽星日自己的頁尾跟 about 還沒。
+           排在壽星日旁邊：同一類（都在幫人省錢），而且是從壽星日分出去的站。
+           沒有掛 data-flag：管理員開關的 key 有資料庫白名單，要加得先跑 SQL；
+           真的需要能關再說。 -->
+      <a href="https://tw-deals.pages.dev/?utm_source=shouxingri&amp;utm_medium=web&amp;utm_campaign=footer" target="_blank" rel="noopener">好康地圖</a>
+      <span class="xsj-sep">·</span>
       <a href="https://play.google.com/store/apps/details?id=com.bandary.app" target="_blank" rel="noopener"
          data-flag="show_studio_bandary">Bandary 聽團曆</a>
       <span class="xsj-sep">·</span>
@@ -4313,6 +4319,7 @@ addEventListener('pagehide', flushEvents);
    算同一個 to——這樣換連結前後的數字是連續的，不會看起來像「那天突然沒人點了」。 */
 const OUT_LINKS=[
   {to:'brandpage',   re:/afortunadofu-bot\.github\.io\/celinefubrandpage/i},
+  {to:'haokang',     re:/tw-deals\.pages\.dev/i},
   {to:'bandary',     re:/id=com\.bandary\.app|forms\.gle\/FhBJgWBWb72MCg5x5/i},
   {to:'relatestats', re:/id=com\.relatestats\.app|forms\.gle\/6HT4LzRSsPA76b6s7/i},
   {to:'threads',     re:/threads\.(com|net)\/@dayscount/i},
@@ -6486,7 +6493,7 @@ async function loadCoffeeStats(){
 }
 /* 頁尾那組「小數據所」連結的點擊（studio_click，meta.to 記點到哪一個）。
    跟咖啡那塊共用同一個區間選單——問的是同一件事：有多少人真的往外走。 */
-const LINK_LABEL={brandpage:'品牌頁 小數據所', bandary:'Bandary 聽團曆',
+const LINK_LABEL={brandpage:'品牌頁 小數據所', haokang:'好康地圖', bandary:'Bandary 聽團曆',
   relatestats:'RelateStats', threads:'Threads @dayscount', other:'其他連結',
   page_about:'關於這個網站', page_privacy:'隱私權政策', page_terms:'服務條款',
   page_updates:'更新紀錄', page_other:'其他頁面'};

@@ -68,6 +68,9 @@ const about = fs.readFileSync(path.join(root, 'about.html'), 'utf8');
   t.eq('Google Play 的 RelateStats', linkTo('https://play.google.com/store/apps/details?id=com.relatestats.app'), 'relatestats');
   t.eq('舊的報名表連結也還算同一個（數字才接得起來）',
     linkTo('https://forms.gle/FhBJgWBWb72MCg5x5'), 'bandary');
+  t.eq('好康地圖（v192）記成 haokang', linkTo('https://tw-deals.pages.dev/?utm_source=shouxingri'), 'haokang');
+  t.ok('track.js（about 那幾頁）也認得好康地圖',
+    fs.readFileSync(path.join(root, 'track.js'), 'utf8').split('\n').some((l) => l.includes("to: 'haokang'") && l.includes('tw-deals')));
   t.eq('不相干的 Google Play app 不算', linkTo('https://play.google.com/store/apps/details?id=com.whatsapp'), null);
   // 比字串就好——在測試裡再寫一次那串 regex 只是多一個會打錯的地方
   const bandaryLine = fs.readFileSync(path.join(root, 'track.js'), 'utf8')

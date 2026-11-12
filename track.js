@@ -28,6 +28,7 @@
   var OUT = [
     { to: 'brandpage', re: /afortunadofu-bot\.github\.io\/celinefubrandpage/i },
     // 新舊網址都算同一個 app（2026-10-15 從封測報名表換成 Google Play）
+    { to: 'haokang', re: /tw-deals\.pages\.dev/i },
     { to: 'bandary', re: /id=com\.bandary\.app|forms\.gle\/FhBJgWBWb72MCg5x5/i },
     { to: 'relatestats', re: /id=com\.relatestats\.app|forms\.gle\/6HT4LzRSsPA76b6s7/i },
   ];

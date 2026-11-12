@@ -25,17 +25,20 @@ const { boot, tick, makeAsserts } = require('./harness');
   const dots = $$('.xsj-mark i').map((i) => (i.classList.contains('hi') ? 'A' : i.classList.contains('on') ? 'W' : '.'));
   t.eq('點陣標誌的點位跟品牌規範一樣', dots.join(''), '.W.A' + 'WA..' + '..AW' + 'A.W.');
   const apps = () => $$('.xsj-apps a').map((x) => [x.textContent.trim(), x.getAttribute('href')]);
-  t.eq('列出三個產品', apps().map((x) => x[0]),
-    ['壽星日', 'Bandary 聽團曆', 'RelateStats']);
+  // v192 加了好康地圖（壽星日分出去的全台優惠站），排在壽星日旁邊
+  t.eq('列出四個產品', apps().map((x) => x[0]),
+    ['壽星日', '好康地圖', 'Bandary 聽團曆', 'RelateStats']);
+  const hrefOf = (name) => (apps().find((x) => x[0] === name) || [])[1];
+  t.ok('好康地圖連到 tw-deals，帶來源參數', /^https:\/\/tw-deals\.pages\.dev\/\?utm_source=shouxingri/.test(hrefOf('好康地圖') || ''), hrefOf('好康地圖'));
   t.eq('壽星日標成目前這一站', $('.xsj-apps [aria-current="page"]').textContent.trim(), '壽星日');
   // 2026-10-15 上架了，另外兩個從封測報名表換成 Google Play 的上架頁
-  t.eq('Bandary 連到 Google Play', apps()[1][1],
+  t.eq('Bandary 連到 Google Play', hrefOf('Bandary 聽團曆'),
     'https://play.google.com/store/apps/details?id=com.bandary.app');
-  t.eq('RelateStats 連到 Google Play', apps()[2][1],
+  t.eq('RelateStats 連到 Google Play', hrefOf('RelateStats'),
     'https://play.google.com/store/apps/details?id=com.relatestats.app');
   t.ok('不要還留著舊的報名表連結', !/forms\.gle/.test($('.xsj-apps').innerHTML));
   t.ok('外部連結都開新分頁且加了 noopener',
-    $$('.xsj-apps a[href^="https://play.google.com"]').every((a) => a.target === '_blank' && /noopener/.test(a.rel)));
+    $$('.xsj-apps a[href^="https://"]').every((a) => a.target === '_blank' && /noopener/.test(a.rel)));
   t.eq('年份是今年', $('#xsjYear').textContent, String(new Date().getFullYear()));
 
   /* ================= 1.5 「我的」看得到自己回報過的問題（v73）================= */

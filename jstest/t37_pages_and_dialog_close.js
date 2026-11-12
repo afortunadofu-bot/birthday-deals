@@ -83,7 +83,8 @@ const read = (f) => fs.readFileSync(path.join(HERE, f), 'utf8');
   t.ok('about.html 是一整頁', /^<!DOCTYPE html>/i.test(about.trim()));
   t.ok('有標題', /<h1>關於做這個網站的人<\/h1>/.test(about));
   t.ok('連得到品牌頁（細節搬到這一頁，連結也跟著搬）', /celinefubrandpage/.test(about));
-  t.ok('三個 app 都寫到了', /壽星日/.test(about) && /Bandary/.test(about) && /RelateStats/.test(about));
+  t.ok('四個 app 都寫到了（v192 加好康地圖）', /壽星日/.test(about) && /好康地圖/.test(about) && /Bandary/.test(about) && /RelateStats/.test(about));
+  t.ok('好康地圖連到 tw-deals', /href="https:\/\/tw-deals\.pages\.dev\/[^"]*"[\s\S]{0,80}好康地圖/.test(about));
   /* celine：「不用提一個人做的，然後這跟免費伺服器的論述衝突」——
      「自己付主機跟網域」那套不能再出現，照實寫跑在免費方案上就好。 */
   t.ok('照實寫：跑在免費方案上', /免費方案/.test(about));

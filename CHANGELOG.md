@@ -13,6 +13,22 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v192　頁尾、關於頁加上好康地圖
+
+**沒有資料庫變更。** 動 `template.html`（頁尾、`OUT_LINKS`、`LINK_LABEL`）、`about.html`、`track.js`、`updates.json`，
+測試 t22、t37、t45。
+
+celine（11/12）：「品牌頁把台灣優惠整理也放上去」。品牌頁 celinefubrandpage 11/10（`068edf7`）就有了，
+壽星日自己的頁尾跟 about 還沒。
+
+- 頁尾產品列：壽星日 · **好康地圖** · Bandary 聽團曆 · RelateStats。排在壽星日旁邊（同類、從壽星日分出去的）。
+- about.html「小數據所的三個 app」→「四個」，好康地圖用品牌頁同一句介紹。
+- 連結帶 `utm_source=shouxingri&utm_campaign=footer|about`，好康地圖那邊分得出從壽星日來的人。
+- 點擊統計：`OUT_LINKS`／`track.js` 加 `haokang`，管理員的站外連結統計會多一列「好康地圖」。
+- **沒有掛管理員開關**：開關的 key 在資料庫有白名單，要加得先跑 SQL；需要能關再加。
+
+---
+
 ## v191　咖啡說明的金額改成「每個月大概兩三千元」
 
 **沒有資料庫變更。** 只動 `template.html` 的咖啡視窗一句話、t35、t101。
