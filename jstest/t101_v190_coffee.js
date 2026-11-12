@@ -23,10 +23,11 @@ const { boot, tick, makeSb, makeAsserts } = require('./harness');
 
   /* ===== 1. 視窗的字（只看讀者看得到的，不看註解） ===== */
   const say = $('#dlgCoffee .coffee-say').textContent.replace(/\s+/g, ' ');
-  t.ok('講得出一個月大約 2,000 元', /一個月大約要 2,000 元/.test(say), say);
-  t.ok('講得出錢去哪', /資料庫/.test(say) && /伺服器/.test(say) && /AI 工具/.test(say), say);
+  /* v191 celine：「寫糊一點不要太清楚」——給區間、只講種類不點名哪家服務 */
+  t.ok('講得出每個月大概要多少（區間）', /每個月大概兩三千元/.test(say), say);
+  t.ok('只講種類，不點名哪家服務', !/Supabase|Cloudflare|Claude/i.test(say), say);
+  t.ok('講得出錢去哪（資料庫、主機、AI、API）', /資料庫/.test(say) && /主機/.test(say) && /AI 工具/.test(say) && /API/.test(say), say);
   t.ok('有一杯多少錢，跟 Buy Me a Coffee 那頁（3 美元）對得上', /3 美元（約 100 元）/.test(say), say);
-  t.ok('幾杯就夠一個月：2,000 ÷ 100 = 20', /20 杯就夠/.test(say), say);
   t.ok('停擺寫日期不寫「11 月初」（過幾個月就讀不懂）', /11\/3/.test(say) && !/11 月初/.test(say), say);
 
   /* ===== 2. 三個入口都開同一張視窗，事件帶來源 ===== */

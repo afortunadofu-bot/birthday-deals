@@ -108,7 +108,7 @@ function loadFrom(url) {
   t.ok('改成照實寫：跑在免費方案上', /免費方案/.test(coffeeSay), coffeeSay.slice(0, 220));
   t.ok('而且講得出咖啡的用途（換成付費的）', /付費/.test(coffeeSay), coffeeSay.slice(0, 220));
   /* v190 celine：「沒半個人給過錢」「說維運一個月要兩千塊之類的」——講出一個數字跟錢去哪 */
-  t.ok('寫得出一個月大約要多少錢', /一個月大約要 <b>2,000 元<\/b>/.test(coffeeSay), coffeeSay.slice(0, 400));
+  t.ok('寫得出一個月大約要多少錢（v191 改成區間）', /<b>每個月大概兩三千元<\/b>/.test(coffeeSay), coffeeSay.slice(0, 400));
   t.ok('也說得出錢去哪（包含開發用的 AI 工具）', /AI 工具/.test(coffeeSay) && /資料庫/.test(coffeeSay), coffeeSay.slice(0, 400));
   // 同一套說法，兩個地方不能再打架
   const slow = (index.match(/id="freeTierNote"[\s\S]*?<\/div>/) || [''])[0];
