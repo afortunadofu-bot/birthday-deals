@@ -1600,6 +1600,11 @@
   .note-slow-go{display:inline-block;margin-top:9px;font-size:.8rem;font-weight:700;
     color:var(--accent-dark);text-decoration:none}
   .note-slow-go:hover{text-decoration:underline;text-underline-offset:3px}
+  button.note-slow-go{display:block;background:none;border:0;padding:0;font-family:inherit;cursor:pointer;text-align:left}
+  .hero-coffee{margin:10px 0 0;font-size:.82rem;color:var(--ink-2);line-height:1.7}
+  .hero-coffee button{background:none;border:0;padding:0;font:inherit;font-weight:700;
+    color:var(--accent-dark);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  .hero-coffee.hidden,.coffee-entry.hidden{display:none}
   /* v154「我送出過的」裡的三顆小分頁：一條分段控制，不是三個標題列——
      這三塊本來就是各佔一個標題，而整頁的問題正是標題列太多。 */
   .rec-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
@@ -2740,6 +2745,9 @@
         <p>人多的時候壽星日會慢個幾秒，偶爾要重新整理一次才打得開——<b>不是你的網路有問題。</b>
           它整個跑在免費方案上，正在想辦法讓它快一點、穩一點。</p>
         <a class="note-slow-go" href="about.html">它是怎麼養著的 <span aria-hidden="true">→</span></a>
+        <!-- v190：這塊本來就在講「免費方案所以慢」，正是咖啡想說的事，卻沒有入口——
+             讀到這裡、想幫忙的人得自己去找左下角那顆沒字的杯子。 -->
+        <button type="button" class="note-slow-go coffee-entry hidden" data-coffee-from="slow_note">想幫它換成付費方案？請我喝杯咖啡 ☕</button>
       </div>
     </div>
     <div class="panel hidden" id="myDebug">
@@ -3110,8 +3118,17 @@
        自己掏錢那套還是不成立的那一套。照實寫就好：跑在免費額度上，
        所以會慢；想換成付費的，這就是咖啡的用途。
        順帶把「我一個人做的」拿掉——要講身世，about.html 有一整頁可以講。 -->
-  <p class="coffee-say">它現在整個跑在免費方案上，所以人多的時候會慢。<br><br>
-    想做的下一步是換成付費的方案，讓它快一點、穩一點。
+  <!-- v190 celine：「目前沒半個人給過錢」「要包含 claude 的價格，說維運一個月要兩千塊之類的」。
+       10/12～11/11 每週 1～2% 的人點開這張，點開的人只有約 6% 按去 Buy Me a Coffee。
+       原本的「換成付費方案、快一點穩一點」太抽象，讀的人不知道差多少、錢去哪。
+       改成寫出一個數字跟它的用途，再加上 11/3 真的停擺過那次當例子。
+       不逐項列金額：AI 工具的方案會變，總數講個大概就好。
+       QA：「11 月初」過幾個月就讀不懂了，改寫成 11/3；再補一杯多少錢——
+       視窗講 2,000 元、Buy Me a Coffee 那頁一杯 3 美元，中間沒有橋，讀的人得自己換算。
+       **Buy Me a Coffee 那邊改了單價，這一句要跟著改**（jstest t35 釘著）。 -->
+  <p class="coffee-say">它現在整個跑在免費方案上，所以人多的時候會慢，11/3 還因為額度用完停擺過一次。<br><br>
+    要讓它穩定跑下去，一個月大約要 <b>2,000 元</b>：資料庫和伺服器換成付費方案，加上開發用的 AI 工具。
+    一杯咖啡 3 美元（約 100 元），一個月 20 杯就夠。<br><br>
     如果它幫你省到了什麼，請我喝杯咖啡會很有幫助。</p>
   <div class="foot">
     <button class="btn" value="cancel">下次吧</button>

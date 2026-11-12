@@ -107,6 +107,9 @@ function loadFrom(url) {
   t.ok('也不要說主機跟網域是自己付的', !/主機跟網域/.test(coffeeSay), coffeeSay.slice(0, 220));
   t.ok('改成照實寫：跑在免費方案上', /免費方案/.test(coffeeSay), coffeeSay.slice(0, 220));
   t.ok('而且講得出咖啡的用途（換成付費的）', /付費/.test(coffeeSay), coffeeSay.slice(0, 220));
+  /* v190 celine：「沒半個人給過錢」「說維運一個月要兩千塊之類的」——講出一個數字跟錢去哪 */
+  t.ok('寫得出一個月大約要多少錢', /一個月大約要 <b>2,000 元<\/b>/.test(coffeeSay), coffeeSay.slice(0, 400));
+  t.ok('也說得出錢去哪（包含開發用的 AI 工具）', /AI 工具/.test(coffeeSay) && /資料庫/.test(coffeeSay), coffeeSay.slice(0, 400));
   // 同一套說法，兩個地方不能再打架
   const slow = (index.match(/id="freeTierNote"[\s\S]*?<\/div>/) || [''])[0];
   t.ok('「有時候會慢一點」跟咖啡視窗講的是同一件事', /免費方案/.test(slow), slow.slice(0, 220));
