@@ -427,13 +427,18 @@ async function cached(request, ctx, name, ttl, load, browserTtl) {
  */
 const TILE_DEG = 0.025;
 const TILE_LIMIT = 1000;
+/* v193：30 分鐘 → 6 小時（celine：「你先繼續砍」，Supabase 11/2 寬限期結束、超過可能被限制）。
+   11/12～13 一天 Worker 為了格子問了 Supabase 2,519 次——台灣幾個機房各存各的，
+   大家拖地圖拖過的格子很多，30 分鐘一到又得重問。分店一天變不到幾家，
+   代價是「剛加的分店、剛隱藏的分店，地圖上最多晚 6 小時」。 */
+const TILE_TTL = 6 * 3600;
 function serveTile(request, env, ctx, url) {
   const y = Number(url.searchParams.get('y'));
   const x = Number(url.searchParams.get('x'));
   if (!Number.isInteger(y) || !Number.isInteger(x) || y < 800 || y > 1120 || x < 4640 || x > 4960) {
     return json({ error: 'bad tile' }, { status: 400, ttl: 0 });
   }
-  return cached(request, ctx, `tile/${y}_${x}`, FRESH_TTL, async () => {
+  return cached(request, ctx, `tile/${y}_${x}`, TILE_TTL, async () => {
     const base = cfg(env, 'SUPABASE_URL');
     const key = cfg(env, 'SUPABASE_ANON_KEY');
     const r = await fetch(`${base}/rest/v1/rpc/offer_stores_in_bounds`, {

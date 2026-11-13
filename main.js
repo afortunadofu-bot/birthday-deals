@@ -961,7 +961,7 @@ async function onSession(s){
        我的評分      → 排行榜的「還沒評分」提示跟詳情頁的星等要對
        通知數字      → 鈴鐺的紅點在每一頁都看得到
        flushPendingReport → 補送上次沒送成功的回報，不能拖 */
-  if(me){ loadWishlist(); loadMyUsedOffers(); loadMyRatings(); flushPendingReport(); loadNotifCount(); }
+  if(me){ loadMyBoot(); flushPendingReport(); }
   else { $('#pendPreviewPanel').classList.add('hidden'); $('#pendEditsPreviewPanel').classList.add('hidden'); $('#btnNotif').classList.add('hidden'); }
   /* 管理員那一包有十幾支查詢，開場全部打完等於每次重新整理就是十幾次請求——
      而且大部分時候根本沒點進「審核」。改成切到那個分頁才載，只留徽章那一支
@@ -1300,7 +1300,24 @@ async function loadOffers(force){
 }
 
 /* ---- 待辦清單：未登入先存 localStorage，登入後自動合併上傳 ---- */
-async function loadWishlist(){
+/* v193：登入後開場那四支（收藏、用過的、我的評分、未讀通知）併成一支 my_boot()。
+   Logs Explorer 11/12～13 一天：wishlist 1,201、usage_reports 589、offer_ratings 287、
+   notifications 273——每個登入的人每次打開都打一輪。
+   還沒跑 schema_v193 的站台不會壞：呼叫失敗就讓四支各自去查，跟以前一模一樣
+   （它們都接受「已經拿到的資料」，拿不到才自己查）。 */
+async function loadMyBoot(){
+  if(!LIVE||!me) return;
+  let d=null;
+  try{
+    const {data,error}=await sb.rpc('my_boot');
+    if(!error && data && typeof data==='object') d=data;
+  }catch{}
+  loadWishlist(d?.wish);
+  loadMyUsedOffers(d?.used);
+  loadMyRatings(d?.ratings);
+  loadNotifCount(d?.unread);
+}
+async function loadWishlist(pre){
   if(!LIVE||!me) return;
   const localIds=[...WISH];
   if(localIds.length){
@@ -1318,16 +1335,19 @@ async function loadWishlist(){
       localStorage.removeItem('sxr_wishlist');
     }
   }
-  const {data}=await sb.from('wishlist').select('offer_id').eq('user_id',me.id);
+  // 剛把這台裝置上的收藏合併上去，my_boot 那份是合併前拿的，要重問一次
+  const {data} = (Array.isArray(pre) && !localIds.length) ? {data:pre.map(offer_id=>({offer_id}))}
+    : await sb.from('wishlist').select('offer_id').eq('user_id',me.id);
   WISH=new Set((data||[]).map(r=>String(r.offer_id)));
   if(NEAR_MAP) paintNearPins();     // 登入後收藏才讀得到，地圖要重畫一次
   render();
 }
 /* ---- 我自己回報過「用過了」的優惠：卡片列表要看得到，不然使用者送出回報後
    回到列表滑一輪，只看到全站彙總的「已用 N 次」，看不出裡面有沒有算到自己那筆。 ---- */
-async function loadMyUsedOffers(){
+async function loadMyUsedOffers(pre){
   if(!LIVE||!me) return;
-  const {data}=await sb.from('usage_reports').select('offer_id').eq('user_id',me.id);
+  const {data} = Array.isArray(pre) ? {data:pre.map(offer_id=>({offer_id}))}
+    : await sb.from('usage_reports').select('offer_id').eq('user_id',me.id);
   MY_USED_OFFER_IDS=new Set((data||[]).map(r=>String(r.offer_id)));
   render();
   if(!$('#tab-mine').classList.contains('hidden')) renderMyWishlist();
@@ -1366,10 +1386,10 @@ async function fetchNotifCount(){
   if(error) return 0;   // 舊版資料庫還沒跑 schema_v20，安靜失敗，不用整頁報錯打擾使用者
   return (data||[]).filter(r=>!r.read_at).length;
 }
-async function loadNotifCount(){
+async function loadNotifCount(pre){
   if(!LIVE||!me){ $('#btnNotif').classList.add('hidden'); return; }
   $('#btnNotif').classList.remove('hidden');
-  const n=await fetchNotifCount();
+  const n = Number.isFinite(Number(pre)) && pre!==null && pre!==undefined ? Number(pre) : await fetchNotifCount();
   $('#notifCount').classList.toggle('hidden', n===0);
   $('#notifCount').textContent = n>99?'99+':String(n);
 }
@@ -4749,9 +4769,9 @@ async function setNearCenter(lat, lng, label){
 }
 /* v187：附近的分店改成按格子跟 Worker 拿（/tile，一格 0.025 度、約 2.5 公里）。
    11/11 中午一小時，地圖拖動＋清單跟著地圖直接問了 Supabase 約 120 次（加上 OPTIONS），每個人各問各的；
-   切成固定的格子之後，同一格 Cloudflare 存 30 分鐘大家共用，自己拖回看過的地方也不用再拿。
+   切成固定的格子之後，同一格 Cloudflare 存 6 小時（v193，原本 30 分鐘）大家共用，自己拖回看過的地方也不用再拿。
    哪一格拿不到、店多到被截斷（一格 1000 家）、或要的範圍超過 16 格（例如 5 公里以上），
-   就照原本直接問資料庫——結果一樣，只是比較費。代價：剛加的分店最多晚 30 分鐘才出現在地圖上。 */
+   就照原本直接問資料庫——結果一樣，只是比較費。代價：剛加的分店最多晚 6 小時才出現在地圖上。 */
 const TILE_DEG=0.025, TILE_MAX=16, TILE_LIMIT=1000;
 const TILE_CACHE=new Map();   // 'y_x' → Promise<分店陣列|null>
 let TILE_OK=true;             // Worker 還沒更新到有 /tile 的版本（404）就這次造訪不再試
@@ -7837,9 +7857,10 @@ async function loadMyTab(){
   loadPendingPreview(d?d.pending||[]:null);
   loadPendingEditsPreview(d?d.pending_edits||[]:null);
 }
-async function loadMyRatings(){
+async function loadMyRatings(pre){
   if(!LIVE||!me) return;
-  const {data}=await sb.from('offer_ratings').select('offer_id,score').eq('user_id',me.id);
+  const {data} = Array.isArray(pre) ? {data:pre}
+    : await sb.from('offer_ratings').select('offer_id,score').eq('user_id',me.id);
   MY_RATED=new Set((data||[]).map(r=>String(r.offer_id)));
   MY_SCORES=new Map((data||[]).map(r=>[String(r.offer_id), r.score]));
   renderRatedCta();

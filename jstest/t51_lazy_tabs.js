@@ -19,11 +19,14 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   const $ = (s) => doc.querySelector(s);
 
   /* ========== 開場只載輕的那幾支 ========== */
-  const boot_ = index.split('\n').find((l) => l.includes('if(me){ loadWishlist()'));
+  // v193：收藏、用過了、我的評分、通知數字併進 loadMyBoot()（一支 my_boot），開場那一行只剩它跟補送回報
+  const boot_ = index.split('\n').find((l) => l.includes('if(me){ loadMyBoot()'));
   t.ok('找得到開場那一行', !!boot_);
-  t.ok('開場留著：收藏、用過了、我的評分、補送回報、通知數字',
-    ['loadWishlist', 'loadMyUsedOffers', 'loadMyRatings', 'flushPendingReport', 'loadNotifCount']
-      .every((f) => boot_.includes(f)), boot_);
+  t.ok('開場留著：一次問完的 loadMyBoot、補送回報',
+    ['loadMyBoot', 'flushPendingReport'].every((f) => boot_.includes(f)), boot_);
+  const myBoot = (index.match(/async function loadMyBoot\(\)\{[\s\S]*?\n\}/) || [''])[0];
+  t.ok('loadMyBoot 裡照樣是收藏、用過了、我的評分、通知數字',
+    ['loadWishlist', 'loadMyUsedOffers', 'loadMyRatings', 'loadNotifCount'].every((f) => myBoot.includes(f)), myBoot.slice(0, 300));
   t.ok('開場不再載「我的」那一包', !/loadMyStuff\(\)/.test(boot_), boot_);
   t.ok('開場不再載投稿狀態那兩支',
     !/loadPendingPreview|loadPendingEditsPreview/.test(boot_), boot_);
@@ -87,12 +90,15 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   /* ========== 我的評分還是開場就載（排行榜要用）========== */
   const sb2 = makeSb({ tables: { offer_ratings: [{ offer_id: 7, score: 4 }] } });
   win.__sb2 = sb2;
+  hits.length = 0;
   win.eval(`sb=window.__sb2; me={id:'u-1'}; renderRatedCta=()=>{}; maybeShowRateNudge=()=>{};
     loadMyRatings();`);
   await tick(win, 3);
   t.eq('評分讀得回來', win.eval('MY_SCORES.get("7")'), 4);
+  // v193 起參數多了一個 pre（my_boot 給的），所以改問行為：讀評分不會順便把「我的」整包拉下來
   t.ok('而且是獨立一支，不用把「我的」整包拉下來',
-    /async function loadMyRatings\(\)/.test(index));
+    !hits.includes('loadMyStuff') && sb2.__calls.select.every((c) => c.table === 'offer_ratings'),
+    JSON.stringify({ hits, sel: sb2.__calls.select.map((c) => c.table) }));
 
   process.exit(t.done() ? 0 : 1);
 })().catch((e) => { console.error(e); process.exit(1); });

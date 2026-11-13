@@ -34,6 +34,7 @@ celine：「為啥你現在 SQL 編號都是亂碼亂跳」。
 | `schema_v166_expected_spend.sql` | 投稿的「預計會花多少」欄位；修改建議核可時套用低消／預計花費（低消從 v81 起一直沒套用到）。**跑完再更新 Worker** | 投稿照樣送得出去，只是預計花費存不進去；低消的修改建議照舊核可了也不會改 |
 | `schema_v184_offer_detail_bundle.sql` | 點開優惠詳情一次拿齊留言、回報、修改歷史、暱稱、愛心（`offer_detail_bundle`，security invoker、RLS 照常）——少打 Supabase | 照原本分開查，畫面一樣，只是每點開一次多 8～10 個請求 |
 | `fix_v185_ok_regions.sql` | Ok超商（id 469）縣市設成「全台」——Google 要用 OKmart 查、一跑就掃全台要花錢，先手動設 | 縣市空白，用縣市篩選時找不到它 |
+| `schema_v193_my_boot.sql` | 登入後的收藏、用過的、我的評分、未讀通知一次拿齊（`my_boot`，只回自己的）——少打 Supabase | 照原本分開查，畫面一樣，只是每次打開多 3 個請求 |
 | `schema_v179_offer_hours.sql` | 投稿／修改建議填的營業時間（`offers.hours`、`hours_note`），核可修改建議時套用。**要先跑 v166；跑完再更新 Worker** | 投稿表單裡不出現「營業時間」；詳情、篩選也沒有 |
 | `schema_v178_store_hours.sql` | 分店營業時間欄位、「幾點有開」篩選（`offers_open_at`）。**跑完才能貼 `fetch_stores.py --hours` 產生的 stores_import_*.sql** | 篩選裡不出現「營業時間」，其他照常 |
 | `schema_v164_spend_whitelist_flags.sql` | 大家實際花多少（篩選、卡片）、修改建議也算白名單、待辦清單已註冊／已收到券、一句回饋 | 「實際花費」篩選不出現、待辦清單沒有那兩顆、白名單照舊只數投稿；其他照常 |

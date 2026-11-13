@@ -13,6 +13,49 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v193　再少打 Supabase：登入後四支併一支、地圖格子存 6 小時
+
+**有資料庫變更：`schema_v193_my_boot.sql`（沒跑也不會壞）。要重貼 Worker。**
+動 `template.html`、`worker/offers-cache.js`、`MIGRATIONS.md`，測試 t100、t51（開場那一行改成 loadMyBoot，斷言改問行為），新增 t102。
+
+### 起因
+
+celine（11/13）：「看起來還是有點危險 這幾天只要有流量提升是不是就會爆掉」，接著貼了 Supabase 的通知：
+寬限期 11/2 結束、Fair Use Policy 生效，超過額度專案可能被限制（請求回 402）——「你先繼續砍」。
+
+Log Ingestion 0.65/1 GB，剩 22 天，一天要壓在 16 MB 以下；11/12 是 16.8 MB。
+Logs Explorer 11/12～13 的 24 小時，大約四成是 Worker 轉發（人變多不太會跟著變多），
+六成是每個人自己的查詢（會跟著變多）。前幾名：
+
+| 請求 | 一天 | 誰打的 |
+| --- | --- | --- |
+| `rpc/offer_stores_in_bounds` | 2,519 | Worker（`/tile`） |
+| `site_events` | 1,913 | Worker（事件） |
+| `wishlist` | 1,201 | 瀏覽器 |
+| `rpc/offer_detail_bundle` | 1,382 | 瀏覽器 |
+| `usage_reports` | 589 | 瀏覽器 |
+| `offer_ratings` | 287 | 瀏覽器 |
+| `notifications` | 273 | 瀏覽器 |
+
+### 做法
+
+- **`my_boot()`**：登入後開場的收藏、用過的、我的評分、未讀通知數，四支併一支。
+  只回呼叫者自己的（`auth.uid()`，不收參數），只給 authenticated 執行。
+  - 沒跑 SQL（PGRST202）或網路錯：四支各自去查，跟以前一樣。
+  - 裝置上有還沒同步的收藏：先合併，收藏那支照樣重問（`my_boot` 那份是合併前的）。
+- **`/tile` 30 分鐘 → 6 小時**（`TILE_TTL`）。分店一天變不到幾家；台灣幾個機房各存各的，
+  拖過的格子一多，30 分鐘一到又得重問。
+
+### 代價
+
+- 剛加的分店、剛隱藏的分店，地圖上最多晚 6 小時。
+
+### 預估
+
+一天約少 3,500～4,000 筆請求（格子 1,500～2,000＋登入那四支約 2,000），大約從 17 MB 降到 12～13 MB。
+
+---
+
 ## v192　頁尾、關於頁加上好康地圖
 
 **沒有資料庫變更。** 動 `template.html`（頁尾、`OUT_LINKS`、`LINK_LABEL`）、`about.html`、`track.js`、`updates.json`，

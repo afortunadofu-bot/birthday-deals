@@ -55,7 +55,8 @@ const inTile = (s, y, x) => s.lat >= y * T - 1e-9 && s.lat <= (y + 1) * T + 1e-9
     Math.abs(b.p_south - 25.025) < 1e-9 && Math.abs(b.p_north - 25.05) < 1e-9
     && Math.abs(b.p_west - 121.5) < 1e-9 && Math.abs(b.p_east - 121.525) < 1e-9 && b.p_limit === 1000, JSON.stringify(b));
   t.ok('回的是 {at, data}', body.at && Array.isArray(body.data) && body.data.length === 1);
-  t.ok('瀏覽器也存 30 分鐘', /max-age=1800/.test(res.headers.get('cache-control')));
+  // v193：格子 30 分鐘 → 6 小時（分店一天變不到幾家；11/12～13 一天 Worker 為了格子問了 2,519 次）
+  t.ok('格子存 6 小時，瀏覽器也一樣', /max-age=21600/.test(res.headers.get('cache-control')), res.headers.get('cache-control'));
   await new Promise((r) => setTimeout(r, 5));
   up = [];
   res = await get('/tile?y=1001&x=4860');
