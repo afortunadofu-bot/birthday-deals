@@ -247,10 +247,13 @@
     background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);
     border-radius:var(--r-sm);padding:11px 14px;margin:0 0 12px;font-size:.85rem;color:var(--ink-2);
     box-shadow:var(--shadow-sm)}
+  /* v194 UX 檢查：.new-banner 會換行，只有一段文字＋✕ 的那種（地圖提示）在手機上被拆成三行、
+     佔 152px，第一張卡片被擠到畫面下半。文字自己吃掉剩下的寬度，✕ 留在同一行。 */
   .new-banner .nb-icon{flex-shrink:0;width:30px;height:30px;border-radius:50%;
     background:var(--accent-soft);color:var(--accent-dark);display:flex;align-items:center;
     justify-content:center;font-size:1rem}
   .new-banner span:not(.nb-icon){flex:1 1 auto;min-width:120px}
+  .new-banner span.nb-text{flex:1 1 0;min-width:0}
   .new-banner b{color:var(--ink)}
   .new-banner #btnOnlyNew.active{background:var(--accent-dark);border-color:var(--accent-dark);color:#fff}
   .btn.plain{background:none;border:none;padding:2px 4px;color:var(--ink-3);font-size:1rem;line-height:1}
@@ -840,7 +843,9 @@
   .cfoot .btn{min-height:36px}
   .cfoot .btn svg{display:inline-block}
   .src{font-size:.74rem;color:var(--ink-3);margin-left:auto;text-align:right}
-  .src a{color:var(--ink-3)}
+  /* v194 UX 檢查：手機上「來源↗」只有 36×17，手指很難點到。用 padding 把可點範圍撐大、
+     負 margin 抵銷，畫面上的位置不變。 */
+  .src a{color:var(--ink-3);display:inline-block;padding:10px 6px;margin:-10px -6px}
 
   /* 手機版卡片精簡：優惠內容最多兩行，減少次要資訊的視覺份量 */
   @media(max-width:768px){
@@ -1999,7 +2004,7 @@
          箭頭指向下面第一張卡片的按鈕列。看過、按過地圖、或按 ✕ 就不再出現。 -->
     <div class="new-banner hidden" id="mapTipBanner">
       <span class="nb-icon" aria-hidden="true">📍</span>
-      <span>每張優惠卡片下面都有一顆 <b>📍 地圖</b>，一鍵用 Google 地圖找離你最近的分店 👇</span>
+      <span class="nb-text">每張優惠卡片下面都有一顆 <b>📍 地圖</b>，一鍵用 Google 地圖找離你最近的分店 👇</span>
       <button class="btn sm plain" id="btnDismissMapTip" type="button" aria-label="知道了">✕</button>
     </div>
 
@@ -9000,7 +9005,11 @@ function render(){
   syncExactRegionToggle();
   syncFilterExtras();
   const sum=list.filter(o=>o.valueTwd).reduce((a,o)=>a+o.valueTwd,0);
+  /* v194 UX 檢查：「隱藏過期」預設勾著，一打開就是「555 / 560 筆」，篩選按鈕卻顯示 0——
+     看起來像少了 5 筆資料。講一句是誰藏的。 */
+  const expiredN=$('#fLive').checked ? OFFERS.filter(o=>o.validUntil&&dUntil(o.validUntil)<0).length : 0;
   $('#count').textContent=`${list.length} / ${OFFERS.length} 筆`
+    +(expiredN?`（${expiredN} 筆已過期沒列出）`:'')
     +(activeRegion.size?`　${[...activeRegion].filter(r=>r!=='__none__').join('、')}${
         $('#fExactRegion')?.checked?'（不含全台）':'含全台'}`:'')+(sum?`　合計約 ${nt(sum)}`:'')+(NEAR.active&&NEAR.byOffer?`　📍 ${NEAR.km} 公里內`:'')
     +hoursCountNote(filterPredicate({skipHours:true}));
@@ -9048,7 +9057,11 @@ function offerCardHtml(o, idx){
   const isAdmin=!!myProfile?.is_admin;
   return ((o,idx)=>{
     const ex=expText(o), pu=pulseText(o);
-    const cost=o.membershipCost==='spend'?'．需消費紀錄':o.membershipCost==='tier'?'．需達等級':'';
+    /* v194 UX 檢查：會員類型本身就是「需達等級」（星巴克）時，後面再接「．需達等級」
+       就變成「需達等級．需達等級」。一樣的字不重複講。 */
+    const memLabel=MEM_LABEL[o.membershipType]||'會員';
+    const cost0=o.membershipCost==='spend'?'需消費紀錄':o.membershipCost==='tier'?'需達等級':'';
+    const cost=cost0 && cost0!==memLabel ? '．'+cost0 : '';
     const wished=WISH.has(String(o.id));
     const nearSt=NEAR.active&&NEAR.byOffer?NEAR.byOffer.get(String(o.id)):null;
     return `<article class="card" data-id="${esc(o.id)}" style="--i:${idx}">
@@ -9072,7 +9085,7 @@ function offerCardHtml(o, idx){
         ${/* 嵐：「讓人知道去這家店領生日優惠大概會花多少錢」。免費・需消費以外的類型
              （買一送一、折扣）有低消也要寫出來，上面那一格只處理「免費・需消費」。 */''}
         ${(o.minSpend!=null && o.freeTier!=='free_min')?`<span class="flag hide-lean">低消 ${nt(o.minSpend)}</span>`:''}
-        <span class="flag hide-lean">${esc(MEM_LABEL[o.membershipType]||'會員')}${cost}</span>
+        <span class="flag hide-lean">${esc(memLabel)}${cost}</span>
         ${o.verified?'<span class="flag ok-flag hide-lean">已查證</span>':'<span class="flag alert">未查證</span>'}
         ${o.ratingCount?`<span class="flag star hide-lean">★ ${o.ratingAvg}（${o.ratingCount}）</span>`:''}
         <span class="flag hide-lean">已用 ${o.reportCount||0} 次</span>
