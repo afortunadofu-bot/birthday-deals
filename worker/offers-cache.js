@@ -431,7 +431,33 @@ const TILE_LIMIT = 1000;
    11/12～13 一天 Worker 為了格子問了 Supabase 2,519 次——台灣幾個機房各存各的，
    大家拖地圖拖過的格子很多，30 分鐘一到又得重問。分店一天變不到幾家，
    代價是「剛加的分店、剛隱藏的分店，地圖上最多晚 6 小時」。 */
-const TILE_TTL = 6 * 3600;
+/* v195：6 小時 → 24 小時。6 小時之後 11/16～17 一天還是問了 1,840 次——台灣人拖過的格子很多，
+   機房又各存各的。代價：剛加／剛隱藏的分店，地圖上最多晚一天。 */
+const TILE_TTL = 24 * 3600;
+/**
+ * /detail?id=<整數>：沒登入的人看的優惠詳情（v195）。offer_detail_bundle 是 security invoker，
+ * 用 anon 身分讀到的就是公開的那一份，每個人都一樣，存 10 分鐘大家共用。
+ * 11/16～17 一天瀏覽器直接打了 2,443 次。登入的人前端照樣直接問。
+ */
+const DETAIL_TTL = 600;
+function serveDetail(request, env, ctx, url) {
+  const id = Number(url.searchParams.get('id'));
+  if (!Number.isInteger(id) || id < 1 || id > 10000000) {
+    return json({ error: 'bad id' }, { status: 400, ttl: 0 });
+  }
+  return cached(request, ctx, `detail/${id}`, DETAIL_TTL, async () => {
+    const base = cfg(env, 'SUPABASE_URL');
+    const key = cfg(env, 'SUPABASE_ANON_KEY');
+    const r = await fetch(`${base}/rest/v1/rpc/offer_detail_bundle`, {
+      method: 'POST',
+      headers: { apikey: key, authorization: `Bearer ${key}`, accept: 'application/json', 'content-type': 'application/json' },
+      body: JSON.stringify({ p_offer_id: id }),
+    });
+    if (!r.ok) throw new Error(`offer_detail_bundle ${r.status}`);
+    return await r.json();
+  }, 60);
+}
+
 function serveTile(request, env, ctx, url) {
   const y = Number(url.searchParams.get('y'));
   const x = Number(url.searchParams.get('x'));
@@ -472,7 +498,7 @@ async function statusPage(request) {
   const now = new Date().toISOString();
 
   if (!(request.headers.get('accept') || '').includes('text/html')) {
-    return json({ ok: true, service: '壽星日 edge cache', paths: ['/offers', '/offers/first', '/stats', '/board', '/boot', '/spend', '/tile', '/events', '/health'], cache: warm, now },
+    return json({ ok: true, service: '壽星日 edge cache', paths: ['/offers', '/offers/first', '/stats', '/board', '/boot', '/spend', '/tile', '/detail', '/events', '/health'], cache: warm, now },
       { ttl: 0 });
   }
 
@@ -538,6 +564,7 @@ const handler = {
       if (path === '/spend') return serve(request, env, ctx, 'spend');
       if (path.startsWith('/img/')) return serveImage(request, env, ctx, path.slice(5));
       if (path === '/tile') return serveTile(request, env, ctx, url);
+  if (path === '/detail') return serveDetail(request, env, ctx, url);
       if (path === '/health') return json({ ok: true, now: new Date().toISOString() }, { ttl: 0 });
     }
 
@@ -547,7 +574,7 @@ const handler = {
 
     if (path === '/' && (request.method === 'GET' || request.method === 'HEAD')) return statusPage(request);
 
-    return json({ error: 'not found', paths: ['/offers', '/offers/first', '/stats', '/board', '/boot', '/spend', '/tile', '/events', '/health'] }, { status: 404, ttl: 0 });
+    return json({ error: 'not found', paths: ['/offers', '/offers/first', '/stats', '/board', '/boot', '/spend', '/tile', '/detail', '/events', '/health'] }, { status: 404, ttl: 0 });
   },
 };
 

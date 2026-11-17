@@ -13,6 +13,53 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v195　再少打 Supabase：詳情走 Worker、待審修改一次拿、格子存一天
+
+**沒有資料庫變更。要重貼 Worker。** 動 `template.html`、`worker/offers-cache.js`，測試 t100、新增 t104。
+
+### 起因
+
+celine（11/17）：「能再降低嗎」。Log Ingestion 0.72/1 GB，剩 17 天，一天要壓在 16.5 MB 以下；
+11/13～16 每天 15～18 MB，11/16 是 17.7 MB——v193 之後沒有明顯下降。Logs Explorer 11/16～17 的 24 小時：
+
+| 請求 | 一天 | 誰打的 | 這版 |
+| --- | --- | --- | --- |
+| `rpc/offer_detail_bundle` | 2,443 | 瀏覽器 | 沒登入的走 Worker `/detail`，存 10 分鐘共用 |
+| `site_events` | 2,345 | Worker | （沒動，見下） |
+| `rpc/offer_stores_in_bounds` | 1,840 | Worker | 格子 6 小時 → 24 小時 |
+| `offer_edits_pending_preview` | 970 | 瀏覽器 | 一次拿全部，5 分鐘內共用 |
+| `profiles` | 811 | 瀏覽器 | `last_seen_at` 6 小時內不重寫 |
+| `offer_stores` | 492 | 瀏覽器 | 「有沒有營業時間」記在裝置上一天 |
+
+### 做法
+
+- **`/detail?id=`**（Worker）：`offer_detail_bundle` 是 security invoker，用 anon 讀到的就是公開那一份，
+  每個人都一樣。Worker 存 10 分鐘、瀏覽器留 1 分鐘。前端只有**沒登入**的人走這條；登入的人照樣直接問
+  （自己的評分、剛留的言要馬上看到）。Worker 回 404（還沒更新）就這次造訪不再試。
+- **`pendingEditsFor(id)`**：登入的人每點開一筆就問一次「這筆有沒有待審的修改建議」。
+  改成一次拿全部（最多 300 筆）、5 分鐘內共用；自己送出修改建議時 `forgetPendingEdits()` 清掉。
+- **`last_seen_at`**：每次打開都寫一次。改成距離上次超過 6 小時才寫（`LAST_SEEN_EVERY_MS`）。
+- **`loadHoursAvail()`**：每次打開都問「有沒有任何分店有營業時間」。答案一旦是「有」就不會變回去，
+  記在 localStorage 一天（`sxr_hours_avail`）。
+- **`TILE_TTL` 6 → 24 小時**。
+
+### 代價
+
+- 沒登入的人看到的留言、回報最多晚 10 分鐘。
+- 剛加／剛隱藏的分店，地圖上最多晚一天。
+- 待審的修改建議最多晚 5 分鐘才出現在別人的詳情裡。
+
+### 沒動的：事件
+
+Worker 轉送 `site_events` 一天 2,345 次，已經是攢 25 秒一批（`ctx.waitUntil` 最多 30 秒，不能再長）。
+要再少只能換地方存事件或少記幾種，牽涉管理員統計，這版先不動。
+
+### 預估
+
+一天約少 3,000～3,500 筆，17.7 MB → 約 14 MB。
+
+---
+
 ## v194　使用者體驗檢查：手機第一屏、過期說明、重複標籤、小按鈕
 
 **沒有資料庫變更，不用重貼 Worker。** 動 `template.html`、`updates.json`，新增 t103。

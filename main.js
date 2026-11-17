@@ -535,6 +535,7 @@ function renderNewOffersBanner(weekCount, sinceCount, shownIds){
   const btn=$('#btnOnlyNew');
   btn.textContent='只看新的'; btn.classList.remove('active');
 }
+const LAST_SEEN_EVERY_MS=6*60*60*1000;
 async function checkNewOffers(){
   const live=OFFERS.filter(o=>o.status==='approved' || !o.status);   // offers_public 本來就只有已通過的
   const prevSeen = me ? (myProfile?.last_seen_at||null) : (localStorage.getItem('sxr_last_seen')||null);
@@ -547,7 +548,11 @@ async function checkNewOffers(){
   // 更新「上次來訪」時間戳，留到下次來訪才會覺得這批是新的。
   const nowIso = new Date().toISOString();
   try{
-    if(me && sb){ await sb.from('profiles').update({last_seen_at:nowIso}).eq('id',me.id); if(myProfile) myProfile.last_seen_at=nowIso; }
+    /* v195：每次打開都寫一次 last_seen_at（profiles 一天 811 次裡的大宗）。
+       6 小時內再來不重寫——「自上次來訪的新優惠」本來就是以「一段時間沒來」為單位。 */
+    const lastMs=Date.parse(myProfile?.last_seen_at||'')||0;
+    if(me && sb){ if(Date.now()-lastMs>LAST_SEEN_EVERY_MS){
+      await sb.from('profiles').update({last_seen_at:nowIso}).eq('id',me.id); if(myProfile) myProfile.last_seen_at=nowIso; } }
     else localStorage.setItem('sxr_last_seen', nowIso);
   }catch{ /* 更新失敗不影響瀏覽，安靜略過就好 */ }
 }
@@ -5302,9 +5307,17 @@ function hoursLabel(){
 async function loadHoursAvail(){
   if(HOURS_TRIED || !LIVE) return;
   HOURS_TRIED=true;
-  // 只問「有沒有任何一家分店有營業時間」——v178 沒跑（沒有這個欄位）或還沒匯入，整列不出現
-  const {data,error}=await sb.from('offer_stores').select('offer_id').not('open_week','is',null).limit(1);
-  HOURS_AVAIL=!error && Array.isArray(data) && data.length>0;
+  /* v195：這一支每次打開都問（offer_stores 一天 492 次的大宗）。答案一旦是「有」就不會變回「沒有」，
+     記在這台裝置上一天。 */
+  let known=false;
+  try{ known=Date.now()-Number(localStorage.getItem('sxr_hours_avail')||0)<24*60*60*1000; }catch{}
+  if(known) HOURS_AVAIL=true;
+  else {
+    // 只問「有沒有任何一家分店有營業時間」——v178 沒跑（沒有這個欄位）或還沒匯入，整列不出現
+    const {data,error}=await sb.from('offer_stores').select('offer_id').not('open_week','is',null).limit(1);
+    HOURS_AVAIL=!error && Array.isArray(data) && data.length>0;
+    if(HOURS_AVAIL) try{ localStorage.setItem('sxr_hours_avail', String(Date.now())); }catch{}
+  }
   buildHoursControls();
   if(HOURS_F.mode) render();
 }
@@ -6239,8 +6252,27 @@ function flashRateBox(root){
 /* v184：詳情要的東西一次拿齊。這支叫不到（schema_v184 還沒跑）的話，這次造訪之後都不再試，
    直接走原本分開查的路；其他錯誤（網路一時不通）只是這一次退回去。 */
 let DETAIL_BUNDLE_OK=true;
+/* v195：沒登入的人看到的詳情每個人都一樣（offer_detail_bundle 是 security invoker，
+   anon 讀到的就是公開的那一份），交給 Worker 的 /detail 存 10 分鐘大家共用。
+   11/16～17 一天 offer_detail_bundle 2,443 次，是瀏覽器直接打 Supabase 的第一名。
+   登入的人照樣直接問（有自己的評分、剛留的言要馬上看到）。
+   Worker 還沒更新（404）就這次造訪不再試，改回直接問。 */
+let DETAIL_EDGE_OK=true;
+async function detailFromEdge(id){
+  if(me || !edgeApi() || !DETAIL_EDGE_OK) return null;
+  try{
+    const r=await fetch(`${edgeApi()}/detail?id=${Number(id)}`);
+    if(r.status===404){ DETAIL_EDGE_OK=false; return null; }
+    if(!r.ok) return null;
+    const j=await r.json();
+    const d=j?.data;
+    return d && ['comments','reports','history','names','report_likes','comment_likes'].every(k=>Array.isArray(d[k])) ? d : null;
+  }catch{ return null; }
+}
 async function loadDetailBundle(id){
   if(!DETAIL_BUNDLE_OK || !/^\d+$/.test(String(id))) return null;
+  const edge=await detailFromEdge(id);
+  if(edge) return edge;
   try{
     const {data,error}=await sb.rpc('offer_detail_bundle',{p_offer_id:Number(id)});
     if(error){
@@ -6252,6 +6284,23 @@ async function loadDetailBundle(id){
     return ok ? data : null;
   }catch{ return null; }
 }
+/* v195：登入的人每點開一筆詳情，就另外問一次「這筆有沒有待審的修改建議」——
+   11/16～17 一天 970 次。待審的修改建議全站加起來才幾筆，改成一次拿全部（5 分鐘內共用），
+   點開哪一筆就從裡面挑。自己剛送出修改建議時清掉，下次點開會重拿。 */
+let PENDING_EDITS_ALL=null, PENDING_EDITS_AT=0;
+const PENDING_EDITS_TTL_MS=5*60*1000;
+async function pendingEditsFor(id){
+  if(!me) return null;
+  if(!PENDING_EDITS_ALL || Date.now()-PENDING_EDITS_AT>PENDING_EDITS_TTL_MS){
+    const {data,error}=await sb.from('offer_edits_pending_preview').select('*')
+      .order('created_at',{ascending:false}).limit(300);
+    if(error) return (await sb.from('offer_edits_pending_preview').select('*').eq('offer_id',id)
+      .order('created_at',{ascending:false})).data;
+    PENDING_EDITS_ALL=data||[]; PENDING_EDITS_AT=Date.now();
+  }
+  return PENDING_EDITS_ALL.filter(e=>String(e.offer_id)===String(id));
+}
+function forgetPendingEdits(){ PENDING_EDITS_ALL=null; PENDING_EDITS_AT=0; }
 async function openDetail(id, fallback=null, focusRate=false){
   if(!LIVE){ alert(offlineMsg('讀不到留言')); return; }
   dtlId=id;
@@ -6301,8 +6350,7 @@ async function openDetail(id, fallback=null, focusRate=false){
   if(bundle){
     c=bundle.comments; r=bundle.reports; eh=bundle.history; myR={score:bundle.my_score};
     preNames=bundle.names; preLikes={rl:bundle.report_likes, cl:bundle.comment_likes};
-    pe=me ? (await sb.from('offer_edits_pending_preview').select('*').eq('offer_id',id)
-      .order('created_at',{ascending:false})).data : null;
+    pe=me ? await pendingEditsFor(id) : null;
   } else [{data:c},{data:r},{data:myR},{data:eh},{data:pe}]=await Promise.all([
     sb.from('comments').select('id,body,created_at,is_hidden,user_id')
       .eq('offer_id',id).order('created_at',{ascending:false}).limit(50),
@@ -7366,6 +7414,7 @@ $('#submitForm').onsubmit=async e=>{
       if(!sameOfferVal(newV,oldV)) patch[k]=newV;
     });
     if(!Object.keys(patch).length){ b.disabled=false; note($('#submitMsg'),'alert','沒有偵測到任何欄位變動，改點內容再送出。'); return; }
+    forgetPendingEdits();
     ({error}=await sb.from('offer_edits').insert({
       offer_id:Number(editing), proposed_by:me.id, patch, reason, source_url:url, source_tier:tier}));
   }else if(editing&&asAdmin){
