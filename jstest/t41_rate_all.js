@@ -114,19 +114,15 @@ const REPORTS = [
   t.ok('關起來才同步', /dlgRateAll'\)\.addEventListener\('close'[\s\S]{0,320}loadOffers\(true\)/.test(index));
 
   /* ================= 3. 多幾個入口 ================= */
-  // 「我的使用回報」每一列
-  const btns = $$('#myReports .rep-rate').map((b) => b.dataset.oid);
-  t.eq('還沒評的那幾列有「給星等」', btns, ['102']);   // 101 剛剛評完了
-  t.eq('評過的顯示已評，不再問一次', $$('#myReports .rep-rated').length, 2);
-  t.ok('沒用成的不問（沒什麼好評）',
-    !$$('#myReports .rep').some((r) => /沒用成的/.test(r.textContent) && /給星等/.test(r.textContent)));
-
-  // 點星等不要順便把「編輯回報」打開
+  // 「我的使用回報」每一列——v196 起不放「給星等」按鈕了（celine 轉來的許願：一筆一行只寫日期、店家、
+  // 花多少、省多少），點那一列打開回報表單，表單裡就能給星等
+  t.eq('「每一次」那幾列不再有給星等／已評', $$('#myReports .rep-rate, #myReports .rep-rated').length, 0);
   let opened = null;
   win.openReport = (...a) => { opened = a; };
-  $('#myReports .rep-rate').click();
+  win.eval('openReport=window.openReport');
+  $('#myReports .rep').click();
   await tick(win, 2);
-  t.eq('點「給星等」不會順便開編輯回報', opened, null);
+  t.ok('點那一列：打開回報表單（星等在裡面）', Array.isArray(opened) && opened.length === 2, JSON.stringify(opened));
 
   // 入口分流：只剩一家就直接開那筆詳情（順便看得到別人的評價），多家才開清單
   t.ok('一家 → 開詳情', /list\.length===1\) openDetail\(first\.id, null, true\)/.test(index));

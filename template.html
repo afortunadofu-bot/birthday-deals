@@ -888,6 +888,12 @@
     border-bottom:1px solid var(--line-soft)}
   .rep.rep-click{cursor:pointer;border-radius:var(--r-xs);margin:0 -6px;padding:6px}
   .rep.rep-click:hover{background:var(--line-soft)}
+  /* v196「每一次」一筆一行：日期固定寬度對齊，店名吃剩下的寬度、太長就省略，金額靠右 */
+  .rep.rep-line{flex-wrap:nowrap;align-items:baseline;gap:10px}
+  .rep-line .rl-date{flex:0 0 auto;min-width:3.4em;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  .rep-line .rl-brand{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rep-line .rl-money{flex:0 0 auto;margin-left:auto;font-variant-numeric:tabular-nums}
+  .rep-line .rl-money small{font-size:.7rem;color:var(--ink-3);margin-right:2px}
   .rep.wl-row-done{background:var(--free-bg);border-radius:var(--r-xs);margin:0 -8px;padding:6px 8px;
     border-bottom-color:transparent}
   /* 詳情視窗的使用回報：celine 回饋手機上有補充說明的回報會「一行一兩個字、拉得很長」。
@@ -13730,29 +13736,33 @@ function renderMyReports(R){
   const box=$('#myReports');
   renderMyShopTotals();
   if(!box || !L) return;
+  /* v196 celine 轉來的許願：「每一次」只顯示日期、店家、花多少、省多少——點那一列就能給星等跟編輯
+     （回報表單裡就有星等），所以「☆ 給星等」「★ 已評」「編輯 ›」都拿掉。
+     成功不寫「成功」兩個字，直接寫花多少、省多少；失敗不會省到錢，只寫「失敗」。
+     一筆一行，日期對齊、店名太長就省略，看起來是一整張整齊的表。 */
+  const thisYear=String(new Date().getFullYear());
+  const shortDate=d=>{ const m=String(d||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(!m) return String(d||'');
+    return (m[1]===thisYear?'':m[1]+'/')+Number(m[2])+'/'+Number(m[3]); };
   box.innerHTML=MY_REPORTS.map(r=>{
-    const id=String(r.offer_id||'');
-    const rated=id && MY_RATED.has(id);
-    const canRate=id && r.result==='success' && r.offers;
-    const star = rated ? '<span class="rep-rated" title="你給過星等了">★ 已評</span>'
-      : canRate ? `<button type="button" class="btn sm rep-rate" data-oid="${esc(id)}">☆ 給星等</button>`
-      : '';
-    return `<div class="rep rep-click" data-id="${r.id}">
-      <span>${esc(r.used_on)}</span><b style="flex:1 1 auto;min-width:0">${esc(r.offers?.brand||'（已下架）')}</b>
-      <span class="${L[r.result][1]}">${L[r.result][0]}</span>
-      <span class="ms-money">${moneyLine(Number(r.spent_twd||0), r.spent_twd!=null&&r.spent_twd!==''?1:0, 1, Number(r.saved_twd||0))}</span>
-      ${star}
-      <span style="color:var(--ink-3);font-size:.75rem;white-space:nowrap">編輯 ›</span></div>`;
+    const money = r.result==='failed'
+      ? `<span class="rl-money ${L.failed[1]}">${L.failed[0]}</span>`
+      : `<span class="rl-money ms-money">${r.result==='partial'?`<small>${L.partial[0]}</small>`:''}${
+          moneyLine(Number(r.spent_twd||0), r.spent_twd!=null&&r.spent_twd!==''?1:0, 1, Number(r.saved_twd||0))}</span>`;
+    return `<div class="rep rep-click rep-line" data-id="${r.id}" role="button" tabindex="0"
+      title="點一下：給星等、改這筆回報">
+      <span class="rl-date">${esc(shortDate(r.used_on))}</span>
+      <b class="rl-brand">${esc(r.offers?.brand||'（已下架）')}</b>
+      ${money}</div>`;
   }).join('')
     ||'<div style="color:var(--ink-3);font-size:.86rem">還沒有回報紀錄。</div>';
-  box.querySelectorAll('.rep-click').forEach(row=>row.onclick=()=>{
-    const r=MY_REPORTS.find(x=>String(x.id)===row.dataset.id);
-    if(r) openReport(r.offer_id, r);
-  });
-  box.querySelectorAll('.rep-rate').forEach(b=>b.onclick=e=>{
-    e.stopPropagation();               // 不要順便把編輯回報也打開
-    logEvent('rate_cta', {from:'my_reports'});
-    openDetail(b.dataset.oid, null, true);
+  box.querySelectorAll('.rep-click').forEach(row=>{
+    const open=()=>{
+      const r=MY_REPORTS.find(x=>String(x.id)===row.dataset.id);
+      if(r) openReport(r.offer_id, r);
+    };
+    row.onclick=open;
+    row.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(); } };
   });
 }
 

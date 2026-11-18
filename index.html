@@ -888,6 +888,12 @@
     border-bottom:1px solid var(--line-soft)}
   .rep.rep-click{cursor:pointer;border-radius:var(--r-xs);margin:0 -6px;padding:6px}
   .rep.rep-click:hover{background:var(--line-soft)}
+  /* v196「每一次」一筆一行：日期固定寬度對齊，店名吃剩下的寬度、太長就省略，金額靠右 */
+  .rep.rep-line{flex-wrap:nowrap;align-items:baseline;gap:10px}
+  .rep-line .rl-date{flex:0 0 auto;min-width:3.4em;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  .rep-line .rl-brand{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rep-line .rl-money{flex:0 0 auto;margin-left:auto;font-variant-numeric:tabular-nums}
+  .rep-line .rl-money small{font-size:.7rem;color:var(--ink-3);margin-right:2px}
   .rep.wl-row-done{background:var(--free-bg);border-radius:var(--r-xs);margin:0 -8px;padding:6px 8px;
     border-bottom-color:transparent}
   /* 詳情視窗的使用回報：celine 回饋手機上有補充說明的回報會「一行一兩個字、拉得很長」。
