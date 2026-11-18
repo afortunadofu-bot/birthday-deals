@@ -888,12 +888,30 @@
     border-bottom:1px solid var(--line-soft)}
   .rep.rep-click{cursor:pointer;border-radius:var(--r-xs);margin:0 -6px;padding:6px}
   .rep.rep-click:hover{background:var(--line-soft)}
-  /* v196「每一次」一筆一行：日期固定寬度對齊，店名吃剩下的寬度、太長就省略，金額靠右 */
-  .rep.rep-line{flex-wrap:nowrap;align-items:baseline;gap:10px}
-  .rep-line .rl-date{flex:0 0 auto;min-width:3.4em;color:var(--ink-3);font-variant-numeric:tabular-nums}
-  .rep-line .rl-brand{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .rep-line .rl-money{flex:0 0 auto;margin-left:auto;font-variant-numeric:tabular-nums}
-  .rep-line .rl-money small{font-size:.7rem;color:var(--ink-3);margin-right:2px}
+  /* v197「每一次」是一張表：表頭寫「花」「省」，格子只放數字。店家吃剩下的寬度、太長就省略
+     （max-width:0 + width:100% 是讓表格欄位能被 ellipsis 截斷的老招）。 */
+  .rl-table{width:100%;border-collapse:collapse;font-size:.81rem;font-variant-numeric:tabular-nums}
+  .rl-table th{font-size:.72rem;font-weight:600;color:var(--ink-3);text-align:left;padding:4px 6px;white-space:nowrap;
+    border-bottom:1px solid var(--line)}
+  .rl-table td{padding:7px 6px;border-bottom:1px solid var(--line-soft);white-space:nowrap}
+  .rl-table .num{text-align:right}
+  .rl-table .rl-date{color:var(--ink-3)}
+  .rl-table .rl-brand{width:100%;max-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+  .rl-table .rl-brand .rl-brand-link{display:block}
+  .rl-table .rl-saved{color:var(--ok, #2e7d32);font-weight:700}
+  .rl-table .rl-saved small{font-size:.68rem;color:var(--ink-3);font-weight:400;margin-right:3px}
+  .rl-table tr.rep-click{cursor:pointer}
+  .rl-table .rl-n{color:var(--ink-3)}
+  .rl-table .rl-star{color:#e0a400;font-weight:700}
+  .rl-table .rl-nostar{color:var(--ink-3)}
+  .rl-table tfoot th, .rl-table tfoot td{border-top:1px solid var(--line);border-bottom:0;font-weight:700;padding-top:9px;text-align:left}
+  .rl-table tfoot td.num{text-align:right}
+  .rl-brand-link{background:none;border:0;padding:0;font:inherit;font-weight:700;color:var(--ink);cursor:pointer;
+    max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;
+    text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+  .rl-brand-link:hover{text-decoration-color:currentColor}
+  .rl-note{margin:6px 0 0;font-size:.74rem;color:var(--ink-3)}
+  .rl-table tr.rep-click:hover td{background:var(--line-soft)}
   .rep.wl-row-done{background:var(--free-bg);border-radius:var(--r-xs);margin:0 -8px;padding:6px 8px;
     border-bottom-color:transparent}
   /* 詳情視窗的使用回報：celine 回饋手機上有補充說明的回報會「一行一兩個字、拉得很長」。

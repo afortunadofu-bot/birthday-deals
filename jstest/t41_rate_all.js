@@ -120,7 +120,7 @@ const REPORTS = [
   let opened = null;
   win.openReport = (...a) => { opened = a; };
   win.eval('openReport=window.openReport');
-  $('#myReports .rep').click();
+  $('#myReports tr.rl-row').click();
   await tick(win, 2);
   t.ok('點那一列：打開回報表單（星等在裡面）', Array.isArray(opened) && opened.length === 2, JSON.stringify(opened));
 

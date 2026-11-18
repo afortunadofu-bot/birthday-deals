@@ -27,29 +27,38 @@ const { boot, tick, makeSb, makeAsserts, stubHeavy } = require('./harness');
   t.ok('有回報：那一段出現', !$('#myRepWrap').classList.contains('hidden'));
   t.ok('預設看「每一家」', !$('#myShopTotals').classList.contains('hidden') && $('#myReports').classList.contains('hidden'));
 
-  const shops = $$('#myShopTotals button.my-shop');
+  // v197 起「每一家」也是一張表：店家／次／花／省／評分，格子只放數字
+  const shops = $$('#myShopTotals tbody tr.rl-row');
   const txt = (el) => el.textContent.replace(/\s+/g, ' ').trim();
-  t.eq('一家一列（同一家的回報加起來），省最多的在上面', shops.map((b) => b.querySelector('b').textContent), ['王品', '星巴克', '失敗那家']);
-  t.ok('王品：2 次、花 $200、省 $600', /2 次/.test(txt(shops[0])) && /花 \$200/.test(txt(shops[0])) && /省 \$600/.test(txt(shops[0])), txt(shops[0]));
-  t.ok('有一次沒填花多少：講出來，不當 0', /1 次沒填/.test(txt(shops[0])));
-  t.ok('花 0 元的照樣寫 $0（填了 0 跟沒填不一樣）', /花 \$0/.test(txt(shops[1])), txt(shops[1]));
-  const total = txt($('#myShopTotals .my-shop-total'));
-  t.ok('最下面一列合計：3 家、4 次', /合計 3 家/.test(total) && /4 次/.test(total), total);
-  t.ok('合計花＝有填的加起來', /花 \$350/.test(total), total);
-  t.ok('合計省＝全部加起來', /省 \$680/.test(total), total);
-  t.ok('合計也講出幾次沒填', /1 次沒填/.test(total));
+  const cell = (row, cls) => txt(row.querySelector(cls));
+  t.eq('表頭：店家、次、花、省、評分', $$('#myShopTotals thead th').map(txt), ['店家', '次', '花', '省', '評分']);
+  t.eq('一家一列（同一家的回報加起來），省最多的在上面', shops.map((r) => cell(r, '.rl-brand')), ['王品', '星巴克', '失敗那家']);
+  t.eq('王品：2 次、花 $200、省 $600', [cell(shops[0], '.rl-n'), cell(shops[0], '.rl-spent'), cell(shops[0], '.rl-saved')], ['2', '$200', '$600']);
+  t.eq('花 0 元的照樣寫 $0（填了 0 跟沒填不一樣）', cell(shops[1], '.rl-spent'), '$0');
+  const total = $('#myShopTotals tfoot tr');
+  t.ok('最下面一列合計：3 家、4 次', /合計 3 家/.test(txt(total)) && cell(total, '.rl-n') === '4', txt(total));
+  t.eq('合計花＝有填的加起來', cell(total, '.rl-spent'), '$350');
+  t.eq('合計省＝全部加起來', cell(total, '.rl-saved'), '$680');
+  t.ok('幾次沒填寫在表格下面，不塞進格子', /另外 1 次沒填/.test(txt($('#myShopTotals .rl-note'))) && !/沒填/.test(txt(total)));
 
-  let opened = null;
+  let opened = null, openedRep = null;
   win.openDetail = (id) => { opened = id; };
-  win.eval('openDetail=window.openDetail');
+  win.openReport = (oid, r) => { openedRep = [oid, r && r.id]; };
+  win.eval('openDetail=window.openDetail; openReport=window.openReport');
   shops[0].click();
-  t.eq('點一家：開那筆的詳情', opened, '7');
+  t.eq('點那一列（花、省）：打開這家的使用回報', openedRep, [7, 1]);
+  t.eq('…不是開詳情', opened, null);
+  shops[0].querySelector('.rl-brand-link').click();
+  t.eq('點店名：開那筆的詳情', opened, '7');
 
   $('#myRepWrap [data-rv="each"]').click();
   t.ok('切「每一次」：一筆一列', !$('#myReports').classList.contains('hidden') && $('#myShopTotals').classList.contains('hidden'));
-  t.eq('四筆都在', $$('#myReports .rep').length, 4);
-  t.ok('每一筆寫出花多少、省多少', /花 \$200/.test(txt($$('#myReports .rep')[0])) && /省 \$300/.test(txt($$('#myReports .rep')[0])));
-  t.ok('沒填的那一筆寫「—」', /花 —/.test(txt($$('#myReports .rep')[1])));
+  // v197 起「每一次」是一張表：表頭寫花／省，格子只放數字
+  const eachRows = $$('#myReports tr.rl-row');
+  t.eq('四筆都在', eachRows.length, 4);
+  t.ok('每一筆寫出花多少、省多少', eachRows[0].querySelector('.rl-spent').textContent.trim() === '$200'
+    && /\$300/.test(eachRows[0].querySelector('.rl-saved').textContent), txt(eachRows[0]));
+  t.eq('沒填的那一筆寫「—」', eachRows[1].querySelector('.rl-spent').textContent.trim(), '—');
   t.eq('記住上次看哪一種', win.localStorage.getItem('sxr_my_rep_view'), 'each');
   $('#myRepWrap [data-rv="shop"]').click();
 
