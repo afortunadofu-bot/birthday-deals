@@ -714,6 +714,19 @@
   .near-bar .btn.sm{min-height:30px;padding:4px 10px}
   .near-bar .toggle{font-size:.8rem}
   .near-head #nearStatus{line-height:1.45}
+  /* v199 常用地點：一排小膠囊，點名字就換過去，✕ 刪掉 */
+  .near-saved{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+  .near-saved-k{font-size:.74rem;color:var(--ink-3);margin-right:2px}
+  .near-saved-chip{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;
+    background:var(--surface);max-width:100%}
+  .near-saved-chip.on{border-color:var(--accent-line);background:var(--accent-soft)}
+  .near-saved-go{background:none;border:0;font:inherit;font-size:.8rem;color:var(--ink);cursor:pointer;
+    padding:5px 4px 5px 11px;max-width:12em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .near-saved-del{background:none;border:0;font:inherit;font-size:.72rem;color:var(--ink-3);cursor:pointer;
+    padding:5px 9px 5px 4px}
+  .near-saved-del:hover{color:var(--alert)}
+  .near-saved-form{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .near-saved-form input{width:11em;font-size:.8rem;padding:4px 8px;min-height:30px}
   .near-info{font-size:1rem;line-height:1;padding:2px 6px;color:var(--ink-3)}
   .near-info[aria-expanded="true"]{color:var(--accent)}
   .near-trigger{flex:none;white-space:nowrap}
@@ -1995,6 +2008,9 @@
         <button class="btn sm" id="btnNearPlace" type="button">換地點</button>
         <button class="btn sm" id="btnNearMap" type="button">地圖</button>
       </div>
+      <!-- v199 楊晴：「附近地圖可以自己填地址查詢了！那想問可以有常用地址的收藏嗎？
+           輸入過一次，按收藏的話，到時候就可以直接用選單選」。 -->
+      <div class="near-saved hidden" id="nearSaved"></div>
       <!-- 嵐：「多一個可以輸入地點開地圖定位的功能（改定位地點到指定位置）」 -->
       <div class="hidden" id="nearPlaceWrap" style="margin-top:8px">
         <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
@@ -2009,7 +2025,7 @@
            灰色小字能不能拿 ⓘ 隱藏之類的」——說明文字收進狀態列旁邊的 ⓘ，
            按了才展開。地圖本來就在下面，少掉這兩三行就看得到了。 -->
       <div class="hint hidden" id="nearNotes" style="margin-top:4px">
-        位置只用來算距離，不會存起來。分店資料來自 Google 地圖，可能有遺漏或已歇業。
+        位置只用來算距離，不會存起來；只有你自己按「☆ 存這裡」的常用地點，會留在這台裝置上。分店資料來自 Google 地圖，可能有遺漏或已歇業。
         <span id="nearMapHint"></span>
       </div>
       <div class="hidden" id="nearMapWrap" style="margin-top:8px;position:relative">
