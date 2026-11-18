@@ -5702,12 +5702,28 @@ async function loadSiteStats(force){
   // 只留最有感的兩個數字：總筆數（規模）、大家已省下多少（社會認同，
   // 有回報資料才顯示）。免費筆數已經有篩選 chip 可以自己勾，瀏覽次數
   // 這種站方視角的數字對訪客沒有意義，拿掉。
-  $('#siteStats').innerHTML=
-    `<div class="statpills">`
+  /* v198 celine：「這裡多一個平台總瀏覽人數跟在線人數」。
+     - 總瀏覽人數：site_stats 本來就有的 visitor_count（不重複裝置，/stats 那包裡就有，不多打請求）。
+     - 在線人數：Worker 的 /boot 順便帶 site_online_now()（最近 5 分鐘有動靜的裝置）。
+       /boot 每個人開站本來就會拿，Worker 10 分鐘才問 Supabase 一次——不會多吃 Log 額度。
+       所以這個數字最舊大約 10 分鐘前，字面寫「剛剛」不寫「即時」。
+       至少寫 1：正在看的這個人自己就在線上（快取那一刻可能還沒算到他）。
+       Worker 還沒更新、或拿不到 /boot 就不畫這顆——不退回直接查資料庫，那樣每個訪客多一個請求。 */
+  const visitors=Number(s.visitor_count)||0;
+  const pills=()=>`<div class="statpills">`
     + `<span class="statpill">📋 共 <b>${s.offer_count}</b> 筆優惠</span>`
     + (s.report_count?`<span class="statpill">💰 大家累積省下 <b>${nt(s.saved_total)}</b>（${s.report_count} 次回報）</span>`:'')
+    + (visitors?`<span class="statpill" title="來看過壽星日的人數（同一台裝置只算一次）">👀 總瀏覽人數 <b>${nt2(visitors)}</b></span>`:'')
+    + (ONLINE_NOW!=null?`<span class="statpill stat-online" title="最近幾分鐘有在逛的人">🟢 剛剛 <b>${nt2(Math.max(1,ONLINE_NOW))}</b> 人在線上</span>`:'')
     + `</div>`;
+  $('#siteStats').innerHTML=pills();
+  if(LIVE && ONLINE_NOW==null){
+    const b=await bootBundle().catch(()=>null);
+    const n=b && b.online!=null && Number.isFinite(Number(b.online)) ? Number(b.online) : null;
+    if(n!=null){ ONLINE_NOW=n; $('#siteStats').innerHTML=pills(); }
+  }
 }
+var ONLINE_NOW=null;   // 用 var：開站流程可能在這一行之前就呼叫 loadSiteStats()
 
 /* ---- 登入 ----
    redirectTo 一律正規化成「目錄」而不是 .../index.html。

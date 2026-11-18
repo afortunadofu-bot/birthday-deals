@@ -16,7 +16,7 @@
  *   /offers/first  開場先畫的前 60 筆（照「依省最多」排，跟網站的預設排序同一套）
  *   /stats   站台數據（site_stats_cached，沒跑 v78 就退回 site_stats）
  *   /board   排行榜那一頁要的 14 份公開統計，打包成一包
- *   /boot    每開一次網頁都要問的兩筆（公告、顯示開關），快取 180 秒（v184 前是 60 秒）
+ *   /boot    每開一次網頁都要問的（公告、顯示開關、v198 起加剛剛在線人數），快取 600 秒
  *   /spend   大家實際花多少（offer_spend_summary），快取 30 分鐘（v183）
  *   POST /events  事件記錄轉送給 Supabase 的 site_events（v183；v185 起在這裡攢 20 秒、很多人的合成一批送）
  *   /img/avatars/…  使用者頭像（Supabase Storage 的公開檔），Cloudflare 存 7 天（v185）
@@ -184,11 +184,26 @@ async function fromSupabase(env, kind) {
       return await r.json();
     };
     // 公告可能一則都沒有（空陣列），那也是答案，不是失敗
-    const [ann, flags] = await Promise.all([
+    /* v198：順便帶「剛剛在線人數」（site_online_now，最近 5 分鐘有動靜的裝置）。
+       首頁統計那排要顯示；每個人開站本來就拿 /boot，放這裡就是 10 分鐘問一次，
+       不用每位訪客各打一次 Supabase。用 anon 身分問（schema_v55 只 grant 給 anon／authenticated）。
+       拿不到就是 null，前端那顆就不畫，不影響公告跟顯示開關。 */
+    const online = async () => {
+      const r = await fetch(`${base}/rest/v1/rpc/site_online_now`, {
+        method: 'POST',
+        headers: { apikey: key, authorization: `Bearer ${key}`, accept: 'application/json', 'content-type': 'application/json' },
+        body: '{}',
+      });
+      if (!r.ok) return null;
+      const n = Number(await r.json());
+      return Number.isFinite(n) ? n : null;
+    };
+    const [ann, flags, onlineNow] = await Promise.all([
       one('current_announcement?select=*&limit=1').catch(() => null),
       one('site_settings?select=key,enabled'),
+      online().catch(() => null),
     ]);
-    return { announcement: Array.isArray(ann) ? (ann[0] || null) : (ann || null), flags };
+    return { announcement: Array.isArray(ann) ? (ann[0] || null) : (ann || null), flags, online: onlineNow };
   }
 
   /* 開場那 60 筆：照 value_twd 由大到小，跟網站預設的「依省最多」同一個排序，

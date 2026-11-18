@@ -13,6 +13,22 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v198　首頁統計多兩顆：總瀏覽人數、剛剛在線人數
+
+**沒有資料庫變更。Worker 要重貼**（`worker/offers-cache.js`，`/boot` 多帶 `online`）。動 `template.html`、`updates.json`，測試 t40、t106。
+
+celine（11/18）：「這裡多一個平台總瀏覽人數跟在線人數」（指首頁「共 N 筆優惠／大家累積省下」那排）。
+
+- 👀 **總瀏覽人數**：`site_stats.visitor_count`（不重複裝置），`/stats` 那包本來就有，不多打請求。
+  刻意不用 `pageview_count`（那是瀏覽次數，排行榜那邊叫「平台總瀏覽人次」）。
+- 🟢 **剛剛 N 人在線上**：Worker 的 `/boot` 順便問 `site_online_now()`（最近 5 分鐘有動靜的裝置）。
+  每個人開站本來就拿 `/boot`、Worker 10 分鐘才問 Supabase 一次，所以 Log 額度幾乎不變——
+  代價是數字最舊約 10 分鐘，字面寫「剛剛」不寫「即時」。至少寫 1（正在看的人自己就在線上）。
+- Worker 還沒重貼（`/boot` 沒有 `online`）就不畫在線那顆，**不退回前端直接打 `site_online_now`**——那樣每位訪客多一個請求。
+- Worker：`site_online_now` 用 anon 身分問（schema_v55 只 grant 給 anon／authenticated）；問不到回 `null`，公告跟顯示開關照舊。
+
+---
+
 ## v197　「我省下多少」兩種看法都改成真的表格，看得到星等
 
 **沒有資料庫變更，不用重貼 Worker。** 動 `template.html`、`updates.json`，測試 t41、t84、t105。

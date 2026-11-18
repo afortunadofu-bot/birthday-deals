@@ -116,7 +116,7 @@ const KEYS = ['lbAll', 'pop', 'lbAllPrev', 'savedAll', 'popPrev', 'wish', 'wishP
   body = await res.json();
   t.eq('公告拿得到', body.data.announcement && body.data.announcement.id, 9);
   t.ok('開關也拿得到', Array.isArray(body.data.flags) && body.data.flags.length === 1);
-  t.eq('只打兩筆', upstream.length, 2);
+  t.eq('打三筆（v198 起多帶剛剛在線人數）', upstream.length, 3);
   t.eq('瀏覽器只留 60 秒（v187：Worker 自己存 10 分鐘，瀏覽器不要再疊 10 分鐘）',
     res.headers.get('cache-control'), 'public, max-age=60');
   upstream = [];
