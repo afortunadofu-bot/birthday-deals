@@ -508,6 +508,12 @@
   .venue-mine{font-size:.74rem;font-weight:700;color:var(--accent-dark);background:var(--accent-soft);
     border-radius:999px;padding:1px 7px;white-space:nowrap}
   .venue-fix{margin:10px 2px 2px;font-size:.8rem;color:var(--ink-3)}
+  /* v202 商場自己的壽星禮（疊加） */
+  .venue-mall{font-size:.74rem;font-weight:700;color:#7a4b00;background:#fff3d6;
+    border-radius:999px;padding:1px 7px;white-space:nowrap}
+  .venue-mall-note{font-size:.8rem;line-height:1.55;color:var(--ink-2);background:#fff8e6;
+    border:1px solid #f3dca6;border-radius:10px;padding:8px 10px;margin:6px 0 4px}
+  .venue-offer.vo-mall{background:#fffaf0}
   /* v160 行程的地圖：編號就是第幾站，跟清單上的編號一樣 */
   .plan-pin{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;
     background:#e8483c;color:#fff;font-weight:800;font-size:12px;border:2px solid #fff;
@@ -551,6 +557,10 @@
   .filt-label{flex:none;font-size:.75rem;color:var(--ink-3);font-weight:700;
     padding-top:6px;width:34px;letter-spacing:.02em}
   .filt-row .chipgrp{margin-top:0;flex:1;min-width:0}
+  /* v202 行政區 */
+  .dist-box{flex:1;min-width:0}
+  .dist-note{font-size:.72rem;color:var(--ink-3);margin-top:6px;line-height:1.5}
+  .dist-loading{font-size:.8rem;color:var(--ink-3)}
   input,select,textarea{font:inherit;font-size:.86rem;padding:9px 12px;border:1px solid var(--line);
     border-radius:var(--r-sm);background:var(--surface);color:var(--ink);max-width:100%;
     transition:border-color .16s var(--ease),box-shadow .16s var(--ease)}
@@ -1878,6 +1888,11 @@
       <div class="sheet-handle"></div>
       <div class="sheet-head"><h3>篩選</h3><button class="btn sm" type="button" id="btnCloseFilter">完成</button></div>
       <div class="filt-row"><span class="filt-label">地區</span><div class="row chipgrp" id="regionChips"></div></div>
+      <!-- v202 問卷（11/18）：「希望加入近哪個捷運站、哪一區（ex 士林區、信義區等等）做搜尋，
+           不然光找台北市很難分辨。」只選一個縣市時才出現；行政區是從分店地址抓的。 -->
+      <div class="filt-row hidden" id="districtRow"><span class="filt-label">區域</span>
+        <div class="dist-box"><div class="row chipgrp" id="districtChips"></div>
+          <div class="dist-note">依 Google 地圖上的分店地址，沒有分店資料的優惠不會出現在這裡。找捷運站附近：用「📍 附近」輸入站名。</div></div></div>
       <div class="filt-row"><span class="filt-label">會員</span><div class="row chipgrp" id="memChips"></div></div>
       <div class="filt-row"><span class="filt-label">期間</span><div class="row chipgrp" id="timingChips"></div></div>
       <div class="filt-row"><span class="filt-label">類型</span><div class="row chipgrp" id="freeChips"></div></div>

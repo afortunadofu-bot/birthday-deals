@@ -508,6 +508,12 @@
   .venue-mine{font-size:.74rem;font-weight:700;color:var(--accent-dark);background:var(--accent-soft);
     border-radius:999px;padding:1px 7px;white-space:nowrap}
   .venue-fix{margin:10px 2px 2px;font-size:.8rem;color:var(--ink-3)}
+  /* v202 商場自己的壽星禮（疊加） */
+  .venue-mall{font-size:.74rem;font-weight:700;color:#7a4b00;background:#fff3d6;
+    border-radius:999px;padding:1px 7px;white-space:nowrap}
+  .venue-mall-note{font-size:.8rem;line-height:1.55;color:var(--ink-2);background:#fff8e6;
+    border:1px solid #f3dca6;border-radius:10px;padding:8px 10px;margin:6px 0 4px}
+  .venue-offer.vo-mall{background:#fffaf0}
   /* v160 行程的地圖：編號就是第幾站，跟清單上的編號一樣 */
   .plan-pin{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;
     background:#e8483c;color:#fff;font-weight:800;font-size:12px;border:2px solid #fff;
@@ -551,6 +557,10 @@
   .filt-label{flex:none;font-size:.75rem;color:var(--ink-3);font-weight:700;
     padding-top:6px;width:34px;letter-spacing:.02em}
   .filt-row .chipgrp{margin-top:0;flex:1;min-width:0}
+  /* v202 行政區 */
+  .dist-box{flex:1;min-width:0}
+  .dist-note{font-size:.72rem;color:var(--ink-3);margin-top:6px;line-height:1.5}
+  .dist-loading{font-size:.8rem;color:var(--ink-3)}
   input,select,textarea{font:inherit;font-size:.86rem;padding:9px 12px;border:1px solid var(--line);
     border-radius:var(--r-sm);background:var(--surface);color:var(--ink);max-width:100%;
     transition:border-color .16s var(--ease),box-shadow .16s var(--ease)}
@@ -1877,6 +1887,11 @@
       <div class="sheet-handle"></div>
       <div class="sheet-head"><h3>篩選</h3><button class="btn sm" type="button" id="btnCloseFilter">完成</button></div>
       <div class="filt-row"><span class="filt-label">地區</span><div class="row chipgrp" id="regionChips"></div></div>
+      <!-- v202 問卷（11/18）：「希望加入近哪個捷運站、哪一區（ex 士林區、信義區等等）做搜尋，
+           不然光找台北市很難分辨。」只選一個縣市時才出現；行政區是從分店地址抓的。 -->
+      <div class="filt-row hidden" id="districtRow"><span class="filt-label">區域</span>
+        <div class="dist-box"><div class="row chipgrp" id="districtChips"></div>
+          <div class="dist-note">依 Google 地圖上的分店地址，沒有分店資料的優惠不會出現在這裡。找捷運站附近：用「📍 附近」輸入站名。</div></div></div>
       <div class="filt-row"><span class="filt-label">會員</span><div class="row chipgrp" id="memChips"></div></div>
       <div class="filt-row"><span class="filt-label">期間</span><div class="row chipgrp" id="timingChips"></div></div>
       <div class="filt-row"><span class="filt-label">類型</span><div class="row chipgrp" id="freeChips"></div></div>
@@ -3716,6 +3731,7 @@ let activeCat=new Set(), activeFree=new Set(), activeTiming=new Set();   // 篩�
 let activeRegion=new Set(), activeMemType=new Set();
 let HOURS_F={mode:'', dow:null, min:null};   // v178 營業時間篩選 mode: '' | 'now' | 'at'（要在 loadFilters 之前宣告）
 let activeCatEx=new Set();   // v180 不看的分類
+let activeDistrict=new Set(), DIST_FOR=null;   // v202 行政區：DIST_FOR＝這組行政區是哪個縣市的
 let activeSpend=new Set();   // v164 大家實際花多少（嵐：「統計花費金額，讓其他人有個概念這家會花多少」→「進到篩選」）   // 地區／會員也改多選，跟上面那組共用同一套 mkMulti chip 邏輯
 let deferredInstall = null;
 let WISH=new Set();          // 待辦清單（收藏的優惠 id，字串形式）
@@ -3745,6 +3761,7 @@ function saveFilters(){
     hours:HOURS_F.mode?{...HOURS_F}:null,
     catEx:[...activeCatEx], fHideUsed:$('#fHideUsed').checked, fKeepUnknown:$('#fKeepUnknown').checked,
     fExactRegion:$('#fExactRegion').checked,
+    district:DIST_FOR&&activeDistrict.size?{county:DIST_FOR, list:[...activeDistrict]}:null,
     sort:$('#sort').value
   })); }catch{}
 }
@@ -3753,6 +3770,9 @@ function loadFilters(){
   if(!s) return;
   $('#q').value=s.q||'';
   (s.region||[]).forEach(v=>activeRegion.add(v)); (s.memType||[]).forEach(v=>activeMemType.add(v));
+  if(s.district && typeof s.district.county==='string' && Array.isArray(s.district.list)){
+    DIST_FOR=s.district.county; s.district.list.forEach(v=>activeDistrict.add(String(v)));
+  }
   (s.cat||[]).forEach(v=>activeCat.add(v)); (s.free||[]).forEach(v=>activeFree.add(v));
   (s.timing||[]).forEach(v=>activeTiming.add(v));
   $('#fNoCompanion').checked=!!s.fNoCompanion;
@@ -7362,6 +7382,30 @@ async function loadVenuePairs(){
 }
 /* 管理員改了範圍、位置、公開與否，配對就不準了，下次重抓 */
 function forgetVenuePairs(){ VENUE_PAIRS=null; VENUE_PAIRS_TRIED=false; }
+/* v202 問卷（11/01）：「如果有 ai 協助整理網友提供的 combo 技（不同優惠疊加）也會更威，
+   像是環球自己有優惠，環球的店家也有優惠，可以疊加」。
+   AI 整理先不做；但「商場自己的壽星禮」本來就混在商圈清單裡，跟一般店家排在一起看不出來。
+   認出來、排到最上面、講清楚可以跟店家的一起拿。
+   品牌名有「（限○○門市）」的是店家（例如「樂敘(限夢時代門市)」），不是商場本身。 */
+const MALL_BRAND_RE=/購物中心|百貨公司|Global Mall|ATT ?4 ?fun|Focus ?百貨|LaLaport|Outlet|SOGO|新光三越|遠東百貨|大遠百|微風廣場|太平洋百貨|夢時代|巨城|裕隆城|漢神|京站|中友百貨|台茂|大魯閣|三創/i;
+function isMallOffer(o){
+  const b=String(o&&o.brand||'');
+  return MALL_BRAND_RE.test(b) && !/[（(]\s*限/.test(b);
+}
+/* 只看「範圍內有沒有這家分店」會漏：商場很大，Google 給的座標常常不在商圈中心 180 公尺內
+   （實測中和環球、板橋車站・環球都漏掉）。所以商圈名字裡有商場的名字也算：
+   「Global Mall 環球購物中心」→「環球」，「中和環球」「桃園環球店」都對得上。 */
+function mallKey(brand){ return String(brand||'').replace(/Global Mall|購物中心|百貨公司|百貨|\s+/gi,'').toLowerCase(); }
+function venueNamedMalls(v){
+  const n=String(v&&v.name||'').replace(/\s+/g,'').toLowerCase();
+  return OFFERS.filter(o=>{ if(!isMallOffer(o)) return false; const k=mallKey(o.brand); return k.length>=2 && n.includes(k); });
+}
+function venueMallOffers(v){
+  const s=VENUE_PAIRS?.get(v.id);
+  const out=s ? OFFERS.filter(o=>s.has(String(o.id)) && isMallOffer(o)) : [];
+  venueNamedMalls(v).forEach(o=>{ if(!out.includes(o)) out.push(o); });
+  return out;
+}
 function venueWishHits(v){
   const s=VENUE_PAIRS?.get(v.id);
   return s ? [...WISH].filter(id=>s.has(id)) : [];
@@ -7661,6 +7705,7 @@ function renderVenues(){
       aria-expanded="${VENUE_OPEN===v.id?'true':'false'}">
       <span class="venue-name">${esc(v.name)}</span>
       ${(()=>{ const n=me?venueWishHits(v).length:0; return n?`<span class="venue-mine">收藏 ${n}</span>`:''; })()}
+      ${venueMallOffers(v).length?'<span class="venue-mall" title="商場自己也有壽星禮">🏬 商場禮</span>':''}
       <span class="venue-n">${v.offer_count} 家</span>
       ${sortBy==='near'&&VENUE_HERE&&v.lat!=null?`<span class="venue-dist">${esc(fmtDistance(venueDistM(v,VENUE_HERE)))}</span>`:''}
       <span class="venue-cty">${esc(v.county||'')}</span>
@@ -7719,8 +7764,12 @@ async function fillVenue(id){
     if(error){ body.innerHTML='<div class="hint">載入失敗：'+esc(zhErr(error))+'</div>'; return; }
     ids=new Set((data||[]).map(x=>String(x.venue_offer_ids ?? x)));
   }
-  const list=OFFERS.filter(o=>ids.has(String(o.id)));
+  // v202：商場自己的壽星禮排最上面（其他照原本順序）
   const v=(VENUES||[]).find(x=>x.id===id);
+  const named=v?venueNamedMalls(v).filter(o=>!ids.has(String(o.id))):[];
+  const list=OFFERS.filter(o=>ids.has(String(o.id))).concat(named)
+    .map((o,i)=>[o,i]).sort((a,b)=>isMallOffer(b[0])-isMallOffer(a[0]) || a[1]-b[1]).map(x=>x[0]);
+  const malls=list.filter(isMallOffer);
   const top=(v?venueAdminHtml(v):'')+(v&&v.lat!=null?`<div class="venue-map" id="venueMap${id}"></div>`:'');
   if(!list.length){
     body.innerHTML=top+'<div class="hint">這裡的優惠暫時查不到。</div>';
@@ -7739,15 +7788,18 @@ async function fillVenue(id){
       ${left.length?`<button type="button" class="btn sm" id="venueAll${id}">全選</button>`:''}
       <span class="hint" style="margin:0">${left.length?'勾起來再按「加入」':'這裡的都收藏了'}</span>
     </div>`
+    +(malls.length?`<div class="venue-mall-note">🏬 <b>${malls.map(o=>esc(o.brand)).join('、')}</b>
+      自己也有壽星禮，跟下面店家的生日優惠是分開領的——同一趟可以一起拿。</div>`:'')
     +list.map(o=>{
       const oid=String(o.id), wished=WISH.has(oid);
-      return `<div class="venue-offer">
+      return `<div class="venue-offer${isMallOffer(o)?' vo-mall':''}">
         <input type="checkbox" class="vo-pick" data-vpick="${esc(oid)}" aria-label="勾選 ${esc(o.brand)}"
           ${wished?'checked disabled':(VENUE_PICKS.set.has(oid)?'checked':'')}>
         <button type="button" class="vo-open" data-id="${esc(oid)}">
           <span class="vo-brand">${esc(o.brand)}</span>
           <span class="vo-offer">${esc(String(o.offer||'').slice(0,40))}</span>
         </button>
+        ${isMallOffer(o)?'<span class="venue-mall">商場</span>':''}
         ${wished?'<span class="flag">已收藏</span>':''}
       </div>`;
     }).join('');
@@ -8849,6 +8901,7 @@ $('#sort').addEventListener('input',()=>{ if(NEAR.active) NEAR.sortTouched=true;
    不好拿掉，就等於沒有在用。 ---- */
 const FILTER_SETS={
   region:{set:()=>activeRegion, sel:'#regionChips'},
+  district:{set:()=>activeDistrict, sel:'#districtChips'},
   mem:   {set:()=>activeMemType, sel:'#memChips'},
   cat:   {set:()=>activeCat,     sel:'#cats'},
   free:  {set:()=>activeFree,    sel:'#freeChips'},
@@ -9017,6 +9070,86 @@ async function fetchHoursOpen(key){
     : {map:new Map(data.map(r=>[String(r.offer_id), !!r.is_open]))});
   render();
 }
+/* ---- v202 行政區 ----------------------------------------------------
+   問卷（11/18）：「希望加入近哪個捷運站、哪一區（ex 士林區、信義區等等）做搜尋，
+   不然光找台北市很難分辨。」台北市一選就是三百多筆。
+
+   行政區不用另外填：每一家分店都有 Google 地圖的地址，資料庫從地址抓出「內湖區」
+   （schema_v202 的 offer_districts）。只在選了「一個」縣市時才問那個縣市，
+   回來的是 {"內湖區":[優惠編號…], …}，幾 KB；同一台裝置記一天。
+   問不到（函式還沒建、連不上）就整列不出現，其他篩選照舊。
+   捷運站不另外做：「附近」本來就能輸入站名、照距離排。 ---- */
+const DIST_CACHE=new Map(), DIST_PENDING=new Set(), DIST_LS='sxr_districts_v1';
+let DIST_SIG='';
+function districtCounty(){
+  if(activeRegion.size!==1) return null;
+  const r=[...activeRegion][0];
+  return (r!=='__none__' && r!=='全台' && COUNTIES.includes(r)) ? r : null;
+}
+function distFromJson(o){
+  const byOffer=new Map();
+  for(const [d,ids] of Object.entries(o||{})){
+    if(!Array.isArray(ids)) continue;
+    for(const id of ids){ const k=String(id); if(!byOffer.has(k)) byOffer.set(k,new Set()); byOffer.get(k).add(d); }
+  }
+  return {byOffer, names:Object.keys(o||{})};
+}
+async function fetchDistricts(county){
+  if(DIST_CACHE.has(county) || DIST_PENDING.has(county)) return;
+  let all={};
+  try{ all=JSON.parse(localStorage.getItem(DIST_LS)||'{}')||{}; }catch{ all={}; }
+  const c=all[county];
+  if(c && c.d && Date.now()-Number(c.at||0)<24*60*60*1000){
+    DIST_CACHE.set(county, distFromJson(c.d)); render(); return;
+  }
+  DIST_PENDING.add(county);
+  let data=null, error=null;
+  try{ ({data,error}=await sb.rpc('offer_districts',{p_county:county})); }catch(e){ error=e; }
+  DIST_PENDING.delete(county);
+  if(error || !data || typeof data!=='object' || Array.isArray(data)){
+    DIST_CACHE.set(county,{none:true});
+  } else {
+    DIST_CACHE.set(county, distFromJson(data));
+    try{ all[county]={at:Date.now(), d:data}; localStorage.setItem(DIST_LS, JSON.stringify(all)); }catch{}
+  }
+  render();
+}
+/* null＝不適用（沒選、選了好幾個縣市、還沒連上）；{loading}；{none}＝問不到；{byOffer,names} */
+function districtState(){
+  const county=districtCounty();
+  if(!county || !LIVE || !sb) return null;
+  const c=DIST_CACHE.get(county);
+  if(!c){ fetchDistricts(county); return {loading:true}; }
+  return c;
+}
+function syncDistrictRow(){
+  const county=districtCounty();
+  if(county!==DIST_FOR){ activeDistrict.clear(); DIST_FOR=county; }   // 換縣市，上一個縣市的行政區不帶過去
+  const row=$('#districtRow'); if(!row) return;
+  const st=districtState();
+  if(st && st.none) activeDistrict.clear();
+  const show=!!st && !st.none && (st.loading || st.names.length>0);
+  row.classList.toggle('hidden', !show);
+  if(!show){ DIST_SIG=''; return; }
+  const sig=`${county}|${st.loading?'…':st.names.length}|${OFFERS.length}|${[...activeDistrict].sort().join(',')}`;
+  if(sig===DIST_SIG) return;
+  DIST_SIG=sig;
+  const box=$('#districtChips');
+  if(st.loading){ box.innerHTML='<span class="dist-loading">讀取行政區…</span>'; return; }
+  const n=d=>OFFERS.filter(o=>st.byOffer.get(String(o.id))?.has(d)).length;
+  const items=st.names.map(d=>[d,n(d)]).filter(x=>x[1]>0)
+    .sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0],'zh-Hant'));
+  box.innerHTML=[['全部行政區','']].concat(items.map(([d,k])=>[`${d}（${k}）`,d]))
+    .map(([label,v])=>`<button type="button" class="chip" data-v="${esc(v)}"
+      aria-pressed="${v===''?activeDistrict.size===0:activeDistrict.has(v)}">${esc(label)}</button>`).join('');
+  box.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{
+    const v=b.dataset.v;
+    if(v==='') activeDistrict.clear();
+    else activeDistrict.has(v)?activeDistrict.delete(v):activeDistrict.add(v);
+    render();
+  });
+}
+
 /* 篩選用：null＝沒在篩；{loading}＝還在問（先不擋，問回來會再畫一次）；{map}／{err} */
 function hoursState(){
   if(!hoursOn()) return null;
@@ -9078,6 +9211,7 @@ function filterPredicate(opts={}){
   const hrsMap=hrs&&hrs.map, hrsMow=hrsMap?hoursMow():null;
   const keepUnknown=$('#fKeepUnknown').checked;
   const hideUsed=$('#fHideUsed').checked && hideUsedAvail(), catEx=activeCatEx;
+  const dist=activeDistrict.size?districtState():null, distSel=[...activeDistrict];
   return o=>{
     if(hrsMap){
       const id=String(o.id);
@@ -9102,6 +9236,11 @@ function filterPredicate(opts={}){
         : matchRegion(o,r,exactRegion));
       if(!ok) return false;
     }
+    // v202：行政區看分店地址。還在問的時候先不擋（問回來會再畫一次）
+    if(dist && dist.byOffer){
+      const ds=dist.byOffer.get(String(o.id));
+      if(!ds || !distSel.some(d=>ds.has(d))) return false;
+    }
     if(onlyV&&!o.verified) return false;
     if(hideX&&o.validUntil&&dUntil(o.validUntil)<0) return false;
     if(onlyR&&!(o.lastUsedOn&&dSince(o.lastUsedOn)<=90)) return false;
@@ -9113,6 +9252,7 @@ function filterPredicate(opts={}){
   };
 }
 function render(){
+  syncDistrictRow();
   const q=$('#q').value.trim().toLowerCase();
   const onlyV=$('#fVerified').checked, hideX=$('#fLive').checked, onlyR=$('#fReported').checked;
   const onlyC=$('#fHasComments').checked, noCompanion=$('#fNoCompanion').checked;
@@ -9124,7 +9264,7 @@ function render(){
   // 還原成 distance，但座標刻意不存、附近模式是關的，這時退回預設排序，不然列表會亂序。
   if(sortBy==='distance'&&!(NEAR.active&&NEAR.byOffer)){ sortBy='value'; if(!NEAR.active) $('#sort').value='value'; }
 
-  const activeCount = (q?1:0)+activeRegion.size+activeMemType.size+activeCat.size+activeFree.size+activeTiming.size
+  const activeCount = (q?1:0)+activeRegion.size+activeDistrict.size+activeMemType.size+activeCat.size+activeFree.size+activeTiming.size
     +activeSpend.size+($('#fNoAdvance').checked?1:0)+(hoursOn()?1:0)
     +activeCatEx.size+($('#fHideUsed').checked&&hideUsedAvail()?1:0)
     +(onlyV?1:0)+(!hideX?1:0)+(onlyR?1:0)+(onlyC?1:0)+(noCompanion?1:0)+(onlyTransferable?1:0)
@@ -9186,7 +9326,8 @@ function render(){
   $('#count').textContent=`${list.length} / ${OFFERS.length} 筆`
     +(expiredN?`（${expiredN} 筆已過期沒列出）`:'')
     +(activeRegion.size?`　${[...activeRegion].filter(r=>r!=='__none__').join('、')}${
-        $('#fExactRegion')?.checked?'（不含全台）':'含全台'}`:'')+(sum?`　合計約 ${nt(sum)}`:'')+(NEAR.active&&NEAR.byOffer?`　📍 ${NEAR.km} 公里內`:'')
+        $('#fExactRegion')?.checked?'（不含全台）':'含全台'}`:'')
+    +(activeDistrict.size?` ${[...activeDistrict].join('、')}`:'')+(sum?`　合計約 ${nt(sum)}`:'')+(NEAR.active&&NEAR.byOffer?`　📍 ${NEAR.km} 公里內`:'')
     +hoursCountNote(filterPredicate({skipHours:true}));
   $('#empty').classList.toggle('hidden',list.length>0);
   // 搜尋沒結果時，使用者常常不知道是「真的沒有」還是「被篩選 chips 擋住了」。
@@ -9566,7 +9707,7 @@ $('#btnClearFilters').onclick=()=>{
   $('#fExactRegion').checked=false; $('#fNoAdvance').checked=false;
   $('#fHideUsed').checked=false; $('#fKeepUnknown').checked=false; activeCatEx.clear();
   activeCat.clear(); activeFree.clear(); activeTiming.clear(); activeRegion.clear(); activeMemType.clear();
-  activeSpend.clear();
+  activeSpend.clear(); activeDistrict.clear();
   HOURS_F.mode=''; buildHoursControls();
   $$('#timingChips .chip, #freeChips .chip, #cats .chip, #regionChips .chip, #memChips .chip, #spendChips .chip, #catsEx .chip')
     .forEach(c=>c.setAttribute('aria-pressed',c.dataset.v===''));
@@ -9581,7 +9722,7 @@ $('#btnEmptyClearFilters').onclick=()=>{
   $('#fExactRegion').checked=false; $('#fNoAdvance').checked=false;
   $('#fHideUsed').checked=false; $('#fKeepUnknown').checked=false; activeCatEx.clear();
   activeCat.clear(); activeFree.clear(); activeTiming.clear(); activeRegion.clear(); activeMemType.clear();
-  activeSpend.clear();
+  activeSpend.clear(); activeDistrict.clear();
   HOURS_F.mode=''; buildHoursControls();
   $$('#timingChips .chip, #freeChips .chip, #cats .chip, #regionChips .chip, #memChips .chip, #spendChips .chip, #catsEx .chip')
     .forEach(c=>c.setAttribute('aria-pressed',c.dataset.v===''));

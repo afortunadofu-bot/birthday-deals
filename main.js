@@ -153,6 +153,7 @@ let activeCat=new Set(), activeFree=new Set(), activeTiming=new Set();   // 篩�
 let activeRegion=new Set(), activeMemType=new Set();
 let HOURS_F={mode:'', dow:null, min:null};   // v178 營業時間篩選 mode: '' | 'now' | 'at'（要在 loadFilters 之前宣告）
 let activeCatEx=new Set();   // v180 不看的分類
+let activeDistrict=new Set(), DIST_FOR=null;   // v202 行政區：DIST_FOR＝這組行政區是哪個縣市的
 let activeSpend=new Set();   // v164 大家實際花多少（嵐：「統計花費金額，讓其他人有個概念這家會花多少」→「進到篩選」）   // 地區／會員也改多選，跟上面那組共用同一套 mkMulti chip 邏輯
 let deferredInstall = null;
 let WISH=new Set();          // 待辦清單（收藏的優惠 id，字串形式）
@@ -182,6 +183,7 @@ function saveFilters(){
     hours:HOURS_F.mode?{...HOURS_F}:null,
     catEx:[...activeCatEx], fHideUsed:$('#fHideUsed').checked, fKeepUnknown:$('#fKeepUnknown').checked,
     fExactRegion:$('#fExactRegion').checked,
+    district:DIST_FOR&&activeDistrict.size?{county:DIST_FOR, list:[...activeDistrict]}:null,
     sort:$('#sort').value
   })); }catch{}
 }
@@ -190,6 +192,9 @@ function loadFilters(){
   if(!s) return;
   $('#q').value=s.q||'';
   (s.region||[]).forEach(v=>activeRegion.add(v)); (s.memType||[]).forEach(v=>activeMemType.add(v));
+  if(s.district && typeof s.district.county==='string' && Array.isArray(s.district.list)){
+    DIST_FOR=s.district.county; s.district.list.forEach(v=>activeDistrict.add(String(v)));
+  }
   (s.cat||[]).forEach(v=>activeCat.add(v)); (s.free||[]).forEach(v=>activeFree.add(v));
   (s.timing||[]).forEach(v=>activeTiming.add(v));
   $('#fNoCompanion').checked=!!s.fNoCompanion;
@@ -2543,7 +2548,7 @@ const updatesQuiet=()=>ISO(new Date()) < UPDATES_QUIET_UNTIL;
 /* 更新紀錄的內容在 updates.json，build.py 注入這裡，同一份資料也產生整頁的
    updates.html。「我的」頁面只用到日期跟標題（最新幾筆＋NEW 標記），
    細項（items）留著是給 updates.html 用的。 */
-const SITE_UPDATES = [{"date":"2026-11-18","title":"「我省下多少」排成表格，附近可以存常用地點","items":["首頁上方的數字多了兩個：總共有多少人來看過壽星日，以及剛剛有幾個人在線上","「附近」可以把常用地點存起來（家、公司…），下次一點就換過去，不用再打一次地址","「我省下多少」改成表格：花、省、評分各一欄，排起來很整齊；點那一列打開那次的使用回報，點店名看優惠詳情"]},{"date":"2026-11-13","title":"手機上第一眼看得到更多優惠","items":["清單上方「每張卡片都有地圖」那條提示變矮了，手機一打開就看得到更多卡片；卡片上的「來源↗」也比較好點","清單數字會說明有幾筆因為過期沒列出來，不會以為少了資料；星巴克那種「需達等級．需達等級」重複的字拿掉了"]},{"date":"2026-11-12","title":"頁尾多了好康地圖","items":["小數據所的新網站「好康地圖」：全台超商、手搖飲、餐廳今天有什麼優惠，在地圖上找離你最近的。頁尾和「關於」頁都點得到"]},{"date":"2026-11-11","title":"開啟變快了","items":["打開網站跟重新整理都比以前快：原本整頁要等所有東西都讀完才動得起來，現在版面會先出現，優惠接著填上去","手機上差最多——舊一點的手機或網路慢的時候，以前常常要盯著空白畫面等好幾秒","左下角咖啡的說明寫清楚了：讓網站穩定跑下去一個月大約要多少錢、會用在哪裡"]},{"date":"2026-11-09","title":"可以填營業時間、篩「幾點有開」；篩選也能排除不想看的","items":["投稿和建議修改可以填營業時間，詳情看得到現在有沒有開；篩選可以選「現在有開」或指定星期幾、幾點","篩選多了「不看」哪些分類、「隱藏我回報用過的」，還有「資料沒寫的也列出來」，不會因為店家資料不全被篩掉","附近的地圖拖到哪，清單就換成那裡附近的店；定位失敗會說怎麼開權限；簡易版待辦清單不再一字一行；商圈地圖能按用過了"]},{"date":"2026-11-05","title":"待辦清單可以直接上下排順序；系統更新時會先公告","items":["待辦清單每一張都有 ▲▼，不用先切到「自訂順序」，按一下就照你排的","資料庫在維護時，最上面會先掛公告，登入暫停；錯誤訊息也都改成中文說明怎麼辦","頁尾可以連到小數據所的 Threads @dayscount，聯絡信箱也換成新的"]},{"date":"2026-11-02","title":"看得到大家實際花多少，也看得到自己在每一家花多少、省多少","items":["篩選多了「不用提前加入」和「實際花費」，卡片寫出大家平均花多少；商圈可以照遠近、收藏數排","「我省下多少」跟使用回報合在一起、排到前面，每一家花多少、省多少都看得到；待辦清單可以勾「已註冊會員」也能篩","投稿要填需提前幾天、低消、預計花多少跟使用條件；回報多的優惠，沒寫字的收成一行、長留言先摺起來"]},{"date":"2026-10-30","title":"「一趟用最多」有地圖了；行程可以分享給大家","items":["全台商圈地圖（越深越多家），點開看每家分店、勾選想要的再加入；照你的收藏推薦去哪一趟，一鍵存成行程","行程可以分段落、看地圖、公開給大家看；「大家的行程」有三趟範例，可以收藏或一鍵加進來","附近地圖上你用過的店變綠色，也能只看用過的；「我的」使用回報移到最前面，這週會先播一段更新介紹"]},{"date":"2026-10-29","title":"可以排行程了；投稿的按鈕跟到每一頁","items":["「排行程」可以排一趟：哪天、去哪幾家、照什麼順序，每家都能寫備註","還看得到哪裡一次能用到最多家；右下角「＋投稿」每一頁都按得到","「我的」從 18 塊收成 13 塊；設定會記得、清單可切字少版"]},{"date":"2026-10-28","title":"地圖上直接就能記「我用過了」","items":["地圖的店家小視窗多一顆「我用過了」，不用再回清單找","優惠詳情視窗下面也加了同一顆","回報用過之後會提醒你順便給星等，排行榜的說明也剪短了"]},{"date":"2026-10-23","title":"手機上比較不會跳出「連不到資料庫」了","items":["連線元件改成從本站載入，不再等外部網站，慢或被擋都不受影響","真的連不上時，多一顆「複製狀況」可以把情況傳給我們"]},{"date":"2026-10-22","title":"地圖好按了、篩選看得見、折扣寫出幾折","items":["地圖上的點變好按了，資訊也不會看到一半就不見","現在篩了哪些條件直接列在清單上面，可以一個一個拿掉","「我的」打開就是待辦清單；折扣會寫出幾折、折多少錢"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
+const SITE_UPDATES = [{"date":"2026-11-19","title":"選了縣市可以再選哪一區，商圈標出商場自己的壽星禮","items":["篩選只選一個縣市時，下面多一排行政區（士林區、信義區…），照分店地址找出那一區有店的優惠；可以複選","想找捷運站附近：用「📍 附近」輸入站名，照距離排","「排行程」的商圈裡，商場自己的壽星禮（例如環球購物中心）排在最上面並標出來，可以跟店家的生日優惠一起拿"]},{"date":"2026-11-18","title":"「我省下多少」排成表格，附近可以存常用地點","items":["首頁上方的數字多了兩個：總共有多少人來看過壽星日，以及剛剛有幾個人在線上","「附近」可以把常用地點存起來（家、公司…），下次一點就換過去，不用再打一次地址","「我省下多少」改成表格：花、省、評分各一欄，排起來很整齊；點那一列打開那次的使用回報，點店名看優惠詳情"]},{"date":"2026-11-13","title":"手機上第一眼看得到更多優惠","items":["清單上方「每張卡片都有地圖」那條提示變矮了，手機一打開就看得到更多卡片；卡片上的「來源↗」也比較好點","清單數字會說明有幾筆因為過期沒列出來，不會以為少了資料；星巴克那種「需達等級．需達等級」重複的字拿掉了"]},{"date":"2026-11-12","title":"頁尾多了好康地圖","items":["小數據所的新網站「好康地圖」：全台超商、手搖飲、餐廳今天有什麼優惠，在地圖上找離你最近的。頁尾和「關於」頁都點得到"]},{"date":"2026-11-11","title":"開啟變快了","items":["打開網站跟重新整理都比以前快：原本整頁要等所有東西都讀完才動得起來，現在版面會先出現，優惠接著填上去","手機上差最多——舊一點的手機或網路慢的時候，以前常常要盯著空白畫面等好幾秒","左下角咖啡的說明寫清楚了：讓網站穩定跑下去一個月大約要多少錢、會用在哪裡"]},{"date":"2026-11-09","title":"可以填營業時間、篩「幾點有開」；篩選也能排除不想看的","items":["投稿和建議修改可以填營業時間，詳情看得到現在有沒有開；篩選可以選「現在有開」或指定星期幾、幾點","篩選多了「不看」哪些分類、「隱藏我回報用過的」，還有「資料沒寫的也列出來」，不會因為店家資料不全被篩掉","附近的地圖拖到哪，清單就換成那裡附近的店；定位失敗會說怎麼開權限；簡易版待辦清單不再一字一行；商圈地圖能按用過了"]},{"date":"2026-11-05","title":"待辦清單可以直接上下排順序；系統更新時會先公告","items":["待辦清單每一張都有 ▲▼，不用先切到「自訂順序」，按一下就照你排的","資料庫在維護時，最上面會先掛公告，登入暫停；錯誤訊息也都改成中文說明怎麼辦","頁尾可以連到小數據所的 Threads @dayscount，聯絡信箱也換成新的"]},{"date":"2026-11-02","title":"看得到大家實際花多少，也看得到自己在每一家花多少、省多少","items":["篩選多了「不用提前加入」和「實際花費」，卡片寫出大家平均花多少；商圈可以照遠近、收藏數排","「我省下多少」跟使用回報合在一起、排到前面，每一家花多少、省多少都看得到；待辦清單可以勾「已註冊會員」也能篩","投稿要填需提前幾天、低消、預計花多少跟使用條件；回報多的優惠，沒寫字的收成一行、長留言先摺起來"]},{"date":"2026-10-30","title":"「一趟用最多」有地圖了；行程可以分享給大家","items":["全台商圈地圖（越深越多家），點開看每家分店、勾選想要的再加入；照你的收藏推薦去哪一趟，一鍵存成行程","行程可以分段落、看地圖、公開給大家看；「大家的行程」有三趟範例，可以收藏或一鍵加進來","附近地圖上你用過的店變綠色，也能只看用過的；「我的」使用回報移到最前面，這週會先播一段更新介紹"]},{"date":"2026-10-29","title":"可以排行程了；投稿的按鈕跟到每一頁","items":["「排行程」可以排一趟：哪天、去哪幾家、照什麼順序，每家都能寫備註","還看得到哪裡一次能用到最多家；右下角「＋投稿」每一頁都按得到","「我的」從 18 塊收成 13 塊；設定會記得、清單可切字少版"]},{"date":"2026-10-28","title":"地圖上直接就能記「我用過了」","items":["地圖的店家小視窗多一顆「我用過了」，不用再回清單找","優惠詳情視窗下面也加了同一顆","回報用過之後會提醒你順便給星等，排行榜的說明也剪短了"]},{"date":"2026-10-23","title":"手機上比較不會跳出「連不到資料庫」了","items":["連線元件改成從本站載入，不再等外部網站，慢或被擋都不受影響","真的連不上時，多一顆「複製狀況」可以把情況傳給我們"]},{"date":"2026-10-22","title":"地圖好按了、篩選看得見、折扣寫出幾折","items":["地圖上的點變好按了，資訊也不會看到一半就不見","現在篩了哪些條件直接列在清單上面，可以一個一個拿掉","「我的」打開就是待辦清單；折扣會寫出幾折、折多少錢"]},{"date":"2026-10-21","title":"修好 App 裡「離線模式」的問題","items":["App 連不到資料庫時會說人話，不會再跳出一串看不懂的英文指令","App 改用自己包在裡面的連線元件，不用再等網路下載，比較不會卡成離線模式"]},{"date":"2026-10-19","title":"待辦清單可以直接看地圖、由近到遠","items":["待辦清單多一顆「📍 看地圖、由近到遠」：收藏的店直接攤在地圖上，照距離排"]},{"date":"2026-10-18","title":"另外兩個 app 上架 Google Play 了","items":["頁尾那兩條從「封閉測試報名」換成下載頁：Bandary 聽團曆、RelateStats","「關於」那一頁的三個 app 介紹也補上下載連結"]},{"date":"2026-10-17","title":"「附近」可以只看收藏的店","items":["開「📍 附近」之後多一顆「只看收藏」：列表跟地圖同時收成只剩待辦清單裡的店，再按一次就全部回來","地圖上收藏過的店本來就畫得比較大、顏色不一樣，不用切換也認得出來"]},{"date":"2026-10-16","title":"推薦榜看得到被用過幾次，洞察分析可以看整年","items":["「用過的人最推薦」多一欄「用過次數」：分數高但只有兩三個人評過的，跟被用過幾十次的，一眼就分得出來","洞察分析的「月份」可以切成「年份」：看今年到目前為止總共省下多少、每個月之間怎麼起伏"]},{"date":"2026-10-15","title":"修好三個大家回報的問題","items":["編輯使用回報時，「這次總共花了多少」看得到原本填的金額了（之前是空的，而且一存就被清掉）","待辦清單的上下排序不會再卡住沒反應","篩選縣市時多一顆「只看有標這個縣市的」，不想看全台連鎖就勾起來"]},{"date":"2026-10-14","title":"回報的時候就可以給推薦指數","items":["回報使用狀況的表單多了「推薦指數」，用完當下順手給幾顆星就好，不用等之後再被問一次","回報「失敗」時不會問推薦指數"]},{"date":"2026-10-13","title":"排行榜變快了，圖表可以選區間","items":["排行榜那一頁的統計改成大家共用一份，開起來比以前快，資料庫也輕很多","洞察分析的「月份」多了每天的走勢圖，「走勢」跟「使用時段」都能自己選區間","「調整區塊順序」改成「我的」裡的「版面設定」，而且每一塊都可以收合了"]},{"date":"2026-10-12","title":"多了「用過的人最推薦」，洞察分析可以選月份","items":["排行榜多一塊「用過的人最推薦」：用過之後給的星等排行，至少兩個人評過才會上榜","用過但還沒給星等的店，榜單底下會提醒你，一家點一下就好","洞察分析的「月份」可以自己選；頁尾跟幾處版面也整理過"]},{"date":"2026-10-08","title":"更新紀錄跟「關於」改成獨立頁面","items":["更新紀錄跟「關於做這個網站的人」不再收合在「我的」裡面，點進去是完整的一頁","左下角的咖啡改回單一顆圖示，按下去還是先看說明再決定","修好說明視窗按「下次吧」關不掉、關掉之後頁面卡住不能捲的問題"]},{"date":"2026-10-07","title":"排行榜跟「我的」可以自己排版面","items":["「排行榜」和「我的」最上面多一顆「⇅ 調整區塊順序」，常看的可以往前搬，順序記在這台裝置上","頁尾的「小數據所」連得到品牌頁，看另外兩個 app"]},{"date":"2026-10-06","title":"按愛心、公告標題、投稿要填地點","items":["覺得哪則回報或留言有幫助，改成按愛心 ♥","通知裡的公告看得到完整標題，分享排行榜的圖卡不會再切掉第 5 名","新增優惠時「適用縣市」和「要不要出示證件」改成必填"]},{"date":"2026-10-05","title":"「附近」不會再自己打開","items":["允許過定位也不會每次打開就跳進「附近」，想用再按「📍 附近」","開啟速度調過一輪，載入快很多"]},{"date":"2026-10-01","title":"火鍋跟燒肉分開篩","items":["「火鍋燒肉」拆成兩個類別，類別篩選每一格都會寫出有幾筆"]},{"date":"2026-09-30","title":"投稿前先幫你比對、附近直接開地圖","items":["投稿打店名時，站上已經有同一家就會列出來，可以直接改成對那筆提修改建議","按「📍 附近」就直接開地圖；小螢幕到桌機的版面都重新檢查過"]},{"date":"2026-09-29","title":"地圖可以自己指定地點","items":["「附近」可以直接打地名查那附近的優惠","「我的」看得到自己回報過的問題處理到哪了"]},{"date":"2026-09-23","title":"月底提醒、排行榜看最近","items":["月底前會提醒你待辦清單裡哪幾個優惠這個月就結束","「大家都在用什麼」可以看最近 7／30／90／180 天"]},{"date":"2026-09-21","title":"列表更順、數字對齊","items":["幫家人記生日的話，待辦清單會分成兩份，可以切換也能互搬","排行榜各頁的金額改成同一份資料，數字不再對不起來","新增隱私權政策與服務條款"]},{"date":"2026-09-18","title":"圖表全面改版","items":["站台數據、洞察分析換成更好讀的圖表，手指按住就看得到數字","排行榜會告訴你自己第幾名，也可以切「進步最多」","「買一送一」跟「折扣」分成兩類；大頭貼可以自己上傳照片"]},{"date":"2026-09-17","title":"待辦清單改版","items":["每一筆變成一張小卡，點店名看詳情，備註要寫的時候再按"]},{"date":"2026-09-16","title":"附近有優惠的店、家人的生日、清單標籤","items":["新增「📍 附近」：只看你附近有優惠的店，由近到遠排序，也給導航連結","可以幫家人或另一半也記一個生日，他的生日快到會提醒你","待辦清單可以貼標籤分組，上面用標籤篩選"]},{"date":"2026-09-15","title":"回饋問卷、按讚、Google 地圖","items":["新增回饋問卷：全部用點的，大約兩分鐘，歡迎隨時來填","每張優惠卡片多一顆「📍 地圖」，直接找附近分店","「我的」新增更新紀錄跟「加到主畫面」的說明"]},{"date":"2026-09-14","title":"回報與待辦清單更好用","items":["在優惠詳情看到自己的回報，旁邊就能直接編輯","同一家店今年回報第二次時會先提醒，避免省下的金額算兩次","待辦清單點「詳情」就看得到大家的回報和留言"]},{"date":"2026-09-09","title":"看得到大家正在提的修改建議","items":["優惠詳情看得到這筆目前有哪些修改建議在審核中，不用重複提"]},{"date":"2026-09-07","title":"排行榜新數據、手機版修正","items":["排行榜多了即時在線人數、總瀏覽人次、大家都在什麼時段用","手機版填新增表單時，鍵盤不會再蓋住底部導覽列"]},{"date":"2026-09-04","title":"待辦清單分年度、入會死線提醒","items":["待辦清單可以分年度整理，還會提醒入會死線","成就徽章點開就看得到怎麼解鎖","類別「連鎖餐廳」改名「餐廳」，並新增「其他」"]},{"date":"2026-09-03","title":"排行榜手機版排版","items":["名次升降改成小徽章，名字太長會自動省略，手機上不再擠成一團"]},{"date":"2026-08-06","title":"一大包使用體驗改善","items":["投稿可以取消、評分可以取消、暱稱可以自己改","排行榜上的店家可以點進去看詳情，優惠詳情也多了好按的關閉鈕","網頁打開速度變快，畫面不再跳來跳去"]},{"date":"2026-08-05","title":"壽星日上線 🎂","items":["整理全台生日優惠，可以篩選、收藏到待辦清單、回報使用狀況"]}];
 const SITE_UPDATES_SHOW=3;
 
 function updatesSeenDate(){
@@ -3799,6 +3804,30 @@ async function loadVenuePairs(){
 }
 /* 管理員改了範圍、位置、公開與否，配對就不準了，下次重抓 */
 function forgetVenuePairs(){ VENUE_PAIRS=null; VENUE_PAIRS_TRIED=false; }
+/* v202 問卷（11/01）：「如果有 ai 協助整理網友提供的 combo 技（不同優惠疊加）也會更威，
+   像是環球自己有優惠，環球的店家也有優惠，可以疊加」。
+   AI 整理先不做；但「商場自己的壽星禮」本來就混在商圈清單裡，跟一般店家排在一起看不出來。
+   認出來、排到最上面、講清楚可以跟店家的一起拿。
+   品牌名有「（限○○門市）」的是店家（例如「樂敘(限夢時代門市)」），不是商場本身。 */
+const MALL_BRAND_RE=/購物中心|百貨公司|Global Mall|ATT ?4 ?fun|Focus ?百貨|LaLaport|Outlet|SOGO|新光三越|遠東百貨|大遠百|微風廣場|太平洋百貨|夢時代|巨城|裕隆城|漢神|京站|中友百貨|台茂|大魯閣|三創/i;
+function isMallOffer(o){
+  const b=String(o&&o.brand||'');
+  return MALL_BRAND_RE.test(b) && !/[（(]\s*限/.test(b);
+}
+/* 只看「範圍內有沒有這家分店」會漏：商場很大，Google 給的座標常常不在商圈中心 180 公尺內
+   （實測中和環球、板橋車站・環球都漏掉）。所以商圈名字裡有商場的名字也算：
+   「Global Mall 環球購物中心」→「環球」，「中和環球」「桃園環球店」都對得上。 */
+function mallKey(brand){ return String(brand||'').replace(/Global Mall|購物中心|百貨公司|百貨|\s+/gi,'').toLowerCase(); }
+function venueNamedMalls(v){
+  const n=String(v&&v.name||'').replace(/\s+/g,'').toLowerCase();
+  return OFFERS.filter(o=>{ if(!isMallOffer(o)) return false; const k=mallKey(o.brand); return k.length>=2 && n.includes(k); });
+}
+function venueMallOffers(v){
+  const s=VENUE_PAIRS?.get(v.id);
+  const out=s ? OFFERS.filter(o=>s.has(String(o.id)) && isMallOffer(o)) : [];
+  venueNamedMalls(v).forEach(o=>{ if(!out.includes(o)) out.push(o); });
+  return out;
+}
 function venueWishHits(v){
   const s=VENUE_PAIRS?.get(v.id);
   return s ? [...WISH].filter(id=>s.has(id)) : [];
@@ -4098,6 +4127,7 @@ function renderVenues(){
       aria-expanded="${VENUE_OPEN===v.id?'true':'false'}">
       <span class="venue-name">${esc(v.name)}</span>
       ${(()=>{ const n=me?venueWishHits(v).length:0; return n?`<span class="venue-mine">收藏 ${n}</span>`:''; })()}
+      ${venueMallOffers(v).length?'<span class="venue-mall" title="商場自己也有壽星禮">🏬 商場禮</span>':''}
       <span class="venue-n">${v.offer_count} 家</span>
       ${sortBy==='near'&&VENUE_HERE&&v.lat!=null?`<span class="venue-dist">${esc(fmtDistance(venueDistM(v,VENUE_HERE)))}</span>`:''}
       <span class="venue-cty">${esc(v.county||'')}</span>
@@ -4156,8 +4186,12 @@ async function fillVenue(id){
     if(error){ body.innerHTML='<div class="hint">載入失敗：'+esc(zhErr(error))+'</div>'; return; }
     ids=new Set((data||[]).map(x=>String(x.venue_offer_ids ?? x)));
   }
-  const list=OFFERS.filter(o=>ids.has(String(o.id)));
+  // v202：商場自己的壽星禮排最上面（其他照原本順序）
   const v=(VENUES||[]).find(x=>x.id===id);
+  const named=v?venueNamedMalls(v).filter(o=>!ids.has(String(o.id))):[];
+  const list=OFFERS.filter(o=>ids.has(String(o.id))).concat(named)
+    .map((o,i)=>[o,i]).sort((a,b)=>isMallOffer(b[0])-isMallOffer(a[0]) || a[1]-b[1]).map(x=>x[0]);
+  const malls=list.filter(isMallOffer);
   const top=(v?venueAdminHtml(v):'')+(v&&v.lat!=null?`<div class="venue-map" id="venueMap${id}"></div>`:'');
   if(!list.length){
     body.innerHTML=top+'<div class="hint">這裡的優惠暫時查不到。</div>';
@@ -4176,15 +4210,18 @@ async function fillVenue(id){
       ${left.length?`<button type="button" class="btn sm" id="venueAll${id}">全選</button>`:''}
       <span class="hint" style="margin:0">${left.length?'勾起來再按「加入」':'這裡的都收藏了'}</span>
     </div>`
+    +(malls.length?`<div class="venue-mall-note">🏬 <b>${malls.map(o=>esc(o.brand)).join('、')}</b>
+      自己也有壽星禮，跟下面店家的生日優惠是分開領的——同一趟可以一起拿。</div>`:'')
     +list.map(o=>{
       const oid=String(o.id), wished=WISH.has(oid);
-      return `<div class="venue-offer">
+      return `<div class="venue-offer${isMallOffer(o)?' vo-mall':''}">
         <input type="checkbox" class="vo-pick" data-vpick="${esc(oid)}" aria-label="勾選 ${esc(o.brand)}"
           ${wished?'checked disabled':(VENUE_PICKS.set.has(oid)?'checked':'')}>
         <button type="button" class="vo-open" data-id="${esc(oid)}">
           <span class="vo-brand">${esc(o.brand)}</span>
           <span class="vo-offer">${esc(String(o.offer||'').slice(0,40))}</span>
         </button>
+        ${isMallOffer(o)?'<span class="venue-mall">商場</span>':''}
         ${wished?'<span class="flag">已收藏</span>':''}
       </div>`;
     }).join('');
@@ -5286,6 +5323,7 @@ $('#sort').addEventListener('input',()=>{ if(NEAR.active) NEAR.sortTouched=true;
    不好拿掉，就等於沒有在用。 ---- */
 const FILTER_SETS={
   region:{set:()=>activeRegion, sel:'#regionChips'},
+  district:{set:()=>activeDistrict, sel:'#districtChips'},
   mem:   {set:()=>activeMemType, sel:'#memChips'},
   cat:   {set:()=>activeCat,     sel:'#cats'},
   free:  {set:()=>activeFree,    sel:'#freeChips'},
@@ -5454,6 +5492,86 @@ async function fetchHoursOpen(key){
     : {map:new Map(data.map(r=>[String(r.offer_id), !!r.is_open]))});
   render();
 }
+/* ---- v202 行政區 ----------------------------------------------------
+   問卷（11/18）：「希望加入近哪個捷運站、哪一區（ex 士林區、信義區等等）做搜尋，
+   不然光找台北市很難分辨。」台北市一選就是三百多筆。
+
+   行政區不用另外填：每一家分店都有 Google 地圖的地址，資料庫從地址抓出「內湖區」
+   （schema_v202 的 offer_districts）。只在選了「一個」縣市時才問那個縣市，
+   回來的是 {"內湖區":[優惠編號…], …}，幾 KB；同一台裝置記一天。
+   問不到（函式還沒建、連不上）就整列不出現，其他篩選照舊。
+   捷運站不另外做：「附近」本來就能輸入站名、照距離排。 ---- */
+const DIST_CACHE=new Map(), DIST_PENDING=new Set(), DIST_LS='sxr_districts_v1';
+let DIST_SIG='';
+function districtCounty(){
+  if(activeRegion.size!==1) return null;
+  const r=[...activeRegion][0];
+  return (r!=='__none__' && r!=='全台' && COUNTIES.includes(r)) ? r : null;
+}
+function distFromJson(o){
+  const byOffer=new Map();
+  for(const [d,ids] of Object.entries(o||{})){
+    if(!Array.isArray(ids)) continue;
+    for(const id of ids){ const k=String(id); if(!byOffer.has(k)) byOffer.set(k,new Set()); byOffer.get(k).add(d); }
+  }
+  return {byOffer, names:Object.keys(o||{})};
+}
+async function fetchDistricts(county){
+  if(DIST_CACHE.has(county) || DIST_PENDING.has(county)) return;
+  let all={};
+  try{ all=JSON.parse(localStorage.getItem(DIST_LS)||'{}')||{}; }catch{ all={}; }
+  const c=all[county];
+  if(c && c.d && Date.now()-Number(c.at||0)<24*60*60*1000){
+    DIST_CACHE.set(county, distFromJson(c.d)); render(); return;
+  }
+  DIST_PENDING.add(county);
+  let data=null, error=null;
+  try{ ({data,error}=await sb.rpc('offer_districts',{p_county:county})); }catch(e){ error=e; }
+  DIST_PENDING.delete(county);
+  if(error || !data || typeof data!=='object' || Array.isArray(data)){
+    DIST_CACHE.set(county,{none:true});
+  } else {
+    DIST_CACHE.set(county, distFromJson(data));
+    try{ all[county]={at:Date.now(), d:data}; localStorage.setItem(DIST_LS, JSON.stringify(all)); }catch{}
+  }
+  render();
+}
+/* null＝不適用（沒選、選了好幾個縣市、還沒連上）；{loading}；{none}＝問不到；{byOffer,names} */
+function districtState(){
+  const county=districtCounty();
+  if(!county || !LIVE || !sb) return null;
+  const c=DIST_CACHE.get(county);
+  if(!c){ fetchDistricts(county); return {loading:true}; }
+  return c;
+}
+function syncDistrictRow(){
+  const county=districtCounty();
+  if(county!==DIST_FOR){ activeDistrict.clear(); DIST_FOR=county; }   // 換縣市，上一個縣市的行政區不帶過去
+  const row=$('#districtRow'); if(!row) return;
+  const st=districtState();
+  if(st && st.none) activeDistrict.clear();
+  const show=!!st && !st.none && (st.loading || st.names.length>0);
+  row.classList.toggle('hidden', !show);
+  if(!show){ DIST_SIG=''; return; }
+  const sig=`${county}|${st.loading?'…':st.names.length}|${OFFERS.length}|${[...activeDistrict].sort().join(',')}`;
+  if(sig===DIST_SIG) return;
+  DIST_SIG=sig;
+  const box=$('#districtChips');
+  if(st.loading){ box.innerHTML='<span class="dist-loading">讀取行政區…</span>'; return; }
+  const n=d=>OFFERS.filter(o=>st.byOffer.get(String(o.id))?.has(d)).length;
+  const items=st.names.map(d=>[d,n(d)]).filter(x=>x[1]>0)
+    .sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0],'zh-Hant'));
+  box.innerHTML=[['全部行政區','']].concat(items.map(([d,k])=>[`${d}（${k}）`,d]))
+    .map(([label,v])=>`<button type="button" class="chip" data-v="${esc(v)}"
+      aria-pressed="${v===''?activeDistrict.size===0:activeDistrict.has(v)}">${esc(label)}</button>`).join('');
+  box.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{
+    const v=b.dataset.v;
+    if(v==='') activeDistrict.clear();
+    else activeDistrict.has(v)?activeDistrict.delete(v):activeDistrict.add(v);
+    render();
+  });
+}
+
 /* 篩選用：null＝沒在篩；{loading}＝還在問（先不擋，問回來會再畫一次）；{map}／{err} */
 function hoursState(){
   if(!hoursOn()) return null;
@@ -5515,6 +5633,7 @@ function filterPredicate(opts={}){
   const hrsMap=hrs&&hrs.map, hrsMow=hrsMap?hoursMow():null;
   const keepUnknown=$('#fKeepUnknown').checked;
   const hideUsed=$('#fHideUsed').checked && hideUsedAvail(), catEx=activeCatEx;
+  const dist=activeDistrict.size?districtState():null, distSel=[...activeDistrict];
   return o=>{
     if(hrsMap){
       const id=String(o.id);
@@ -5539,6 +5658,11 @@ function filterPredicate(opts={}){
         : matchRegion(o,r,exactRegion));
       if(!ok) return false;
     }
+    // v202：行政區看分店地址。還在問的時候先不擋（問回來會再畫一次）
+    if(dist && dist.byOffer){
+      const ds=dist.byOffer.get(String(o.id));
+      if(!ds || !distSel.some(d=>ds.has(d))) return false;
+    }
     if(onlyV&&!o.verified) return false;
     if(hideX&&o.validUntil&&dUntil(o.validUntil)<0) return false;
     if(onlyR&&!(o.lastUsedOn&&dSince(o.lastUsedOn)<=90)) return false;
@@ -5550,6 +5674,7 @@ function filterPredicate(opts={}){
   };
 }
 function render(){
+  syncDistrictRow();
   const q=$('#q').value.trim().toLowerCase();
   const onlyV=$('#fVerified').checked, hideX=$('#fLive').checked, onlyR=$('#fReported').checked;
   const onlyC=$('#fHasComments').checked, noCompanion=$('#fNoCompanion').checked;
@@ -5561,7 +5686,7 @@ function render(){
   // 還原成 distance，但座標刻意不存、附近模式是關的，這時退回預設排序，不然列表會亂序。
   if(sortBy==='distance'&&!(NEAR.active&&NEAR.byOffer)){ sortBy='value'; if(!NEAR.active) $('#sort').value='value'; }
 
-  const activeCount = (q?1:0)+activeRegion.size+activeMemType.size+activeCat.size+activeFree.size+activeTiming.size
+  const activeCount = (q?1:0)+activeRegion.size+activeDistrict.size+activeMemType.size+activeCat.size+activeFree.size+activeTiming.size
     +activeSpend.size+($('#fNoAdvance').checked?1:0)+(hoursOn()?1:0)
     +activeCatEx.size+($('#fHideUsed').checked&&hideUsedAvail()?1:0)
     +(onlyV?1:0)+(!hideX?1:0)+(onlyR?1:0)+(onlyC?1:0)+(noCompanion?1:0)+(onlyTransferable?1:0)
@@ -5623,7 +5748,8 @@ function render(){
   $('#count').textContent=`${list.length} / ${OFFERS.length} 筆`
     +(expiredN?`（${expiredN} 筆已過期沒列出）`:'')
     +(activeRegion.size?`　${[...activeRegion].filter(r=>r!=='__none__').join('、')}${
-        $('#fExactRegion')?.checked?'（不含全台）':'含全台'}`:'')+(sum?`　合計約 ${nt(sum)}`:'')+(NEAR.active&&NEAR.byOffer?`　📍 ${NEAR.km} 公里內`:'')
+        $('#fExactRegion')?.checked?'（不含全台）':'含全台'}`:'')
+    +(activeDistrict.size?` ${[...activeDistrict].join('、')}`:'')+(sum?`　合計約 ${nt(sum)}`:'')+(NEAR.active&&NEAR.byOffer?`　📍 ${NEAR.km} 公里內`:'')
     +hoursCountNote(filterPredicate({skipHours:true}));
   $('#empty').classList.toggle('hidden',list.length>0);
   // 搜尋沒結果時，使用者常常不知道是「真的沒有」還是「被篩選 chips 擋住了」。
@@ -6003,7 +6129,7 @@ $('#btnClearFilters').onclick=()=>{
   $('#fExactRegion').checked=false; $('#fNoAdvance').checked=false;
   $('#fHideUsed').checked=false; $('#fKeepUnknown').checked=false; activeCatEx.clear();
   activeCat.clear(); activeFree.clear(); activeTiming.clear(); activeRegion.clear(); activeMemType.clear();
-  activeSpend.clear();
+  activeSpend.clear(); activeDistrict.clear();
   HOURS_F.mode=''; buildHoursControls();
   $$('#timingChips .chip, #freeChips .chip, #cats .chip, #regionChips .chip, #memChips .chip, #spendChips .chip, #catsEx .chip')
     .forEach(c=>c.setAttribute('aria-pressed',c.dataset.v===''));
@@ -6018,7 +6144,7 @@ $('#btnEmptyClearFilters').onclick=()=>{
   $('#fExactRegion').checked=false; $('#fNoAdvance').checked=false;
   $('#fHideUsed').checked=false; $('#fKeepUnknown').checked=false; activeCatEx.clear();
   activeCat.clear(); activeFree.clear(); activeTiming.clear(); activeRegion.clear(); activeMemType.clear();
-  activeSpend.clear();
+  activeSpend.clear(); activeDistrict.clear();
   HOURS_F.mode=''; buildHoursControls();
   $$('#timingChips .chip, #freeChips .chip, #cats .chip, #regionChips .chip, #memChips .chip, #spendChips .chip, #catsEx .chip')
     .forEach(c=>c.setAttribute('aria-pressed',c.dataset.v===''));
