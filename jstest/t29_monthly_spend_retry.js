@@ -72,7 +72,12 @@ const { boot, tick, makeAsserts } = require('./harness');
   /* ================= 3. 連不上時自己重試 ================= */
   const src = doc.documentElement.innerHTML;
   t.ok('SDK 有備援 CDN', /unpkg\.com\/@supabase\/supabase-js/.test(src) && /cdn\.jsdelivr\.net\/npm\/@supabase/.test(src));
-  t.ok('逾時放寬到 10 秒（原本 5 秒）', /loadScriptTag\(url, 10000\)/.test(src), (src.match(/loadScriptTag\([^)]*\)/g) || []).slice(0, 4));
+  // v200 起 CDN 那兩個多帶 integrity——問實際呼叫時給的逾時，不比對原始碼排列
+  const sdkCalls = await win.eval(`(async()=>{ const had=window.supabase, real=loadScriptTag, calls=[];
+    window.supabase=undefined; loadScriptTag=async(s,ms)=>{ calls.push([s,ms]); return false; };
+    try{ await loadSupabaseSdk(); } finally { loadScriptTag=real; window.supabase=had; }
+    return calls; })()`);
+  t.ok('逾時放寬到 10 秒（原本 5 秒）', sdkCalls.length >= 3 && sdkCalls.every((c) => c[1] === 10000), JSON.stringify(sdkCalls));
   t.ok('降級之後會自己再試', /connectLive\(retry\+1\)/.test(src));
   t.ok('重試有上限，不會無限打', /retry<3/.test(src));
   t.ok('接上之後把登入鈕的字復原', /#btnLogin'\)\.textContent = 'Google 登入'/.test(src));

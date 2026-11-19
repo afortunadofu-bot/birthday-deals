@@ -44,6 +44,7 @@ SITE_FILES = {
     'robots.txt': 'robots.txt',
     'sitemap.xml': 'sitemap.xml',
     'google63fde25685d9acd8.html': 'google63fde25685d9acd8.html',  # Search Console 驗證
+    '_headers': '_headers',                # v200 安全標頭（Cloudflare 讀這個檔）
 }
 # 更新動畫的截圖（v162 起），檔名跟著那一波更新換
 for f in sorted(glob.glob(os.path.join(HERE, 'whatsnew-*.jpg'))):

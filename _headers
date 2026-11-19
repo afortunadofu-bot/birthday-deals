@@ -1,0 +1,17 @@
+# v200（OWASP A05）：Cloudflare 靜態檔案的回應標頭。原本一個安全標頭都沒有。
+# publish.py 會把這個檔案一起放進上傳資料夾，整個資料夾上傳就生效。
+#
+# - nosniff：瀏覽器不要自己猜檔案類型（把上傳的東西當 script 跑）
+# - frame-ancestors 'none' / X-Frame-Options：別的網站不能用 iframe 把壽星日包起來騙人點（點擊劫持）
+# - base-uri / object-src：少兩條被注入時能利用的路
+# - Referrer-Policy：點站外連結時只帶網域，不帶 ?offer=… 這種完整網址
+# - Permissions-Policy：只有自己能用定位（「附近」要用）；相機、麥克風、付款一律關掉
+# 刻意還沒做完整的 script-src CSP：首頁有內嵌 script、要接 Supabase／OSM／Google 多個來源，
+# 寫錯整站就打不開，要另外一版慢慢收。
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Content-Security-Policy: frame-ancestors 'none'; base-uri 'self'; object-src 'none'
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(self), camera=(), microphone=(), payment=(), usb=()
+  Strict-Transport-Security: max-age=31536000

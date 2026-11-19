@@ -13,6 +13,19 @@ SQL Editor 執行一次**，前端才會抓得到新的欄位／view／RPC。全
 
 ---
 
+## v200　OWASP Top 10 檢查之後的修正
+
+**有資料庫變更：`schema_v200_security.sql`。** 動 `template.html`、新增 `_headers`、`publish.py`，測試 t108。不用重貼 Worker。
+
+celine：「用 OWASP 這類公開清單檢查一次壽星日」。
+
+- **資料庫（`schema_v200_security.sql`）**：`site_events` 收回 anon 的讀取權限；管理員才能讀的政策改成 `(select public.is_admin())`，整個查詢只判斷一次，不是每一筆判斷一次。原本沒登入的請求也會讓資料庫整張表檢查到逾時。
+- **A03 注入**：投稿、修改建議填的來源網址只接受 http／https（`safeHref`）；其他的不畫成連結，審核頁直接把原字串顯示出來。
+- **A08 外部程式完整性**：Supabase SDK 的 CDN 備援原本寫 `@2`（永遠拿最新的 2.x）、也沒有 integrity，改成釘死 2.117.3、各帶 sha384；Leaflet 的 JS／CSS 也帶 integrity。站上自己那份 SDK 照舊先讀。瀏覽器實測：兩個備援都載得進來，雜湊錯了會被擋。
+- **A05 設定**：新增 `_headers`：nosniff、不准被 iframe 包（`frame-ancestors 'none'`）、Referrer-Policy、Permissions-Policy（定位只給自己）、HSTS。完整的 script-src CSP 要另外一版處理（首頁有內嵌 script、來源很多，寫錯整站就打不開）。
+
+---
+
 ## v199　附近：常用地點可以存起來，下次一點就換過去
 
 **沒有資料庫變更，不用重貼 Worker。** 動 `template.html`、`updates.json`，測試 t107。

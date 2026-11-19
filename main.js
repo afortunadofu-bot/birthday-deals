@@ -306,6 +306,10 @@ const ICONS={
 };
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* v200（OWASP A03）：投稿、修改建議填的「來源網址」是使用者給的字串，直接放進 href 的話
+   javascript:、data: 這種網址一點就會執行。esc() 只擋得住跳出屬性，擋不住網址本身。
+   只放行 http／https，其他一律不畫成連結。 */
+const safeHref = u => /^https?:\/\//i.test(String(u ?? '').trim()) ? String(u).trim() : '';
 const nt  = n => (n==null?'—':'$'+Number(n).toLocaleString('en-US'));
 const note=(el,cls,html)=>{el.innerHTML=`<div class="note ${cls}">${html}</div>`};
 /* celine（2026-10-29）：「其他人不該看到這個」。公開的地方（優惠／排行榜／排行程／我的，
@@ -586,11 +590,14 @@ function paintSeedNow(){
 }
 
 // 動態載入一支外部 script，成功/失敗/逾時都會 resolve（不會讓呼叫端卡住）。
-function loadScriptTag(src, timeoutMs){
+/* v200（OWASP A08）：從別人的 CDN 載的程式碼要帶 integrity——CDN 被入侵或檔案被換掉，
+   瀏覽器比對雜湊不符就不執行（當成載入失敗，照原本的退路走）。自己站上的檔案不用。 */
+function loadScriptTag(src, timeoutMs, integrity){
   return new Promise(resolve=>{
     let done=false;
     const finish=ok=>{ if(done) return; done=true; resolve(ok); };
     const s=document.createElement('script'); s.src=src;
+    if(integrity){ s.setAttribute('integrity', integrity); s.setAttribute('crossorigin', 'anonymous'); }
     s.onload=()=>finish(true); s.onerror=()=>finish(false);
     document.head.appendChild(s);
     setTimeout(()=>finish(false), timeoutMs);
@@ -601,10 +608,18 @@ function loadScriptTag(src, timeoutMs){
 // 逾時就直接當離線模式繼續運作（畫面已經有種子資料撐著，不會整頁空白）。
 /* SDK 的來源不只一個：主要用 jsdDelivr，連不上就換 unpkg 再試一次。
    手機網路或某些地區偶爾會卡在單一 CDN，備援一條路比什麼都有效。 */
+/* v200（OWASP A08）：原本寫 @2（永遠拿最新的 2.x）又沒有 integrity——等於讓 CDN 上任何一版、
+   任何被換掉的檔案都能在我們網站上執行。改成釘死跟站上那份同一版（2.117.3），各帶雜湊。
+   jsDelivr 那份跟 vendor/supabase.min.js 一模一樣；unpkg 沒有 .min，用同一版的未壓縮檔。
+   以後換 SDK 版本：vendor/ 那份、這兩個網址、SDK_SRI 三個一起換（雜湊用 openssl dgst -sha384 算）。 */
 const SDK_URLS=[
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
-  'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js'
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.min.js',
+  'https://unpkg.com/@supabase/supabase-js@2.117.3/dist/umd/supabase.js'
 ];
+const SDK_SRI={
+  [SDK_URLS[0]]:'sha384-dl/4LkSyQ4uEucc48NM6VDZLAjLLq9yMzZ5JLXumBq7Ld33XBof73hseOqPhO89+',
+  [SDK_URLS[1]]:'sha384-BWcjm9OdFth9TbhCxZPdm+gAOUMAzQy9nmTs12ioXdCcbVnJaPMn+fMUoQCLt60R',
+};
 /* SDK 一律先用自己站上那一份，CDN 只是備援。
 
    使用者 tomoe_hot（Threads 私訊）：
@@ -639,7 +654,7 @@ async function loadSupabaseSdk(){
     if(window.supabase){ SDK_FROM='本站'; return true; }
   }
   for(const url of SDK_URLS){
-    await loadScriptTag(url, 10000);
+    await loadScriptTag(url, 10000, SDK_SRI[url]);
     if(window.supabase){ SDK_FROM=new URL(url).hostname; return true; }
   }
   SDK_FROM='都失敗';
@@ -4962,9 +4977,11 @@ function loadLeaflet(){
     const l=document.createElement('link');
     l.rel='stylesheet'; l.dataset.leaflet='1';
     l.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+    l.setAttribute('integrity','sha384-c6Rcwz4e4CITMbu/NBmnNS8yN2sC3cUElMEMfP3vqqKFp7GOYaaBBCqmaWBjmkjb'); l.setAttribute('crossorigin','anonymous');
     document.head.appendChild(l);
   }
-  return loadScriptTag('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js', 8000)
+  return loadScriptTag('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js', 8000,
+    'sha384-NElt3Op+9NBMCYaef5HxeJmU4Xeard/Lku8ek6hoPTvYkQPh3zLIrJP7KiRocsxO')
     .then(ok=>ok&&!!window.L);
 }
 async function openNearMap(){
@@ -5718,8 +5735,8 @@ function offerCardHtml(o, idx){
             o.verified?'取消查證':'標記已查證'}</button>
           <button class="btn sm act-adminedit" data-id="${esc(o.id)}">編輯</button>`
           :(me?`<button class="btn sm act-suggest" data-id="${esc(o.id)}">建議修改</button>`:'')}
-        ${o.bestSource?`<span class="src">${esc(o.bestSource.tierLabel||TIER_LABEL[o.bestSource.tier])}
-          <a href="${esc(o.bestSource.url)}" target="_blank" rel="noopener nofollow">來源↗</a></span>`:''}
+        ${o.bestSource&&safeHref(o.bestSource.url)?`<span class="src">${esc(o.bestSource.tierLabel||TIER_LABEL[o.bestSource.tier])}
+          <a href="${esc(safeHref(o.bestSource.url))}" target="_blank" rel="noopener nofollow">來源↗</a></span>`:''}
       </div>
       </article>`;
   })(o, idx);
@@ -6272,8 +6289,8 @@ function offerFactsHtml(o){
       <a class="btn sm dtl-map" onclick="markMapTipDone()" href="${esc(mapsSearchUrl(o))}" target="_blank" rel="noopener"
         title="用 Google 地圖找附近的分店">📍 在 Google 地圖找附近分店</a></div>`:''}
     ${(o.sources&&o.sources.length)?`<div class="meta" style="margin-top:8px">
-      ${o.sources.map(s=>`<span>${esc(s.tierLabel||TIER_LABEL[s.tier]||'來源')}
-        <a href="${esc(s.url)}" target="_blank" rel="noopener nofollow">連結↗</a></span>`).join('')}
+      ${o.sources.filter(s=>safeHref(s&&s.url)).map(s=>`<span>${esc(s.tierLabel||TIER_LABEL[s.tier]||'來源')}
+        <a href="${esc(safeHref(s.url))}" target="_blank" rel="noopener nofollow">連結↗</a></span>`).join('')}
     </div>`:''}
   </div>`;
 }
@@ -12006,7 +12023,9 @@ async function loadPendingEdits(){
            斷行的空格，手機版一遇到這種網址整個版面就被撐寬跑掉，右邊留一大片
            空白。改成跟全站其他「來源」連結一樣，只顯示短字「來源↗」，網址還是
            點得進去，只是不再把整串網址印在畫面上。 -->
-      ${e.source_url?`<div class="meta"><span>來源：<a href="${esc(e.source_url)}" target="_blank" rel="noopener nofollow">來源↗</a></span></div>`:''}
+      ${e.source_url?`<div class="meta"><span>來源：${safeHref(e.source_url)
+        ?`<a href="${esc(safeHref(e.source_url))}" target="_blank" rel="noopener nofollow">來源↗</a>`
+        :`<code>${esc(e.source_url)}</code>（不是 http／https 網址，不畫成連結）`}</span></div>`:''}
       ${rows||'<div class="hint" style="margin-top:6px">（沒有偵測到欄位差異）</div>'}
       <div class="row" style="margin-top:10px">
         <input class="en" data-id="${e.id}" placeholder="審核備註" style="flex:1;min-width:140px">
