@@ -3265,12 +3265,23 @@
 </form></dialog>
 <dialog id="dlgVenueSuggest"><form method="dialog" class="dlg">
   <h2 id="vsTitle">推薦一個地點</h2>
-  <p class="sub" id="vsSub">哪裡一趟就能用到好幾家生日優惠？告訴我們名字就好，座標我們自己對。</p>
+  <p class="sub" id="vsSub">哪裡一趟就能用到好幾家生日優惠？取個名字、指出在哪裡，送出就會出現在這一頁。</p>
   <div class="field"><label>地點名稱 *</label>
     <input id="vsName" maxlength="40" autocomplete="off"
       placeholder="例如：新光三越南西店、新竹巨城"></div>
   <div class="field"><label>在哪個縣市</label>
     <select id="vsCounty"><option value="">不確定／跨縣市</option></select></div>
+  <!-- v204 celine：「民眾投稿的行程可以直接上架 不用我審核」。直接上架要有座標，
+       所以推薦新地點時請他自己指出位置（跟「附近」換地點同一個查法）。建議修改既有地點時不出現。 -->
+  <div class="field" id="vsLocField"><label>在哪裡 *</label>
+    <div class="row" style="gap:6px;flex-wrap:nowrap">
+      <input id="vsPlaceQ" type="search" maxlength="60" autocomplete="off" style="flex:1 1 auto;min-width:0"
+        placeholder="輸入地名，例如：新光三越南西店">
+      <button type="button" class="btn sm" id="btnVsPlace" style="flex:none">查這裡</button>
+    </div>
+    <button type="button" class="btn sm" id="btnVsHere" style="margin-top:6px">📍 用我現在的位置</button>
+    <div id="vsPlaceHits"></div>
+    <div class="hint" id="vsPlaceMsg" style="margin-top:4px"></div></div>
   <!-- celine：「幾家店建議有搜尋功能跟核可打勾，可以直接搜尋系統有的然後添加」。
        本來是一格空白讓人自己打；收回來的常常是「星巴克 康是美 那幾家」，
        品牌名寫法跟站上的對不起來。改成搜站上已經有的、勾起來——跟行程的

@@ -113,7 +113,7 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v160_venue_pairs.
 
   // 推薦新地點：不帶 venue_id（沒跑 v160 的資料庫沒有這一欄，不能因此送不出去）
   sent.length = 0;
-  win.eval('openVenueSuggest()');
+  win.eval("openVenueSuggest(); vsSetLoc(22.99,120.20,'某處');");   // v204：新地點要先指出位置
   t.ok('推薦新地點：標題照舊', /推薦一個地點/.test($('#vsTitle').textContent));
   t.eq('推薦新地點：名字是空的', $('#vsName').value, '');
   $('#vsName').value = '高雄夢時代';

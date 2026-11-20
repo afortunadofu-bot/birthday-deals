@@ -60,7 +60,7 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v153_venues_write
            return Promise.resolve({error:window.__err||null}); } }) };`);
   win.eval(`const vc=document.querySelector('#venueCounty');
     vc.innerHTML='<option value=""></option><option value="台南市">台南市</option>';
-    vc.value='台南市'; openVenueSuggest();`);
+    vc.value='台南市'; openVenueSuggest(); vsSetLoc(22.99,120.20,'某處');`);  // v204：新地點要先指出位置
   t.ok('登入之後打得開', $('#dlgVenueSuggest').open);
   t.eq('縣市清單是全台 22 個＋一個「不確定」', $('#vsCounty').options.length, 23);
   t.ok('「全台」不在裡面（那不是一個地點）',
@@ -82,7 +82,7 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v153_venues_write
   t.eq('送進自己的那張表', calls[0]?.tb, 'venue_suggestions');
   t.eq('名字前後空白有修掉', calls[0]?.row.name, '新光三越南西店');
   t.eq('縣市跟著送', calls[0]?.row.county, '台南市');
-  t.eq('裡面有哪幾家也送', calls[0]?.row.note, '星巴克、康是美');
+  t.eq('裡面有哪幾家也送（v204 起後面接座標）', calls[0]?.row.note, '星巴克、康是美；位置 22.99000,120.20000');
   t.eq('身分是自己', calls[0]?.row.user_id, 'u-1');
   /* status 不從前端送：RLS 的 with check 要求 status='pending'，
      由資料庫的預設值給，前端送什麼都不算數。 */
@@ -94,7 +94,7 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v153_venues_write
      「管理員要先跑 schema_v153…」，這條本來就是在守那句話，現在反過來守它不在。 */
   calls.length = 0;
   win.eval("window.__err={message:'Could not find the table public.venue_suggestions in the schema cache'};");
-  win.eval("openVenueSuggest(); document.querySelector('#vsName').value='高雄夢時代';");
+  win.eval("openVenueSuggest(); vsSetLoc(22.99,120.20,'某處'); document.querySelector('#vsName').value='高雄夢時代';");
   win.eval("document.querySelector('#btnVsSend').click()");
   await tick(win, 3);
   t.ok('表還沒建：講「還沒開放」', /還沒開放/.test($('#vsMsg').textContent), $('#vsMsg').textContent);

@@ -58,7 +58,7 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
       {id:3,brand:'屈臣氏',offer:'禮券'}];
     MY_USED_OFFER_IDS=new Set();`);
   t.ok('「裡面有哪幾家」不再是一格空白', !$('#dlgVenueSuggest textarea#vsNote'));
-  win.eval("document.querySelector('#venueCounty').value=''; openVenueSuggest();");
+  win.eval("document.querySelector('#venueCounty').value=''; openVenueSuggest(); vsSetLoc(22.99,120.20,'某處');");  // v204：先指出位置
   t.ok('視窗打得開', $('#dlgVenueSuggest').open);
   const search = () => $('#vsPicker .op-search');
   t.ok('裡面有搜尋框', !!search());
@@ -87,16 +87,17 @@ const index = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   /* 勾的寫成品牌名、站上找不到的接在後面——管理員看得懂是哪幾家就好，
      對座標用的是熱點清單，不需要優惠的 id（多一欄就多一支 SQL 要跑） */
   t.eq('勾的照勾的順序寫成品牌名，找不到的接在後面',
-    sent[0]?.row.note, '星巴克、康是美；還有一家巷口的手搖');
+    sent[0]?.row.note, '星巴克、康是美；還有一家巷口的手搖；位置 22.99000,120.20000');
 
   // 一家都不勾、也沒寫：note 是空的，不是空字串
   sent.length = 0;
-  win.eval("openVenueSuggest();");
+  win.eval("openVenueSuggest(); vsSetLoc(22.99,120.20,'某處');");
   $('#vsName').value = '高雄夢時代';
   win.eval("document.querySelector('#btnVsSend').click()");
   await tick(win, 3);
   t.eq('什麼都沒勾也送得出去', sent[0]?.row.name, '高雄夢時代');
-  t.eq('那一格存成空的，不是空字串', sent[0]?.row.note, null);
+  // v204 起退回舊流程時備註只剩座標（沒勾、沒寫的時候也不會是空字串）
+  t.eq('沒勾沒寫：備註只有座標，不是空字串', sent[0]?.row.note, '位置 22.99000,120.20000');
   $('#dlgVenueSuggest').close();
 
   /* 跟行程「加店家」同一個元件，不是兩份長得像的程式 */

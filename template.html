@@ -3264,12 +3264,23 @@
 </form></dialog>
 <dialog id="dlgVenueSuggest"><form method="dialog" class="dlg">
   <h2 id="vsTitle">推薦一個地點</h2>
-  <p class="sub" id="vsSub">哪裡一趟就能用到好幾家生日優惠？告訴我們名字就好，座標我們自己對。</p>
+  <p class="sub" id="vsSub">哪裡一趟就能用到好幾家生日優惠？取個名字、指出在哪裡，送出就會出現在這一頁。</p>
   <div class="field"><label>地點名稱 *</label>
     <input id="vsName" maxlength="40" autocomplete="off"
       placeholder="例如：新光三越南西店、新竹巨城"></div>
   <div class="field"><label>在哪個縣市</label>
     <select id="vsCounty"><option value="">不確定／跨縣市</option></select></div>
+  <!-- v204 celine：「民眾投稿的行程可以直接上架 不用我審核」。直接上架要有座標，
+       所以推薦新地點時請他自己指出位置（跟「附近」換地點同一個查法）。建議修改既有地點時不出現。 -->
+  <div class="field" id="vsLocField"><label>在哪裡 *</label>
+    <div class="row" style="gap:6px;flex-wrap:nowrap">
+      <input id="vsPlaceQ" type="search" maxlength="60" autocomplete="off" style="flex:1 1 auto;min-width:0"
+        placeholder="輸入地名，例如：新光三越南西店">
+      <button type="button" class="btn sm" id="btnVsPlace" style="flex:none">查這裡</button>
+    </div>
+    <button type="button" class="btn sm" id="btnVsHere" style="margin-top:6px">📍 用我現在的位置</button>
+    <div id="vsPlaceHits"></div>
+    <div class="hint" id="vsPlaceMsg" style="margin-top:4px"></div></div>
   <!-- celine：「幾家店建議有搜尋功能跟核可打勾，可以直接搜尋系統有的然後添加」。
        本來是一格空白讓人自己打；收回來的常常是「星巴克 康是美 那幾家」，
        品牌名寫法跟站上的對不起來。改成搜站上已經有的、勾起來——跟行程的
@@ -6852,6 +6863,9 @@ async function loadVenueAdmin(){
     sb.from('venues').select('id,name,county,is_public,lat,lng').order('name').limit(300),
     sb.rpc('admin_venue_candidates',{p_min_offers:8}),
   ]);
+  /* v204 最近自動上架的（使用者推薦、直接公開）：不對就在這裡取消公開。欄位還沒有就不列。 */
+  const auto=await sb.from('venue_suggestions').select('id,name,county,created_at,venue_id')
+    .eq('published',true).order('created_at',{ascending:false}).limit(30);
   // venues 讀不到就整塊停下來——後面兩段都要靠它比對「這個熱點建過了沒」
   if(mine.error){
     const missing=/venues|does not exist|schema cache/i.test(mine.error.message||'');
@@ -6866,7 +6880,7 @@ async function loadVenueAdmin(){
       .eq('status','pending').order('created_at',{ascending:false}).limit(50);
     sugRows=r.error?[]:(r.data||[]);
   }
-  VENUE_ADMIN={sug:sugRows, mine:mine.data||[],
+  VENUE_ADMIN={sug:sugRows, auto:auto.error?[]:(auto.data||[]), mine:mine.data||[],
                cand:cand.error?[]:(cand.data||[]), candErr:cand.error?zhErr(cand.error):''};
   renderVenueAdmin();
 }
@@ -6946,7 +6960,17 @@ function renderVenueAdmin(){
         <div class="hint va-stores">${esc(venueStoresHint(c.sample_names))}</div>
       </div>`).join('') : none('系統找到的熱點都建過了。'));
 
+  const autoRows=(VENUE_ADMIN.auto||[]).filter(r=>r.venue_id);
+  const autoHtml=autoRows.length ? autoRows.map(r=>{
+      const v=mine.find(x=>x.id===r.venue_id);
+      return `<div class="va-row">
+        <div style="flex:1 1 auto;min-width:0"><b>${esc(v?v.name:r.name)}</b>
+          <span style="color:var(--ink-3)">${esc(r.county||'')} · ${esc(String(r.created_at||'').slice(5,10))}</span></div>
+        ${v&&v.is_public?`<button type="button" class="btn sm" data-vauto-hide="${r.venue_id}">取消公開</button>`
+          :'<span class="hint" style="margin:0">已取消公開</span>'}
+      </div>`; }).join('') : '';
   box.innerHTML = sec(`使用者推薦的（${sug.length}）`, sugHtml)
+    + (autoHtml ? sec(`最近自動上架的（${autoRows.length}）`, autoHtml) : '')
     + sec(`還沒公開的（${hidden.length}）`, mineHtml
         + (shown ? `<p class="hint" style="margin:6px 0 0">已經公開的 ${shown} 個不列在這裡——`
           + '到「排行程」點開那一格，最上面有改名、範圍、取消公開、刪除。</p>' : ''))
@@ -6964,6 +6988,11 @@ function renderVenueAdmin(){
     reviewVenueSuggest(r.id,'accepted');
   });
   box.querySelectorAll('[data-vs-no]').forEach(b=>b.onclick=()=>reviewVenueSuggest(b.dataset.vsNo,'rejected'));
+  box.querySelectorAll('[data-vauto-hide]').forEach(b=>b.onclick=async()=>{
+    const {error}=await sb.from('venues').update({is_public:false}).eq('id',Number(b.dataset.vautoHide));
+    if(error){ showToast(venueWriteHint(error)); return; }
+    VENUES=null; forgetVenuePairs(); showToast('收起來了'); loadVenueAdmin();
+  });
   box.querySelectorAll('[data-vpub]').forEach(b=>b.onchange=()=>saveVenue(b.dataset.vpub));
   box.querySelectorAll('[data-vname]').forEach(b=>b.onchange=()=>saveVenue(b.dataset.vname));
   box.querySelectorAll('[data-vdel]').forEach(b=>b.onclick=()=>delVenue(b.dataset.vdel));
@@ -8118,7 +8147,9 @@ function openVenueSuggest(venue){
   $('#vsTitle').textContent = VS_EDIT ? `建議修改「${VS_EDIT.name}」` : '推薦一個地點';
   $('#vsSub').textContent = VS_EDIT
     ? '名字不對就直接改上面那一格；少了哪幾家就勾起來；其他的寫在最下面。'
-    : '哪裡一趟就能用到好幾家生日優惠？告訴我們名字就好，座標我們自己對。';
+    : '哪裡一趟就能用到好幾家生日優惠？取個名字、指出在哪裡，送出就會出現在這一頁。';
+  VS_LOC=null; $('#vsPlaceQ').value=''; $('#vsPlaceHits').innerHTML=''; $('#vsPlaceMsg').textContent='';
+  $('#vsLocField').classList.toggle('hidden', !!VS_EDIT);
   $('#vsNote').placeholder = VS_EDIT
     ? '哪裡不對？例如：範圍太大、這家已經撤櫃了'
     : '站上找不到的店寫在這裡（不填也可以）';
@@ -8134,6 +8165,50 @@ function openVenueSuggest(venue){
   logEvent('venue_suggest',{edit:VS_EDIT?1:0});
 }
 let VS_PICKER=null;
+/* v204 推薦地點的位置：{lat,lng,label}。查法跟「附近」的換地點一樣（Nominatim，只在按下去時查一次）。 */
+let VS_LOC=null, VS_PLACE_SEQ=0;
+function vsSetLoc(lat, lng, label){
+  VS_LOC={lat, lng, label};
+  $('#vsPlaceHits').innerHTML='';
+  $('#vsPlaceMsg').textContent=`📍 選好了：${label}`;
+}
+async function vsSearchPlace(){
+  const q=String($('#vsPlaceQ').value||'').trim() || String($('#vsName').value||'').trim();
+  $('#vsPlaceHits').innerHTML='';
+  if(!q){ $('#vsPlaceMsg').textContent='輸入地名再按「查這裡」。'; return; }
+  const seq=++VS_PLACE_SEQ;
+  $('#vsPlaceMsg').textContent='查詢中…';
+  let list=[];
+  try{
+    const res=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&accept-language=zh-TW'
+      +'&countrycodes=tw&q='+encodeURIComponent(q),{headers:{'Accept':'application/json'}});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    list=await res.json();
+  }catch(e){
+    if(seq!==VS_PLACE_SEQ) return;
+    $('#vsPlaceMsg').textContent='查不到地點（網路或服務暫時有問題），可以改用「用我現在的位置」。';
+    return;
+  }
+  if(seq!==VS_PLACE_SEQ) return;
+  if(!list.length){ $('#vsPlaceMsg').textContent=`找不到「${q}」，換個說法試試（例如加上縣市）。`; return; }
+  const pick=p=>vsSetLoc(Number(p.lat), Number(p.lon), String(p.display_name||'').split(',')[0].trim()||q);
+  if(list.length===1){ pick(list[0]); return; }
+  $('#vsPlaceMsg').textContent='找到幾個地方，選一個：';
+  $('#vsPlaceHits').innerHTML=list.map((p,i)=>
+    `<button type="button" class="merge-hit near-place-hit" data-i="${i}">${esc(String(p.display_name||'').split(',')[0])}
+      <small>${esc(p.display_name||'')}</small></button>`).join('');
+  $$('#vsPlaceHits .near-place-hit').forEach(b=>b.onclick=()=>pick(list[Number(b.dataset.i)]));
+}
+$('#btnVsPlace').onclick=vsSearchPlace;
+$('#vsPlaceQ').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); vsSearchPlace(); } });
+$('#btnVsHere').onclick=()=>{
+  if(!navigator.geolocation){ $('#vsPlaceMsg').textContent='這個瀏覽器拿不到位置，改用上面查地名。'; return; }
+  $('#vsPlaceMsg').textContent='找你的位置中…';
+  navigator.geolocation.getCurrentPosition(
+    pos=>vsSetLoc(pos.coords.latitude, pos.coords.longitude, '你現在的位置'),
+    ()=>{ $('#vsPlaceMsg').textContent='拿不到你的位置，改用上面查地名。'; },
+    {timeout:10000, maximumAge:60000});
+};
 $('#btnVenueSuggest').onclick=()=>openVenueSuggest();
 $('#btnVsCancel').onclick=()=>$('#dlgVenueSuggest').close();
 $('#btnVsSend').onclick=async()=>{
@@ -8146,9 +8221,40 @@ $('#btnVsSend').onclick=async()=>{
   const note=[brands.join('、'), extra].filter(Boolean).join('；');
   const box=$('#vsMsg');
   if(name.length<2){ box.innerHTML='<div class="note alert">地點名稱至少要兩個字。</div>'; return; }
+  if(!VS_EDIT && !VS_LOC){ box.innerHTML='<div class="note alert">先指出在哪裡：查地名，或用你現在的位置。</div>'; return; }
   const btn=$('#btnVsSend'); btn.disabled=true; btn.textContent='送出中…';
+  /* v204：新地點直接上架（submit_venue）。那支 SQL 還沒跑的話退回原本的「送給管理員」，座標寫進備註。 */
+  if(!VS_EDIT){
+    let r;
+    try{ r=await sb.rpc('submit_venue',{p_name:name.slice(0,40), p_county:$('#vsCounty').value||null,
+      p_lat:VS_LOC.lat, p_lng:VS_LOC.lng, p_note:note?note.slice(0,250):null}); }
+    catch(e){ r={data:null, error:{message:'submit_venue unavailable: '+(e&&e.message||e)}}; }
+    if(!r.error && r.data && r.data.result){
+      btn.disabled=false; btn.textContent='送出';
+      const d=r.data;
+      box.innerHTML='<div class="note">'+(d.result==='published'
+        ? `上架了！「${esc(d.name)}」現在就在這一頁，裡面算到 ${Number(d.offers)||0} 家。謝謝你！`
+        : d.result==='exists'
+        ? `這裡已經有「${esc(d.name)}」了，就在這一頁，不用再建一個。謝謝你！`
+        : '收到了！這附近站上的店還不多，我們看過之後再上架。')+'</div>';
+      logEvent('venue_submit',{result:d.result});
+      $('#vsName').value=''; $('#vsNote').value=''; VS_PICKER=null; VS_LOC=null;
+      loadMyVenueSuggestions();
+      if(d.result!=='pending'){ VENUES=null; forgetVenuePairs(); if(d.venue_id) VENUE_OPEN=Number(d.venue_id); loadVenues(); }
+      setTimeout(()=>$('#dlgVenueSuggest').close(), 1800);
+      return;
+    }
+    const missingFn=r.error && /submit_venue|function|does not exist|schema cache/i.test(r.error.message||'');
+    if(r.error && !missingFn){
+      btn.disabled=false; btn.textContent='送出';
+      box.innerHTML='<div class="note alert">'+esc(zhErr(r.error))+'</div>';
+      return;
+    }
+  }
+  const locNote=(!VS_EDIT && VS_LOC) ? `位置 ${VS_LOC.lat.toFixed(5)},${VS_LOC.lng.toFixed(5)}` : '';
+  const fullNote=[note, locNote].filter(Boolean).join('；');
   const row={ name: name.slice(0,40), county: $('#vsCounty').value||null,
-    note: note ? note.slice(0,300) : null, user_id: me.id };
+    note: fullNote ? fullNote.slice(0,300) : null, user_id: me.id };
   // 只有「建議修改」才帶這一欄：v160 還沒跑的資料庫沒有它，推薦新地點不該因此送不出去
   if(VS_EDIT) row.venue_id=VS_EDIT.id;
   const {error}=await sb.from('venue_suggestions').insert(row);
@@ -12825,15 +12931,20 @@ $('#btnPaAdd').onclick=async()=>{
 
 /* 自己推薦過的地點：就列在「一趟用最多」那一塊下面，不另外開一塊——
    你是在這裡送出的，當然也在這裡看它後來怎麼了。 */
-const VS_STATUS={pending:['⏳ 等著對座標',''], accepted:['✓ 收下了','ok'],
+const VS_STATUS={pending:['⏳ 等著看過',''], accepted:['✓ 收下了','ok'], published:['✓ 已上架','ok'],
                  rejected:['— 這次沒收','partial']};
 async function loadMyVenueSuggestions(){
   const box=$('#myVenueSuggests');
   if(!box) return;
   if(!LIVE||!me){ box.innerHTML=''; return; }
-  const {data,error}=await sb.from('venue_suggestions')
-    .select('id,name,county,status,created_at')
+  let {data,error}=await sb.from('venue_suggestions')
+    .select('id,name,county,status,created_at,published')
     .eq('user_id',me.id).order('created_at',{ascending:false}).limit(20);
+  if(error){   // v204 的 published 欄還沒有：退回原本那一句
+    ({data,error}=await sb.from('venue_suggestions')
+      .select('id,name,county,status,created_at')
+      .eq('user_id',me.id).order('created_at',{ascending:false}).limit(20));
+  }
   // 表還沒建起來：整塊安靜地不出現，不要在公開頁面放一行紅字
   if(error){ box.innerHTML=''; return; }
   const rows=data||[];
@@ -12841,7 +12952,7 @@ async function loadMyVenueSuggestions(){
   box.innerHTML='<div style="margin-top:14px;border-top:1px solid var(--line);padding-top:10px">'
     +'<div style="font-size:.8rem;color:var(--ink-3);font-weight:700;margin-bottom:6px">你推薦過的地點</div>'
     +rows.map(r=>{
-      const [label,cls]=VS_STATUS[r.status]||VS_STATUS.pending;
+      const [label,cls]=VS_STATUS[r.published?'published':r.status]||VS_STATUS.pending;
       return `<div class="row" style="gap:8px;align-items:baseline;font-size:.84rem;padding:3px 0">
         <span style="font-weight:700">${esc(r.name)}</span>
         <span style="color:var(--ink-3)">${esc(r.county||'')}</span>
