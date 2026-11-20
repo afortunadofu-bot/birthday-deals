@@ -91,19 +91,25 @@ const { boot, tick, makeAsserts } = require('./harness');
   t.ok('視窗裡有好康地圖的連結（新分頁、帶來源）', !!go && /^https:\/\/tw-deals\.pages\.dev\/\?utm_source=shouxingri/.test(go.getAttribute('href'))
     && go.getAttribute('target') === '_blank' && /noopener/.test(go.getAttribute('rel')));
   t.ok('測試環境預設不跳', !$('#dlgPromo').open);
-  t.ok('日期內才跳', win.eval(`promoActive(new Date(2026,10,20))`) && win.eval(`promoActive(new Date(2026,11,4))`)
-    && !win.eval(`promoActive(new Date(2026,11,5))`) && !win.eval(`promoActive(new Date(2026,10,19))`));
-  win.eval(`window.__SXR_NO_PROMO=false; promoActive=()=>true; localStorage.removeItem(PROMO_KEY);
+  t.ok('11/20～11/30 才跳（celine：這個月都出現）', win.eval(`promoActive(new Date(2026,10,20))`) && win.eval(`promoActive(new Date(2026,10,30))`)
+    && !win.eval(`promoActive(new Date(2026,11,1))`) && !win.eval(`promoActive(new Date(2026,10,19))`));
+  win.eval(`window.__SXR_NO_PROMO=false; promoActive=()=>true; localStorage.removeItem(PROMO_KEY); sessionStorage.removeItem(PROMO_SESSION_KEY);
     $$('dialog').forEach(d=>{ if(d.open) d.close(); }); window.__ev2=[]; const _l=logEvent; logEvent=(a,b)=>{ window.__ev2.push([a,b]); };`);
   t.ok('第一次：跳出來', win.eval('maybeShowPromo()') === true && $('#dlgPromo').open);
+  // 「下次再說」是 <form method="dialog"> 的按鈕，jsdom 沒有實作那種關法（瀏覽器實測會關）——直接關
+  win.eval(`$('#dlgPromo').close()`);
+  t.ok('同一個分頁重新整理：不重跳', win.eval('maybeShowPromo()') === false);
+  win.eval('sessionStorage.removeItem(PROMO_SESSION_KEY)');
+  t.ok('按「下次再說」：下次打開還會跳', win.eval('maybeShowPromo()') === true && $('#dlgPromo').open);
   t.ok('記一筆「看到視窗」', win.eval('window.__ev2.some(e=>e[0]==="promo_open")'));
   go.dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
   t.ok('點連結：記成從視窗點的（跟頁尾分開算）', win.eval('window.__ev2.some(e=>e[0]==="studio_click" && e[1].to==="haokang" && e[1].from==="popup")'),
     JSON.stringify(win.eval('window.__ev2')));
   await tick(win, 2);
   t.ok('點完視窗自己關', !$('#dlgPromo').open);
-  t.ok('同一台裝置不再跳', win.eval('maybeShowPromo()') === false);
-  win.eval(`localStorage.removeItem(PROMO_KEY); $('#dlgDetail').showModal();`);
+  win.eval('sessionStorage.removeItem(PROMO_SESSION_KEY)');
+  t.ok('按過「去好康地圖」：之後打開都不再跳', win.eval('maybeShowPromo()') === false);
+  win.eval(`localStorage.removeItem(PROMO_KEY); sessionStorage.removeItem(PROMO_SESSION_KEY); $('#dlgDetail').showModal();`);
   t.ok('有別的視窗開著時不跳', win.eval('maybeShowPromo()') === false);
   win.eval(`$('#dlgDetail').close();`);
 

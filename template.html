@@ -3221,7 +3221,7 @@
 </form></dialog>
 <!-- v203 celine：「幫我發一個公告說可以連到好康地圖」→「你跳一個 popup 然後有超連結」。
      資料庫的公告只能放純文字、網址點不下去，所以做成開站跳一次的視窗。
-     PROMO_HAOKANG 的日期內、每台裝置只跳一次；按連結或「下次再說」都算看過。 -->
+     v203b celine：「好康地圖通知 這個月都出現」→ 11/30 前每次打開都跳；按過「去好康地圖」的人才不再跳。 -->
 <dialog id="dlgPromo" aria-labelledby="promoTitle"><form method="dialog" class="dlg">
   <h2 id="promoTitle">🗺️ 好康地圖上線了</h2>
   <p class="sub">壽星日的姊妹站。</p>
@@ -12614,25 +12614,36 @@ function whatsNewActive(){
 }
 function whatsNewDone(){ try{ return !!localStorage.getItem(WN_KEY); }catch{ return false; } }
 function markWhatsNewDone(how){ try{ localStorage.setItem(WN_KEY, how); }catch{} }
-/* ---- v203 好康地圖的視窗：日期內、每台裝置跳一次 ---- */
-const PROMO_HAOKANG={id:'haokang1120', from:'2026-11-20', until:'2026-12-04'};
+/* ---- v203 好康地圖的視窗 ----
+   v203b celine：「好康地圖通知 這個月都出現」。11/30 前每次打開網站都跳：
+   - 按過「去好康地圖」的（PROMO_KEY，記在這台裝置）→ 不再跳，他已經去過了
+   - 按「下次再說」→ 下次打開還會跳
+   - 同一個分頁裡重新整理、切來切去不重跳（sessionStorage），不然會一直擋在前面 */
+const PROMO_HAOKANG={id:'haokang1120', from:'2026-11-20', until:'2026-11-30'};
 const PROMO_KEY='sxr_promo_'+PROMO_HAOKANG.id;
+const PROMO_SESSION_KEY='sxr_promo_seen_'+PROMO_HAOKANG.id;
 function promoActive(now=new Date()){
   const d=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   return d>=PROMO_HAOKANG.from && d<=PROMO_HAOKANG.until;
 }
-function promoDone(){ try{ return !!localStorage.getItem(PROMO_KEY); }catch{ return true; } }   // 存不了就不跳，免得每次都跳
+function promoDone(){
+  try{ return !!localStorage.getItem(PROMO_KEY) || !!sessionStorage.getItem(PROMO_SESSION_KEY); }
+  catch{ return true; }   // 存不了就不跳，免得每次都跳
+}
 function maybeShowPromo(){
   if(window.__SXR_NO_PROMO) return false;   // 測試環境照真實日期會跳，預設關掉（見 jstest/harness.js）
   if(!promoActive() || promoDone()) return false;
   if(!$('#bdayCheer')?.classList.contains('hidden')) return false;
   if([...document.querySelectorAll('dialog')].some(d=>d.open)) return false;
-  try{ localStorage.setItem(PROMO_KEY, String(Date.now())); }catch{}
+  try{ sessionStorage.setItem(PROMO_SESSION_KEY, '1'); }catch{}
   $('#dlgPromo').showModal(); pushDlgHistory();
   logEvent('promo_open',{id:PROMO_HAOKANG.id});
   return true;
 }
-$('#btnPromoGo').addEventListener('click', ()=>{ setTimeout(()=>$('#dlgPromo').close(), 0); });
+$('#btnPromoGo').addEventListener('click', ()=>{
+  try{ localStorage.setItem(PROMO_KEY, String(Date.now())); }catch{}   // 去過了，之後不再跳
+  setTimeout(()=>$('#dlgPromo').close(), 0);
+});
 
 /* 開場呼叫：跳了回 true（呼叫的人就不要再跳別的） */
 function maybeShowWhatsNew(){
