@@ -70,10 +70,11 @@ function fakeCaches() {
     bootBundle=async()=>({announcement:null, flags:[], online:3});`);
   await win.eval('loadSiteStats()');
   await tick(win);
-  t.ok('有總瀏覽人數', pills().some((p) => p === '👀 總瀏覽人數 135,456'), pills().join(' | '));
+  // v203：跟站台數據統一，用瀏覽人次（pageview_count）
+  t.ok('有總瀏覽人次（跟站台數據同一個數字）', pills().some((p) => p === '👀 總瀏覽人次 268,479'), pills().join(' | '));
   t.ok('有在線人數', pills().some((p) => p === '🟢 剛剛 3 人在線上'), pills().join(' | '));
   t.eq('順序：筆數、累積省下、瀏覽人數、在線', pills().map((p) => p.slice(0, 2)), ['📋', '💰', '👀', '🟢']);
-  t.ok('不是用「人次」（那是瀏覽次數 268,479）', !/268,479|人次/.test(txt()));
+  t.ok('不是用不重複裝置數（135,456，跟站台數據對不起來）', !/135,456|人數/.test(txt()));
 
   win.eval(`ONLINE_NOW=null; bootBundle=async()=>({announcement:null, flags:[], online:0});`);
   await win.eval('loadSiteStats()');
@@ -85,7 +86,7 @@ function fakeCaches() {
   await tick(win);
   t.ok('Worker 還沒更新（/boot 沒有 online）：不畫在線那顆', !/在線/.test(txt()), txt());
   t.eq('…也不自己打 site_online_now', sb.__calls.rpc.filter((c) => c.name === 'site_online_now').length, 0);
-  t.ok('瀏覽人數照樣在', /總瀏覽人數 135,456/.test(txt()));
+  t.ok('瀏覽人次照樣在', /總瀏覽人次 268,479/.test(txt()));
 
   win.eval(`ONLINE_NOW=null; bootBundle=async()=>null;
     siteStats=async()=>({offer_count:12, saved_total:0, report_count:0, visitor_count:0});`);

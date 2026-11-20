@@ -561,6 +561,10 @@
   .dist-box{flex:1;min-width:0}
   .dist-note{font-size:.72rem;color:var(--ink-3);margin-top:6px;line-height:1.5}
   .dist-loading{font-size:.8rem;color:var(--ink-3)}
+  /* v203 有效月份 */
+  .month-range{gap:6px;align-items:center;flex-wrap:nowrap}
+  .month-range select{width:auto;flex:0 1 auto;min-width:0;padding:6px 8px;font-size:.85rem}
+  .month-range span{font-size:.82rem;color:var(--ink-2)}
   input,select,textarea{font:inherit;font-size:.86rem;padding:9px 12px;border:1px solid var(--line);
     border-radius:var(--r-sm);background:var(--surface);color:var(--ink);max-width:100%;
     transition:border-color .16s var(--ease),box-shadow .16s var(--ease)}
@@ -1895,6 +1899,14 @@
           <div class="dist-note">依 Google 地圖上的分店地址，沒有分店資料的優惠不會出現在這裡。找捷運站附近：用「📍 附近」輸入站名。</div></div></div>
       <div class="filt-row"><span class="filt-label">會員</span><div class="row chipgrp" id="memChips"></div></div>
       <div class="filt-row"><span class="filt-label">期間</span><div class="row chipgrp" id="timingChips"></div></div>
+      <!-- v203 celine：「篩選多一個選有效期限月份的功能，可以選區間」→ 選日曆月份（例如 11 月～12 月）。
+           有寫活動起訖日的看日期；一般生日優惠照「我的」填的生日月份推（用得到下個月的多算一個月）。 -->
+      <div class="filt-row"><span class="filt-label">月份</span>
+        <div class="dist-box"><div class="row month-range">
+          <select id="fMonthFrom" aria-label="從幾月"><option value="">不限</option><option value="1">1 月</option><option value="2">2 月</option><option value="3">3 月</option><option value="4">4 月</option><option value="5">5 月</option><option value="6">6 月</option><option value="7">7 月</option><option value="8">8 月</option><option value="9">9 月</option><option value="10">10 月</option><option value="11">11 月</option><option value="12">12 月</option></select>
+          <span>到</span>
+          <select id="fMonthTo" aria-label="到幾月"><option value="">同一個月</option><option value="1">1 月</option><option value="2">2 月</option><option value="3">3 月</option><option value="4">4 月</option><option value="5">5 月</option><option value="6">6 月</option><option value="7">7 月</option><option value="8">8 月</option><option value="9">9 月</option><option value="10">10 月</option><option value="11">11 月</option><option value="12">12 月</option></select>
+        </div><div class="dist-note hidden" id="monthNote"></div></div></div>
       <div class="filt-row"><span class="filt-label">類型</span><div class="row chipgrp" id="freeChips"></div></div>
       <!-- 嵐：「統計花費金額／人數，讓其他人有個概念這家會花多少」「進到篩選」。
            只算 3 人以上回報過「這次花多少」的；v164 那支 SQL 沒跑的話整列不出現。 -->
@@ -1926,6 +1938,9 @@
              不太有系統性」。只收資料講得清楚的：不用當會員（也不用預約），或寫明 0 天而且
              說明裡沒有「需／須提前、先加入」。沒寫的（目前一大半）不算進來。 -->
         <label class="toggle"><input type="checkbox" id="fNoAdvance"> 不用提前加入（當月加入就能用）</label>
+        <!-- v203 楊晴（11/19）：「可以增加當月至下個月都能用的優惠標籤嗎？目前有看到幾家使用期限有到下個月，
+             很想一次蒐集其他家！」 -->
+        <label class="toggle"><input type="checkbox" id="fNextMonth"> 生日月過了還能用（用到下個月）</label>
         <!-- 金信宇回報：「我點擊篩選『花蓮縣』時，底下篩選出的建議店家有很多都不是
              花蓮店家」。選了縣市之後，標成「全台」的連鎖店本來就會一起列出來
              （標題那行有寫「含全台」），但「全台」常常是個寬鬆的標記——很多連鎖
@@ -3203,6 +3218,20 @@
     <button class="btn" value="cancel">下次吧</button>
     <a class="btn primary" id="btnCoffeeGo" href="https://buymeacoffee.com/celinefu"
        target="_blank" rel="noopener">去 Buy Me a Coffee ↗</a>
+  </div>
+</form></dialog>
+<!-- v203 celine：「幫我發一個公告說可以連到好康地圖」→「你跳一個 popup 然後有超連結」。
+     資料庫的公告只能放純文字、網址點不下去，所以做成開站跳一次的視窗。
+     PROMO_HAOKANG 的日期內、每台裝置只跳一次；按連結或「下次再說」都算看過。 -->
+<dialog id="dlgPromo" aria-labelledby="promoTitle"><form method="dialog" class="dlg">
+  <h2 id="promoTitle">🗺️ 好康地圖上線了</h2>
+  <p class="sub">壽星日的姊妹站。</p>
+  <p class="coffee-say">不是生日也想撿便宜的話，去好康地圖看看：超商、手搖飲、餐廳今天有什麼優惠，在地圖上找離你最近的。<br><br>之後在網頁最下面點「好康地圖」也到得了。</p>
+  <div class="foot">
+    <button class="btn" value="cancel" id="btnPromoLater">下次再說</button>
+    <a class="btn primary" id="btnPromoGo" data-from="popup" style="text-decoration:none"
+       href="https://tw-deals.pages.dev/?utm_source=shouxingri&amp;utm_medium=web&amp;utm_campaign=popup"
+       target="_blank" rel="noopener">去好康地圖 ↗</a>
   </div>
 </form></dialog>
 <!-- celine：「把這幾版更新統一做個動畫展示」「要可以按快轉或跳過，至少維持一周都會跳出來，

@@ -561,6 +561,10 @@
   .dist-box{flex:1;min-width:0}
   .dist-note{font-size:.72rem;color:var(--ink-3);margin-top:6px;line-height:1.5}
   .dist-loading{font-size:.8rem;color:var(--ink-3)}
+  /* v203 有效月份 */
+  .month-range{gap:6px;align-items:center;flex-wrap:nowrap}
+  .month-range select{width:auto;flex:0 1 auto;min-width:0;padding:6px 8px;font-size:.85rem}
+  .month-range span{font-size:.82rem;color:var(--ink-2)}
   input,select,textarea{font:inherit;font-size:.86rem;padding:9px 12px;border:1px solid var(--line);
     border-radius:var(--r-sm);background:var(--surface);color:var(--ink);max-width:100%;
     transition:border-color .16s var(--ease),box-shadow .16s var(--ease)}
@@ -1894,6 +1898,14 @@
           <div class="dist-note">依 Google 地圖上的分店地址，沒有分店資料的優惠不會出現在這裡。找捷運站附近：用「📍 附近」輸入站名。</div></div></div>
       <div class="filt-row"><span class="filt-label">會員</span><div class="row chipgrp" id="memChips"></div></div>
       <div class="filt-row"><span class="filt-label">期間</span><div class="row chipgrp" id="timingChips"></div></div>
+      <!-- v203 celine：「篩選多一個選有效期限月份的功能，可以選區間」→ 選日曆月份（例如 11 月～12 月）。
+           有寫活動起訖日的看日期；一般生日優惠照「我的」填的生日月份推（用得到下個月的多算一個月）。 -->
+      <div class="filt-row"><span class="filt-label">月份</span>
+        <div class="dist-box"><div class="row month-range">
+          <select id="fMonthFrom" aria-label="從幾月"><option value="">不限</option><option value="1">1 月</option><option value="2">2 月</option><option value="3">3 月</option><option value="4">4 月</option><option value="5">5 月</option><option value="6">6 月</option><option value="7">7 月</option><option value="8">8 月</option><option value="9">9 月</option><option value="10">10 月</option><option value="11">11 月</option><option value="12">12 月</option></select>
+          <span>到</span>
+          <select id="fMonthTo" aria-label="到幾月"><option value="">同一個月</option><option value="1">1 月</option><option value="2">2 月</option><option value="3">3 月</option><option value="4">4 月</option><option value="5">5 月</option><option value="6">6 月</option><option value="7">7 月</option><option value="8">8 月</option><option value="9">9 月</option><option value="10">10 月</option><option value="11">11 月</option><option value="12">12 月</option></select>
+        </div><div class="dist-note hidden" id="monthNote"></div></div></div>
       <div class="filt-row"><span class="filt-label">類型</span><div class="row chipgrp" id="freeChips"></div></div>
       <!-- 嵐：「統計花費金額／人數，讓其他人有個概念這家會花多少」「進到篩選」。
            只算 3 人以上回報過「這次花多少」的；v164 那支 SQL 沒跑的話整列不出現。 -->
@@ -1925,6 +1937,9 @@
              不太有系統性」。只收資料講得清楚的：不用當會員（也不用預約），或寫明 0 天而且
              說明裡沒有「需／須提前、先加入」。沒寫的（目前一大半）不算進來。 -->
         <label class="toggle"><input type="checkbox" id="fNoAdvance"> 不用提前加入（當月加入就能用）</label>
+        <!-- v203 楊晴（11/19）：「可以增加當月至下個月都能用的優惠標籤嗎？目前有看到幾家使用期限有到下個月，
+             很想一次蒐集其他家！」 -->
+        <label class="toggle"><input type="checkbox" id="fNextMonth"> 生日月過了還能用（用到下個月）</label>
         <!-- 金信宇回報：「我點擊篩選『花蓮縣』時，底下篩選出的建議店家有很多都不是
              花蓮店家」。選了縣市之後，標成「全台」的連鎖店本來就會一起列出來
              （標題那行有寫「含全台」），但「全台」常常是個寬鬆的標記——很多連鎖
@@ -3204,6 +3219,20 @@
        target="_blank" rel="noopener">去 Buy Me a Coffee ↗</a>
   </div>
 </form></dialog>
+<!-- v203 celine：「幫我發一個公告說可以連到好康地圖」→「你跳一個 popup 然後有超連結」。
+     資料庫的公告只能放純文字、網址點不下去，所以做成開站跳一次的視窗。
+     PROMO_HAOKANG 的日期內、每台裝置只跳一次；按連結或「下次再說」都算看過。 -->
+<dialog id="dlgPromo" aria-labelledby="promoTitle"><form method="dialog" class="dlg">
+  <h2 id="promoTitle">🗺️ 好康地圖上線了</h2>
+  <p class="sub">壽星日的姊妹站。</p>
+  <p class="coffee-say">不是生日也想撿便宜的話，去好康地圖看看：超商、手搖飲、餐廳今天有什麼優惠，在地圖上找離你最近的。<br><br>之後在網頁最下面點「好康地圖」也到得了。</p>
+  <div class="foot">
+    <button class="btn" value="cancel" id="btnPromoLater">下次再說</button>
+    <a class="btn primary" id="btnPromoGo" data-from="popup" style="text-decoration:none"
+       href="https://tw-deals.pages.dev/?utm_source=shouxingri&amp;utm_medium=web&amp;utm_campaign=popup"
+       target="_blank" rel="noopener">去好康地圖 ↗</a>
+  </div>
+</form></dialog>
 <!-- celine：「把這幾版更新統一做個動畫展示」「要可以按快轉或跳過，至少維持一周都會跳出來，
      然後最後要引導說對更新內容細節有興趣可以看更新紀錄（顯示更新紀錄的位置）」 -->
 <dialog id="dlgWhatsNew" aria-labelledby="wnTitle"><div class="dlg wn">
@@ -3757,7 +3786,8 @@ function saveFilters(){
     fVerified:$('#fVerified').checked, fLive:$('#fLive').checked,
     fReported:$('#fReported').checked, fHasComments:$('#fHasComments').checked,
     fNoCompanion:$('#fNoCompanion').checked, fTransferable:$('#fTransferable').checked,
-    fNoAdvance:$('#fNoAdvance').checked, spend:[...activeSpend],
+    fNoAdvance:$('#fNoAdvance').checked, fNextMonth:$('#fNextMonth').checked, spend:[...activeSpend],
+    monthFrom:$('#fMonthFrom').value, monthTo:$('#fMonthTo').value,
     hours:HOURS_F.mode?{...HOURS_F}:null,
     catEx:[...activeCatEx], fHideUsed:$('#fHideUsed').checked, fKeepUnknown:$('#fKeepUnknown').checked,
     fExactRegion:$('#fExactRegion').checked,
@@ -3778,6 +3808,10 @@ function loadFilters(){
   $('#fNoCompanion').checked=!!s.fNoCompanion;
   $('#fTransferable').checked=!!s.fTransferable;
   $('#fNoAdvance').checked=!!s.fNoAdvance;
+  $('#fNextMonth').checked=!!s.fNextMonth;
+  { const ok=v=>/^(?:[1-9]|1[0-2])$/.test(String(v||''));
+    $('#fMonthFrom').value=ok(s.monthFrom)?String(s.monthFrom):'';
+    $('#fMonthTo').value=ok(s.monthTo)&&ok(s.monthFrom)?String(s.monthTo):''; }
   (s.spend||[]).filter(v=>SPEND_BUCKETS.includes(v)).forEach(v=>activeSpend.add(v));
   (s.catEx||[]).forEach(v=>activeCatEx.add(v));
   $('#fHideUsed').checked=!!s.fHideUsed; $('#fKeepUnknown').checked=!!s.fKeepUnknown;
@@ -4320,6 +4354,7 @@ async function connectLive(retry=0){
     maybeShowBirthdayCheer();
     // 跳了更新動畫，這一次就不再問定位、不跳更新通知——不要一打開連跳三個視窗
     if(maybeShowWhatsNew()) return;
+    if(maybeShowPromo()) return;      // v203 好康地圖：跳了這次就不再問定位
     await maybeAskLocation();
     maybeShowUpdatesNudge();
   }, 1200);
@@ -4414,7 +4449,7 @@ document.addEventListener('click', e=>{
   if(!a) return;
   const href = a.getAttribute('href') || '';
   const hit = OUT_LINKS.find(x=>x.re.test(href));
-  if(hit) logEvent('studio_click', {to:hit.to, from:'footer'});
+  if(hit) logEvent('studio_click', {to:hit.to, from:a.dataset.from||'footer'});   // v203 視窗那顆帶 data-from="popup"
 }, true);   // 捕獲階段：就算有人中途擋掉冒泡也還是算得到
 
 /* ---- 離線／登入失敗診斷：直接告訴使用者卡在哪 ---- */
@@ -4958,6 +4993,7 @@ async function loadMyUsedOffers(pre){
   $('#btnReportsMap')?.classList.toggle('hidden', !MY_USED_OFFER_IDS.size);
   if(NEAR.active) renderNearBar();
   if(NEAR_MAP) paintNearPins();
+  renderVenueRecs();   // v203「照你的待辦清單」可以不算用過的：用過的清單回來要重算
 }
 $('#btnReportsMap').onclick=reportsToMap;
 /* ---- 未登入時填好的使用回報，登入回來後自動補送 ---- */
@@ -5760,11 +5796,13 @@ async function loadSiteStats(force){
        所以這個數字最舊大約 10 分鐘前，字面寫「剛剛」不寫「即時」。
        至少寫 1：正在看的這個人自己就在線上（快取那一刻可能還沒算到他）。
        Worker 還沒更新、或拿不到 /boot 就不畫這顆——不退回直接查資料庫，那樣每個訪客多一個請求。 */
-  const visitors=Number(s.visitor_count)||0;
+  /* v203 celine：首頁跟站台數據兩個總瀏覽數字不一樣（136,362 人 vs 271,113 人次），「統一用高的」。
+     首頁改用 pageview_count（瀏覽人次），字也跟站台數據一樣寫「總瀏覽人次」。 */
+  const visitors=Number(s.pageview_count)||0;
   const pills=()=>`<div class="statpills">`
     + `<span class="statpill">📋 共 <b>${s.offer_count}</b> 筆優惠</span>`
     + (s.report_count?`<span class="statpill">💰 大家累積省下 <b>${nt(s.saved_total)}</b>（${s.report_count} 次回報）</span>`:'')
-    + (visitors?`<span class="statpill" title="來看過壽星日的人數（同一台裝置只算一次）">👀 總瀏覽人數 <b>${nt2(visitors)}</b></span>`:'')
+    + (visitors?`<span class="statpill" title="壽星日累積被打開的次數">👀 總瀏覽人次 <b>${nt2(visitors)}</b></span>`:'')
     + (ONLINE_NOW!=null?`<span class="statpill stat-online" title="最近幾分鐘有在逛的人">🟢 剛剛 <b>${nt2(Math.max(1,ONLINE_NOW))}</b> 人在線上</span>`:'')
     + `</div>`;
   $('#siteStats').innerHTML=pills();
@@ -7410,21 +7448,36 @@ function venueWishHits(v){
   const s=VENUE_PAIRS?.get(v.id);
   return s ? [...WISH].filter(id=>s.has(id)) : [];
 }
+/* v203 楊晴（11/19）：「『一趟用最多』一開始顯示『照你的待辦清單』覺得很讚！不過是否能夠有地方選說
+   排除收藏裡面已用過的，再去看哪個地點最多我剩下可以去換的」。
+   收藏裡有回報過用過的才出現這顆勾選；預設勾著（剩下能換的才是要去的理由），記在這台裝置。 */
+function venueRecsSkipUsed(){
+  const p=loadPrefs();
+  return p.venueRecsSkipUsed!==false;
+}
 function renderVenueRecs(){
   const box=$('#venueRecs'); if(!box) return;
   if(!me || !VENUE_PAIRS || !WISH.size || !(VENUES||[]).length){ box.innerHTML=''; return; }
-  const ranked=(VENUES||[]).map(v=>({v, hit:venueWishHits(v)}))
+  const usedInWish=[...WISH].filter(id=>MY_USED_OFFER_IDS.has(id)).length;
+  const skipUsed=usedInWish>0 && venueRecsSkipUsed();
+  const left=WISH.size-(skipUsed?usedInWish:0);
+  const skipBox=usedInWish?`<label class="toggle" style="margin:0 0 8px"><input type="checkbox" id="vrSkipUsed"${skipUsed?' checked':''}>
+      不算我用過的（收藏裡有 ${usedInWish} 筆回報過用過了）</label>`:'';
+  const wireSkip=()=>{ const cb=$('#vrSkipUsed'); if(cb) cb.onchange=()=>{ savePref('venueRecsSkipUsed', cb.checked); renderVenueRecs(); }; };
+  const ranked=(VENUES||[]).map(v=>({v, hit:venueWishHits(v).filter(id=>!skipUsed || !MY_USED_OFFER_IDS.has(id))}))
     .filter(x=>x.hit.length)
     .sort((a,b)=>b.hit.length-a.hit.length || (b.v.offer_count||0)-(a.v.offer_count||0))
     .slice(0,3);
   if(!ranked.length){
-    box.innerHTML=`<div class="venue-recs"><div class="vr-title">照你的待辦清單</div>
-      <p class="sub" style="margin:0">你收藏的 ${WISH.size} 筆，都不在下面這些商圈裡。</p></div>`;
+    box.innerHTML=`<div class="venue-recs"><div class="vr-title">照你的待辦清單</div>${skipBox}
+      <p class="sub" style="margin:0">${skipUsed&&!left?'你收藏的都用過了，再收藏幾家吧。'
+        :`你收藏的${skipUsed?'、還沒用過的':''} ${left} 筆，都不在下面這些商圈裡。`}</p></div>`;
+    wireSkip();
     return;
   }
   const brand=id=>OFFERS.find(o=>String(o.id)===id)?.brand;
-  box.innerHTML=`<div class="venue-recs"><div class="vr-title">照你的待辦清單</div>
-    <p class="sub">你收藏了 ${WISH.size} 筆。去這${ranked.length>1?'幾':'一'}個地方，一趟用得最多：</p>
+  box.innerHTML=`<div class="venue-recs"><div class="vr-title">照你的待辦清單</div>${skipBox}
+    <p class="sub">${skipUsed?`你收藏、還沒用過的有 ${left} 筆`:`你收藏了 ${WISH.size} 筆`}。去這${ranked.length>1?'幾':'一'}個地方，一趟用得最多：</p>
     ${ranked.map(({v,hit})=>`<div class="vr-item"><button type="button" class="vr-row" data-vr="${v.id}">
       <b>${esc(v.name)}</b><span class="vr-n">${hit.length} 筆</span>
       <span class="vr-brands">${esc(hit.map(brand).filter(Boolean).slice(0,6).join('、'))}${hit.length>6?'…':''}</span>
@@ -7434,6 +7487,7 @@ function renderVenueRecs(){
     openVenueFromMap(Number(b.dataset.vr));
   });
   box.querySelectorAll('[data-vrplan]').forEach(b=>b.onclick=()=>venueRecToPlan(Number(b.dataset.vrplan), b));
+  wireSkip();
 }
 /* celine：「這個要有辦法點下去一鍵收藏成我的行程」。
    一趟＝這個商圈，名字就是商圈的名字，店家＝你收藏的、在這個商圈裡的那幾筆。
@@ -8937,6 +8991,8 @@ function activeFilterChips(){
   box('#fNoCompanion','一人也能用');
   box('#fTransferable','不用本人證件');
   box('#fNoAdvance','不用提前加入');
+  box('#fNextMonth','用到下個月');
+  { const r=monthRange(); if(r) out.push({label:monthRangeLabel(r), drop:()=>{ $('#fMonthFrom').value=''; $('#fMonthTo').value=''; }}); }
   if($('#fHideUsed').checked && hideUsedAvail()) out.push({label:'隱藏我用過的', drop:()=>{ $('#fHideUsed').checked=false; }});
   if(hoursOn()) out.push({label:hoursLabel(), drop:()=>{ HOURS_F.mode=''; buildHoursControls(); }});
   if($('#fExactRegion').checked && activeRegion.size)
@@ -8979,6 +9035,60 @@ function syncFilterExtras(){
   $('#fHideUsedWrap')?.classList.toggle('hidden', !hideUsedAvail());
   const strictOn=$('#fNoAdvance').checked || $('#fTransferable').checked || activeSpend.size>0 || hoursOn();
   $('#fKeepUnknownWrap')?.classList.toggle('hidden', !strictOn);
+}
+/* v203 楊晴：「當月至下個月都能用」。沒有獨立欄位，但效期都寫在文字裡、寫法很固定：
+   「生日該月份至隔月月底」「效期到生日隔月月底」「生日當月至次月7日」「生日當日起 60 天內」。
+   2026-11-20 拿線上 575 筆對過：抓到 23 筆，沒有誤判（「次月壽星會在 5 月發送」「前 2 個月加入」
+   「365 天內消費滿」這種講的不是效期，都不會中）。 */
+const NEXT_MONTH_RES=[
+  /(生日|該月|當月)[^。；，,\n]{0,14}(至|到)[^。；，,\n]{0,3}(隔月|次月|下個?月)/,
+  /生日(當日|當天)?起\s*([6-9]\d|[1-9]\d{2})\s*天/,
+  /(到|至)\s*生日\s*(隔月|次月|下個?月)/,
+];
+function nextMonthOk(o){
+  const t=[o.validity,o.offer,o.conditions,o.advanceNote].map(x=>String(x||'')).join(' ');
+  return NEXT_MONTH_RES.some(r=>r.test(t));
+}
+/* ---- v203 有效月份（日曆月份區間）----
+   celine：「篩選多一個選有效期限月份的功能，可以選區間」。
+   - 有寫活動起訖日（valid_from／valid_until）的：活動期間跟選的月份有重疊就算。
+     年份照「接下來的那幾個月」算：今天 11 月選 1～2 月，是明年的 1～2 月。
+   - 生日優惠（大多數）：照「我的」填的生日月份，生日那個月能用；用得到下個月的（nextMonthOk）多算一個月。
+     沒填生日就推不出來——這種先不擋，篩選底下講一句。
+   - 跨年（12 月～1 月）照樣可以選。 */
+function monthRange(){
+  const a=+($('#fMonthFrom')?.value||0);
+  if(!a) return null;
+  const b=+($('#fMonthTo')?.value||0)||a;
+  const ms=[]; let m=a;
+  for(let i=0;i<12;i++){ ms.push(m); if(m===b) break; m=m%12+1; }
+  return {a, b, ms};
+}
+function monthRangeLabel(r){ return r.a===r.b?`${r.a} 月能用`:`${r.a}～${r.b} 月能用`; }
+function offerDatedRange(o){ return !!(o.validFrom||o.validUntil); }
+function offerBdayBased(o){ return !(o.validityType==='fixed' && offerDatedRange(o)); }
+/* true／false；生日優惠但不知道生日月份時回 null（不擋） */
+function offerInMonths(o, r, bm, today=TODAY){
+  if(offerDatedRange(o)){
+    const cm=today.getMonth()+1, cy=today.getFullYear();
+    const y1=(r.ms.includes(cm) || r.a>=cm) ? cy : cy+1;
+    const start=new Date(y1, r.a-1, 1), end=new Date(y1+(r.b<r.a?1:0), r.b, 0);
+    const from=o.validFrom?new Date(o.validFrom+'T00:00:00'):null;
+    const until=o.validUntil?new Date(o.validUntil+'T00:00:00'):null;
+    if((from && from>end) || (until && until<start)) return false;
+  }
+  if(!offerBdayBased(o)) return true;
+  if(!bm) return null;
+  const ms=[bm]; if(nextMonthOk(o)) ms.push(bm%12+1);
+  return ms.some(m=>r.ms.includes(m));
+}
+function syncMonthNote(){
+  const r=monthRange(), note=$('#monthNote'); if(!note) return;
+  const bm=+($('#bmonth')?.value||0);
+  const show=!!r && !bm;
+  note.classList.toggle('hidden', !show);
+  if(show) note.textContent='在「我的」填了生日，才算得出一般生日優惠在哪幾個月能用；現在只篩有寫活動日期的。';
+  if(r && bm) note.classList.add('hidden');
 }
 function noAdvanceOk(o){
   const note=String(o.advanceNote||'');
@@ -9204,6 +9314,8 @@ function filterPredicate(opts={}){
   const onlyV=$('#fVerified').checked, hideX=$('#fLive').checked, onlyR=$('#fReported').checked;
   const onlyC=$('#fHasComments').checked, noCompanion=$('#fNoCompanion').checked;
   const onlyTransferable=$('#fTransferable').checked, noAdvance=$('#fNoAdvance').checked;
+  const nextMonth=$('#fNextMonth').checked;
+  const mRange=monthRange(), myBm=+($('#bmonth')?.value||0);
   const exactRegion=$('#fExactRegion').checked && activeRegion.size>0;
   const cat=activeCat, free=activeFree, timing=activeTiming, mem=activeMemType, region=activeRegion;
   const spend=activeSpend;
@@ -9222,6 +9334,8 @@ function filterPredicate(opts={}){
     if(hideUsed && MY_USED_OFFER_IDS.has(String(o.id))) return false;
     if(catEx.size && catEx.has(o.category)) return false;
     if(noAdvance && !noAdvanceOk(o) && !(keepUnknown && advanceUnknown(o))) return false;
+    if(nextMonth && !nextMonthOk(o)) return false;
+    if(mRange && offerInMonths(o, mRange, myBm)===false) return false;
     if(spend.size){ const x=spendOf(o);
       if(x ? !spend.has(spendBucket(x.avg)) : !keepUnknown) return false; }
     if(cat.size&&!cat.has(o.category)) return false;
@@ -9252,7 +9366,7 @@ function filterPredicate(opts={}){
   };
 }
 function render(){
-  syncDistrictRow();
+  syncDistrictRow(); syncMonthNote();
   const q=$('#q').value.trim().toLowerCase();
   const onlyV=$('#fVerified').checked, hideX=$('#fLive').checked, onlyR=$('#fReported').checked;
   const onlyC=$('#fHasComments').checked, noCompanion=$('#fNoCompanion').checked;
@@ -9265,7 +9379,7 @@ function render(){
   if(sortBy==='distance'&&!(NEAR.active&&NEAR.byOffer)){ sortBy='value'; if(!NEAR.active) $('#sort').value='value'; }
 
   const activeCount = (q?1:0)+activeRegion.size+activeDistrict.size+activeMemType.size+activeCat.size+activeFree.size+activeTiming.size
-    +activeSpend.size+($('#fNoAdvance').checked?1:0)+(hoursOn()?1:0)
+    +activeSpend.size+($('#fNoAdvance').checked?1:0)+($('#fNextMonth').checked?1:0)+(monthRange()?1:0)+(hoursOn()?1:0)
     +activeCatEx.size+($('#fHideUsed').checked&&hideUsedAvail()?1:0)
     +(onlyV?1:0)+(!hideX?1:0)+(onlyR?1:0)+(onlyC?1:0)+(noCompanion?1:0)+(onlyTransferable?1:0)
     +(exactRegion?1:0);
@@ -9391,6 +9505,7 @@ function offerCardHtml(o, idx){
       <div class="row" style="gap:5px">
         ${o.timing.includes('當日')?`<span class="flag today">${esc(o.timing)}</span>`
           :`<span class="flag">${esc(o.timing)}</span>`}
+        ${nextMonthOk(o)?'<span class="flag" title="生日月過了，下個月還能用">用到下個月</span>':''}
         ${o.freeTier==='free_no_min'?'<span class="flag free">免費・無低消</span>':
           o.freeTier==='free_min'?`<span class="flag">免費・需消費${o.minSpend!=null?`（低消 ${nt(o.minSpend)}）`:''}</span>`:
           o.freeTier==='bogo'?'<span class="flag">買一送一</span>':
@@ -9676,7 +9791,7 @@ function renderReminders(){
   });
 }
 
-['#fVerified','#fLive','#fReported','#fHasComments','#fNoCompanion','#fTransferable','#fNoAdvance','#fExactRegion','#sort',
+['#fVerified','#fLive','#fReported','#fHasComments','#fNoCompanion','#fTransferable','#fNoAdvance','#fNextMonth','#fMonthFrom','#fMonthTo','#fExactRegion','#sort',
  '#fHideUsed','#fKeepUnknown']
   .forEach(s=>$(s).addEventListener('input',render));
 // 搜尋框單獨處理：勾選框一次只觸發一次沒差，但打字是每個按鍵都觸發一次
@@ -9704,7 +9819,8 @@ $('#btnClearFilters').onclick=()=>{
   $('#q').value='';
   $('#fVerified').checked=false; $('#fLive').checked=true; $('#fReported').checked=false;
   $('#fHasComments').checked=false; $('#fNoCompanion').checked=false; $('#fTransferable').checked=false;
-  $('#fExactRegion').checked=false; $('#fNoAdvance').checked=false;
+  $('#fExactRegion').checked=false; $('#fNoAdvance').checked=false; $('#fNextMonth').checked=false;
+  $('#fMonthFrom').value=''; $('#fMonthTo').value='';
   $('#fHideUsed').checked=false; $('#fKeepUnknown').checked=false; activeCatEx.clear();
   activeCat.clear(); activeFree.clear(); activeTiming.clear(); activeRegion.clear(); activeMemType.clear();
   activeSpend.clear(); activeDistrict.clear();
@@ -9719,7 +9835,8 @@ $('#btnClearFilters').onclick=()=>{
 $('#btnEmptyClearFilters').onclick=()=>{
   $('#fVerified').checked=false; $('#fLive').checked=true; $('#fReported').checked=false;
   $('#fHasComments').checked=false; $('#fNoCompanion').checked=false; $('#fTransferable').checked=false;
-  $('#fExactRegion').checked=false; $('#fNoAdvance').checked=false;
+  $('#fExactRegion').checked=false; $('#fNoAdvance').checked=false; $('#fNextMonth').checked=false;
+  $('#fMonthFrom').value=''; $('#fMonthTo').value='';
   $('#fHideUsed').checked=false; $('#fKeepUnknown').checked=false; activeCatEx.clear();
   activeCat.clear(); activeFree.clear(); activeTiming.clear(); activeRegion.clear(); activeMemType.clear();
   activeSpend.clear(); activeDistrict.clear();
@@ -9952,6 +10069,7 @@ function offerFactsHtml(o){
     <div class="row" style="gap:5px;margin-bottom:8px">
       ${o.timing.includes('當日')?`<span class="flag today">${esc(o.timing)}</span>`
         :`<span class="flag">${esc(o.timing)}</span>`}
+      ${nextMonthOk(o)?'<span class="flag" title="生日月過了，下個月還能用">用到下個月</span>':''}
       ${o.freeTier==='free_no_min'?'<span class="flag free">免費・無低消</span>':
         o.freeTier==='free_min'?'<span class="flag">免費・需消費</span>':
           o.freeTier==='bogo'?'<span class="flag">買一送一</span>':
@@ -10573,7 +10691,7 @@ window.addEventListener('popstate', ()=>{
     [$('#dlgDetail'),$('#dlgReport'),$('#dlgFeedback'),$('#dlgNotif'),$('#dlgSharePreview'),
      $('#dlgCoffee'),$('#dlgBulkAdd'),$('#dlgBadgeUnlock'),
      // v153「推薦一個地點」、v156「加店家」當初沒列進來：手機按返回鍵關不掉它們
-     $('#dlgVenueSuggest'),$('#dlgPlanAdd'),$('#dlgWhatsNew')].forEach(d=>{ if(d?.open) d.close(); });
+     $('#dlgVenueSuggest'),$('#dlgPlanAdd'),$('#dlgWhatsNew'),$('#dlgPromo')].forEach(d=>{ if(d?.open) d.close(); });
     // 手機篩選／排序底部彈出視窗不是 <dialog>，沒有原生 close 事件，
     // 這裡直接呼叫對應的關閉函式（DLG_HISTORY_PUSHED 已經是 false，
     // 函式裡再呼叫一次 consumeDlgHistory() 會被自己的保護擋掉，不會重複觸發）。
@@ -10598,6 +10716,7 @@ $('#dlgNotif').addEventListener('close', consumeDlgHistory);
 $('#dlgSharePreview').addEventListener('close', consumeDlgHistory);
 // 咖啡視窗當初也漏掛（它開場有 pushDlgHistory），症狀跟通知視窗一樣
 $('#dlgCoffee').addEventListener('close', consumeDlgHistory);
+$('#dlgPromo').addEventListener('close', consumeDlgHistory);
 /* 場館的「一鍵加入」（v145）跟解鎖徽章（v147）開場都有 pushDlgHistory()，
    當初也漏掛——症狀跟上面那兩個一樣：返回鍵第一下會被幽靈紀錄吃掉。 */
 $('#dlgBulkAdd').addEventListener('close', consumeDlgHistory);
@@ -12495,6 +12614,26 @@ function whatsNewActive(){
 }
 function whatsNewDone(){ try{ return !!localStorage.getItem(WN_KEY); }catch{ return false; } }
 function markWhatsNewDone(how){ try{ localStorage.setItem(WN_KEY, how); }catch{} }
+/* ---- v203 好康地圖的視窗：日期內、每台裝置跳一次 ---- */
+const PROMO_HAOKANG={id:'haokang1120', from:'2026-11-20', until:'2026-12-04'};
+const PROMO_KEY='sxr_promo_'+PROMO_HAOKANG.id;
+function promoActive(now=new Date()){
+  const d=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  return d>=PROMO_HAOKANG.from && d<=PROMO_HAOKANG.until;
+}
+function promoDone(){ try{ return !!localStorage.getItem(PROMO_KEY); }catch{ return true; } }   // 存不了就不跳，免得每次都跳
+function maybeShowPromo(){
+  if(window.__SXR_NO_PROMO) return false;   // 測試環境照真實日期會跳，預設關掉（見 jstest/harness.js）
+  if(!promoActive() || promoDone()) return false;
+  if(!$('#bdayCheer')?.classList.contains('hidden')) return false;
+  if([...document.querySelectorAll('dialog')].some(d=>d.open)) return false;
+  try{ localStorage.setItem(PROMO_KEY, String(Date.now())); }catch{}
+  $('#dlgPromo').showModal(); pushDlgHistory();
+  logEvent('promo_open',{id:PROMO_HAOKANG.id});
+  return true;
+}
+$('#btnPromoGo').addEventListener('click', ()=>{ setTimeout(()=>$('#dlgPromo').close(), 0); });
+
 /* 開場呼叫：跳了回 true（呼叫的人就不要再跳別的） */
 function maybeShowWhatsNew(){
   if(!whatsNewActive() || whatsNewDone()) return false;
