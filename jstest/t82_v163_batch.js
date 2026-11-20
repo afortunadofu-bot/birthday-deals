@@ -47,7 +47,8 @@ const sql = fs.readFileSync(path.join(__dirname, '..', 'schema_v163_event_range.
   t.ok('建好重新讀一次行程、打開那一趟', win.eval('window.__loaded') === 1 && win.eval('PLAN_OPEN') === 77);
   t.ok('沒收藏的同商圈店家不會被塞進去', !ins[1][1].some((r) => r.offer_id === 9));
 
-  win.eval("window.__ins=[]; MY_USED_OFFER_IDS=new Set(['1','2']); renderVenueRecs();");
+  // v203 起推薦預設不算用過的（全部用過的商圈不會列）；這裡要測的是「存成行程」那一步，先切回算全部
+  win.eval("window.__ins=[]; MY_USED_OFFER_IDS=new Set(['1','2']); savePref('venueRecsSkipUsed', false); renderVenueRecs();");
   recBtn(4).click();
   await tick(win, 6);
   t.eq('全部都用過了：照樣全放，不建一趟空的',

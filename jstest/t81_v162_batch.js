@@ -133,7 +133,8 @@ const root = (f) => path.join(__dirname, '..', f);
   t.ok('別的視窗開著：不疊上去', win.eval('maybeShowWhatsNew()') === false);
   win.eval("document.querySelector('#dlgCoffee').close();");
   t.ok('開場：跳了動畫就不再問定位、不跳更新通知',
-    /if\(maybeShowWhatsNew\(\)\) return;\s*await maybeAskLocation\(\);/.test(index));
+    // v203 中間多了好康地圖視窗那一行（一樣是「跳了就 return」），允許它在中間
+    /if\(maybeShowWhatsNew\(\)\) return;\s*(?:if\(maybeShowPromo\(\)\) return;[^\n]*\n\s*)?await maybeAskLocation\(\);/.test(index));
 
   // 最後一張：更新紀錄在哪裡＋帶我去看
   win.eval("maybeShowWhatsNew(); showWhatsNewScene(9);");
