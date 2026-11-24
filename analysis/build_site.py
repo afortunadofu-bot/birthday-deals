@@ -77,13 +77,22 @@ def home(f):
              "拿不到行為資料的產品，怎麼知道做得好不好",
              "只能靠 Play Console、評論與許願板"],
             "沒有遙測的案例"),
+    ])
+    projects = "".join([
         th.case_card(
             "ml-autofill.html", "投稿欄位自動預填",
             "拿 581 筆已標註的優惠訓練文字分類器，讓投稿審核先填好三個欄位。",
             ["優惠型態：準確率 81.7%，六成的投稿可以自動填、其中 92.4% 正確",
              "入會方式做不起來——優惠文字裡根本沒寫怎麼入會，所以只敢填一成",
              "類別的瓶頸是分類法：把餐飲細類合併，準確率從 57.8% 跳到 69.5%"],
-            "機器學習"),
+            "機器學習／文字分類"),
+        th.case_card(
+            "venue-clusters.html", "自動找出商圈",
+            "21,209 家店的座標分群，用 148 個人工商圈驗收。",
+            ["對上人工商圈 79.7%，另外補出台中、台南、彰化這些手工沒做到的",
+             "對不上的 30 個全是郊區購物中心——方法的邊界，不是模型不好",
+             "BallTree 比暴力法快 21 倍，才掃得完 12 組參數"],
+            "非監督學習／空間索引"),
     ])
 
     how = """
@@ -144,7 +153,8 @@ def home(f):
 """
 
     body = (th.card("", how) + tiles
-            + th.card("三個案例", cases)
+            + th.card("三個產品", cases)
+            + th.card("資料與 ML 專題", projects)
             + th.card("我怎麼做產品分析", method)
             + th.card("具體會的東西", skills)
             + th.card("聯絡", contact))
@@ -587,6 +597,135 @@ def ml_autofill():
     )
 
 
+# ───────────────────── 商圈自動分群（好康地圖的 OSM 店家）─────────────────────
+
+GEO_METRICS = HERE.parent / "geo" / "metrics.json"
+
+
+def venue_clusters():
+    if not GEO_METRICS.exists():
+        return None
+    import json
+    g = json.loads(GEO_METRICS.read_text(encoding="utf-8"))
+    ch_sel = g["chosen"]
+    b = g["benchmark"]
+
+    intro = f"""
+  <p class="lede">好康地圖收的是全台的優惠，而使用者真正在問的是「我附近有什麼」。
+    壽星日那邊已經有 {g["n_manual"]} 個<b>人工</b>圈出來的商圈——名字、中心點、半徑
+    都是一個一個手工定的——但手工只做得動雙北跟幾個大城市。</p>
+  <p>這一題：拿 {g["n_stores"]:,} 家店的座標自動分群，看能不能長出商圈，
+    再用那 {g["n_manual"]} 個人工商圈當對照組驗收。非監督學習最容易自我感覺良好，
+    有人工標準可以對的時候就該對。</p>
+"""
+
+    grid_rows = "".join(
+        f'<tr><th scope="row">{r["eps_m"]} m / {r["min_samples"]}</th>'
+        f'<td>{r["n_clusters"]}</td><td>{r["store_coverage"]}%</td>'
+        f'<td>{r["manual_recall"]}%</td><td>{r["median_stores"]}</td></tr>'
+        for r in g["grid"])
+    method = f"""
+  <p>DBSCAN，距離用 haversine（球面距離，不是把經緯度當平面座標），
+    底層走 BallTree。兩個參數要掃：<code>eps</code> 是「多近算鄰居」，
+    <code>min_samples</code> 是「幾家店才算一群」。</p>
+  <p>另外加一條領域規則：<b>一個商圈至少要有 {g["min_brands"]} 個不同品牌</b>。
+    只看密度會把同一條街的五家 50嵐 當成商圈，但那不是商圈，那是展店策略。</p>
+  <table class="metrics"><thead><tr><th>eps / min_samples</th><th>群數</th>
+    <th>收進多少店</th><th>對上人工商圈</th><th>每群中位店數</th></tr></thead>
+    <tbody>{grid_rows}</tbody></table>
+  <p><b>半徑放大，反而對不上。</b>eps 從 150 m 拉到 300 m，收進的店從 50% 升到 78%，
+    但對上人工商圈的比例從 79.7% 掉到 33.8%——因為相鄰的街區被黏成一大塊，
+    重心飄離原本的商圈中心。這條曲線不是「越大越好」，是有甜蜜點的。</p>
+  <p>最後選 <b>eps = {ch_sel["eps_m"]} m、min_samples = {ch_sel["min_samples"]}</b>：
+    對上人工的比例最高，同分再取收進最多店家的。
+    沒有用 silhouette 挑參數——它只看分得乾不乾淨，不管分出來的是不是商圈。</p>
+"""
+
+    tiles = th.stats([
+        th.stat("自動找到的商圈", f'{g["n_clusters"]:,} 個', f'人工有 {g["n_manual"]} 個'),
+        th.stat("對上人工商圈", f'{g["manual_recall"]}%',
+                f'{g["manual_hit"]} / {g["n_manual"]} 個'),
+        th.stat("收進的店家", f'{g["store_coverage"]}%',
+                f'{g["n_stores"]:,} 家裡的一半'),
+        th.stat("silhouette", f'{g["silhouette"]}', "分群本身的緊密程度"),
+    ])
+    county = [{"c": r["county"], "gap": r["gap"]} for r in g["counties"][:14]]
+    result = f"""
+  {tiles}
+  <p class="caption">自動商圈數減人工商圈數，各縣市</p>
+  {ch.hbar(county, label="c", value="gap", label_w=76, row_h=24, bar_h=14,
+           title="自動比人工多找到幾個商圈")}
+  <p><b>人工漏掉的全在雙北以外。</b>台中人工只有
+    {next(r["manual"] for r in g["counties"] if r["county"] == "台中市")} 個、
+    自動找到 {next(r["auto"] for r in g["counties"] if r["county"] == "台中市")} 個；
+    台南 {next(r["manual"] for r in g["counties"] if r["county"] == "台南市")} 對
+    {next(r["auto"] for r in g["counties"] if r["county"] == "台南市")}。
+    這正是自動化的用處——不是取代那 {g["n_manual"]} 個手工的，是把其他縣市補起來。</p>
+"""
+
+    miss_rows = "".join(
+        f'<tr><th scope="row">{th.esc(m["name"])}</th><td>{th.esc(m["county"])}</td>'
+        f'<td>{m["distance_m"]:,} m</td></tr>' for m in g["misses"][:8])
+    limits = f"""
+  <p>{g["manual_miss"]} 個人工商圈沒被對上。把它們列出來之後，型態很一致：</p>
+  <table class="metrics"><thead><tr><th>人工商圈</th><th>縣市</th>
+    <th>最近的自動群有多遠</th></tr></thead><tbody>{miss_rows}</tbody></table>
+  <p><b>幾乎全是郊區的大型購物中心</b>（Outlet、夢時代、萬家福、秀泰）。
+    它們周圍沒有密集的店家，密度法當然抓不到——一棟樓裡有五十家店，
+    但在地圖上那是一個點。</p>
+  <p>所以結論不是「模型不夠好」，是<b>商圈有兩種</b>：街區型（靠密度）
+    跟單點型（一棟建築就是一個商圈）。後者要用別的訊號，例如 OSM 的
+    <code>shop=mall</code> 標籤或樓地板面積，密度分群本來就不該處理它。</p>
+"""
+
+    perf = f"""
+  <p>分群之前要先算鄰居。{b["n"]:,} 家店兩兩比是 {b["n"] ** 2 // 2 // 1000000} 百萬次
+    距離計算，暴力法 O(n²)；BallTree 把空間切成巢狀的球，查詢降到 O(log n)。</p>
+  {th.stats([
+      th.stat("暴力法", f'{b["brute_estimated_s"]} 秒',
+              f'用 {b["brute_subset_n"]:,} 家的子集實測 {b["brute_subset_s"]} 秒再換算'),
+      th.stat("BallTree", f'{round(b["balltree_build_s"] + b["balltree_query_s"], 1)} 秒',
+              f'建樹 {b["balltree_build_s"]} 秒＋查詢 {b["balltree_query_s"]} 秒'),
+      th.stat("快了", f'{b["speedup"]} 倍', f'每家店找最近的 {b["k"]} 家', "good"),
+  ])}
+  <p>這不是純理論的差別：參數要掃 12 組，每一組都要重算一次鄰居。
+    用暴力法這一題要跑十分鐘以上，用 BallTree 是 24 秒——
+    能不能快速試參數，直接決定你敢不敢多試幾種。</p>
+"""
+
+    use = """
+  <ul class="plain">
+    <li><b>先補六都以外。</b>雙北的人工商圈已經夠細，自動的價值在台中、台南、
+      彰化、新竹這些手工還沒做到的地方。</li>
+    <li><b>自動的當草稿，不是直接上線。</b>名字還是要人取——
+      「台北市第 17 群」沒有人看得懂，「中山站・南京西路」才有用。</li>
+    <li><b>郊區購物中心另外處理。</b>那 {miss} 個對不上的不要硬塞進密度分群，
+      用 OSM 的 mall 標籤直接建一個點。</li>
+  </ul>
+  <p class="note">店家資料來自 OpenStreetMap（© OpenStreetMap contributors，ODbL），
+    由好康地圖的 <code>crawler/osm_stores.py</code> 抓取；這一頁只放彙總與群中心，
+    不重新散布原始資料。程式在 <code>geo/</code>。</p>
+"""
+    use = use.replace("{miss}", str(g["manual_miss"]))
+
+    body = (th.card("", intro)
+            + th.card("方法與參數", method)
+            + th.card("結果", result)
+            + th.card("對不上的那些，才是重點", limits)
+            + th.card("資料結構：為什麼不能用暴力法", perf)
+            + th.card("產品上怎麼用", use))
+    return th.page(
+        filename="venue-clusters.html",
+        title="自動找出商圈",
+        lead=f'{g["n_stores"]:,} 家店的座標分群，跟 {g["n_manual"]} 個人工商圈對照。',
+        desc="用 DBSCAN 在 21,209 家店的座標上自動長出商圈，以 148 個人工商圈驗收，"
+             "並比較 BallTree 與暴力法的效能。",
+        meta=f'資料：OpenStreetMap 店家 {g["n_stores"]:,} 家（ODbL）＋'
+             f'壽星日人工商圈 {g["n_manual"]} 個　·　更新 {STAMP}',
+        body=body,
+    )
+
+
 # ─────────────────────── 組裝 ───────────────────────
 
 def main():
@@ -637,9 +776,10 @@ def main():
         "bandary.html": bandary(),
         "relatestats.html": relatestats(),
     }
-    ml_page = ml_autofill()
-    if ml_page:
-        pages["ml-autofill.html"] = ml_page
+    for name, page in (("ml-autofill.html", ml_autofill()),
+                       ("venue-clusters.html", venue_clusters())):
+        if page:
+            pages[name] = page
     for name, doc in pages.items():
         (DOCS / name).write_text(doc, encoding="utf-8")
         print(f"寫好 docs/{name}（{len(doc):,} 字元）")

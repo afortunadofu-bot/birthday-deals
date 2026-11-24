@@ -1,0 +1,505 @@
+{
+ "n_stores": 21209,
+ "n_manual": 148,
+ "min_brands": 3,
+ "grid": [
+  {
+   "eps_m": 100,
+   "min_samples": 4,
+   "n_clusters": 991,
+   "store_coverage": 31.5,
+   "manual_recall": 77.7,
+   "median_stores": 5
+  },
+  {
+   "eps_m": 100,
+   "min_samples": 6,
+   "n_clusters": 339,
+   "store_coverage": 14.9,
+   "manual_recall": 50.7,
+   "median_stores": 8
+  },
+  {
+   "eps_m": 100,
+   "min_samples": 8,
+   "n_clusters": 117,
+   "store_coverage": 6.5,
+   "manual_recall": 27.7,
+   "median_stores": 9
+  },
+  {
+   "eps_m": 150,
+   "min_samples": 4,
+   "n_clusters": 1149,
+   "store_coverage": 50.1,
+   "manual_recall": 79.7,
+   "median_stores": 6
+  },
+  {
+   "eps_m": 150,
+   "min_samples": 6,
+   "n_clusters": 568,
+   "store_coverage": 32.6,
+   "manual_recall": 69.6,
+   "median_stores": 8
+  },
+  {
+   "eps_m": 150,
+   "min_samples": 8,
+   "n_clusters": 278,
+   "store_coverage": 20.2,
+   "manual_recall": 52.0,
+   "median_stores": 11
+  },
+  {
+   "eps_m": 200,
+   "min_samples": 4,
+   "n_clusters": 1033,
+   "store_coverage": 62.8,
+   "manual_recall": 64.2,
+   "median_stores": 6
+  },
+  {
+   "eps_m": 200,
+   "min_samples": 6,
+   "n_clusters": 616,
+   "store_coverage": 47.7,
+   "manual_recall": 64.9,
+   "median_stores": 9
+  },
+  {
+   "eps_m": 200,
+   "min_samples": 8,
+   "n_clusters": 397,
+   "store_coverage": 35.1,
+   "manual_recall": 54.7,
+   "median_stores": 12
+  },
+  {
+   "eps_m": 300,
+   "min_samples": 4,
+   "n_clusters": 731,
+   "store_coverage": 77.8,
+   "manual_recall": 33.8,
+   "median_stores": 7
+  },
+  {
+   "eps_m": 300,
+   "min_samples": 6,
+   "n_clusters": 504,
+   "store_coverage": 68.9,
+   "manual_recall": 32.4,
+   "median_stores": 11
+  },
+  {
+   "eps_m": 300,
+   "min_samples": 8,
+   "n_clusters": 382,
+   "store_coverage": 59.8,
+   "manual_recall": 31.8,
+   "median_stores": 14
+  }
+ ],
+ "chosen": {
+  "eps_m": 150,
+  "min_samples": 4,
+  "n_clusters": 1149,
+  "store_coverage": 50.1,
+  "manual_recall": 79.7,
+  "median_stores": 6
+ },
+ "n_clusters": 1149,
+ "store_coverage": 50.1,
+ "silhouette": 0.528,
+ "manual_hit": 118,
+ "manual_miss": 30,
+ "manual_recall": 79.7,
+ "misses": [
+  {
+   "name": "台南三井 Outlet（歸仁）",
+   "county": "台南市",
+   "distance_m": 4456,
+   "n_stores": null
+  },
+  {
+   "name": "高雄夢時代",
+   "county": "高雄市",
+   "distance_m": 1995,
+   "n_stores": null
+  },
+  {
+   "name": "台南仁德萬家福",
+   "county": "台南市",
+   "distance_m": 1541,
+   "n_stores": null
+  },
+  {
+   "name": "秀泰岡山店",
+   "county": "高雄市",
+   "distance_m": 1443,
+   "n_stores": null
+  },
+  {
+   "name": "台南新營萬家福",
+   "county": "台南市",
+   "distance_m": 1358,
+   "n_stores": null
+  },
+  {
+   "name": "高雄鳳山萬家福",
+   "county": "高雄市",
+   "distance_m": 1310,
+   "n_stores": null
+  },
+  {
+   "name": "高雄中安路（待確認）",
+   "county": "高雄市",
+   "distance_m": 1210,
+   "n_stores": null
+  },
+  {
+   "name": "中壢大江購物中心",
+   "county": "桃園市",
+   "distance_m": 1000,
+   "n_stores": null
+  },
+  {
+   "name": "高雄前鎮・成功萬家福",
+   "county": "高雄市",
+   "distance_m": 880,
+   "n_stores": null
+  },
+  {
+   "name": "內湖萬家福",
+   "county": "台北市",
+   "distance_m": 862,
+   "n_stores": null
+  },
+  {
+   "name": "台中豐原",
+   "county": "台中市",
+   "distance_m": 796,
+   "n_stores": null
+  },
+  {
+   "name": "新莊・新北大道",
+   "county": "新北市",
+   "distance_m": 769,
+   "n_stores": null
+  }
+ ],
+ "counties": [
+  {
+   "county": "新北市",
+   "auto": 228,
+   "manual": 32,
+   "gap": 196
+  },
+  {
+   "county": "台中市",
+   "auto": 203,
+   "manual": 19,
+   "gap": 184
+  },
+  {
+   "county": "台北市",
+   "auto": 170,
+   "manual": 41,
+   "gap": 129
+  },
+  {
+   "county": "桃園市",
+   "auto": 143,
+   "manual": 20,
+   "gap": 123
+  },
+  {
+   "county": "台南市",
+   "auto": 82,
+   "manual": 6,
+   "gap": 76
+  },
+  {
+   "county": "高雄市",
+   "auto": 72,
+   "manual": 14,
+   "gap": 58
+  },
+  {
+   "county": "彰化縣",
+   "auto": 42,
+   "manual": 1,
+   "gap": 41
+  },
+  {
+   "county": "新竹市",
+   "auto": 39,
+   "manual": 5,
+   "gap": 34
+  },
+  {
+   "county": "新竹縣",
+   "auto": 36,
+   "manual": 1,
+   "gap": 35
+  },
+  {
+   "county": "屏東縣",
+   "auto": 23,
+   "manual": 2,
+   "gap": 21
+  },
+  {
+   "county": "基隆市",
+   "auto": 19,
+   "manual": 1,
+   "gap": 18
+  },
+  {
+   "county": "苗栗縣",
+   "auto": 19,
+   "manual": 1,
+   "gap": 18
+  },
+  {
+   "county": "宜蘭縣",
+   "auto": 15,
+   "manual": 1,
+   "gap": 14
+  },
+  {
+   "county": "嘉義市",
+   "auto": 13,
+   "manual": 2,
+   "gap": 11
+  },
+  {
+   "county": "雲林縣",
+   "auto": 12,
+   "manual": 1,
+   "gap": 11
+  },
+  {
+   "county": "南投縣",
+   "auto": 12,
+   "manual": 1,
+   "gap": 11
+  },
+  {
+   "county": "嘉義縣",
+   "auto": 8,
+   "manual": 0,
+   "gap": 8
+  },
+  {
+   "county": "花蓮縣",
+   "auto": 6,
+   "manual": 0,
+   "gap": 6
+  },
+  {
+   "county": "台東縣",
+   "auto": 4,
+   "manual": 0,
+   "gap": 4
+  },
+  {
+   "county": "金門縣",
+   "auto": 1,
+   "manual": 0,
+   "gap": 1
+  },
+  {
+   "county": "連江縣",
+   "auto": 1,
+   "manual": 0,
+   "gap": 1
+  },
+  {
+   "county": "澎湖縣",
+   "auto": 1,
+   "manual": 0,
+   "gap": 1
+  }
+ ],
+ "top_clusters": [
+  {
+   "id": 63,
+   "lat": 25.05359245,
+   "lng": 121.52869955,
+   "n_stores": 200,
+   "n_brands": 47,
+   "county": "台北市",
+   "top_brands": [
+    "7-11",
+    "全家",
+    "萊爾富",
+    "摩斯漢堡"
+   ]
+  },
+  {
+   "id": 101,
+   "lat": 25.044927085427137,
+   "lng": 121.5118704522613,
+   "n_stores": 199,
+   "n_brands": 50,
+   "county": "台北市",
+   "top_brands": [
+    "7-11",
+    "全家",
+    "萊爾富",
+    "星巴克"
+   ]
+  },
+  {
+   "id": 152,
+   "lat": 25.0661305,
+   "lng": 121.4979744,
+   "n_stores": 100,
+   "n_brands": 37,
+   "county": "新北市",
+   "top_brands": [
+    "7-11",
+    "全家",
+    "萊爾富",
+    "八方雲集"
+   ]
+  },
+  {
+   "id": 47,
+   "lat": 25.050493958333334,
+   "lng": 121.560729375,
+   "n_stores": 96,
+   "n_brands": 37,
+   "county": "台北市",
+   "top_brands": [
+    "7-11",
+    "全家",
+    "萊爾富",
+    "摩斯漢堡"
+   ]
+  },
+  {
+   "id": 82,
+   "lat": 24.1733928125,
+   "lng": 120.6463084375,
+   "n_stores": 64,
+   "n_brands": 35,
+   "county": "台中市",
+   "top_brands": [
+    "7-11",
+    "全家",
+    "弘爺漢堡",
+    "清心福全"
+   ]
+  },
+  {
+   "id": 43,
+   "lat": 25.051606101694915,
+   "lng": 121.54396254237288,
+   "n_stores": 59,
+   "n_brands": 24,
+   "county": "台北市",
+   "top_brands": [
+    "7-11",
+    "全家",
+    "星巴克",
+    "八方雲集"
+   ]
+  },
+  {
+   "id": 45,
+   "lat": 24.98204271186441,
+   "lng": 121.53914999999999,
+   "n_stores": 59,
+   "n_brands": 29,
+   "county": "新北市",
+   "top_brands": [
+    "全家",
+    "7-11",
+    "50嵐",
+    "全聯"
+   ]
+  },
+  {
+   "id": 287,
+   "lat": 25.13001543859649,
+   "lng": 121.74230912280703,
+   "n_stores": 57,
+   "n_brands": 25,
+   "county": "基隆市",
+   "top_brands": [
+    "7-11",
+    "全家",
+    "OK超商",
+    "全聯"
+   ]
+  },
+  {
+   "id": 71,
+   "lat": 25.022614444444443,
+   "lng": 121.46732462962963,
+   "n_stores": 54,
+   "n_brands": 21,
+   "county": "新北市",
+   "top_brands": [
+    "7-11",
+    "全家",
+    "萊爾富",
+    "八方雲集"
+   ]
+  },
+  {
+   "id": 462,
+   "lat": 24.990710188679245,
+   "lng": 121.31239641509436,
+   "n_stores": 53,
+   "n_brands": 25,
+   "county": "桃園市",
+   "top_brands": [
+    "7-11",
+    "全家",
+    "星巴克",
+    "CoCo都可"
+   ]
+  },
+  {
+   "id": 60,
+   "lat": 25.001662884615385,
+   "lng": 121.49851346153847,
+   "n_stores": 52,
+   "n_brands": 28,
+   "county": "新北市",
+   "top_brands": [
+    "7-11",
+    "全家",
+    "全聯",
+    "八方雲集"
+   ]
+  },
+  {
+   "id": 165,
+   "lat": 25.016590196078432,
+   "lng": 121.47775,
+   "n_stores": 51,
+   "n_brands": 33,
+   "county": "新北市",
+   "top_brands": [
+    "7-11",
+    "全家",
+    "美廉社",
+    "八方雲集"
+   ]
+  }
+ ],
+ "benchmark": {
+  "n": 21209,
+  "k": 20,
+  "brute_subset_n": 1500,
+  "brute_subset_s": 0.277,
+  "brute_estimated_s": 55.5,
+  "balltree_build_s": 0.021,
+  "balltree_query_s": 2.612,
+  "speedup": 21.1
+ }
+}

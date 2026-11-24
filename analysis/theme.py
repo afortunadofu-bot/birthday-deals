@@ -15,6 +15,7 @@ NAV = [
     ("bandary.html", "Bandary"),
     ("relatestats.html", "RelateStats"),
     ("ml-autofill.html", "ML 預填"),
+    ("venue-clusters.html", "商圈聚類"),
     ("sql-report.html", "SQL 報告"),
 ]
 

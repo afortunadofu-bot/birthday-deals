@@ -1,0 +1,1334 @@
+[
+ {
+  "id": 1,
+  "name": "新竹巨城商圈",
+  "county": "新竹市",
+  "lat": 24.809665,
+  "lng": 120.975078,
+  "radius_m": 180,
+  "offer_count": 46
+ },
+ {
+  "id": 2,
+  "name": "新店裕隆城",
+  "county": "新北市",
+  "lat": 24.97777,
+  "lng": 121.546425,
+  "radius_m": 180,
+  "offer_count": 43
+ },
+ {
+  "id": 3,
+  "name": "台中七期・臺灣大道",
+  "county": "台中市",
+  "lat": 24.164549,
+  "lng": 120.643978,
+  "radius_m": 180,
+  "offer_count": 46
+ },
+ {
+  "id": 4,
+  "name": "中和環球",
+  "county": "新北市",
+  "lat": 25.006656,
+  "lng": 121.474818,
+  "radius_m": 180,
+  "offer_count": 32
+ },
+ {
+  "id": 5,
+  "name": "南崁台茂",
+  "county": "桃園市",
+  "lat": 25.053368,
+  "lng": 121.288258,
+  "radius_m": 180,
+  "offer_count": 28
+ },
+ {
+  "id": 6,
+  "name": "板橋車站・環球",
+  "county": "新北市",
+  "lat": 25.014252,
+  "lng": 121.463816,
+  "radius_m": 180,
+  "offer_count": 26
+ },
+ {
+  "id": 7,
+  "name": "高雄漢神巨蛋",
+  "county": "高雄市",
+  "lat": 22.669849,
+  "lng": 120.302556,
+  "radius_m": 180,
+  "offer_count": 37
+ },
+ {
+  "id": 8,
+  "name": "高雄夢時代",
+  "county": "高雄市",
+  "lat": 22.595205,
+  "lng": 120.307091,
+  "radius_m": 180,
+  "offer_count": 55
+ },
+ {
+  "id": 9,
+  "name": "宜蘭新月廣場",
+  "county": "宜蘭縣",
+  "lat": 24.754063,
+  "lng": 121.750746,
+  "radius_m": 180,
+  "offer_count": 27
+ },
+ {
+  "id": 10,
+  "name": "信義・松壽路",
+  "county": "台北市",
+  "lat": 25.034952,
+  "lng": 121.566409,
+  "radius_m": 180,
+  "offer_count": 39
+ },
+ {
+  "id": 11,
+  "name": "台北京站",
+  "county": "台北市",
+  "lat": 25.04867,
+  "lng": 121.517281,
+  "radius_m": 180,
+  "offer_count": 50
+ },
+ {
+  "id": 12,
+  "name": "信義・松仁路",
+  "county": "台北市",
+  "lat": 25.036874,
+  "lng": 121.567373,
+  "radius_m": 180,
+  "offer_count": 36
+ },
+ {
+  "id": 13,
+  "name": "台中遠雄廣場",
+  "county": "台中市",
+  "lat": 24.135985,
+  "lng": 120.687723,
+  "radius_m": 180,
+  "offer_count": 30
+ },
+ {
+  "id": 14,
+  "name": "板橋大遠百",
+  "county": "新北市",
+  "lat": 25.013773,
+  "lng": 121.467031,
+  "radius_m": 180,
+  "offer_count": 25
+ },
+ {
+  "id": 15,
+  "name": "中山站・南京西路",
+  "county": "台北市",
+  "lat": 25.052496,
+  "lng": 121.520679,
+  "radius_m": 180,
+  "offer_count": 48
+ },
+ {
+  "id": 16,
+  "name": "新莊・新北大道",
+  "county": "新北市",
+  "lat": 25.059657,
+  "lng": 121.449528,
+  "radius_m": 180,
+  "offer_count": 30
+ },
+ {
+  "id": 17,
+  "name": "南港・三井 LaLaport",
+  "county": "台北市",
+  "lat": 25.059284,
+  "lng": 121.617689,
+  "radius_m": 180,
+  "offer_count": 28
+ },
+ {
+  "id": 18,
+  "name": "台南新光三越西門",
+  "county": "台南市",
+  "lat": 22.987014,
+  "lng": 120.198445,
+  "radius_m": 180,
+  "offer_count": 41
+ },
+ {
+  "id": 19,
+  "name": "忠孝復興・SOGO",
+  "county": "台北市",
+  "lat": 25.042033,
+  "lng": 121.545133,
+  "radius_m": 180,
+  "offer_count": 30
+ },
+ {
+  "id": 20,
+  "name": "高雄大順路",
+  "county": "高雄市",
+  "lat": 22.656082,
+  "lng": 120.306347,
+  "radius_m": 180,
+  "offer_count": 19
+ },
+ {
+  "id": 21,
+  "name": "高雄中安路（待確認）",
+  "county": "高雄市",
+  "lat": 22.582528,
+  "lng": 120.329624,
+  "radius_m": 180,
+  "offer_count": 21
+ },
+ {
+  "id": 22,
+  "name": "天母・忠誠路",
+  "county": "台北市",
+  "lat": 25.111908,
+  "lng": 121.531234,
+  "radius_m": 180,
+  "offer_count": 23
+ },
+ {
+  "id": 23,
+  "name": "高雄三多商圈",
+  "county": "高雄市",
+  "lat": 22.61304,
+  "lng": 120.30451,
+  "radius_m": 180,
+  "offer_count": 21
+ },
+ {
+  "id": 24,
+  "name": "大直美麗華",
+  "county": "台北市",
+  "lat": 25.083121,
+  "lng": 121.557303,
+  "radius_m": 180,
+  "offer_count": 22
+ },
+ {
+  "id": 25,
+  "name": "樹林秀泰",
+  "county": "新北市",
+  "lat": 24.995517,
+  "lng": 121.428286,
+  "radius_m": 180,
+  "offer_count": 15
+ },
+ {
+  "id": 26,
+  "name": "中壢 SOGO",
+  "county": "桃園市",
+  "lat": 24.962423,
+  "lng": 121.223685,
+  "radius_m": 180,
+  "offer_count": 32
+ },
+ {
+  "id": 27,
+  "name": "信義・松高路",
+  "county": "台北市",
+  "lat": 25.040173,
+  "lng": 121.56554,
+  "radius_m": 180,
+  "offer_count": 50
+ },
+ {
+  "id": 28,
+  "name": "嘉義忠孝路",
+  "county": "嘉義市",
+  "lat": 23.496418,
+  "lng": 120.452691,
+  "radius_m": 180,
+  "offer_count": 17
+ },
+ {
+  "id": 29,
+  "name": "台中一中街・中友",
+  "county": "台中市",
+  "lat": 24.152152,
+  "lng": 120.684918,
+  "radius_m": 180,
+  "offer_count": 25
+ },
+ {
+  "id": 30,
+  "name": "桃園經國路",
+  "county": "桃園市",
+  "lat": 25.015914,
+  "lng": 121.304995,
+  "radius_m": 180,
+  "offer_count": 16
+ },
+ {
+  "id": 31,
+  "name": "永和中山路",
+  "county": "新北市",
+  "lat": 25.008011,
+  "lng": 121.507674,
+  "radius_m": 180,
+  "offer_count": 22
+ },
+ {
+  "id": 32,
+  "name": "南港・忠孝東路",
+  "county": "台北市",
+  "lat": 25.05256,
+  "lng": 121.604641,
+  "radius_m": 180,
+  "offer_count": 25
+ },
+ {
+  "id": 33,
+  "name": "台北車站・微風",
+  "county": "台北市",
+  "lat": 25.047164,
+  "lng": 121.517128,
+  "radius_m": 180,
+  "offer_count": 51
+ },
+ {
+  "id": 34,
+  "name": "西門町",
+  "county": "台北市",
+  "lat": 25.043948,
+  "lng": 121.506977,
+  "radius_m": 180,
+  "offer_count": 39
+ },
+ {
+  "id": 35,
+  "name": "台中進德路",
+  "county": "台中市",
+  "lat": 24.135393,
+  "lng": 120.692297,
+  "radius_m": 180,
+  "offer_count": 28
+ },
+ {
+  "id": 36,
+  "name": "台北站前・館前路",
+  "county": "台北市",
+  "lat": 25.045539,
+  "lng": 121.515723,
+  "radius_m": 180,
+  "offer_count": 43
+ },
+ {
+  "id": 37,
+  "name": "新店小碧潭・京站",
+  "county": "新北市",
+  "lat": 24.972554,
+  "lng": 121.530425,
+  "radius_m": 180,
+  "offer_count": 16
+ },
+ {
+  "id": 38,
+  "name": "台北站前・南陽街",
+  "county": "台北市",
+  "lat": 25.045688,
+  "lng": 121.516293,
+  "radius_m": 180,
+  "offer_count": 53
+ },
+ {
+  "id": 39,
+  "name": "士林・中正路",
+  "county": "台北市",
+  "lat": 25.094889,
+  "lng": 121.525536,
+  "radius_m": 180,
+  "offer_count": 17
+ },
+ {
+  "id": 40,
+  "name": "台南南紡購物中心",
+  "county": "台南市",
+  "lat": 22.991071,
+  "lng": 120.233061,
+  "radius_m": 180,
+  "offer_count": 33
+ },
+ {
+  "id": 41,
+  "name": "桃園站前",
+  "county": "桃園市",
+  "lat": 24.990413,
+  "lng": 121.312973,
+  "radius_m": 180,
+  "offer_count": 44
+ },
+ {
+  "id": 42,
+  "name": "台南三井 Outlet（歸仁）",
+  "county": "台南市",
+  "lat": 22.924986,
+  "lng": 120.287557,
+  "radius_m": 180,
+  "offer_count": 20
+ },
+ {
+  "id": 43,
+  "name": "台中七期・大遠百",
+  "county": "台中市",
+  "lat": 24.164549,
+  "lng": 120.643978,
+  "radius_m": 180,
+  "offer_count": 46
+ },
+ {
+  "id": 44,
+  "name": "竹北遠百",
+  "county": "新竹縣",
+  "lat": 24.822551,
+  "lng": 121.0238,
+  "radius_m": 180,
+  "offer_count": 25
+ },
+ {
+  "id": 45,
+  "name": "桃園中正路",
+  "county": "桃園市",
+  "lat": 24.990413,
+  "lng": 121.312973,
+  "radius_m": 180,
+  "offer_count": 44
+ },
+ {
+  "id": 46,
+  "name": "遠東百貨中山店",
+  "county": "新北市",
+  "lat": 25.010971,
+  "lng": 121.464232,
+  "radius_m": 180,
+  "offer_count": 16
+ },
+ {
+  "id": 47,
+  "name": "微風南京店",
+  "county": "台北市",
+  "lat": 25.052188,
+  "lng": 121.548253,
+  "radius_m": 180,
+  "offer_count": 18
+ },
+ {
+  "id": 48,
+  "name": "左營高鐵站 環球店",
+  "county": "高雄市",
+  "lat": 22.687341,
+  "lng": 120.307221,
+  "radius_m": 180,
+  "offer_count": 15
+ },
+ {
+  "id": 49,
+  "name": "環球南港車站店",
+  "county": "台北市",
+  "lat": 25.052806,
+  "lng": 121.607004,
+  "radius_m": 180,
+  "offer_count": 22
+ },
+ {
+  "id": 50,
+  "name": "新光三越中山店",
+  "county": "台南市",
+  "lat": 22.995303,
+  "lng": 120.209818,
+  "radius_m": 180,
+  "offer_count": 13
+ },
+ {
+  "id": 51,
+  "name": "台中廣三SOGO店",
+  "county": "台中市",
+  "lat": 24.155458,
+  "lng": 120.662435,
+  "radius_m": 180,
+  "offer_count": 25
+ },
+ {
+  "id": 52,
+  "name": "誠品生活板橋店",
+  "county": "新北市",
+  "lat": 25.008556,
+  "lng": 121.460644,
+  "radius_m": 180,
+  "offer_count": 24
+ },
+ {
+  "id": 53,
+  "name": "SOGO天母店",
+  "county": "台北市",
+  "lat": 25.105119,
+  "lng": 121.52397,
+  "radius_m": 180,
+  "offer_count": 20
+ },
+ {
+  "id": 54,
+  "name": "台中文心秀泰店",
+  "county": "台中市",
+  "lat": 24.12987,
+  "lng": 120.645698,
+  "radius_m": 180,
+  "offer_count": 18
+ },
+ {
+  "id": 55,
+  "name": "桃園環球店",
+  "county": "桃園市",
+  "lat": 25.060064,
+  "lng": 121.369487,
+  "radius_m": 180,
+  "offer_count": 18
+ },
+ {
+  "id": 56,
+  "name": "豐原太平洋百貨",
+  "county": "台中市",
+  "lat": 24.251317,
+  "lng": 120.720255,
+  "radius_m": 180,
+  "offer_count": 20
+ },
+ {
+  "id": 57,
+  "name": "新莊中正路",
+  "county": "新北市",
+  "lat": 25.035344,
+  "lng": 121.449039,
+  "radius_m": 180,
+  "offer_count": 20
+ },
+ {
+  "id": 58,
+  "name": "汐科",
+  "county": "新北市",
+  "lat": 25.062095,
+  "lng": 121.648772,
+  "radius_m": 180,
+  "offer_count": 26
+ },
+ {
+  "id": 59,
+  "name": "台中文心",
+  "county": "台中市",
+  "lat": 24.154039,
+  "lng": 120.646221,
+  "radius_m": 180,
+  "offer_count": 15
+ },
+ {
+  "id": 60,
+  "name": "屏東太平洋百貨",
+  "county": "屏東縣",
+  "lat": 22.673962,
+  "lng": 120.490213,
+  "radius_m": 180,
+  "offer_count": 17
+ },
+ {
+  "id": 61,
+  "name": "中壢大江購物中心",
+  "county": "桃園市",
+  "lat": 25.001382,
+  "lng": 121.228636,
+  "radius_m": 180,
+  "offer_count": 20
+ },
+ {
+  "id": 62,
+  "name": "新竹忠孝",
+  "county": "新竹市",
+  "lat": 24.805418,
+  "lng": 120.984441,
+  "radius_m": 180,
+  "offer_count": 10
+ },
+ {
+  "id": 63,
+  "name": "台北林森北",
+  "county": "台北市",
+  "lat": 25.054291,
+  "lng": 121.525322,
+  "radius_m": 180,
+  "offer_count": 14
+ },
+ {
+  "id": 64,
+  "name": "淡水捷運",
+  "county": "新北市",
+  "lat": 25.169163,
+  "lng": 121.44496,
+  "radius_m": 180,
+  "offer_count": 28
+ },
+ {
+  "id": 65,
+  "name": "桃園藝文特區",
+  "county": "桃園市",
+  "lat": 25.018802,
+  "lng": 121.300481,
+  "radius_m": 180,
+  "offer_count": 16
+ },
+ {
+  "id": 66,
+  "name": "台北羅斯福",
+  "county": "台北市",
+  "lat": 25.026905,
+  "lng": 121.522615,
+  "radius_m": 180,
+  "offer_count": 17
+ },
+ {
+  "id": 67,
+  "name": "新竹大遠百店",
+  "county": "新竹市",
+  "lat": 24.802163,
+  "lng": 120.965171,
+  "radius_m": 180,
+  "offer_count": 17
+ },
+ {
+  "id": 68,
+  "name": "桃園平鎮",
+  "county": "桃園市",
+  "lat": 24.902409,
+  "lng": 121.212435,
+  "radius_m": 180,
+  "offer_count": 11
+ },
+ {
+  "id": 69,
+  "name": "台中豐原",
+  "county": "台中市",
+  "lat": 24.252113,
+  "lng": 120.706295,
+  "radius_m": 180,
+  "offer_count": 9
+ },
+ {
+  "id": 70,
+  "name": "苗栗頭份尚順購物中心",
+  "county": "苗栗縣",
+  "lat": 24.688623,
+  "lng": 120.904048,
+  "radius_m": 180,
+  "offer_count": 15
+ },
+ {
+  "id": 71,
+  "name": "桃園中壢大全聯",
+  "county": "桃園市",
+  "lat": 24.954576,
+  "lng": 121.234867,
+  "radius_m": 180,
+  "offer_count": 17
+ },
+ {
+  "id": 72,
+  "name": "桃園中壢",
+  "county": "桃園市",
+  "lat": 24.955566,
+  "lng": 121.225139,
+  "radius_m": 180,
+  "offer_count": 18
+ },
+ {
+  "id": 73,
+  "name": "板橋南雅",
+  "county": "新北市",
+  "lat": 25.001802,
+  "lng": 121.456784,
+  "radius_m": 180,
+  "offer_count": 8
+ },
+ {
+  "id": 74,
+  "name": "台北 興隆",
+  "county": "台北市",
+  "lat": 24.99995,
+  "lng": 121.55604,
+  "radius_m": 180,
+  "offer_count": 18
+ },
+ {
+  "id": 75,
+  "name": "桃園高鐵",
+  "county": "桃園市",
+  "lat": 25.016772,
+  "lng": 121.213319,
+  "radius_m": 180,
+  "offer_count": 10
+ },
+ {
+  "id": 76,
+  "name": "板橋江子翠",
+  "county": "新北市",
+  "lat": 25.029414,
+  "lng": 121.472989,
+  "radius_m": 180,
+  "offer_count": 14
+ },
+ {
+  "id": 77,
+  "name": "板橋文化店",
+  "county": "新北市",
+  "lat": 25.021707,
+  "lng": 121.467284,
+  "radius_m": 180,
+  "offer_count": 16
+ },
+ {
+  "id": 78,
+  "name": "台北明曜店",
+  "county": "台北市",
+  "lat": 25.041686,
+  "lng": 121.551888,
+  "radius_m": 180,
+  "offer_count": 20
+ },
+ {
+  "id": 79,
+  "name": "台北忠孝東路",
+  "county": "台北市",
+  "lat": 25.040984,
+  "lng": 121.556974,
+  "radius_m": 180,
+  "offer_count": 17
+ },
+ {
+  "id": 80,
+  "name": "林口萬家福",
+  "county": "新北市",
+  "lat": 25.077223,
+  "lng": 121.374126,
+  "radius_m": 180,
+  "offer_count": 14
+ },
+ {
+  "id": 81,
+  "name": "淡水淡新",
+  "county": "新北市",
+  "lat": 25.188201,
+  "lng": 121.443641,
+  "radius_m": 180,
+  "offer_count": 9
+ },
+ {
+  "id": 82,
+  "name": "內湖CITYLINK",
+  "county": "台北市",
+  "lat": 25.084413,
+  "lng": 121.594201,
+  "radius_m": 180,
+  "offer_count": 12
+ },
+ {
+  "id": 83,
+  "name": "三重正義",
+  "county": "新北市",
+  "lat": 25.066808,
+  "lng": 121.496884,
+  "radius_m": 180,
+  "offer_count": 16
+ },
+ {
+  "id": 84,
+  "name": "漢神自強店",
+  "county": "高雄市",
+  "lat": 22.61971,
+  "lng": 120.29682,
+  "radius_m": 180,
+  "offer_count": 21
+ },
+ {
+  "id": 85,
+  "name": "新光三越高雄左營門市",
+  "county": "高雄市",
+  "lat": 22.68782,
+  "lng": 120.30929,
+  "radius_m": 180,
+  "offer_count": 21
+ },
+ {
+  "id": 86,
+  "name": "蘆洲徐匯",
+  "county": "新北市",
+  "lat": 25.08027,
+  "lng": 121.48062,
+  "radius_m": 180,
+  "offer_count": 18
+ },
+ {
+  "id": 87,
+  "name": "新莊",
+  "county": "新北市",
+  "lat": 25.04901,
+  "lng": 121.44728,
+  "radius_m": 180,
+  "offer_count": 21
+ },
+ {
+  "id": 88,
+  "name": "台中美村",
+  "county": "台中市",
+  "lat": 24.1504,
+  "lng": 120.66179,
+  "radius_m": 180,
+  "offer_count": 20
+ },
+ {
+  "id": 89,
+  "name": "松山車站",
+  "county": "台北市",
+  "lat": 25.04919,
+  "lng": 121.57838,
+  "radius_m": 180,
+  "offer_count": 28
+ },
+ {
+  "id": 90,
+  "name": "台北三創",
+  "county": "台北市",
+  "lat": 25.04535,
+  "lng": 121.53118,
+  "radius_m": 180,
+  "offer_count": 16
+ },
+ {
+  "id": 91,
+  "name": "台北八德",
+  "county": "台北市",
+  "lat": 25.04827,
+  "lng": 121.55402,
+  "radius_m": 180,
+  "offer_count": 12
+ },
+ {
+  "id": 92,
+  "name": "中壢萬家福",
+  "county": "桃園市",
+  "lat": 24.94696,
+  "lng": 121.24459,
+  "radius_m": 180,
+  "offer_count": 10
+ },
+ {
+  "id": 93,
+  "name": "台北永康",
+  "county": "台北市",
+  "lat": 25.03331,
+  "lng": 121.52985,
+  "radius_m": 180,
+  "offer_count": 15
+ },
+ {
+  "id": 94,
+  "name": "台北101",
+  "county": "台北市",
+  "lat": 25.03371,
+  "lng": 121.56446,
+  "radius_m": 180,
+  "offer_count": 16
+ },
+ {
+  "id": 95,
+  "name": "大巨蛋SOGO店",
+  "county": "台北市",
+  "lat": 25.04267,
+  "lng": 121.55841,
+  "radius_m": 180,
+  "offer_count": 23
+ },
+ {
+  "id": 96,
+  "name": "台中誠品480店",
+  "county": "台中市",
+  "lat": 24.15997,
+  "lng": 120.6384,
+  "radius_m": 180,
+  "offer_count": 12
+ },
+ {
+  "id": 97,
+  "name": "華泰店名品城",
+  "county": "桃園市",
+  "lat": 25.01432,
+  "lng": 121.2131,
+  "radius_m": 180,
+  "offer_count": 9
+ },
+ {
+  "id": 98,
+  "name": "大魯閣湳雅店",
+  "county": "新竹市",
+  "lat": 24.81907,
+  "lng": 120.97021,
+  "radius_m": 180,
+  "offer_count": 17
+ },
+ {
+  "id": 99,
+  "name": "勤美綠園道",
+  "county": "台中市",
+  "lat": 24.15117,
+  "lng": 120.66386,
+  "radius_m": 180,
+  "offer_count": 13
+ },
+ {
+  "id": 100,
+  "name": "三井outlet",
+  "county": "新北市",
+  "lat": 25.06928,
+  "lng": 121.36542,
+  "radius_m": 180,
+  "offer_count": 25
+ },
+ {
+  "id": 101,
+  "name": "高雄三多sogo",
+  "county": "高雄市",
+  "lat": 22.6142,
+  "lng": 120.30604,
+  "radius_m": 180,
+  "offer_count": 22
+ },
+ {
+  "id": 102,
+  "name": "屏東環球店",
+  "county": "屏東縣",
+  "lat": 22.67315,
+  "lng": 120.49351,
+  "radius_m": 180,
+  "offer_count": 12
+ },
+ {
+  "id": 103,
+  "name": "秀泰岡山店",
+  "county": "高雄市",
+  "lat": 22.77996,
+  "lng": 120.30013,
+  "radius_m": 180,
+  "offer_count": 9
+ },
+ {
+  "id": 104,
+  "name": "新光三越嘉義店",
+  "county": "嘉義市",
+  "lat": 23.47355,
+  "lng": 120.44107,
+  "radius_m": 180,
+  "offer_count": 10
+ },
+ {
+  "id": 105,
+  "name": "台中秀泰店",
+  "county": "台中市",
+  "lat": 24.14055,
+  "lng": 120.68975,
+  "radius_m": 180,
+  "offer_count": 10
+ },
+ {
+  "id": 106,
+  "name": "斗六萬家福",
+  "county": "雲林縣",
+  "lat": 23.70154,
+  "lng": 120.53071,
+  "radius_m": 180,
+  "offer_count": 12
+ },
+ {
+  "id": 107,
+  "name": "高雄前鎮・成功萬家福",
+  "county": "高雄市",
+  "lat": 22.60501,
+  "lng": 120.30441,
+  "radius_m": 180,
+  "offer_count": 13
+ },
+ {
+  "id": 108,
+  "name": "西門・桂林萬家福",
+  "county": "台北市",
+  "lat": 25.0378,
+  "lng": 121.50603,
+  "radius_m": 180,
+  "offer_count": 10
+ },
+ {
+  "id": 109,
+  "name": "新竹香山・大庄",
+  "county": "新竹市",
+  "lat": 24.78885,
+  "lng": 120.92824,
+  "radius_m": 180,
+  "offer_count": 10
+ },
+ {
+  "id": 110,
+  "name": "台中漢神洲際購物廣場",
+  "county": "台中市",
+  "lat": 24.19828,
+  "lng": 120.68609,
+  "radius_m": 180,
+  "offer_count": 12
+ },
+ {
+  "id": 111,
+  "name": "台南仁德萬家福",
+  "county": "台南市",
+  "lat": 22.97233,
+  "lng": 120.24684,
+  "radius_m": 180,
+  "offer_count": 13
+ },
+ {
+  "id": 112,
+  "name": "淡水竹圍",
+  "county": "新北市",
+  "lat": 25.13708,
+  "lng": 121.46041,
+  "radius_m": 180,
+  "offer_count": 13
+ },
+ {
+  "id": 113,
+  "name": "高雄鳳山萬家福",
+  "county": "高雄市",
+  "lat": 22.62861,
+  "lng": 120.34817,
+  "radius_m": 180,
+  "offer_count": 9
+ },
+ {
+  "id": 114,
+  "name": "高雄美術館",
+  "county": "高雄市",
+  "lat": 22.65154,
+  "lng": 120.28794,
+  "radius_m": 180,
+  "offer_count": 10
+ },
+ {
+  "id": 115,
+  "name": "高雄楠梓站前",
+  "county": "高雄市",
+  "lat": 22.72698,
+  "lng": 120.32545,
+  "radius_m": 180,
+  "offer_count": 18
+ },
+ {
+  "id": 116,
+  "name": "台南新營萬家福",
+  "county": "台南市",
+  "lat": 23.31934,
+  "lng": 120.31189,
+  "radius_m": 180,
+  "offer_count": 9
+ },
+ {
+  "id": 117,
+  "name": "台中西屯萬家福・台灣大道",
+  "county": "台中市",
+  "lat": 24.18415,
+  "lng": 120.61495,
+  "radius_m": 180,
+  "offer_count": 15
+ },
+ {
+  "id": 118,
+  "name": "中和景安",
+  "county": "新北市",
+  "lat": 24.99316,
+  "lng": 121.50471,
+  "radius_m": 180,
+  "offer_count": 13
+ },
+ {
+  "id": 119,
+  "name": "桃園青埔・環球 A19",
+  "county": "桃園市",
+  "lat": 25.00202,
+  "lng": 121.2025,
+  "radius_m": 180,
+  "offer_count": 10
+ },
+ {
+  "id": 120,
+  "name": "中和・永安市場站",
+  "county": "新北市",
+  "lat": 25.00221,
+  "lng": 121.5106,
+  "radius_m": 180,
+  "offer_count": 16
+ },
+ {
+  "id": 121,
+  "name": "台北公館",
+  "county": "台北市",
+  "lat": 25.01395,
+  "lng": 121.53453,
+  "radius_m": 180,
+  "offer_count": 17
+ },
+ {
+  "id": 122,
+  "name": "新莊新泰路",
+  "county": "新北市",
+  "lat": 25.04088,
+  "lng": 121.44579,
+  "radius_m": 180,
+  "offer_count": 13
+ },
+ {
+  "id": 123,
+  "name": "松山・南京三民",
+  "county": "台北市",
+  "lat": 25.05129,
+  "lng": 121.56302,
+  "radius_m": 180,
+  "offer_count": 13
+ },
+ {
+  "id": 124,
+  "name": "松山・慶城街",
+  "county": "台北市",
+  "lat": 25.05278,
+  "lng": 121.54465,
+  "radius_m": 180,
+  "offer_count": 15
+ },
+ {
+  "id": 125,
+  "name": "民生社區",
+  "county": "台北市",
+  "lat": 25.05864,
+  "lng": 121.56143,
+  "radius_m": 180,
+  "offer_count": 14
+ },
+ {
+  "id": 126,
+  "name": "內湖萬家福",
+  "county": "台北市",
+  "lat": 25.0602,
+  "lng": 121.57507,
+  "radius_m": 180,
+  "offer_count": 10
+ },
+ {
+  "id": 127,
+  "name": "汐止中興路",
+  "county": "新北市",
+  "lat": 25.06523,
+  "lng": 121.63199,
+  "radius_m": 180,
+  "offer_count": 17
+ },
+ {
+  "id": 128,
+  "name": "內湖科技園區・西湖",
+  "county": "台北市",
+  "lat": 25.08182,
+  "lng": 121.57044,
+  "radius_m": 180,
+  "offer_count": 15
+ },
+ {
+  "id": 129,
+  "name": "內湖路一段・洲子街",
+  "county": "台北市",
+  "lat": 25.0826,
+  "lng": 121.5672,
+  "radius_m": 180,
+  "offer_count": 15
+ },
+ {
+  "id": 130,
+  "name": "五股成泰路",
+  "county": "新北市",
+  "lat": 25.08455,
+  "lng": 121.43835,
+  "radius_m": 180,
+  "offer_count": 11
+ },
+ {
+  "id": 131,
+  "name": "基隆愛三路・東岸廣場",
+  "county": "基隆市",
+  "lat": 25.12952,
+  "lng": 121.74301,
+  "radius_m": 180,
+  "offer_count": 24
+ },
+ {
+  "id": 132,
+  "name": "八德介壽・廣福路",
+  "county": "桃園市",
+  "lat": 24.95875,
+  "lng": 121.29912,
+  "radius_m": 180,
+  "offer_count": 15
+ },
+ {
+  "id": 133,
+  "name": "八德萬家福（置地生活）",
+  "county": "桃園市",
+  "lat": 24.96493,
+  "lng": 121.29886,
+  "radius_m": 180,
+  "offer_count": 10
+ },
+ {
+  "id": 134,
+  "name": "桃園愛買",
+  "county": "桃園市",
+  "lat": 24.98521,
+  "lng": 121.28572,
+  "radius_m": 180,
+  "offer_count": 9
+ },
+ {
+  "id": 135,
+  "name": "大里國光路・大買家",
+  "county": "台中市",
+  "lat": 24.11559,
+  "lng": 120.67969,
+  "radius_m": 180,
+  "offer_count": 14
+ },
+ {
+  "id": 136,
+  "name": "潭子站前",
+  "county": "台中市",
+  "lat": 24.21155,
+  "lng": 120.70507,
+  "radius_m": 180,
+  "offer_count": 10
+ },
+ {
+  "id": 137,
+  "name": "台中復興愛買",
+  "county": "台中市",
+  "lat": 24.1152,
+  "lng": 120.65415,
+  "radius_m": 180,
+  "offer_count": 10
+ },
+ {
+  "id": 138,
+  "name": "桃園大溪市區",
+  "county": "桃園市",
+  "lat": 24.88181,
+  "lng": 121.28883,
+  "radius_m": 180,
+  "offer_count": 10
+ },
+ {
+  "id": 139,
+  "name": "中山・伊通街",
+  "county": "台北市",
+  "lat": 25.05158,
+  "lng": 121.53482,
+  "radius_m": 180,
+  "offer_count": 14
+ },
+ {
+  "id": 140,
+  "name": "大安・科技大樓站",
+  "county": "台北市",
+  "lat": 25.02573,
+  "lng": 121.54367,
+  "radius_m": 180,
+  "offer_count": 14
+ },
+ {
+  "id": 141,
+  "name": "新店耕莘醫院",
+  "county": "新北市",
+  "lat": 24.97516,
+  "lng": 121.53632,
+  "radius_m": 180,
+  "offer_count": 9
+ },
+ {
+  "id": 142,
+  "name": "新店大坪林",
+  "county": "新北市",
+  "lat": 24.98294,
+  "lng": 121.54037,
+  "radius_m": 180,
+  "offer_count": 17
+ },
+ {
+  "id": 143,
+  "name": "彰化金馬路萬家福",
+  "county": "彰化縣",
+  "lat": 24.09444,
+  "lng": 120.54245,
+  "radius_m": 180,
+  "offer_count": 10
+ },
+ {
+  "id": 144,
+  "name": "中和南勢角",
+  "county": "新北市",
+  "lat": 24.98989,
+  "lng": 121.51047,
+  "radius_m": 180,
+  "offer_count": 14
+ },
+ {
+  "id": 145,
+  "name": "南投萬家福",
+  "county": "南投縣",
+  "lat": 23.9058,
+  "lng": 120.68904,
+  "radius_m": 180,
+  "offer_count": 12
+ },
+ {
+  "id": 146,
+  "name": "石牌",
+  "county": "台北市",
+  "lat": 25.11626,
+  "lng": 121.51611,
+  "radius_m": 180,
+  "offer_count": 20
+ },
+ {
+  "id": 147,
+  "name": "桃園機場第二航廈",
+  "county": "桃園市",
+  "lat": 25.07671,
+  "lng": 121.23201,
+  "radius_m": 180,
+  "offer_count": 12
+ },
+ {
+  "id": 148,
+  "name": "永和竹林路",
+  "county": "新北市",
+  "lat": 25.00821,
+  "lng": 121.52095,
+  "radius_m": 180,
+  "offer_count": 14
+ }
+]
