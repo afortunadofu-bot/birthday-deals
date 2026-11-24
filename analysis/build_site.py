@@ -59,7 +59,7 @@ def home(f):
         th.case_card(
             "birthday-deals.html", "壽星日 Birthday Deals",
             "台灣各品牌的生日優惠，可以篩選、收藏、記錄自己省下多少。",
-            ["供給面：139 筆優惠的價值、門檻、縣市覆蓋，九支 SQL 問完",
+            [f'供給面：{f["n_offers"]} 筆優惠的價值、門檻、縣市覆蓋，九支 SQL 問完',
              "資料治理：只有 12% 有品牌官方來源，推導出自動下架的需求",
              "成本分析：資料庫流量超額，拆解成因之後一天少 25% 的量"],
             "有真實資料"),
@@ -175,7 +175,7 @@ def birthday_deals(con, f):
 
     frame = th.metric_table([
         ("供給：優惠數", "approved 狀態的優惠筆數",
-         f'{f["n_offers"]} 筆（2026-08 快照）'),
+         f'{f["n_offers"]} 筆（{f["data_date"]}）'),
         ("供給：縣市覆蓋", "每個縣市拿得到幾筆（含全台連鎖）",
          f'{county[0]["n_offers"]} ↔ {county[-1]["n_offers"]} 筆'),
         ("供給：能當天用的比例", "免費入會且不用提前登錄的占比",
@@ -245,38 +245,43 @@ def birthday_deals(con, f):
   <p class="note">數字出處：repo 裡的 <code>SUPABASE-流量.md</code>，2026-10-20 實測。</p>
 """
 
-    users = """
-  <p>這是這個案例現在唯一的空白，而且空白的原因是技術性的：
-    資料庫停權中，讀不到任何一筆事件。</p>
-  <p>能先做的都做了：事件表本來就設計好了，分析要用的指標也定義完了
-    （上面那張表的「需求」那幾列）。事件表長這樣：</p>
-  <pre><code>site_events(
-  id          bigserial,
-  event_type  text,        -- pageview / submit / use_report / wish / rate / static_view …
-  session_id  text,        -- 匿名，localStorage 產生
-  user_id     uuid,        -- 可為 null（沒登入也能用）
-  meta        jsonb,
-  created_at  timestamptz
-)</code></pre>
-  <p>要算的是三件事：<b>漏斗</b>（到站 → 點開優惠 → 點外連或收藏 → 回報用過）、
-    <b>內容供給與需求對不對得上</b>（最多人收藏的類別，跟優惠數最多的類別是不是同一批）、
-    以及<b>回訪</b>（生日是一年一次的事件，所以留存要看的是「隔年還會不會回來」，
-    不是次日留存）。</p>
-  <h3>已經寫好、等資料就會亮起來的部分</h3>
-  <p>有一半不用等管理員權限。線上有四支 view 本來就開放公開讀
-    （<code>offers_public</code>、<code>wishlist_counts</code>、<code>most_wished</code>、
-    <code>leaderboard_monthly</code>），裡面有每筆優惠的回報數、兌換成功率、
-    留言數與收藏數——那已經是需求面的一半。抓這四支的程式
-    （<code>fetch_live.py</code>）跟吃它的 ETL（<code>build_db.py --live</code>）都寫好了，
-    現在跑會停在一句「Supabase 回 402」。</p>
-  <p>兩支對應的查詢也先寫完了：
-    <code>10_demand_vs_supply.sql</code> 比「哪一類收藏多」跟「哪一類優惠多」的落差，
-    用來決定下一批要去談哪種品牌；
-    <code>11_offer_health.sql</code> 挑出回報多、成功率低的優惠，那是資料錯了或品牌改規則，
-    屬於維運清單。</p>
-  <p>真正要等管理員匯出的只剩漏斗跟回訪，因為 <code>site_events</code> 是
-    admin 限定、anon key 讀不到。</p>
-  <p class="note">公開的只會是彙總。個人層級的事件不離開資料庫，也不進版控。</p>
+    q10 = q(con, (HERE / "queries" / "10_demand_vs_supply.sql").read_text(encoding="utf-8"))
+    short = [r for r in q10 if (r["gap"] or 0) > 0]
+    over = [r for r in q10 if (r["gap"] or 0) < 0]
+    # 用百分點挑「缺口最大」會偏袒本來就大的類別（餐廳佔四成，差 6pp 其實只差 1.15 倍），
+    # 所以標題改用需求／供給的倍數，圖還是畫百分點。
+    top_short = max(short, key=lambda r: (r["wish_share"] or 0) / (r["supply_share"] or 1))
+    top_over = over[-1]
+    drink = next((r for r in q10 if r["category"] == "飲料"), None)
+    users = f"""
+  <p>收藏、回報、留言這三種行為，每筆優惠的彙總在線上四支公開 view 裡就拿得到
+    （<code>offers_public</code>、<code>wishlist_counts</code> 等），不需要管理員權限。
+    目前累積 {f["d_wishes"]}收藏、{f["d_reports"]}回報，
+    {f["n_reported"]} 筆優惠至少有一個人回報用過。</p>
+  <h3>做最多的類別，不是最多人想要的類別</h3>
+  <p>把每個類別的<b>供給占比</b>（優惠數）減掉<b>需求占比</b>（收藏數），
+    就看得出選題有沒有押對。正的是想要的人比供給多，負的是做太多。</p>
+  {ch.diverging_hbar(q10, label="category", value="gap", unit=" pp", label_w=84,
+                     pos_note="供給不足（該補）", neg_note="供給過剩",
+                     title="各類別的需求占比減供給占比")}
+  <p><b>{th.esc(top_short["category"])}是最明顯的缺口</b>：只佔 {top_short["supply_share"]}%
+    的優惠數，卻吃掉 {top_short["wish_share"]}% 的收藏，需求是供給的
+    {round((top_short["wish_share"] or 0) / (top_short["supply_share"] or 1), 1)} 倍。飲料是另一種缺口：供給 {drink["supply_share"]}%，
+    收藏沒有特別多，<b>回報占比卻有 {drink["report_share"]}%</b>，
+    是最常真的被拿去用的類別。反過來 {th.esc(top_over["category"])} 供給
+    {top_over["supply_share"]}%、收藏只有 {top_over["wish_share"]}%，
+    下一批不用再往那邊找。</p>
+  <p>這跟我自己對使用者的判斷對得上（上班族、愛「賺到」的感覺、
+    會收專櫃滿額禮跟美妝的買多折），差別是現在有數字撐著，不只是直覺。</p>
+  <h3>兌換成功率 {f["d_success"]}，維運清單只有四筆</h3>
+  <p>回報「我用過了」的時候可以標成功或失敗。整體成功率 {f["d_success"]}，
+    回報三次以上、成功率低於 80% 的只有 4 筆——那幾筆是資料寫錯或品牌偷改規則，
+    排進下一輪複查就好。這個數字比我預期的高，代表人工整理的品質撐得住。</p>
+  <h3>還缺的那一半</h3>
+  <p>漏斗（到站 → 點開 → 外連 → 回報）跟回訪還沒有，因為事件表
+    <code>site_events</code> 是管理員限定，anon key 讀不到。回訪對這個產品特別重要：
+    生日一年一次，要看的是「隔年還會不會回來」，次日留存在這裡沒有意義。</p>
+  <p class="note">公開的只有彙總。個人層級的事件不離開資料庫，也不進版控。</p>
 """
 
     decisions = th.timeline([
@@ -300,9 +305,10 @@ def birthday_deals(con, f):
 
     todo = """
   <ul class="plain">
-    <li><b>使用者行為那一段還是空的。</b>資料庫恢復之後要補完漏斗、回訪與內容供需。</li>
-    <li><b>優惠筆數要換成現在的。</b>這一頁用的是 2026-08 的快照（139 筆），
-      線上實際已經成長到好幾百筆，等得到資料就重跑。</li>
+    <li><b>漏斗與回訪還沒有。</b>事件表是管理員限定，要另外匯出才算得了
+      「到站 → 點開 → 外連 → 回報」這條路徑，以及隔年的回訪率。</li>
+    <li><b>門市資料只蓋到 117 個品牌。</b>Google Places 那份是 2026-09 抓的，
+      之後新增的品牌沒有門市數，所以 Q7 的散佈圖只有那批老品牌。</li>
     <li><b>縣市覆蓋沒有按人口標準化。</b>手上沒有可引用的人口資料，所以先不換算。</li>
   </ul>
 """
@@ -459,6 +465,7 @@ def main():
                             " and valid_until is not null"
                             " and julianday(valid_until) < julianday('now')"),
         "n_fixed": one(con, "select count(*) from offers where validity_type='fixed'"),
+        "data_date": one(con, "select max(last_checked) from offers") or STAMP,
     }
     # 需求面：有 --live 抓回來才有，沒有就讓頁面顯示「待補」，不要填 0 冒充
     n_demand = one(con, "select count(*) from offer_demand")
@@ -467,9 +474,12 @@ def main():
         f["d_success"] = f'{one(con, "select cast(avg(success_rate) as integer) from offer_demand")}%'
         f["d_wishes"] = f'{one(con, "select coalesce(sum(wish_count),0) from offer_demand"):,} 次'
         f["d_comments"] = f'{one(con, "select coalesce(sum(comment_count),0) from offer_demand"):,} 則'
+        f["n_reported"] = one(con, "select count(*) from offer_demand"
+                                   " where coalesce(report_count,0) > 0")
     else:
         for k in ("d_reports", "d_success", "d_wishes", "d_comments"):
-            f[k] = th.pending("資料庫停權中")
+            f[k] = th.pending("要先跑 fetch_live.py")
+        f["n_reported"] = 0
 
     DOCS.mkdir(exist_ok=True)
     (DOCS / ".nojekyll").write_text("", encoding="utf-8")

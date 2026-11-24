@@ -128,6 +128,61 @@ def hbar(rows, *, label, value, note=None, highlight=None, unit="",
     return "\n".join(out)
 
 
+def diverging_hbar(rows, *, label, value, unit="", width=720, row_h=28, bar_h=16,
+                   label_w=132, title=None, pos_note="", neg_note=""):
+    """兩極的橫條圖：0 在中間，正的往右、負的往左。
+
+    這是 diverging 的標準用法——兩個相反意思的方向，所以用冷暖兩個色相
+    （藍／紅），中間是中性的灰線，絕對不用彩虹，也不用同一個顏色深淺帶過去。
+    """
+    rows = list(rows)
+    vals = [float(r[value] or 0) for r in rows]
+    span_val = max(abs(v) for v in vals) if vals else 1
+    tick_vals, top = _ticks(span_val, want=2)
+    x0 = label_w + PAD_L
+    x1 = width - 56
+    mid = (x0 + x1) / 2
+    half = (x1 - x0) / 2
+    h = len(rows) * row_h + 48
+    out = [f'<svg class="chart" viewBox="0 0 {width} {h}" role="img" '
+           f'aria-label="{esc(title or "")}">']
+    for t in tick_vals:
+        for sign in ((1, -1) if t else (1,)):
+            x = mid + half * (sign * t / top if top else 0)
+            out.append(f'<line class="grid" x1="{x:.1f}" y1="20" x2="{x:.1f}" y2="{h - 28}"/>')
+            out.append(f'<text class="tick" x="{x:.1f}" y="{h - 12}" text-anchor="middle">'
+                       f'{fmt_num(sign * t)}</text>')
+    if pos_note:
+        out.append(f'<text class="reflbl" x="{mid + 6}" y="12">{esc(pos_note)}</text>')
+    if neg_note:
+        out.append(f'<text class="reflbl" x="{mid - 6}" y="12" text-anchor="end">'
+                   f'{esc(neg_note)}</text>')
+    for i, r in enumerate(rows):
+        y = 20 + i * row_h
+        v = float(r[value] or 0)
+        w = half * (abs(v) / top if top else 0)
+        x = mid if v >= 0 else mid - w
+        cls = "bar" if v >= 0 else "bar bar-neg"
+        out.append(f'<g class="row"><title>{esc(r[label])}：{fmt_num(v)}{esc(unit)}</title>')
+        out.append(f'<text class="lbl" x="{label_w}" y="{y + bar_h - 3}" '
+                   f'text-anchor="end">{esc(r[label])}</text>')
+        if v >= 0:
+            d = _rounded_right(x, y, w, bar_h)
+        else:  # 往左長的，圓角在左邊
+            d = (f"M{x + w:.1f},{y} H{x + 4:.1f} A4,4 0 0 0 {x:.1f},{y + 4} "
+                 f"V{y + bar_h - 4:.1f} A4,4 0 0 0 {x + 4:.1f},{y + bar_h} "
+                 f"H{x + w:.1f} Z")
+        out.append(f'<path class="{cls}" d="{d}"/>')
+        tx = (x + w + 6) if v >= 0 else (x - 6)
+        anchor = "start" if v >= 0 else "end"
+        out.append(f'<text class="val" x="{tx:.1f}" y="{y + bar_h - 3}" '
+                   f'text-anchor="{anchor}">{fmt_num(v)}{esc(unit)}</text>')
+        out.append('</g>')
+    out.append(f'<line class="axis" x1="{mid}" y1="20" x2="{mid}" y2="{h - 28}"/>')
+    out.append('</svg>')
+    return "\n".join(out)
+
+
 def column(rows, *, label, value, unit="", width=720, height=240, title=None, sub=None):
     """直條圖：少數幾個有順序的分組。"""
     rows = list(rows)

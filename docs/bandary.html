@@ -138,6 +138,11 @@ table.data td.num{font-variant-numeric:tabular-nums}
 .chart .axis{stroke:var(--axis); stroke-width:1}
 .chart .bar{fill:var(--series-1)}
 .chart .bar-dim{fill:var(--series-dim)}
+.chart .bar-neg{fill:#e34948}
+:root[data-theme=dark] .chart .bar-neg{fill:#e66767}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme=light])) .chart .bar-neg{fill:#e66767}
+}
 .chart .dot{fill:var(--series-1); stroke:var(--card); stroke-width:2}
 .chart .row:hover .bar,.chart .row:hover .dot{filter:brightness(1.12)}
 .chart .row:hover .dot{r:6}
@@ -182,7 +187,7 @@ ul.plain b{color:var(--ink)}
     <a class="brand" href="index.html">小數據所</a>
     <h1>Bandary 聽團曆</h1>
     <p class="sub">台灣聽團仔的演出記錄：追場次、每日選歌、好友日曆、免費活動共享。</p>
-    <p class="byline">Google Play 已上架　·　版本 1.117.2　·　角色：企劃／開發／上架　·　更新 2026-11-04</p>
+    <p class="byline">Google Play 已上架　·　版本 1.117.2　·　角色：企劃／開發／上架　·　更新 2026-11-24</p>
     <nav class="jump"><a href="index.html">首頁</a><a href="birthday-deals.html">壽星日</a><a href="bandary.html" class="on">Bandary</a><a href="relatestats.html">RelateStats</a><a href="sql-report.html">SQL 報告</a></nav>
     <button class="theme" type="button" aria-label="切換深淺色">◐</button>
   </div>

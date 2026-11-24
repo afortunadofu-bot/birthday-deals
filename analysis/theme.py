@@ -68,7 +68,7 @@ def timeline(rows):
     """決策紀錄：版本／做了什麼／為什麼／看什麼數字判斷。"""
     body = "".join(
         f'<li><div class="tl-head"><span class="tl-ver">{esc(v)}</span>'
-        f'<span class="tl-what">{esc(w)}</span></div>'
+        f'<span class="tl-what">{w}</span></div>'
         f'<p class="tl-why">{why}</p></li>' for v, w, why in rows)
     return f'<ol class="timeline">{body}</ol>'
 
@@ -254,6 +254,11 @@ table.data td.num{font-variant-numeric:tabular-nums}
 .chart .axis{stroke:var(--axis); stroke-width:1}
 .chart .bar{fill:var(--series-1)}
 .chart .bar-dim{fill:var(--series-dim)}
+.chart .bar-neg{fill:#e34948}
+:root[data-theme=dark] .chart .bar-neg{fill:#e66767}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme=light])) .chart .bar-neg{fill:#e66767}
+}
 .chart .dot{fill:var(--series-1); stroke:var(--card); stroke-width:2}
 .chart .row:hover .bar,.chart .row:hover .dot{filter:brightness(1.12)}
 .chart .row:hover .dot{r:6}

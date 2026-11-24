@@ -28,7 +28,7 @@ PAGES = HERE.parent / "docs" / "sql-report.html"
 TPE = timezone(timedelta(hours=8))
 
 TITLE = "壽星日資料分析"
-SUBTITLE = "139 筆台灣生日優惠，用 SQL 問九個問題"
+SUBTITLE = "台灣生日優惠資料，用 SQL 問十一個問題"
 
 
 def run(con, name):
@@ -89,6 +89,9 @@ def build():
     q7, s7 = run(con, "07_footprint_vs_value.sql")
     q8, s8 = run(con, "08_footprint_quartiles.sql")
     q9, s9 = run(con, "09_expiry_watch.sql")
+    q10, s10 = run(con, "10_demand_vs_supply.sql")
+    q11, s11 = run(con, "11_offer_health.sql")
+    has_demand = con.execute("select count(*) from offer_demand").fetchone()[0] > 0
     m = q1[0]
     # 縣市的最高與最低先算起來，Q1 的導言跟 Q6 都要用
     best = q6[0]
@@ -140,7 +143,7 @@ def build():
                  + "、".join(f'{esc(r["category"])} {r["n_valued"]} 筆' for r in thin)
                  + '）沒有畫進圖裡。'
                  f'{esc(thin[0]["category"])}的中位數有 NT${thin[0]["median_value"]}，'
-                 f'但兩筆撐不起一個行情，放進去只會把其他類別壓成一條線。'
+                 f'但 {thin[0]["n_valued"]} 筆撐不起一個行情，放進去只會把其他類別壓成一條線。'
                  if thin else ''))
     q2_body = ('<p class="caption">各類別面額中位數（括號是估得出面額的筆數；'
                '只畫 5 筆以上的類別）</p>'
@@ -158,9 +161,11 @@ def build():
     unknown = pick(q3, "bucket", "未明訂", "n_offers") or 0
     need_8up = sum(r["n_offers"] for r in q3
                    if r["bucket"].startswith("要提前 8") or r["bucket"].startswith("要提前 30"))
+    exact_30 = con.execute("select count(*) from offers where advance_days = 30").fetchone()[0]
     q3_ans = (f'<b>生日當天才查，只剩一半能用。</b>'
               f'{m["n_offers"]} 筆裡只有 {same_day} 筆（{pct(same_day, m["n_offers"])}）'
-              f'是當天辦會員當天就能領；{need_8up} 筆要你提前八天以上入會（多數是整整一個月），'
+              f'是當天辦會員當天就能領；{need_8up} 筆要你提前八天以上入會'
+              f'（其中 {exact_30} 筆要求整整一個月），'
               f'還有 {unknown} 筆（{pct(unknown, m["n_offers"])}）'
               f'品牌根本沒說要多久——對壽星來說，沒說＝不保證。')
     q3_body = ('<p class="caption">按「要提前幾天入會」分組的優惠筆數</p>'
@@ -190,19 +195,27 @@ def build():
     official = pick(q5, "tier_label", "1 品牌官方", "n_offers") or 0
     social = pick(q5, "tier_label", "4 社群貼文", "n_offers") or 0
     social_ver = pick(q5, "tier_label", "4 社群貼文", "verified_pct") or 0
-    stale = max(r["days_since_check"] or 0 for r in q5)
+    never = con.execute("select count(*) from offers where last_checked is null").fetchone()[0]
+    over90 = con.execute("select count(*) from offers where julianday('now')"
+                         " - julianday(last_checked) > 90").fetchone()[0]
+    med_lag = con.execute(
+        "select cast(julianday('now') - julianday(last_checked) as integer) from offers"
+        " where last_checked is not null order by 1"
+        " limit 1 offset (select count(last_checked) / 2 from offers)").fetchone()[0]
     weak = sum(r["n_offers"] for r in q5 if r["tier_label"][:1] in ("3", "4"))
     q5_ans = (f'<b>只有 {pct(official, m["n_offers"])} 的優惠有品牌官方背書。</b>'
               f'有 {pct(weak, m["n_offers"])} 的優惠，最好的來源只是部落格懶人包或社群貼文；'
               f'其中社群貼文那 {social} 筆的人工複查率是 {social_ver:.0f}%。'
-              f'整批資料已經 {stale} 天沒有複查過。'
+              f'複查的狀況是：{never} 筆從來沒查過，查過的裡面中位數是 {med_lag} 天前，'
+              f'{over90} 筆超過 90 天。'
               f'這一節看的是資料本身可不可靠，跟優惠大不大沒關係。')
     official_share = f'占 {pct(official, m["n_offers"])}'
+    never_share = f'占 {pct(never, m["n_offers"])}'
     q5_body = ('<p class="caption">以「最可信來源」分組的優惠筆數</p>'
                + ch.hbar(q5, label="tier_label", value="n_offers", label_w=150,
                          title="優惠的最佳來源可信度分佈")
                + f'<div class="stats">'
-                 f'{ch.stat("距離上次複查", f"{stale} 天", "整批 last_checked 都是同一天", "warn")}'
+                 f'{ch.stat("從沒複查過", f"{never} 筆", never_share, "warn")}'
                  f'{ch.stat("有官方來源", f"{official} 筆", official_share)}'
                  f'{ch.stat("只有社群貼文", f"{social} 筆", f"複查率 {social_ver:.0f}%", "warn")}'
                  f'</div>')
@@ -264,11 +277,11 @@ def build():
     # ---------- Q9 檔期 ----------
     expired = [r for r in q9 if r["status"] == "已過期"]
     noend = [r for r in q9 if r["status"] == "沒寫迄日"]
-    q9_ans = (f'<b>這份快照裡的限期檔期，到今天全部不能用了。</b>'
-              f'{len(q9)} 筆 fixed 優惠中 {len(expired)} 筆已過期、{len(noend)} 筆沒寫迄日。'
-              f'快照停在 {esc(meta_build)}，檔期卻會自己走——'
-              f'線上版不能靠人工記得下架，得用 valid_until 自動判斷。'
-              f'這一節列的是要處理的清單。')
+    q9_ans = (f'<b>{len(q9)} 筆限期檔期裡，{len(expired) + len(noend)} 筆沒辦法自動下架。</b>'
+              f'{len(expired)} 筆已經過期還掛在上面，{len(noend)} 筆連迄日都沒寫——'
+              f'沒有迄日，程式就不知道什麼時候該收。'
+              f'檔期會自己走，靠人記得下架一定會漏，所以這一欄是必填。'
+              f'這一節列的是要處理的清單，不是分析結論。')
     pill = {"已過期": ("critical", "✕"), "沒寫迄日": ("warning", "！"),
             "14 天內到期": ("warning", "！"), "還沒開始": ("muted", "·"),
             "進行中": ("good", "✓")}
@@ -287,10 +300,45 @@ def build():
                     f'<td class="num">{ch.fmt_int(r["value_twd"]) if r["value_twd"] else "—"}</td>'
                     f'<td class="num">{r["best_source_tier"] or "—"}</td></tr>')
     body.append('</tbody></table>')
-    q9_body = '<p class="caption">19 筆限期檔期的現況（狀態同時有圖示與文字，不只靠顏色）</p>' \
+    q9_body = (f'<p class="caption">{len(q9)} 筆限期檔期的現況'
+               f'（狀態同時有圖示與文字，不只靠顏色）</p>') \
               + "".join(body)
 
     # ---------- 組頁 ----------
+    # ---------- Q10／Q11 需求面（只有 --live 才有資料）----------
+    if has_demand:
+        short = [r for r in q10 if (r["gap"] or 0) > 0]
+        best = max(short, key=lambda r: (r["wish_share"] or 0) / (r["supply_share"] or 1))
+        worst = [r for r in q10 if (r["gap"] or 0) < 0][-1]
+        avg_ok = con.execute(
+            "select cast(avg(success_rate) as integer) from offer_demand").fetchone()[0]
+        q10_ans = (f'<b>{esc(best["category"])}的需求是供給的 '
+                   f'{round((best["wish_share"] or 0) / (best["supply_share"] or 1), 1)} 倍。</b>'
+                   f'它只佔 {best["supply_share"]}% 的優惠數，卻吃掉 {best["wish_share"]}% 的收藏；'
+                   f'{esc(worst["category"])}剛好相反，供給 {worst["supply_share"]}%、'
+                   f'收藏只有 {worst["wish_share"]}%。'
+                   f'用占比相減而不是直接比數量，是為了不讓「本來就比較多」的類別自動贏。')
+        q10_body = ('<p class="caption">需求占比（收藏）減供給占比（優惠數），單位是百分點</p>'
+                    + ch.diverging_hbar(q10, label="category", value="gap", unit=" pp",
+                                        label_w=84, pos_note="供給不足（該補）",
+                                        neg_note="供給過剩",
+                                        title="各類別的需求占比減供給占比"))
+        q10_tbl = table_block(q10, [("category", "類別"), ("n_offers", "優惠數"),
+                                    ("supply_share", "供給占比 %"), ("wishes", "收藏"),
+                                    ("wish_share", "需求占比 %"), ("reports", "回報"),
+                                    ("report_share", "回報占比 %"),
+                                    ("avg_success_rate", "平均成功率 %"), ("gap", "落差 pp")])
+        q11_ans = (f'<b>{len(q11)} 筆要排進下一輪複查。</b>'
+                   f'條件是回報三次以上、成功率低於 80%——回報太少不能下結論，'
+                   f'一個人說失敗可能只是他那天運氣不好。'
+                   f'整體成功率 {avg_ok}%，所以這張清單短是正常的，不是查詢壞了。')
+        q11_body = ('<p class="caption">回報三次以上、成功率低於 80% 的優惠</p>'
+                    + ch.table(q11, [("brand", "品牌"), ("category", "類別"),
+                                     ("report_count", "回報數"), ("success_rate", "成功率 %"),
+                                     ("wish_count", "收藏"), ("last_used_on", "最後使用"),
+                                     ("days_since_used", "幾天前"),
+                                     ("best_source_tier", "來源層級")]))
+
     secs = [
         s_q1,
         section(2, "哪一類的生日優惠最大方？", q2_ans, q2_body,
@@ -309,17 +357,22 @@ def build():
                 q7_tbl, qno_text="Q7 · Q8"),
         section(9, "哪幾筆已經不能用了？", q9_ans, q9_body,
                 "09_expiry_watch.sql", s9, ""),
-    ]
+    ] + ([
+        section(10, "做最多的類別，是最多人想要的類別嗎？", q10_ans, q10_body,
+                "10_demand_vs_supply.sql", s10, q10_tbl),
+        section(11, "哪幾筆回報失敗最多？", q11_ans, q11_body,
+                "11_offer_health.sql", s11, ""),
+    ] if has_demand else [])
 
     limits = f"""
 <section class="card" id="limits">
   <h2>資料限制</h2>
   <p class="answer">這份分析不能拿來說什麼，先寫在前面。</p>
   <ul class="limits">
-    <li><b>這是快照，不是即時資料。</b>優惠來自 <code>offers.json</code>，
-      最後查證日 {esc(meta_build)}；線上版的 Postgres 已經長得更大，
-      但這台機器跑分析時（{now:%Y-%m-%d}）線上資料庫正好在維護，所以全部用本機快照。
-      Q9 的「全部過期」是快照的必然結果，不是線上網站的狀態。</li>
+    <li><b>資料來源與時間。</b>優惠是 {now:%Y-%m-%d} 從線上資料庫的公開 view
+      （<code>offers_public</code>）抓下來的 {m["n_offers"]} 筆已核可優惠，
+      最後一筆查證日 {esc(meta_build)}。沒有 fetch 的時候會退回 repo 裡的
+      2026-08 快照（139 筆），頁面上的日期會跟著變。</li>
     <li><b>面額是估的。</b><code>value_twd</code> 是把「一份雞塊」「九折」這種優惠
       換算成新台幣的估計值，{m["n_offers"] - m["n_valued"]} 筆估不出來（吃到飽、
       「依門市公告」）就留 null，不當 0。所有平均與中位數都只算得出來的那些。</li>
@@ -361,7 +414,8 @@ def build():
     nav = "".join(f'<a href="#q{a}">{t}</a>' for a, t in
                   [("1", "Q1 規模"), ("2", "Q2 類別"), ("3", "Q3 提前門檻"),
                    ("4", "Q4 入會方式"), ("5", "Q5 資料可信度"), ("6", "Q6 縣市落差"),
-                   ("7", "Q7–8 門市規模"), ("9", "Q9 檔期")])
+                   ("7", "Q7–8 門市規模"), ("9", "Q9 檔期"),
+                   ("10", "Q10 供需落差"), ("11", "Q11 健康度")])
     intro = th.card("", """
   <p>壽星日是小數據所的其中一個 app，收台灣的生日優惠。做網站的時候只在意
     「怎麼顯示」，從來沒認真問過這批資料本身長什麼樣子。這一頁把它丟進 SQLite

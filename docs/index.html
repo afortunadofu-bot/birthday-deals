@@ -138,6 +138,11 @@ table.data td.num{font-variant-numeric:tabular-nums}
 .chart .axis{stroke:var(--axis); stroke-width:1}
 .chart .bar{fill:var(--series-1)}
 .chart .bar-dim{fill:var(--series-dim)}
+.chart .bar-neg{fill:#e34948}
+:root[data-theme=dark] .chart .bar-neg{fill:#e66767}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme=light])) .chart .bar-neg{fill:#e66767}
+}
 .chart .dot{fill:var(--series-1); stroke:var(--card); stroke-width:2}
 .chart .row:hover .bar,.chart .row:hover .dot{filter:brightness(1.12)}
 .chart .row:hover .dot{r:6}
@@ -182,7 +187,7 @@ ul.plain b{color:var(--ink)}
     <a class="brand" href="index.html">小數據所</a>
     <h1>小數據所｜產品分析作品集</h1>
     <p class="sub">把沒人幫你算的事算出來。三個自己做的產品，跟它們背後的數字。</p>
-    <p class="byline">定位：BA／產品分析　·　內容更新 2026-11-04</p>
+    <p class="byline">定位：BA／產品分析　·　內容更新 2026-11-24</p>
     <nav class="jump"><a href="index.html" class="on">首頁</a><a href="birthday-deals.html">壽星日</a><a href="bandary.html">Bandary</a><a href="relatestats.html">RelateStats</a><a href="sql-report.html">SQL 報告</a></nav>
     <button class="theme" type="button" aria-label="切換深淺色">◐</button>
   </div>
@@ -195,7 +200,7 @@ ul.plain b{color:var(--ink)}
   <p>這份作品集要給的不是「我做了三個 app」，而是這三個產品背後我怎麼做決定：
     要衡量什麼、資料從哪來、算出來之後改了什麼、改完有沒有用。
     有數據的地方放數據，還沒有的地方直接標成「待補」，不先填一個看起來合理的數字。</p>
-</section><div class="stats"><div class="stat"><div class="stat-label">線上產品</div><div class="stat-value">3 個</div><div class="stat-sub">壽星日（網站＋App 殼）、Bandary、RelateStats</div></div><div class="stat"><div class="stat-label">壽星日版本</div><div class="stat-value">154 個</div><div class="stat-sub">2026-08 開站到現在，188 個 commit</div></div><div class="stat"><div class="stat-label">回歸測試</div><div class="stat-value">92 支</div><div class="stat-sub">每個版本上線前全部跑過</div></div><div class="stat"><div class="stat-label">分析過的優惠</div><div class="stat-value">139 筆</div><div class="stat-sub">加上 4,734 家門市的縣市分布</div></div></div><section class="card"><h2>三個案例</h2><a class="case" href="birthday-deals.html"><div class="case-head"><span class="case-name">壽星日 Birthday Deals</span><span class="case-status">有真實資料</span></div><p class="case-line">台灣各品牌的生日優惠，可以篩選、收藏、記錄自己省下多少。</p><ul class="case-points"><li>供給面：139 筆優惠的價值、門檻、縣市覆蓋，九支 SQL 問完</li><li>資料治理：只有 12% 有品牌官方來源，推導出自動下架的需求</li><li>成本分析：資料庫流量超額，拆解成因之後一天少 25% 的量</li></ul><span class="case-go">看這個案例 →</span></a><a class="case" href="bandary.html"><div class="case-head"><span class="case-name">Bandary 聽團曆</span><span class="case-status">指標已定義，等數據</span></div><p class="case-line">台灣聽團仔的演出記錄：追場次、每日選歌、好友日曆、免費活動共享。</p><ul class="case-points"><li>已上架 Google Play，版本 1.117.2</li><li>要衡量的是「記錄行為會不會持續」，不是下載數</li><li>數據等 Play Console 與 Firebase 匯出</li></ul><span class="case-go">看這個案例 →</span></a><a class="case" href="relatestats.html"><div class="case-head"><span class="case-name">RelateStats</span><span class="case-status">沒有遙測的案例</span></div><p class="case-line">把通訊軟體上的注意力停留時間算成數字，做社交人格與數位健康分析。</p><ul class="case-points"><li>刻意不要 INTERNET 權限，所以產品端一筆遙測都收不到</li><li>拿不到行為資料的產品，怎麼知道做得好不好</li><li>只能靠 Play Console、評論與許願板</li></ul><span class="case-go">看這個案例 →</span></a></section><section class="card"><h2>我怎麼做產品分析</h2>
+</section><div class="stats"><div class="stat"><div class="stat-label">線上產品</div><div class="stat-value">3 個</div><div class="stat-sub">壽星日（網站＋App 殼）、Bandary、RelateStats</div></div><div class="stat"><div class="stat-label">壽星日版本</div><div class="stat-value">154 個</div><div class="stat-sub">2026-08 開站到現在，188 個 commit</div></div><div class="stat"><div class="stat-label">回歸測試</div><div class="stat-value">92 支</div><div class="stat-sub">每個版本上線前全部跑過</div></div><div class="stat"><div class="stat-label">分析過的優惠</div><div class="stat-value">581 筆</div><div class="stat-sub">加上 4,734 家門市的縣市分布</div></div></div><section class="card"><h2>三個案例</h2><a class="case" href="birthday-deals.html"><div class="case-head"><span class="case-name">壽星日 Birthday Deals</span><span class="case-status">有真實資料</span></div><p class="case-line">台灣各品牌的生日優惠，可以篩選、收藏、記錄自己省下多少。</p><ul class="case-points"><li>供給面：581 筆優惠的價值、門檻、縣市覆蓋，九支 SQL 問完</li><li>資料治理：只有 12% 有品牌官方來源，推導出自動下架的需求</li><li>成本分析：資料庫流量超額，拆解成因之後一天少 25% 的量</li></ul><span class="case-go">看這個案例 →</span></a><a class="case" href="bandary.html"><div class="case-head"><span class="case-name">Bandary 聽團曆</span><span class="case-status">指標已定義，等數據</span></div><p class="case-line">台灣聽團仔的演出記錄：追場次、每日選歌、好友日曆、免費活動共享。</p><ul class="case-points"><li>已上架 Google Play，版本 1.117.2</li><li>要衡量的是「記錄行為會不會持續」，不是下載數</li><li>數據等 Play Console 與 Firebase 匯出</li></ul><span class="case-go">看這個案例 →</span></a><a class="case" href="relatestats.html"><div class="case-head"><span class="case-name">RelateStats</span><span class="case-status">沒有遙測的案例</span></div><p class="case-line">把通訊軟體上的注意力停留時間算成數字，做社交人格與數位健康分析。</p><ul class="case-points"><li>刻意不要 INTERNET 權限，所以產品端一筆遙測都收不到</li><li>拿不到行為資料的產品，怎麼知道做得好不好</li><li>只能靠 Play Console、評論與許願板</li></ul><span class="case-go">看這個案例 →</span></a></section><section class="card"><h2>我怎麼做產品分析</h2>
   <p>每個案例都照同一個順序走，所以三頁讀起來是同一套方法的三次應用。</p>
   <h3>1. 先定義要衡量什麼</h3>
   <p>做之前先寫下來：這個產品好不好，看哪幾個數字。壽星日分成供給（有多少優惠能拿）、

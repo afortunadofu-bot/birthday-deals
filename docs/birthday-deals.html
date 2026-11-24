@@ -138,6 +138,11 @@ table.data td.num{font-variant-numeric:tabular-nums}
 .chart .axis{stroke:var(--axis); stroke-width:1}
 .chart .bar{fill:var(--series-1)}
 .chart .bar-dim{fill:var(--series-dim)}
+.chart .bar-neg{fill:#e34948}
+:root[data-theme=dark] .chart .bar-neg{fill:#e66767}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme=light])) .chart .bar-neg{fill:#e66767}
+}
 .chart .dot{fill:var(--series-1); stroke:var(--card); stroke-width:2}
 .chart .row:hover .bar,.chart .row:hover .dot{filter:brightness(1.12)}
 .chart .row:hover .dot{r:6}
@@ -182,7 +187,7 @@ ul.plain b{color:var(--ink)}
     <a class="brand" href="index.html">小數據所</a>
     <h1>壽星日 Birthday Deals</h1>
     <p class="sub">台灣各品牌的生日優惠，可以篩選、收藏、記錄自己省下多少。</p>
-    <p class="byline">線上：<a href="https://birthdaydeals.celine-fu-work.workers.dev/">birthdaydeals</a>　·　2026-08 開站，154 個版本　·　角色：企劃／開發／分析　·　更新 2026-11-04</p>
+    <p class="byline">線上：<a href="https://birthdaydeals.celine-fu-work.workers.dev/">birthdaydeals</a>　·　2026-08 開站，154 個版本　·　角色：企劃／開發／分析　·　更新 2026-11-24</p>
     <nav class="jump"><a href="index.html">首頁</a><a href="birthday-deals.html" class="on">壽星日</a><a href="bandary.html">Bandary</a><a href="relatestats.html">RelateStats</a><a href="sql-report.html">SQL 報告</a></nav>
     <button class="theme" type="button" aria-label="切換深淺色">◐</button>
   </div>
@@ -194,174 +199,186 @@ ul.plain b{color:var(--ink)}
   <p>這一頁講的是分析的部分：這個產品該看哪些數字、我實際算出了什麼、
     算完之後改了什麼。完整的 SQL 跟圖表在
     <a href="sql-report.html">九題報告</a>那一頁。</p>
-</section><section class="card"><h2>這個產品該看哪些數字</h2><table class="metrics"><thead><tr><th>指標</th><th>怎麼算</th><th>現況</th></tr></thead><tbody><tr><th scope="row">供給：優惠數</th><td>approved 狀態的優惠筆數</td><td>139 筆（2026-08 快照）</td></tr><tr><th scope="row">供給：縣市覆蓋</th><td>每個縣市拿得到幾筆（含全台連鎖）</td><td>115 ↔ 33 筆</td></tr><tr><th scope="row">供給：能當天用的比例</th><td>免費入會且不用提前登錄的占比</td><td>49%</td></tr><tr><th scope="row">品質：官方來源比例</th><td>最佳來源是品牌官方的占比</td><td>12%</td></tr><tr><th scope="row">品質：複查延遲</th><td>今天減去 last_checked</td><td>92 天</td></tr><tr><th scope="row">品質：過期未下架</th><td>validity_type=fixed 且 valid_until 已過</td><td>18 / 19 筆</td></tr><tr><th scope="row">需求：回報使用</th><td>回報「我用過了」的次數（offer_stats）</td><td><span class="pending">待補：資料庫停權中</span></td></tr><tr><th scope="row">需求：兌換成功率</th><td>回報成功 ÷ 全部回報</td><td><span class="pending">待補：資料庫停權中</span></td></tr><tr><th scope="row">需求：收藏</th><td>被加進願望清單的次數（wishlist_counts）</td><td><span class="pending">待補：資料庫停權中</span></td></tr><tr><th scope="row">需求：留言</th><td>每筆優惠底下的留言數</td><td><span class="pending">待補：資料庫停權中</span></td></tr><tr><th scope="row">需求：到站與漏斗</th><td>site_events 的 pageview → 點開 → 外連，以 session 去重</td><td><span class="pending">待補：管理員限定，要另外匯出</span></td></tr><tr><th scope="row">成本：Egress</th><td>Supabase 每月送出的位元組</td><td>上一個週期超過 5 GB 額度</td></tr><tr><th scope="row">成本：固定成本</th><td>快取過期回源一輪的量 × 一天幾輪 × 幾個機房</td><td>約 180 KB／輪</td></tr></tbody></table></section><section class="card"><h2>分析一：供給面</h2>
+</section><section class="card"><h2>這個產品該看哪些數字</h2><table class="metrics"><thead><tr><th>指標</th><th>怎麼算</th><th>現況</th></tr></thead><tbody><tr><th scope="row">供給：優惠數</th><td>approved 狀態的優惠筆數</td><td>581 筆（2026-11-22）</td></tr><tr><th scope="row">供給：縣市覆蓋</th><td>每個縣市拿得到幾筆（含全台連鎖）</td><td>388 ↔ 67 筆</td></tr><tr><th scope="row">供給：能當天用的比例</th><td>免費入會且不用提前登錄的占比</td><td>26%</td></tr><tr><th scope="row">品質：官方來源比例</th><td>最佳來源是品牌官方的占比</td><td>24%</td></tr><tr><th scope="row">品質：複查延遲</th><td>今天減去 last_checked</td><td>2 天</td></tr><tr><th scope="row">品質：過期未下架</th><td>validity_type=fixed 且 valid_until 已過</td><td>5 / 28 筆</td></tr><tr><th scope="row">需求：回報使用</th><td>回報「我用過了」的次數（offer_stats）</td><td>4,784 次</td></tr><tr><th scope="row">需求：兌換成功率</th><td>回報成功 ÷ 全部回報</td><td>98%</td></tr><tr><th scope="row">需求：收藏</th><td>被加進願望清單的次數（wishlist_counts）</td><td>11,205 次</td></tr><tr><th scope="row">需求：留言</th><td>每筆優惠底下的留言數</td><td>109 則</td></tr><tr><th scope="row">需求：到站與漏斗</th><td>site_events 的 pageview → 點開 → 外連，以 session 去重</td><td><span class="pending">待補：管理員限定，要另外匯出</span></td></tr><tr><th scope="row">成本：Egress</th><td>Supabase 每月送出的位元組</td><td>上一個週期超過 5 GB 額度</td></tr><tr><th scope="row">成本：固定成本</th><td>快取過期回源一輪的量 × 一天幾輪 × 幾個機房</td><td>約 180 KB／輪</td></tr></tbody></table></section><section class="card"><h2>分析一：供給面</h2>
   <p>完整的九題在<a href="sql-report.html">報告那一頁</a>，這裡只留跟產品決策有關的三個。</p>
-  <h3>住在哪裡，差 3.5 倍</h3>
-  <p>住台北市的壽星有 115 個優惠可選，
-     最少的縣市只有 33 個，而且那些全部是全台連鎖，
+  <h3>住在哪裡，差 5.8 倍</h3>
+  <p>住台北市的壽星有 388 個優惠可選，
+     最少的縣市只有 67 個，而且那些全部是全台連鎖，
      等於這些縣市完全沒有本地品牌的生日優惠可拿。這是產品的供給缺口，
      不是演算法調一調就會好的東西。</p>
   <svg class="chart" viewBox="0 0 720 518" role="img" aria-label="各縣市可用生日優惠數" preserveAspectRatio="xMidYMid meet">
 <line class="grid" x1="84.0" y1="6" x2="84.0" y2="490"/>
 <text class="tick" x="84.0" y="506" text-anchor="middle">0</text>
-<line class="grid" x1="277.3" y1="6" x2="277.3" y2="490"/>
-<text class="tick" x="277.3" y="506" text-anchor="middle">50</text>
-<line class="grid" x1="470.7" y1="6" x2="470.7" y2="490"/>
-<text class="tick" x="470.7" y="506" text-anchor="middle">100</text>
+<line class="grid" x1="229.0" y1="6" x2="229.0" y2="490"/>
+<text class="tick" x="229.0" y="506" text-anchor="middle">100</text>
+<line class="grid" x1="374.0" y1="6" x2="374.0" y2="490"/>
+<text class="tick" x="374.0" y="506" text-anchor="middle">200</text>
+<line class="grid" x1="519.0" y1="6" x2="519.0" y2="490"/>
+<text class="tick" x="519.0" y="506" text-anchor="middle">300</text>
 <line class="grid" x1="664.0" y1="6" x2="664.0" y2="490"/>
-<text class="tick" x="664.0" y="506" text-anchor="middle">150</text>
-<g class="row"><title>台北市：115</title>
+<text class="tick" x="664.0" y="506" text-anchor="middle">400</text>
+<g class="row"><title>台北市：388</title>
 <text class="lbl" x="76" y="16" text-anchor="end">台北市</text>
-<path class="bar" d="M84.0,6.0 H524.7 A4,4 0 0 1 528.7,10.0 V15.0 A4,4 0 0 1 524.7,19.0 H84.0 Z"/>
-<text class="val" x="534.7" y="16">115</text>
+<path class="bar" d="M84.0,6.0 H642.6 A4,4 0 0 1 646.6,10.0 V15.0 A4,4 0 0 1 642.6,19.0 H84.0 Z"/>
+<text class="val" x="652.6" y="16">388</text>
 </g>
-<g class="row"><title>台中市：90</title>
+<g class="row"><title>台中市：281</title>
 <text class="lbl" x="76" y="38" text-anchor="end">台中市</text>
-<path class="bar" d="M84.0,28.0 H428.0 A4,4 0 0 1 432.0,32.0 V37.0 A4,4 0 0 1 428.0,41.0 H84.0 Z"/>
-<text class="val" x="438.0" y="38">90</text>
+<path class="bar" d="M84.0,28.0 H487.4 A4,4 0 0 1 491.4,32.0 V37.0 A4,4 0 0 1 487.4,41.0 H84.0 Z"/>
+<text class="val" x="497.4" y="38">281</text>
 </g>
-<g class="row"><title>新北市：86</title>
+<g class="row"><title>新北市：258</title>
 <text class="lbl" x="76" y="60" text-anchor="end">新北市</text>
-<path class="bar" d="M84.0,50.0 H412.5 A4,4 0 0 1 416.5,54.0 V59.0 A4,4 0 0 1 412.5,63.0 H84.0 Z"/>
-<text class="val" x="422.5" y="60">86</text>
+<path class="bar" d="M84.0,50.0 H454.1 A4,4 0 0 1 458.1,54.0 V59.0 A4,4 0 0 1 454.1,63.0 H84.0 Z"/>
+<text class="val" x="464.1" y="60">258</text>
 </g>
-<g class="row"><title>高雄市：73</title>
+<g class="row"><title>高雄市：248</title>
 <text class="lbl" x="76" y="82" text-anchor="end">高雄市</text>
-<path class="bar" d="M84.0,72.0 H362.3 A4,4 0 0 1 366.3,76.0 V81.0 A4,4 0 0 1 362.3,85.0 H84.0 Z"/>
-<text class="val" x="372.3" y="82">73</text>
+<path class="bar" d="M84.0,72.0 H439.6 A4,4 0 0 1 443.6,76.0 V81.0 A4,4 0 0 1 439.6,85.0 H84.0 Z"/>
+<text class="val" x="449.6" y="82">248</text>
 </g>
-<g class="row"><title>桃園市：71</title>
+<g class="row"><title>桃園市：230</title>
 <text class="lbl" x="76" y="104" text-anchor="end">桃園市</text>
-<path class="bar" d="M84.0,94.0 H354.5 A4,4 0 0 1 358.5,98.0 V103.0 A4,4 0 0 1 354.5,107.0 H84.0 Z"/>
-<text class="val" x="364.5" y="104">71</text>
+<path class="bar" d="M84.0,94.0 H413.5 A4,4 0 0 1 417.5,98.0 V103.0 A4,4 0 0 1 413.5,107.0 H84.0 Z"/>
+<text class="val" x="423.5" y="104">230</text>
 </g>
-<g class="row"><title>台南市：58</title>
+<g class="row"><title>台南市：202</title>
 <text class="lbl" x="76" y="126" text-anchor="end">台南市</text>
-<path class="bar" d="M84.0,116.0 H304.3 A4,4 0 0 1 308.3,120.0 V125.0 A4,4 0 0 1 304.3,129.0 H84.0 Z"/>
-<text class="val" x="314.3" y="126">58</text>
+<path class="bar" d="M84.0,116.0 H372.9 A4,4 0 0 1 376.9,120.0 V125.0 A4,4 0 0 1 372.9,129.0 H84.0 Z"/>
+<text class="val" x="382.9" y="126">202</text>
 </g>
-<g class="row"><title>新竹市：52</title>
+<g class="row"><title>新竹市：167</title>
 <text class="lbl" x="76" y="148" text-anchor="end">新竹市</text>
-<path class="bar" d="M84.0,138.0 H281.1 A4,4 0 0 1 285.1,142.0 V147.0 A4,4 0 0 1 281.1,151.0 H84.0 Z"/>
-<text class="val" x="291.1" y="148">52</text>
+<path class="bar" d="M84.0,138.0 H322.1 A4,4 0 0 1 326.1,142.0 V147.0 A4,4 0 0 1 322.1,151.0 H84.0 Z"/>
+<text class="val" x="332.1" y="148">167</text>
 </g>
-<g class="row"><title>新竹縣：44</title>
+<g class="row"><title>新竹縣：138</title>
 <text class="lbl" x="76" y="170" text-anchor="end">新竹縣</text>
-<path class="bar" d="M84.0,160.0 H250.1 A4,4 0 0 1 254.1,164.0 V169.0 A4,4 0 0 1 250.1,173.0 H84.0 Z"/>
-<text class="val" x="260.1" y="170">44</text>
+<path class="bar" d="M84.0,160.0 H280.1 A4,4 0 0 1 284.1,164.0 V169.0 A4,4 0 0 1 280.1,173.0 H84.0 Z"/>
+<text class="val" x="290.1" y="170">138</text>
 </g>
-<g class="row"><title>宜蘭縣：42</title>
-<text class="lbl" x="76" y="192" text-anchor="end">宜蘭縣</text>
-<path class="bar" d="M84.0,182.0 H242.4 A4,4 0 0 1 246.4,186.0 V191.0 A4,4 0 0 1 242.4,195.0 H84.0 Z"/>
-<text class="val" x="252.4" y="192">42</text>
+<g class="row"><title>彰化縣：119</title>
+<text class="lbl" x="76" y="192" text-anchor="end">彰化縣</text>
+<path class="bar" d="M84.0,182.0 H252.5 A4,4 0 0 1 256.5,186.0 V191.0 A4,4 0 0 1 252.5,195.0 H84.0 Z"/>
+<text class="val" x="262.5" y="192">119</text>
 </g>
-<g class="row"><title>彰化縣：41</title>
-<text class="lbl" x="76" y="214" text-anchor="end">彰化縣</text>
-<path class="bar" d="M84.0,204.0 H238.5 A4,4 0 0 1 242.5,208.0 V213.0 A4,4 0 0 1 238.5,217.0 H84.0 Z"/>
-<text class="val" x="248.5" y="214">41</text>
+<g class="row"><title>嘉義市：119</title>
+<text class="lbl" x="76" y="214" text-anchor="end">嘉義市</text>
+<path class="bar" d="M84.0,204.0 H252.5 A4,4 0 0 1 256.5,208.0 V213.0 A4,4 0 0 1 252.5,217.0 H84.0 Z"/>
+<text class="val" x="262.5" y="214">119</text>
 </g>
-<g class="row"><title>嘉義市：41</title>
-<text class="lbl" x="76" y="236" text-anchor="end">嘉義市</text>
-<path class="bar" d="M84.0,226.0 H238.5 A4,4 0 0 1 242.5,230.0 V235.0 A4,4 0 0 1 238.5,239.0 H84.0 Z"/>
-<text class="val" x="248.5" y="236">41</text>
+<g class="row"><title>屏東縣：116</title>
+<text class="lbl" x="76" y="236" text-anchor="end">屏東縣</text>
+<path class="bar" d="M84.0,226.0 H248.2 A4,4 0 0 1 252.2,230.0 V235.0 A4,4 0 0 1 248.2,239.0 H84.0 Z"/>
+<text class="val" x="258.2" y="236">116</text>
 </g>
-<g class="row"><title>屏東縣：41</title>
-<text class="lbl" x="76" y="258" text-anchor="end">屏東縣</text>
-<path class="bar" d="M84.0,248.0 H238.5 A4,4 0 0 1 242.5,252.0 V257.0 A4,4 0 0 1 238.5,261.0 H84.0 Z"/>
-<text class="val" x="248.5" y="258">41</text>
+<g class="row"><title>宜蘭縣：113</title>
+<text class="lbl" x="76" y="258" text-anchor="end">宜蘭縣</text>
+<path class="bar" d="M84.0,248.0 H243.8 A4,4 0 0 1 247.8,252.0 V257.0 A4,4 0 0 1 243.8,261.0 H84.0 Z"/>
+<text class="val" x="253.8" y="258">113</text>
 </g>
-<g class="row"><title>苗栗縣：38</title>
-<text class="lbl" x="76" y="280" text-anchor="end">苗栗縣</text>
-<path class="bar" d="M84.0,270.0 H226.9 A4,4 0 0 1 230.9,274.0 V279.0 A4,4 0 0 1 226.9,283.0 H84.0 Z"/>
-<text class="val" x="236.9" y="280">38</text>
+<g class="row"><title>基隆市：106</title>
+<text class="lbl" x="76" y="280" text-anchor="end">基隆市</text>
+<path class="bar" d="M84.0,270.0 H233.7 A4,4 0 0 1 237.7,274.0 V279.0 A4,4 0 0 1 233.7,283.0 H84.0 Z"/>
+<text class="val" x="243.7" y="280">106</text>
 </g>
-<g class="row"><title>雲林縣：38</title>
+<g class="row"><title>雲林縣：106</title>
 <text class="lbl" x="76" y="302" text-anchor="end">雲林縣</text>
-<path class="bar" d="M84.0,292.0 H226.9 A4,4 0 0 1 230.9,296.0 V301.0 A4,4 0 0 1 226.9,305.0 H84.0 Z"/>
-<text class="val" x="236.9" y="302">38</text>
+<path class="bar" d="M84.0,292.0 H233.7 A4,4 0 0 1 237.7,296.0 V301.0 A4,4 0 0 1 233.7,305.0 H84.0 Z"/>
+<text class="val" x="243.7" y="302">106</text>
 </g>
-<g class="row"><title>基隆市：36</title>
-<text class="lbl" x="76" y="324" text-anchor="end">基隆市</text>
-<path class="bar" d="M84.0,314.0 H219.2 A4,4 0 0 1 223.2,318.0 V323.0 A4,4 0 0 1 219.2,327.0 H84.0 Z"/>
-<text class="val" x="229.2" y="324">36</text>
+<g class="row"><title>苗栗縣：104</title>
+<text class="lbl" x="76" y="324" text-anchor="end">苗栗縣</text>
+<path class="bar" d="M84.0,314.0 H230.8 A4,4 0 0 1 234.8,318.0 V323.0 A4,4 0 0 1 230.8,327.0 H84.0 Z"/>
+<text class="val" x="240.8" y="324">104</text>
 </g>
-<g class="row"><title>南投縣：35</title>
-<text class="lbl" x="76" y="346" text-anchor="end">南投縣</text>
-<path class="bar" d="M84.0,336.0 H215.3 A4,4 0 0 1 219.3,340.0 V345.0 A4,4 0 0 1 215.3,349.0 H84.0 Z"/>
-<text class="val" x="225.3" y="346">35</text>
+<g class="row"><title>花蓮縣：91</title>
+<text class="lbl" x="76" y="346" text-anchor="end">花蓮縣</text>
+<path class="bar" d="M84.0,336.0 H212.0 A4,4 0 0 1 216.0,340.0 V345.0 A4,4 0 0 1 212.0,349.0 H84.0 Z"/>
+<text class="val" x="222.0" y="346">91</text>
 </g>
-<g class="row"><title>台東縣：35</title>
-<text class="lbl" x="76" y="368" text-anchor="end">台東縣</text>
-<path class="bar" d="M84.0,358.0 H215.3 A4,4 0 0 1 219.3,362.0 V367.0 A4,4 0 0 1 215.3,371.0 H84.0 Z"/>
-<text class="val" x="225.3" y="368">35</text>
+<g class="row"><title>南投縣：87</title>
+<text class="lbl" x="76" y="368" text-anchor="end">南投縣</text>
+<path class="bar" d="M84.0,358.0 H206.2 A4,4 0 0 1 210.2,362.0 V367.0 A4,4 0 0 1 206.2,371.0 H84.0 Z"/>
+<text class="val" x="216.2" y="368">87</text>
 </g>
-<g class="row"><title>嘉義縣：33</title>
-<text class="lbl" x="76" y="390" text-anchor="end">嘉義縣</text>
-<path class="bar" d="M84.0,380.0 H207.6 A4,4 0 0 1 211.6,384.0 V389.0 A4,4 0 0 1 207.6,393.0 H84.0 Z"/>
-<text class="val" x="217.6" y="390">33</text>
+<g class="row"><title>澎湖縣：84</title>
+<text class="lbl" x="76" y="390" text-anchor="end">澎湖縣</text>
+<path class="bar" d="M84.0,380.0 H201.8 A4,4 0 0 1 205.8,384.0 V389.0 A4,4 0 0 1 201.8,393.0 H84.0 Z"/>
+<text class="val" x="211.8" y="390">84</text>
 </g>
-<g class="row"><title>花蓮縣：33</title>
-<text class="lbl" x="76" y="412" text-anchor="end">花蓮縣</text>
-<path class="bar" d="M84.0,402.0 H207.6 A4,4 0 0 1 211.6,406.0 V411.0 A4,4 0 0 1 207.6,415.0 H84.0 Z"/>
-<text class="val" x="217.6" y="412">33</text>
+<g class="row"><title>嘉義縣：81</title>
+<text class="lbl" x="76" y="412" text-anchor="end">嘉義縣</text>
+<path class="bar" d="M84.0,402.0 H197.4 A4,4 0 0 1 201.4,406.0 V411.0 A4,4 0 0 1 197.4,415.0 H84.0 Z"/>
+<text class="val" x="207.4" y="412">81</text>
 </g>
-<g class="row"><title>澎湖縣：33</title>
-<text class="lbl" x="76" y="434" text-anchor="end">澎湖縣</text>
-<path class="bar" d="M84.0,424.0 H207.6 A4,4 0 0 1 211.6,428.0 V433.0 A4,4 0 0 1 207.6,437.0 H84.0 Z"/>
-<text class="val" x="217.6" y="434">33</text>
+<g class="row"><title>台東縣：80</title>
+<text class="lbl" x="76" y="434" text-anchor="end">台東縣</text>
+<path class="bar" d="M84.0,424.0 H196.0 A4,4 0 0 1 200.0,428.0 V433.0 A4,4 0 0 1 196.0,437.0 H84.0 Z"/>
+<text class="val" x="206.0" y="434">80</text>
 </g>
-<g class="row"><title>金門縣：33</title>
+<g class="row"><title>金門縣：76</title>
 <text class="lbl" x="76" y="456" text-anchor="end">金門縣</text>
-<path class="bar" d="M84.0,446.0 H207.6 A4,4 0 0 1 211.6,450.0 V455.0 A4,4 0 0 1 207.6,459.0 H84.0 Z"/>
-<text class="val" x="217.6" y="456">33</text>
+<path class="bar" d="M84.0,446.0 H190.2 A4,4 0 0 1 194.2,450.0 V455.0 A4,4 0 0 1 190.2,459.0 H84.0 Z"/>
+<text class="val" x="200.2" y="456">76</text>
 </g>
-<g class="row"><title>連江縣：33</title>
+<g class="row"><title>連江縣：67</title>
 <text class="lbl" x="76" y="478" text-anchor="end">連江縣</text>
-<path class="bar" d="M84.0,468.0 H207.6 A4,4 0 0 1 211.6,472.0 V477.0 A4,4 0 0 1 207.6,481.0 H84.0 Z"/>
-<text class="val" x="217.6" y="478">33</text>
+<path class="bar" d="M84.0,468.0 H177.2 A4,4 0 0 1 181.2,472.0 V477.0 A4,4 0 0 1 177.2,481.0 H84.0 Z"/>
+<text class="val" x="187.2" y="478">67</text>
 </g>
 <line class="axis" x1="84" y1="6" x2="84" y2="490"/>
 </svg>
   <h3>一半的優惠，生日當天才查就來不及</h3>
-  <p>49% 的優惠是當天辦會員當天就能領，其餘要提前登錄，
-     還有 32 筆品牌根本沒寫要多久。對一個「生日當天才會被打開」的產品來說，
+  <p>26% 的優惠是當天辦會員當天就能領，其餘要提前登錄，
+     還有 350 筆品牌根本沒寫要多久。對一個「生日當天才會被打開」的產品來說，
      這直接決定了要不要做提前提醒，答案是要。</p>
-  <h3>只有 12% 的優惠有品牌官方背書</h3>
+  <h3>只有 24% 的優惠有品牌官方背書</h3>
   <p>其餘的最佳來源是部落格懶人包或社群貼文。這不是「資料很爛」，
      是「這類資料本來就長這樣」，所以產品要承認它：來源分級顯示在卡片上、
      使用者可以回報有沒有用、過期的自己下架。</p>
-  <svg class="chart" viewBox="0 0 720 146" role="img" aria-label="優惠的最佳來源可信度分佈" preserveAspectRatio="xMidYMid meet">
-<line class="grid" x1="158.0" y1="6" x2="158.0" y2="118"/>
-<text class="tick" x="158.0" y="134" text-anchor="middle">0</text>
-<line class="grid" x1="284.5" y1="6" x2="284.5" y2="118"/>
-<text class="tick" x="284.5" y="134" text-anchor="middle">20</text>
-<line class="grid" x1="411.0" y1="6" x2="411.0" y2="118"/>
-<text class="tick" x="411.0" y="134" text-anchor="middle">40</text>
-<line class="grid" x1="537.5" y1="6" x2="537.5" y2="118"/>
-<text class="tick" x="537.5" y="134" text-anchor="middle">60</text>
-<line class="grid" x1="664.0" y1="6" x2="664.0" y2="118"/>
-<text class="tick" x="664.0" y="134" text-anchor="middle">80</text>
-<g class="row"><title>1 品牌官方：17</title>
+  <svg class="chart" viewBox="0 0 720 202" role="img" aria-label="優惠的最佳來源可信度分佈" preserveAspectRatio="xMidYMid meet">
+<line class="grid" x1="158.0" y1="6" x2="158.0" y2="174"/>
+<text class="tick" x="158.0" y="190" text-anchor="middle">0</text>
+<line class="grid" x1="284.5" y1="6" x2="284.5" y2="174"/>
+<text class="tick" x="284.5" y="190" text-anchor="middle">50</text>
+<line class="grid" x1="411.0" y1="6" x2="411.0" y2="174"/>
+<text class="tick" x="411.0" y="190" text-anchor="middle">100</text>
+<line class="grid" x1="537.5" y1="6" x2="537.5" y2="174"/>
+<text class="tick" x="537.5" y="190" text-anchor="middle">150</text>
+<line class="grid" x1="664.0" y1="6" x2="664.0" y2="174"/>
+<text class="tick" x="664.0" y="190" text-anchor="middle">200</text>
+<g class="row"><title>1 品牌官方：141</title>
 <text class="lbl" x="150" y="19" text-anchor="end">1 品牌官方</text>
-<path class="bar" d="M158.0,6.0 H261.5 A4,4 0 0 1 265.5,10.0 V18.0 A4,4 0 0 1 261.5,22.0 H158.0 Z"/>
-<text class="val" x="271.5" y="19">17</text>
+<path class="bar" d="M158.0,6.0 H510.7 A4,4 0 0 1 514.7,10.0 V18.0 A4,4 0 0 1 510.7,22.0 H158.0 Z"/>
+<text class="val" x="520.7" y="19">141</text>
 </g>
 <g class="row"><title>2 新聞媒體：3</title>
 <text class="lbl" x="150" y="47" text-anchor="end">2 新聞媒體</text>
-<path class="bar" d="M158.0,34.0 H173.0 A4,4 0 0 1 177.0,38.0 V46.0 A4,4 0 0 1 173.0,50.0 H158.0 Z"/>
-<text class="val" x="183.0" y="47">3</text>
+<path class="bar" d="M158.0,34.0 H161.6 A4,4 0 0 1 165.6,38.0 V46.0 A4,4 0 0 1 161.6,50.0 H158.0 Z"/>
+<text class="val" x="171.6" y="47">3</text>
 </g>
-<g class="row"><title>3 部落格懶人包：65</title>
+<g class="row"><title>3 部落格懶人包：97</title>
 <text class="lbl" x="150" y="75" text-anchor="end">3 部落格懶人包</text>
-<path class="bar" d="M158.0,62.0 H565.1 A4,4 0 0 1 569.1,66.0 V74.0 A4,4 0 0 1 565.1,78.0 H158.0 Z"/>
-<text class="val" x="575.1" y="75">65</text>
+<path class="bar" d="M158.0,62.0 H399.4 A4,4 0 0 1 403.4,66.0 V74.0 A4,4 0 0 1 399.4,78.0 H158.0 Z"/>
+<text class="val" x="409.4" y="75">97</text>
 </g>
-<g class="row"><title>4 社群貼文：54</title>
+<g class="row"><title>4 社群貼文：130</title>
 <text class="lbl" x="150" y="103" text-anchor="end">4 社群貼文</text>
-<path class="bar" d="M158.0,90.0 H495.6 A4,4 0 0 1 499.6,94.0 V102.0 A4,4 0 0 1 495.6,106.0 H158.0 Z"/>
-<text class="val" x="505.6" y="103">54</text>
+<path class="bar" d="M158.0,90.0 H482.9 A4,4 0 0 1 486.9,94.0 V102.0 A4,4 0 0 1 482.9,106.0 H158.0 Z"/>
+<text class="val" x="492.9" y="103">130</text>
 </g>
-<line class="axis" x1="158" y1="6" x2="158" y2="118"/>
+<g class="row"><title>未標註：14</title>
+<text class="lbl" x="150" y="131" text-anchor="end">未標註</text>
+<path class="bar" d="M158.0,118.0 H189.4 A4,4 0 0 1 193.4,122.0 V130.0 A4,4 0 0 1 189.4,134.0 H158.0 Z"/>
+<text class="val" x="199.4" y="131">14</text>
+</g>
+<g class="row"><title>未標註：196</title>
+<text class="lbl" x="150" y="159" text-anchor="end">未標註</text>
+<path class="bar" d="M158.0,146.0 H649.9 A4,4 0 0 1 653.9,150.0 V158.0 A4,4 0 0 1 649.9,162.0 H158.0 Z"/>
+<text class="val" x="659.9" y="159">196</text>
+</g>
+<line class="axis" x1="158" y1="6" x2="158" y2="174"/>
 </svg>
 </section><section class="card"><h2>分析二：成本與可靠性</h2>
   <p>2026 年 10 月，Supabase 的免費額度（Egress 5 GB／月）被判超額，整個專案被停權，
@@ -391,42 +408,97 @@ ul.plain b{color:var(--ink)}
      走快取的有擋，前端直接打的沒有。</p>
   <p class="note">數字出處：repo 裡的 <code>SUPABASE-流量.md</code>，2026-10-20 實測。</p>
 </section><section class="card"><h2>分析三：使用者行為（等資料）</h2>
-  <p>這是這個案例現在唯一的空白，而且空白的原因是技術性的：
-    資料庫停權中，讀不到任何一筆事件。</p>
-  <p>能先做的都做了：事件表本來就設計好了，分析要用的指標也定義完了
-    （上面那張表的「需求」那幾列）。事件表長這樣：</p>
-  <pre><code>site_events(
-  id          bigserial,
-  event_type  text,        -- pageview / submit / use_report / wish / rate / static_view …
-  session_id  text,        -- 匿名，localStorage 產生
-  user_id     uuid,        -- 可為 null（沒登入也能用）
-  meta        jsonb,
-  created_at  timestamptz
-)</code></pre>
-  <p>要算的是三件事：<b>漏斗</b>（到站 → 點開優惠 → 點外連或收藏 → 回報用過）、
-    <b>內容供給與需求對不對得上</b>（最多人收藏的類別，跟優惠數最多的類別是不是同一批）、
-    以及<b>回訪</b>（生日是一年一次的事件，所以留存要看的是「隔年還會不會回來」，
-    不是次日留存）。</p>
-  <h3>已經寫好、等資料就會亮起來的部分</h3>
-  <p>有一半不用等管理員權限。線上有四支 view 本來就開放公開讀
-    （<code>offers_public</code>、<code>wishlist_counts</code>、<code>most_wished</code>、
-    <code>leaderboard_monthly</code>），裡面有每筆優惠的回報數、兌換成功率、
-    留言數與收藏數——那已經是需求面的一半。抓這四支的程式
-    （<code>fetch_live.py</code>）跟吃它的 ETL（<code>build_db.py --live</code>）都寫好了，
-    現在跑會停在一句「Supabase 回 402」。</p>
-  <p>兩支對應的查詢也先寫完了：
-    <code>10_demand_vs_supply.sql</code> 比「哪一類收藏多」跟「哪一類優惠多」的落差，
-    用來決定下一批要去談哪種品牌；
-    <code>11_offer_health.sql</code> 挑出回報多、成功率低的優惠，那是資料錯了或品牌改規則，
-    屬於維運清單。</p>
-  <p>真正要等管理員匯出的只剩漏斗跟回訪，因為 <code>site_events</code> 是
-    admin 限定、anon key 讀不到。</p>
-  <p class="note">公開的只會是彙總。個人層級的事件不離開資料庫，也不進版控。</p>
-</section><section class="card"><h2>決策紀錄（節錄）</h2><ol class="timeline"><li><div class="tl-head"><span class="tl-ver">v129</span><span class="tl-what">快取 10 分鐘 → 30 分鐘</span></div><p class="tl-why">成本分析的直接結果：上游請求一天 144 → 48 次。代價是新優惠最多晚 30 分鐘出現，對一個「一年用一次」的產品可以接受。</p></li><li><div class="tl-head"><span class="tl-ver">v132</span><span class="tl-what">優惠清單從 &lt;code&gt;select=*&lt;/code&gt; 改成逐欄點名</span></div><p class="tl-why">量完才發現有五個欄位前端一個都沒讀。146 → 128 KB。順手加了一條測試：view 以後加欄位沒跟著改，測試就會紅。</p></li><li><div class="tl-head"><span class="tl-ver">v133</span><span class="tl-what">標「全台」但其實沒那麼全台的，改成實際有分店的縣市</span></div><p class="tl-why">門市資料跟優惠的 regions 欄位對不起來，是縣市覆蓋那一題算出來的。影響的是使用者在自己縣市看到的清單準不準。</p></li><li><div class="tl-head"><span class="tl-ver">v144</span><span class="tl-what">自動上架：老手的新投稿不用再等審核</span></div><p class="tl-why">投稿審核是人工瓶頸。先看投稿者過去的紀錄，再決定要不要擋。</p></li><li><div class="tl-head"><span class="tl-ver">v167</span><span class="tl-what">「我省下多少」收成一個數字，排到「我送出過的」前面</span></div><p class="tl-why">這個產品的核心價值是「幫你算省下多少」，版面要讓它第一眼就看得到。</p></li><li><div class="tl-head"><span class="tl-ver">v168–v172</span><span class="tl-what">資料庫停掉時，自動掛「系統更新中」、錯誤訊息一律中文</span></div><p class="tl-why">停權期間使用者看到的是英文錯誤。可靠性也是產品的一部分：壞掉的時候要壞得像話。</p></li></ol></section><section class="card"><h2>還沒做到的</h2>
+  <p>收藏、回報、留言這三種行為，每筆優惠的彙總在線上四支公開 view 裡就拿得到
+    （<code>offers_public</code>、<code>wishlist_counts</code> 等），不需要管理員權限。
+    目前累積 11,205 次收藏、4,784 次回報，
+    374 筆優惠至少有一個人回報用過。</p>
+  <h3>做最多的類別，不是最多人想要的類別</h3>
+  <p>把每個類別的<b>供給占比</b>（優惠數）減掉<b>需求占比</b>（收藏數），
+    就看得出選題有沒有押對。正的是想要的人比供給多，負的是做太多。</p>
+  <svg class="chart" viewBox="0 0 720 300" role="img" aria-label="各類別的需求占比減供給占比">
+<line class="grid" x1="378.0" y1="20" x2="378.0" y2="272"/>
+<text class="tick" x="378.0" y="288" text-anchor="middle">0</text>
+<line class="grid" x1="521.0" y1="20" x2="521.0" y2="272"/>
+<text class="tick" x="521.0" y="288" text-anchor="middle">5</text>
+<line class="grid" x1="235.0" y1="20" x2="235.0" y2="272"/>
+<text class="tick" x="235.0" y="288" text-anchor="middle">-5</text>
+<line class="grid" x1="664.0" y1="20" x2="664.0" y2="272"/>
+<text class="tick" x="664.0" y="288" text-anchor="middle">10</text>
+<line class="grid" x1="92.0" y1="20" x2="92.0" y2="272"/>
+<text class="tick" x="92.0" y="288" text-anchor="middle">-10</text>
+<text class="reflbl" x="384.0" y="12">供給不足（該補）</text>
+<text class="reflbl" x="372.0" y="12" text-anchor="end">供給過剩</text>
+<g class="row"><title>餐廳：6 pp</title>
+<text class="lbl" x="84" y="33" text-anchor="end">餐廳</text>
+<path class="bar" d="M378.0,20.0 H545.6 A4,4 0 0 1 549.6,24.0 V32.0 A4,4 0 0 1 545.6,36.0 H378.0 Z"/>
+<text class="val" x="555.6" y="33" text-anchor="start">6 pp</text>
+</g>
+<g class="row"><title>零售美妝：6 pp</title>
+<text class="lbl" x="84" y="61" text-anchor="end">零售美妝</text>
+<path class="bar" d="M378.0,48.0 H545.6 A4,4 0 0 1 549.6,52.0 V60.0 A4,4 0 0 1 545.6,64.0 H378.0 Z"/>
+<text class="val" x="555.6" y="61" text-anchor="start">6 pp</text>
+</g>
+<g class="row"><title>飲料：4.5 pp</title>
+<text class="lbl" x="84" y="89" text-anchor="end">飲料</text>
+<path class="bar" d="M378.0,76.0 H502.7 A4,4 0 0 1 506.7,80.0 V88.0 A4,4 0 0 1 502.7,92.0 H378.0 Z"/>
+<text class="val" x="512.7" y="89" text-anchor="start">4.5 pp</text>
+</g>
+<g class="row"><title>速食：0.2 pp</title>
+<text class="lbl" x="84" y="117" text-anchor="end">速食</text>
+<path class="bar" d="M378.0,104.0 H379.7 A4,4 0 0 1 383.7,108.0 V116.0 A4,4 0 0 1 379.7,120.0 H378.0 Z"/>
+<text class="val" x="389.7" y="117" text-anchor="start">0.2 pp</text>
+</g>
+<g class="row"><title>娛樂樂園：-0.8 pp</title>
+<text class="lbl" x="84" y="145" text-anchor="end">娛樂樂園</text>
+<path class="bar bar-neg" d="M378.0,132 H359.1 A4,4 0 0 0 355.1,136 V144.0 A4,4 0 0 0 359.1,148 H378.0 Z"/>
+<text class="val" x="349.1" y="145" text-anchor="end">-0.8 pp</text>
+</g>
+<g class="row"><title>其他：-1.9 pp</title>
+<text class="lbl" x="84" y="173" text-anchor="end">其他</text>
+<path class="bar bar-neg" d="M378.0,160 H327.7 A4,4 0 0 0 323.7,164 V172.0 A4,4 0 0 0 327.7,176 H378.0 Z"/>
+<text class="val" x="317.7" y="173" text-anchor="end">-1.9 pp</text>
+</g>
+<g class="row"><title>燒肉：-3 pp</title>
+<text class="lbl" x="84" y="201" text-anchor="end">燒肉</text>
+<path class="bar bar-neg" d="M378.0,188 H296.2 A4,4 0 0 0 292.2,192 V200.0 A4,4 0 0 0 296.2,204 H378.0 Z"/>
+<text class="val" x="286.2" y="201" text-anchor="end">-3 pp</text>
+</g>
+<g class="row"><title>甜點烘焙：-3.6 pp</title>
+<text class="lbl" x="84" y="229" text-anchor="end">甜點烘焙</text>
+<path class="bar bar-neg" d="M378.0,216 H279.0 A4,4 0 0 0 275.0,220 V228.0 A4,4 0 0 0 279.0,232 H378.0 Z"/>
+<text class="val" x="269.0" y="229" text-anchor="end">-3.6 pp</text>
+</g>
+<g class="row"><title>火鍋：-7.3 pp</title>
+<text class="lbl" x="84" y="257" text-anchor="end">火鍋</text>
+<path class="bar bar-neg" d="M378.0,244 H173.2 A4,4 0 0 0 169.2,248 V256.0 A4,4 0 0 0 173.2,260 H378.0 Z"/>
+<text class="val" x="163.2" y="257" text-anchor="end">-7.3 pp</text>
+</g>
+<line class="axis" x1="378.0" y1="20" x2="378.0" y2="272"/>
+</svg>
+  <p><b>零售美妝是最明顯的缺口</b>：只佔 3.3%
+    的優惠數，卻吃掉 9.3% 的收藏，需求是供給的
+    2.8 倍。飲料是另一種缺口：供給 8.6%，
+    收藏沒有特別多，<b>回報占比卻有 25.3%</b>，
+    是最常真的被拿去用的類別。反過來 火鍋 供給
+    13.9%、收藏只有 6.6%，
+    下一批不用再往那邊找。</p>
+  <p>這跟我自己對使用者的判斷對得上（上班族、愛「賺到」的感覺、
+    會收專櫃滿額禮跟美妝的買多折），差別是現在有數字撐著，不只是直覺。</p>
+  <h3>兌換成功率 98%，維運清單只有四筆</h3>
+  <p>回報「我用過了」的時候可以標成功或失敗。整體成功率 98%，
+    回報三次以上、成功率低於 80% 的只有 4 筆——那幾筆是資料寫錯或品牌偷改規則，
+    排進下一輪複查就好。這個數字比我預期的高，代表人工整理的品質撐得住。</p>
+  <h3>還缺的那一半</h3>
+  <p>漏斗（到站 → 點開 → 外連 → 回報）跟回訪還沒有，因為事件表
+    <code>site_events</code> 是管理員限定，anon key 讀不到。回訪對這個產品特別重要：
+    生日一年一次，要看的是「隔年還會不會回來」，次日留存在這裡沒有意義。</p>
+  <p class="note">公開的只有彙總。個人層級的事件不離開資料庫，也不進版控。</p>
+</section><section class="card"><h2>決策紀錄（節錄）</h2><ol class="timeline"><li><div class="tl-head"><span class="tl-ver">v129</span><span class="tl-what">快取 10 分鐘 → 30 分鐘</span></div><p class="tl-why">成本分析的直接結果：上游請求一天 144 → 48 次。代價是新優惠最多晚 30 分鐘出現，對一個「一年用一次」的產品可以接受。</p></li><li><div class="tl-head"><span class="tl-ver">v132</span><span class="tl-what">優惠清單從 <code>select=*</code> 改成逐欄點名</span></div><p class="tl-why">量完才發現有五個欄位前端一個都沒讀。146 → 128 KB。順手加了一條測試：view 以後加欄位沒跟著改，測試就會紅。</p></li><li><div class="tl-head"><span class="tl-ver">v133</span><span class="tl-what">標「全台」但其實沒那麼全台的，改成實際有分店的縣市</span></div><p class="tl-why">門市資料跟優惠的 regions 欄位對不起來，是縣市覆蓋那一題算出來的。影響的是使用者在自己縣市看到的清單準不準。</p></li><li><div class="tl-head"><span class="tl-ver">v144</span><span class="tl-what">自動上架：老手的新投稿不用再等審核</span></div><p class="tl-why">投稿審核是人工瓶頸。先看投稿者過去的紀錄，再決定要不要擋。</p></li><li><div class="tl-head"><span class="tl-ver">v167</span><span class="tl-what">「我省下多少」收成一個數字，排到「我送出過的」前面</span></div><p class="tl-why">這個產品的核心價值是「幫你算省下多少」，版面要讓它第一眼就看得到。</p></li><li><div class="tl-head"><span class="tl-ver">v168–v172</span><span class="tl-what">資料庫停掉時，自動掛「系統更新中」、錯誤訊息一律中文</span></div><p class="tl-why">停權期間使用者看到的是英文錯誤。可靠性也是產品的一部分：壞掉的時候要壞得像話。</p></li></ol></section><section class="card"><h2>還沒做到的</h2>
   <ul class="plain">
-    <li><b>使用者行為那一段還是空的。</b>資料庫恢復之後要補完漏斗、回訪與內容供需。</li>
-    <li><b>優惠筆數要換成現在的。</b>這一頁用的是 2026-08 的快照（139 筆），
-      線上實際已經成長到好幾百筆，等得到資料就重跑。</li>
+    <li><b>漏斗與回訪還沒有。</b>事件表是管理員限定，要另外匯出才算得了
+      「到站 → 點開 → 外連 → 回報」這條路徑，以及隔年的回訪率。</li>
+    <li><b>門市資料只蓋到 117 個品牌。</b>Google Places 那份是 2026-09 抓的，
+      之後新增的品牌沒有門市數，所以 Q7 的散佈圖只有那批老品牌。</li>
     <li><b>縣市覆蓋沒有按人口標準化。</b>手上沒有可引用的人口資料，所以先不換算。</li>
   </ul>
 </section>
