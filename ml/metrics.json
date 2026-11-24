@@ -1,0 +1,673 @@
+{
+ "seed": 20261124,
+ "folds": 5,
+ "tasks": [
+  {
+   "task": "free_tier",
+   "title": "優惠型態",
+   "n": 575,
+   "n_classes": 4,
+   "baseline_accuracy": 49.0,
+   "models": {
+    "最大宗（baseline）": {
+     "accuracy": 49.0,
+     "macro_f1": 16.5
+    },
+    "ComplementNB": {
+     "accuracy": 78.4,
+     "macro_f1": 71.9
+    },
+    "羅吉斯迴歸": {
+     "accuracy": 80.0,
+     "macro_f1": 67.4
+    },
+    "羅吉斯迴歸（平衡類別）": {
+     "accuracy": 81.7,
+     "macro_f1": 74.8
+    },
+    "線性 SVM（校準過）": {
+     "accuracy": 81.2,
+     "macro_f1": 72.8
+    }
+   },
+   "best": "羅吉斯迴歸（平衡類別）",
+   "accuracy": 81.7,
+   "macro_f1": 74.8,
+   "labels": [
+    "買一送一",
+    "折扣",
+    "免費有低消",
+    "免費無低消"
+   ],
+   "raw_labels": [
+    "bogo",
+    "discount",
+    "free_min",
+    "free_no_min"
+   ],
+   "support": [
+    37,
+    207,
+    282,
+    49
+   ],
+   "per_class": [
+    {
+     "label": "買一送一",
+     "precision": 100.0,
+     "recall": 89.2,
+     "f1": 94.3,
+     "support": 37
+    },
+    {
+     "label": "折扣",
+     "precision": 81.0,
+     "recall": 86.5,
+     "f1": 83.6,
+     "support": 207
+    },
+    {
+     "label": "免費有低消",
+     "precision": 83.3,
+     "recall": 86.5,
+     "f1": 84.9,
+     "support": 282
+    },
+    {
+     "label": "免費無低消",
+     "precision": 50.0,
+     "recall": 28.6,
+     "f1": 36.4,
+     "support": 49
+    }
+   ],
+   "confusion": [
+    [
+     33,
+     3,
+     1,
+     0
+    ],
+    [
+     0,
+     179,
+     23,
+     5
+    ],
+    [
+     0,
+     29,
+     244,
+     9
+    ],
+    [
+     0,
+     10,
+     25,
+     14
+    ]
+   ],
+   "coverage": [
+    {
+     "threshold": 0.0,
+     "coverage": 100.0,
+     "accuracy": 81.7,
+     "n": 575
+    },
+    {
+     "threshold": 0.5,
+     "coverage": 79.1,
+     "accuracy": 88.6,
+     "n": 455
+    },
+    {
+     "threshold": 0.6,
+     "coverage": 64.0,
+     "accuracy": 92.4,
+     "n": 368
+    },
+    {
+     "threshold": 0.7,
+     "coverage": 43.8,
+     "accuracy": 94.8,
+     "n": 252
+    },
+    {
+     "threshold": 0.8,
+     "coverage": 25.2,
+     "accuracy": 96.6,
+     "n": 145
+    },
+    {
+     "threshold": 0.9,
+     "coverage": 6.8,
+     "accuracy": 97.4,
+     "n": 39
+    },
+    {
+     "threshold": 0.95,
+     "coverage": 2.6,
+     "accuracy": 100.0,
+     "n": 15
+    }
+   ],
+   "operating_point": {
+    "threshold": 0.6,
+    "coverage": 64.0,
+    "accuracy": 92.4,
+    "n": 368
+   }
+  },
+  {
+   "task": "membership_type",
+   "title": "入會方式",
+   "n": 581,
+   "n_classes": 6,
+   "baseline_accuracy": 30.3,
+   "models": {
+    "最大宗（baseline）": {
+     "accuracy": 30.3,
+     "macro_f1": 7.7
+    },
+    "ComplementNB": {
+     "accuracy": 54.2,
+     "macro_f1": 39.0
+    },
+    "羅吉斯迴歸": {
+     "accuracy": 57.3,
+     "macro_f1": 38.2
+    },
+    "羅吉斯迴歸（平衡類別）": {
+     "accuracy": 55.6,
+     "macro_f1": 39.5
+    },
+    "線性 SVM（校準過）": {
+     "accuracy": 57.0,
+     "macro_f1": 37.0
+    }
+   },
+   "best": "羅吉斯迴歸（平衡類別）",
+   "accuracy": 55.6,
+   "macro_f1": 39.5,
+   "labels": [
+    "品牌 APP",
+    "品牌自家會員",
+    "LINE 官方帳號",
+    "不用會員",
+    "Ocard 集點",
+    "其他"
+   ],
+   "raw_labels": [
+    "app",
+    "brand",
+    "line",
+    "none",
+    "ocard",
+    "其他"
+   ],
+   "support": [
+    111,
+    43,
+    88,
+    150,
+    176,
+    13
+   ],
+   "per_class": [
+    {
+     "label": "品牌 APP",
+     "precision": 66.0,
+     "recall": 57.7,
+     "f1": 61.5,
+     "support": 111
+    },
+    {
+     "label": "品牌自家會員",
+     "precision": 12.1,
+     "recall": 9.3,
+     "f1": 10.5,
+     "support": 43
+    },
+    {
+     "label": "LINE 官方帳號",
+     "precision": 40.3,
+     "recall": 28.4,
+     "f1": 33.3,
+     "support": 88
+    },
+    {
+     "label": "不用會員",
+     "precision": 68.7,
+     "recall": 74.7,
+     "f1": 71.6,
+     "support": 150
+    },
+    {
+     "label": "Ocard 集點",
+     "precision": 54.1,
+     "recall": 67.0,
+     "f1": 59.9,
+     "support": 176
+    },
+    {
+     "label": "其他",
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "support": 13
+    }
+   ],
+   "confusion": [
+    [
+     64,
+     7,
+     6,
+     10,
+     22,
+     2
+    ],
+    [
+     12,
+     4,
+     6,
+     5,
+     15,
+     1
+    ],
+    [
+     6,
+     8,
+     25,
+     14,
+     35,
+     0
+    ],
+    [
+     2,
+     4,
+     4,
+     112,
+     26,
+     2
+    ],
+    [
+     11,
+     5,
+     19,
+     20,
+     118,
+     3
+    ],
+    [
+     2,
+     5,
+     2,
+     2,
+     2,
+     0
+    ]
+   ],
+   "coverage": [
+    {
+     "threshold": 0.0,
+     "coverage": 100.0,
+     "accuracy": 55.6,
+     "n": 581
+    },
+    {
+     "threshold": 0.5,
+     "coverage": 40.4,
+     "accuracy": 76.2,
+     "n": 235
+    },
+    {
+     "threshold": 0.6,
+     "coverage": 25.5,
+     "accuracy": 82.4,
+     "n": 148
+    },
+    {
+     "threshold": 0.7,
+     "coverage": 18.2,
+     "accuracy": 87.7,
+     "n": 106
+    },
+    {
+     "threshold": 0.8,
+     "coverage": 10.5,
+     "accuracy": 93.4,
+     "n": 61
+    },
+    {
+     "threshold": 0.9,
+     "coverage": 5.0,
+     "accuracy": 96.6,
+     "n": 29
+    },
+    {
+     "threshold": 0.95,
+     "coverage": 0.5,
+     "accuracy": 100.0,
+     "n": 3
+    }
+   ],
+   "operating_point": {
+    "threshold": 0.8,
+    "coverage": 10.5,
+    "accuracy": 93.4,
+    "n": 61
+   }
+  },
+  {
+   "task": "category",
+   "title": "類別",
+   "n": 581,
+   "n_classes": 9,
+   "baseline_accuracy": 40.1,
+   "models": {
+    "最大宗（baseline）": {
+     "accuracy": 40.1,
+     "macro_f1": 6.4
+    },
+    "ComplementNB": {
+     "accuracy": 55.2,
+     "macro_f1": 44.4
+    },
+    "羅吉斯迴歸": {
+     "accuracy": 55.1,
+     "macro_f1": 33.7
+    },
+    "羅吉斯迴歸（平衡類別）": {
+     "accuracy": 57.8,
+     "macro_f1": 45.0
+    },
+    "線性 SVM（校準過）": {
+     "accuracy": 56.3,
+     "macro_f1": 32.7
+    }
+   },
+   "best": "羅吉斯迴歸（平衡類別）",
+   "accuracy": 57.8,
+   "macro_f1": 45.0,
+   "labels": [
+    "其他",
+    "娛樂樂園",
+    "火鍋",
+    "燒肉",
+    "甜點烘焙",
+    "速食",
+    "零售美妝",
+    "飲料",
+    "餐廳"
+   ],
+   "raw_labels": [
+    "其他",
+    "娛樂樂園",
+    "火鍋",
+    "燒肉",
+    "甜點烘焙",
+    "速食",
+    "零售美妝",
+    "飲料",
+    "餐廳"
+   ],
+   "support": [
+    49,
+    13,
+    81,
+    36,
+    74,
+    26,
+    19,
+    50,
+    233
+   ],
+   "per_class": [
+    {
+     "label": "其他",
+     "precision": 31.0,
+     "recall": 26.5,
+     "f1": 28.6,
+     "support": 49
+    },
+    {
+     "label": "娛樂樂園",
+     "precision": 50.0,
+     "recall": 7.7,
+     "f1": 13.3,
+     "support": 13
+    },
+    {
+     "label": "火鍋",
+     "precision": 77.9,
+     "recall": 74.1,
+     "f1": 75.9,
+     "support": 81
+    },
+    {
+     "label": "燒肉",
+     "precision": 58.5,
+     "recall": 66.7,
+     "f1": 62.3,
+     "support": 36
+    },
+    {
+     "label": "甜點烘焙",
+     "precision": 41.9,
+     "recall": 48.6,
+     "f1": 45.0,
+     "support": 74
+    },
+    {
+     "label": "速食",
+     "precision": 31.2,
+     "recall": 19.2,
+     "f1": 23.8,
+     "support": 26
+    },
+    {
+     "label": "零售美妝",
+     "precision": 27.8,
+     "recall": 26.3,
+     "f1": 27.0,
+     "support": 19
+    },
+    {
+     "label": "飲料",
+     "precision": 62.0,
+     "recall": 62.0,
+     "f1": 62.0,
+     "support": 50
+    },
+    {
+     "label": "餐廳",
+     "precision": 64.7,
+     "recall": 69.1,
+     "f1": 66.8,
+     "support": 233
+    }
+   ],
+   "confusion": [
+    [
+     13,
+     0,
+     3,
+     0,
+     8,
+     0,
+     5,
+     2,
+     18
+    ],
+    [
+     5,
+     1,
+     1,
+     1,
+     0,
+     0,
+     0,
+     0,
+     5
+    ],
+    [
+     2,
+     0,
+     60,
+     2,
+     1,
+     2,
+     0,
+     0,
+     14
+    ],
+    [
+     1,
+     0,
+     3,
+     24,
+     1,
+     0,
+     0,
+     0,
+     7
+    ],
+    [
+     3,
+     0,
+     2,
+     1,
+     36,
+     2,
+     3,
+     5,
+     22
+    ],
+    [
+     0,
+     0,
+     0,
+     0,
+     4,
+     5,
+     0,
+     4,
+     13
+    ],
+    [
+     6,
+     0,
+     0,
+     0,
+     3,
+     1,
+     5,
+     1,
+     3
+    ],
+    [
+     1,
+     0,
+     0,
+     0,
+     11,
+     0,
+     1,
+     31,
+     6
+    ],
+    [
+     11,
+     1,
+     8,
+     13,
+     22,
+     6,
+     4,
+     7,
+     161
+    ]
+   ],
+   "coverage": [
+    {
+     "threshold": 0.0,
+     "coverage": 100.0,
+     "accuracy": 57.8,
+     "n": 581
+    },
+    {
+     "threshold": 0.5,
+     "coverage": 22.9,
+     "accuracy": 82.7,
+     "n": 133
+    },
+    {
+     "threshold": 0.6,
+     "coverage": 13.8,
+     "accuracy": 91.2,
+     "n": 80
+    },
+    {
+     "threshold": 0.7,
+     "coverage": 9.0,
+     "accuracy": 94.2,
+     "n": 52
+    },
+    {
+     "threshold": 0.8,
+     "coverage": 4.0,
+     "accuracy": 87.0,
+     "n": 23
+    },
+    {
+     "threshold": 0.9,
+     "coverage": 0.0,
+     "accuracy": null,
+     "n": 0
+    },
+    {
+     "threshold": 0.95,
+     "coverage": 0.0,
+     "accuracy": null,
+     "n": 0
+    }
+   ],
+   "operating_point": {
+    "threshold": 0.6,
+    "coverage": 13.8,
+    "accuracy": 91.2,
+    "n": 80
+   }
+  }
+ ],
+ "ablations": [
+  {
+   "name": "把餐飲細類合併成一類",
+   "task": "category",
+   "before": {
+    "accuracy": 57.8,
+    "macro_f1": 45.0,
+    "n_classes": 9
+   },
+   "after": {
+    "accuracy": 69.5,
+    "macro_f1": 42.8,
+    "n_classes": 6
+   },
+   "note": "餐廳／火鍋／燒肉／速食在語意上互相包含，模型分不開很合理。合併之後準確率跳多少，就是「分類法切太細」要負的責任。"
+  },
+  {
+   "name": "把 membership 自由文字也餵進去（洩漏）",
+   "task": "membership_type",
+   "before": {
+    "accuracy": 55.6,
+    "macro_f1": 39.5
+   },
+   "after": {
+    "accuracy": 68.7,
+    "macro_f1": 54.4
+   },
+   "note": "這一欄幾乎把答案寫在臉上。數字好看，但投稿當下還沒有這一欄，上線就會掉回原形——這就是為什麼正式模型不收它。"
+  }
+ ]
+}

@@ -26,7 +26,8 @@ create table offers (
     conditions          text,             -- 低消、訂位等條件原文
     validity            text,             -- 券的使用期限原文
 
-    -- 取得門檻（編碼欄位）
+    -- 取得門檻
+    membership          text,             -- 原文，例如「麥當勞 APP 會員」
     membership_type     text,             -- none／app／line／ocard／brand（品牌自家會員）／card／tier
     membership_cost     text,             -- free／spend（要先消費）／tier（要升等）
     advance_days        integer,          -- 需提前幾天入會；0 = 當天辦當天用；null = 沒明訂

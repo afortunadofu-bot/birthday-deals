@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="zh-Hant"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>投稿欄位自動預填</title>
+<meta name="description" content="用 581 筆已標註的生日優惠訓練文字分類器，做投稿審核的欄位預填；含 baseline 對照、信心門檻與覆蓋率取捨、兩個消融實驗。">
+<style>
+:root{
+  color-scheme: light;
+  --page:#f9f9f7; --surface:#fcfcfb; --card:#ffffff;
+  --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+  --series-1:#2a78d6; --series-dim:#9ec5f4;
+  --good:#0ca30c; --warning:#fab219; --critical:#d03b3b;
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme=light])){
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19; --card:#1a1a19;
+    --ink:#f0efec; --ink-2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+    --series-1:#3987e5; --series-dim:#1c5cab;
+  }
+}
+:root[data-theme=dark]{
+  color-scheme: dark;
+  --page:#0d0d0d; --surface:#1a1a19; --card:#1a1a19;
+  --ink:#f0efec; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+  --series-1:#3987e5; --series-dim:#1c5cab;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--page); color:var(--ink);
+  font:15px/1.7 system-ui,-apple-system,"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:880px; margin:0 auto; padding:0 16px}
+.top{padding:34px 0 8px; position:relative}
+.brand{
+  display:inline-block; font-size:13px; letter-spacing:.06em; color:var(--muted);
+  text-decoration:none; margin-bottom:10px;
+}
+.brand:hover{color:var(--ink-2)}
+.top h1{font-size:30px; line-height:1.25; margin:0 0 8px; letter-spacing:-.01em}
+.sub{margin:0 0 12px; color:var(--ink-2); font-size:17px}
+.byline{margin:0; color:var(--muted); font-size:13px}
+.jump{display:flex; flex-wrap:wrap; gap:6px; margin:18px 0 0}
+.jump a{
+  font-size:13px; color:var(--ink-2); text-decoration:none;
+  border:1px solid var(--border); border-radius:999px; padding:3px 11px;
+}
+.jump a:hover{color:var(--ink); border-color:var(--axis)}
+.jump a.on{color:var(--card); background:var(--ink); border-color:var(--ink)}
+.theme{
+  position:absolute; top:34px; right:16px; width:34px; height:34px;
+  border-radius:999px; border:1px solid var(--border); background:var(--card);
+  color:var(--ink-2); font-size:15px; cursor:pointer;
+}
+main{padding:20px 0 40px}
+.card{
+  background:var(--card); border:1px solid var(--border); border-radius:14px;
+  padding:26px 26px 20px; margin:16px 0;
+}
+.card.intro{color:var(--ink-2)}
+.card p{margin:0 0 12px}
+.card p:last-child{margin-bottom:8px}
+.qno{font-size:12px; font-weight:600; letter-spacing:.08em; color:var(--series-1); margin-bottom:6px}
+.card h2{font-size:21px; line-height:1.35; margin:0 0 12px; letter-spacing:-.01em}
+.card h3{font-size:16px; margin:22px 0 8px}
+.answer{margin:0 0 18px; color:var(--ink-2)}
+.answer b{color:var(--ink)}
+.caption{margin:22px 0 6px; font-size:13px; color:var(--muted)}
+.note{margin:12px 0 0; font-size:13px; color:var(--muted)}
+.lede{font-size:17px; color:var(--ink-2)}
+.hero{display:flex; gap:18px; align-items:baseline; flex-wrap:wrap; margin:4px 0 22px}
+.hero-num{font-size:50px; font-weight:650; line-height:1; letter-spacing:-.02em}
+.hero-lbl{flex:1 1 280px; color:var(--ink-2); font-size:14px}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(168px,1fr)); gap:12px; margin:14px 0}
+.stat{border:1px solid var(--border); border-radius:10px; padding:12px 14px}
+.stat-label{font-size:12px; color:var(--muted)}
+.stat-value{font-size:24px; font-weight:620; line-height:1.3; margin:2px 0}
+.stat-sub{font-size:12px; color:var(--ink-2)}
+.stat[data-tone=warn] .stat-value{color:var(--critical)}
+.stat[data-tone=good] .stat-value{color:var(--good)}
+.pending{
+  display:inline-block; font-size:12px; padding:1px 9px; border-radius:999px;
+  border:1px dashed var(--axis); color:var(--muted); white-space:nowrap;
+}
+.case{
+  display:block; text-decoration:none; color:inherit;
+  background:var(--card); border:1px solid var(--border); border-radius:14px;
+  padding:20px 22px 16px; margin:12px 0;
+}
+.case:hover{border-color:var(--axis)}
+.case-head{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
+.case-name{font-size:19px; font-weight:620}
+.case-status{font-size:12px; color:var(--muted)}
+.case-line{margin:6px 0 10px; color:var(--ink-2)}
+.case-points{margin:0 0 12px; padding-left:20px; color:var(--ink-2); font-size:14px}
+.case-points li{margin-bottom:4px}
+.case-go{font-size:13px; color:var(--series-1)}
+table{border-collapse:collapse; width:100%; font-size:13px; margin:6px 0 2px}
+th,td{text-align:left; padding:6px 9px; border-bottom:1px solid var(--border); vertical-align:top}
+thead th{color:var(--muted); font-weight:600; font-size:12px; white-space:nowrap}
+td{color:var(--ink-2)}
+tbody th{font-weight:500; color:var(--ink)}
+table.metrics tbody th{white-space:nowrap}
+table.metrics td:last-child{font-variant-numeric:tabular-nums; white-space:nowrap}
+table.matrix{border-collapse:separate; border-spacing:2px}
+table.matrix td{text-align:center; color:var(--ink); border-radius:3px; border:0}
+table.matrix th{border:0; border-bottom:1px solid var(--border)}
+table.matrix td.on-fill{color:#fff}
+table.data td.num{font-variant-numeric:tabular-nums}
+.timeline{margin:8px 0 0; padding-left:0; list-style:none; counter-reset:none}
+.timeline li{border-left:2px solid var(--grid); padding:0 0 16px 16px; margin:0}
+.timeline li:last-child{padding-bottom:0}
+.tl-head{display:flex; gap:10px; align-items:baseline; flex-wrap:wrap}
+.tl-ver{
+  font-size:12px; font-variant-numeric:tabular-nums; color:var(--series-1);
+  font-weight:600; white-space:nowrap;
+}
+.tl-what{font-weight:560}
+.tl-why{margin:4px 0 0; color:var(--ink-2); font-size:14px}
+.pill{
+  display:inline-block; font-size:12px; padding:1px 9px; border-radius:999px;
+  border:1px solid var(--border); white-space:nowrap;
+}
+.pill[data-tone=critical]{color:var(--critical); border-color:var(--critical)}
+.pill[data-tone=warning]{color:#8a5a00; border-color:var(--warning)}
+:root[data-theme=dark] .pill[data-tone=warning]{color:var(--warning)}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme=light])) .pill[data-tone=warning]{color:var(--warning)}
+}
+.pill[data-tone=good]{color:var(--good); border-color:var(--good)}
+.chart{width:100%; height:auto; display:block; margin:2px 0 4px; overflow:visible}
+.chart .grid{stroke:var(--grid); stroke-width:1}
+.chart .axis{stroke:var(--axis); stroke-width:1}
+.chart .bar{fill:var(--series-1)}
+.chart .bar-dim{fill:var(--series-dim)}
+.chart .bar-neg{fill:#e34948}
+:root[data-theme=dark] .chart .bar-neg{fill:#e66767}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme=light])) .chart .bar-neg{fill:#e66767}
+}
+.chart .dot{fill:var(--series-1); stroke:var(--card); stroke-width:2}
+.chart .row:hover .bar,.chart .row:hover .dot{filter:brightness(1.12)}
+.chart .row:hover .dot{r:6}
+.chart text{font:12px/1 system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif}
+.chart .lbl{fill:var(--ink-2)}
+.chart .sublbl,.chart .tick,.chart .axlbl{fill:var(--muted); font-size:11px}
+.chart .tick{font-variant-numeric:tabular-nums}
+.chart .val{fill:var(--ink-2); font-variant-numeric:tabular-nums}
+.chart .anno{fill:var(--ink-2); font-size:11px}
+.chart .refline{stroke:var(--axis); stroke-width:1}
+.chart .reflbl{fill:var(--muted); font-size:11px}
+.foot{margin-top:18px; border-top:1px solid var(--border); padding-top:12px}
+details{margin:6px 0}
+summary{
+  cursor:pointer; font-size:13px; color:var(--ink-2); list-style:none;
+  display:flex; gap:8px; align-items:center;
+}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸"; color:var(--muted); font-size:11px}
+details[open] summary::before{content:"▾"}
+summary code{font-size:12px; color:var(--muted)}
+pre{
+  background:var(--page); border:1px solid var(--border); border-radius:8px;
+  padding:14px; overflow-x:auto; margin:8px 0 0;
+}
+pre code,code{font:12.5px/1.65 ui-monospace,SFMono-Regular,Consolas,"Noto Sans Mono",monospace}
+code{color:var(--ink-2)}
+ul.plain{margin:0; padding-left:20px; color:var(--ink-2)}
+ul.plain li{margin-bottom:9px}
+ul.plain b{color:var(--ink)}
+.foot-note{color:var(--muted); font-size:12px; padding-bottom:40px}
+@media (max-width:620px){
+  .card{padding:20px 16px 16px}
+  .top h1{font-size:25px}
+  .hero-num{font-size:40px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html">小數據所</a>
+    <h1>投稿欄位自動預填</h1>
+    <p class="sub">把人工判斷的三個欄位交給分類器，沒把握的留白——以及兩個做不起來的任務。</p>
+    <p class="byline">資料 575 筆　·　scikit-learn ＋ 五折交叉驗證　·　更新 2026-11-24</p>
+    <nav class="jump"><a href="index.html">首頁</a><a href="birthday-deals.html">壽星日</a><a href="bandary.html">Bandary</a><a href="relatestats.html">RelateStats</a><a href="ml-autofill.html" class="on">ML 預填</a><a href="sql-report.html">SQL 報告</a></nav>
+    <button class="theme" type="button" aria-label="切換深淺色">◐</button>
+  </div>
+</header>
+<main class="wrap">
+<section class="card">
+  <p class="lede">壽星日的優惠有一部分是使用者投稿的。送進來是一段自由文字，
+    但資料庫裡「優惠型態／入會方式／類別」三欄是編碼過的選項，現在靠人一筆一筆判斷。
+    這個模型的工作不是取代判斷，是<b>把有把握的那些先填好</b>，其餘留白。</p>
+  <p>訓練資料是 575 筆已經標好的優惠，輸入只用投稿當下就有的東西：
+    品牌名、優惠內容、條件。五折交叉驗證，所有數字都是 out-of-fold 算的。</p>
+</section><section class="card"><h2>結果：三個任務，差很多</h2>
+  <p>baseline 是「永遠猜最大宗的那一類」。581 筆是小資料，不先釘住這條線，
+    很容易把「猜對多數類」當成學會了。三個任務都贏過 baseline，但贏的幅度差很多。</p>
+  <table class="metrics"><thead><tr><th>欄位</th><th>資料</th><th>baseline</th><th>準確率</th><th>macro-F1</th><th>自動填覆蓋率</th><th>自動填準確率</th></tr></thead><tbody><tr><th scope="row">優惠型態</th><td>575 筆 / 4 類</td><td>49.0%</td><td><b>81.7%</b></td><td>74.8</td><td>64.0%</td><td>92.4%</td></tr><tr><th scope="row">入會方式</th><td>581 筆 / 6 類</td><td>30.3%</td><td><b>55.6%</b></td><td>39.5</td><td>10.5%</td><td>93.4%</td></tr><tr><th scope="row">類別</th><td>581 筆 / 9 類</td><td>40.1%</td><td><b>57.8%</b></td><td>45.0</td><td>13.8%</td><td>91.2%</td></tr></tbody></table>
+  <p class="caption">比 baseline 多出來的百分點</p>
+  <svg class="chart" viewBox="0 0 720 118" role="img" aria-label="三個任務比 baseline 進步多少" preserveAspectRatio="xMidYMid meet">
+<line class="grid" x1="92.0" y1="6" x2="92.0" y2="90"/>
+<text class="tick" x="92.0" y="106" text-anchor="middle">0</text>
+<line class="grid" x1="235.0" y1="6" x2="235.0" y2="90"/>
+<text class="tick" x="235.0" y="106" text-anchor="middle">10</text>
+<line class="grid" x1="378.0" y1="6" x2="378.0" y2="90"/>
+<text class="tick" x="378.0" y="106" text-anchor="middle">20</text>
+<line class="grid" x1="521.0" y1="6" x2="521.0" y2="90"/>
+<text class="tick" x="521.0" y="106" text-anchor="middle">30</text>
+<line class="grid" x1="664.0" y1="6" x2="664.0" y2="90"/>
+<text class="tick" x="664.0" y="106" text-anchor="middle">40</text>
+<g class="row"><title>優惠型態：32 pp</title>
+<text class="lbl" x="84" y="19" text-anchor="end">優惠型態</text>
+<path class="bar" d="M92.0,6.0 H555.6 A4,4 0 0 1 559.6,10.0 V18.0 A4,4 0 0 1 555.6,22.0 H92.0 Z"/>
+<text class="val" x="565.6" y="19">32 pp</text>
+</g>
+<g class="row"><title>入會方式：25 pp</title>
+<text class="lbl" x="84" y="47" text-anchor="end">入會方式</text>
+<path class="bar" d="M92.0,34.0 H449.8 A4,4 0 0 1 453.8,38.0 V46.0 A4,4 0 0 1 449.8,50.0 H92.0 Z"/>
+<text class="val" x="459.8" y="47">25 pp</text>
+</g>
+<g class="row"><title>類別：17 pp</title>
+<text class="lbl" x="84" y="75" text-anchor="end">類別</text>
+<path class="bar" d="M92.0,62.0 H341.1 A4,4 0 0 1 345.1,66.0 V74.0 A4,4 0 0 1 341.1,78.0 H92.0 Z"/>
+<text class="val" x="351.1" y="75">17 pp</text>
+</g>
+<line class="axis" x1="92" y1="6" x2="92" y2="90"/>
+</svg>
+  <p>模型本身是字元 n-gram TF-IDF ＋ 羅吉斯迴歸（平衡類別）。
+    比過 ComplementNB 跟校準過的線性 SVM，三個任務都是這組 macro-F1 最高。
+    不斷詞是刻意的：中文斷詞器對「大麥克或勁辣雞腿堡＋小薯$89」這種混了品名、
+    數字、符號的句子常切壞，字元 2–4 gram 反而穩。</p>
+</section><section class="card"><h2>真正要挑的是門檻，不是準確率</h2>
+  <p>模型不需要每一筆都答。只要「有把握的那些」夠準，就可以自動預填，
+    其餘留白給人。所以真正要挑的不是準確率，是<b>門檻</b>：
+    信心超過多少才敢填。</p>
+  <p class="caption">優惠型態：每一點是一個信心門檻，橫軸是會自動填的比例，
+    縱軸是這些自動填的準確率</p>
+  <svg class="chart" viewBox="0 0 720 340" role="img" aria-label="覆蓋率與準確率的取捨">
+<line class="grid" x1="52" y1="296.0" x2="704" y2="296.0"/>
+<text class="tick" x="44" y="300.0" text-anchor="end">0</text>
+<line class="grid" x1="52" y1="229.5" x2="704" y2="229.5"/>
+<text class="tick" x="44" y="233.5" text-anchor="end">25</text>
+<line class="grid" x1="52" y1="163.0" x2="704" y2="163.0"/>
+<text class="tick" x="44" y="167.0" text-anchor="end">50</text>
+<line class="grid" x1="52" y1="96.5" x2="704" y2="96.5"/>
+<text class="tick" x="44" y="100.5" text-anchor="end">75</text>
+<line class="grid" x1="52" y1="30.0" x2="704" y2="30.0"/>
+<text class="tick" x="44" y="34.0" text-anchor="end">100</text>
+<text class="tick" x="60.0" y="314" text-anchor="middle">0</text>
+<text class="tick" x="183.8" y="314" text-anchor="middle">20</text>
+<text class="tick" x="307.6" y="314" text-anchor="middle">40</text>
+<text class="tick" x="431.4" y="314" text-anchor="middle">60</text>
+<text class="tick" x="555.1" y="314" text-anchor="middle">80</text>
+<text class="tick" x="678.9" y="314" text-anchor="middle">100</text>
+<g class="row"><title>門檻 0.0：100 家店、面額 81 元</title><circle class="dot" cx="678.9" cy="78.7" r="4.5"/></g>
+<g class="row"><title>門檻 0.5：79 家店、面額 88 元</title><circle class="dot" cx="549.6" cy="60.3" r="4.5"/></g>
+<g class="row"><title>門檻 0.6：64 家店、面額 92 元</title><circle class="dot" cx="456.1" cy="50.2" r="4.5"/></g>
+<g class="row"><title>門檻 0.7：43 家店、面額 94 元</title><circle class="dot" cx="331.1" cy="43.8" r="4.5"/></g>
+<g class="row"><title>門檻 0.8：25 家店、面額 96 元</title><circle class="dot" cx="216.0" cy="39.0" r="4.5"/></g>
+<g class="row"><title>門檻 0.9：6 家店、面額 97 元</title><circle class="dot" cx="102.1" cy="36.9" r="4.5"/></g>
+<g class="row"><title>門檻 0.95：2 家店、面額 100 元</title><circle class="dot" cx="76.1" cy="30.0" r="4.5"/></g>
+<text class="anno" x="447.1" y="42.2" text-anchor="end">門檻 0.6</text>
+<line class="axis" x1="52" y1="296" x2="704" y2="296"/>
+<text class="axlbl" x="704" y="334" text-anchor="end">覆蓋率（%）</text>
+<text class="axlbl" x="2" y="12">準確率（%）</text>
+</svg>
+  <p>選的是<b>門檻 0.6：64.0% 的投稿會被自動填，
+    這些填的 92.4% 是對的。</b>挑法是「自動填的至少九成正確之下，
+    覆蓋率最大」。九成是自己定的——預填錯一欄的代價是審稿的人改回來，不是災難；
+    如果這個欄位錯了會直接影響使用者，門檻要再拉高。</p>
+  <p>另外兩個欄位用同一條規則挑，結果是入會方式只敢填 10.5%、
+    類別只敢填 13.8%。這就是下一節的事。</p>
+</section><section class="card"><h2>兩件做不起來的事，以及為什麼</h2>
+  <h3>入會方式這個任務，不該用這組特徵做</h3>
+  <p>準確率 55.6%，比 baseline 的 30.3% 好，
+    但按門檻只敢自動填 10.5%——九成的投稿還是得人填。
+    原因很單純：<b>優惠文字裡通常根本沒寫怎麼入會</b>，模型只能從品牌名猜。</p>
+  <p>要證明這點可以做個反面實驗：把 <code>membership</code> 那欄自由文字
+    （「麥當勞 APP 會員」）也餵進去，準確率立刻從 55.6%
+    跳到 68.7%。但那是作弊——那一欄跟答案是
+    同一個人在同一個畫面填的，投稿當下還不存在。
+    <b>會跳 13.1
+    個百分點，正好說明這個資訊只能從別的地方來</b>，例如品牌官網或同集團既有品牌。</p>
+  <h3>類別的瓶頸是分類法，不是模型</h3>
+  <p>類別只有 57.8%。看混淆矩陣就知道錯在哪：火鍋、燒肉、速食、甜點
+    全部往「餐廳」跑。這四類在語意上互相包含——燒肉店也是餐廳，人在標的時候也會猶豫。</p>
+  <p>把餐廳／火鍋／燒肉／速食合併成「餐飲」再分一次，準確率從
+    57.8% 跳到 69.5%。
+    <b>那 11.7
+    個百分點是分類法要負的責任，不是模型不夠強。</b>
+    產品上的選擇因此變成：要嘛接受細類只能半自動，要嘛重新設計分類（例如主類＋子標籤）。</p>
+  <p class="caption">類別的混淆矩陣（橫軸是模型猜的，直軸是實際的；對角線才是對的）</p>
+  <table class="matrix"><thead><tr><th></th><th>其他</th><th>娛樂樂園</th><th>火鍋</th><th>燒肉</th><th>甜點烘焙</th><th>速食</th><th>零售美妝</th><th>飲料</th><th>餐廳</th></tr></thead><tbody><tr><th scope="row">其他</th><td style="background:rgba(42,120,214,0.18)">13</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.07)">3</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.13)">8</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.10)">5</td><td style="background:rgba(42,120,214,0.05)">2</td><td style="background:rgba(42,120,214,0.22)">18</td></tr><tr><th scope="row">娛樂樂園</th><td style="background:rgba(42,120,214,0.10)">5</td><td style="background:rgba(42,120,214,0.03)">1</td><td style="background:rgba(42,120,214,0.03)">1</td><td style="background:rgba(42,120,214,0.03)">1</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.10)">5</td></tr><tr><th scope="row">火鍋</th><td style="background:rgba(42,120,214,0.05)">2</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.48)">60</td><td style="background:rgba(42,120,214,0.05)">2</td><td style="background:rgba(42,120,214,0.03)">1</td><td style="background:rgba(42,120,214,0.05)">2</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.19)">14</td></tr><tr><th scope="row">燒肉</th><td style="background:rgba(42,120,214,0.03)">1</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.07)">3</td><td style="background:rgba(42,120,214,0.27)">24</td><td style="background:rgba(42,120,214,0.03)">1</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.12)">7</td></tr><tr><th scope="row">甜點烘焙</th><td style="background:rgba(42,120,214,0.07)">3</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.05)">2</td><td style="background:rgba(42,120,214,0.03)">1</td><td style="background:rgba(42,120,214,0.35)">36</td><td style="background:rgba(42,120,214,0.05)">2</td><td style="background:rgba(42,120,214,0.07)">3</td><td style="background:rgba(42,120,214,0.10)">5</td><td style="background:rgba(42,120,214,0.25)">22</td></tr><tr><th scope="row">速食</th><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.08)">4</td><td style="background:rgba(42,120,214,0.10)">5</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.08)">4</td><td style="background:rgba(42,120,214,0.18)">13</td></tr><tr><th scope="row">零售美妝</th><td style="background:rgba(42,120,214,0.11)">6</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.07)">3</td><td style="background:rgba(42,120,214,0.03)">1</td><td style="background:rgba(42,120,214,0.10)">5</td><td style="background:rgba(42,120,214,0.03)">1</td><td style="background:rgba(42,120,214,0.07)">3</td></tr><tr><th scope="row">飲料</th><td style="background:rgba(42,120,214,0.03)">1</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.16)">11</td><td style="background:rgba(42,120,214,0.00)">·</td><td style="background:rgba(42,120,214,0.03)">1</td><td style="background:rgba(42,120,214,0.32)">31</td><td style="background:rgba(42,120,214,0.11)">6</td></tr><tr><th scope="row">餐廳</th><td style="background:rgba(42,120,214,0.16)">11</td><td style="background:rgba(42,120,214,0.03)">1</td><td style="background:rgba(42,120,214,0.13)">8</td><td style="background:rgba(42,120,214,0.18)">13</td><td style="background:rgba(42,120,214,0.25)">22</td><td style="background:rgba(42,120,214,0.11)">6</td><td style="background:rgba(42,120,214,0.08)">4</td><td style="background:rgba(42,120,214,0.12)">7</td><td class="on-fill" style="background:rgba(42,120,214,0.92)">161</td></tr></tbody></table>
+</section><section class="card"><h2>產品上怎麼用</h2>
+  <ul class="plain">
+    <li><b>預填，不自動送出。</b>模型填好的欄位還是要人按確認。信心低於門檻的留白，
+      不要填一個「看起來合理」的值——審稿的人會信它。</li>
+    <li><b>把信心值留在資料庫裡。</b>之後可以回頭算「模型填的 vs 人改掉的」，
+      那是真正的線上指標，比交叉驗證誠實。</li>
+    <li><b>定期重訓。</b>資料每個月都在長，重訓一次 20 秒。</li>
+    <li><b>不要拿去跑別的網站的優惠。</b>訓練資料全部是壽星日自己的寫法。</li>
+  </ul>
+  <p class="note">完整的限制與不該拿它做什麼，寫在
+    <a href="https://github.com/afortunadofu-bot/birthday-deals/blob/main/ml/MODEL_CARD.md">model
+    card</a>。程式在 <code>ml/</code>：<code>dataset.py</code>、<code>train.py</code>、
+    <code>predict.py</code>，裝好 scikit-learn 就能重跑。</p>
+</section>
+</main>
+<footer class="wrap foot-note">
+  <p>小數據所｜產品分析作品集　·　內容與圖表由 <code>analysis/</code> 的 Python 產生，
+     資料換一版重跑就會更新。</p>
+</footer>
+<script>
+(function () {
+  var btn = document.querySelector('.theme'), root = document.documentElement;
+  try { var s = localStorage.getItem('sdl-theme'); if (s) root.dataset.theme = s; } catch (e) {}
+  btn.addEventListener('click', function () {
+    var dark = root.dataset.theme === 'dark' ||
+      (!root.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('sdl-theme', root.dataset.theme); } catch (e) {}
+  });
+})();
+</script>
+</body></html>

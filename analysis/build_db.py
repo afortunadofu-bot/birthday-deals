@@ -70,7 +70,8 @@ def rows_for_offer(o):
     offer = (
         o["id"], norm(o["brand"]), o.get("groupName"), o["category"],
         o.get("offer") or "", o.get("conditions"), o.get("validity"),
-        o.get("membershipType"), o.get("membershipCost"), o.get("advanceDays"),
+        o.get("membership"), o.get("membershipType"), o.get("membershipCost"),
+        o.get("advanceDays"),
         o.get("advanceNote"),
         o.get("freeTier"), o.get("valueTwd"), o.get("timing"),
         o.get("validityType") or "rolling", o.get("validFrom"), o.get("validUntil"),

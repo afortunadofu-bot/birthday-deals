@@ -14,6 +14,7 @@ NAV = [
     ("birthday-deals.html", "壽星日"),
     ("bandary.html", "Bandary"),
     ("relatestats.html", "RelateStats"),
+    ("ml-autofill.html", "ML 預填"),
     ("sql-report.html", "SQL 報告"),
 ]
 

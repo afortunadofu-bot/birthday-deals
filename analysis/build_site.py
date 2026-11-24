@@ -52,7 +52,7 @@ def home(f):
         th.stat("線上產品", "3 個", "壽星日（網站＋App 殼）、Bandary、RelateStats"),
         th.stat("壽星日版本", "154 個", f'{f["first_day"]} 開站到現在，{f["commits"]} 個 commit'),
         th.stat("回歸測試", "92 支", "每個版本上線前全部跑過"),
-        th.stat("分析過的優惠", f'{f["n_offers"]} 筆', "加上 4,734 家門市的縣市分布"),
+        th.stat("分析過的優惠", f'{f["n_offers"]} 筆', "加上 4,734 家門市與 11,205 次收藏"),
     ])
 
     cases = "".join([
@@ -77,6 +77,13 @@ def home(f):
              "拿不到行為資料的產品，怎麼知道做得好不好",
              "只能靠 Play Console、評論與許願板"],
             "沒有遙測的案例"),
+        th.case_card(
+            "ml-autofill.html", "投稿欄位自動預填",
+            "拿 581 筆已標註的優惠訓練文字分類器，讓投稿審核先填好三個欄位。",
+            ["優惠型態：準確率 81.7%，六成的投稿可以自動填、其中 92.4% 正確",
+             "入會方式做不起來——優惠文字裡根本沒寫怎麼入會，所以只敢填一成",
+             "類別的瓶頸是分類法：把餐飲細類合併，準確率從 57.8% 跳到 69.5%"],
+            "機器學習"),
     ])
 
     how = """
@@ -124,6 +131,9 @@ def home(f):
       按「真的會發生」排風險順序，再決定砍哪一條。</li>
     <li><b>資料治理。</b>來源分級（官方／媒體／部落格／社群）、複查延遲、
       過期自動下架，都是從分析結果長出來的規則。</li>
+    <li><b>機器學習。</b>文字分類（TF-IDF ＋ 羅吉斯迴歸）、類別不平衡、
+      交叉驗證與 baseline 對照、信心門檻換覆蓋率、消融實驗抓資料洩漏，
+      以及一張寫清楚弱點的 model card。重點不是模型多強，是知道哪些任務不該做。</li>
   </ul>
 """
 
@@ -442,6 +452,141 @@ def relatestats():
     )
 
 
+# ───────────────────── ML：投稿欄位自動預填 ─────────────────────
+
+ML_METRICS = HERE.parent / "ml" / "metrics.json"
+
+
+def ml_autofill():
+    """讀 ../ml/metrics.json 產出案例頁；還沒訓練過就不產這一頁。"""
+    if not ML_METRICS.exists():
+        return None
+    import json
+    m = json.loads(ML_METRICS.read_text(encoding="utf-8"))
+    tasks = {x["task"]: x for x in m["tasks"]}
+    ab = {a["task"]: a for a in m.get("ablations", [])}
+    ft, mt, cat = tasks["free_tier"], tasks["membership_type"], tasks["category"]
+
+    intro = f"""
+  <p class="lede">壽星日的優惠有一部分是使用者投稿的。送進來是一段自由文字，
+    但資料庫裡「優惠型態／入會方式／類別」三欄是編碼過的選項，現在靠人一筆一筆判斷。
+    這個模型的工作不是取代判斷，是<b>把有把握的那些先填好</b>，其餘留白。</p>
+  <p>訓練資料是 {ft["n"]} 筆已經標好的優惠，輸入只用投稿當下就有的東西：
+    品牌名、優惠內容、條件。五折交叉驗證，所有數字都是 out-of-fold 算的。</p>
+"""
+
+    rows = []
+    for x in (ft, mt, cat):
+        op = x.get("operating_point") or {}
+        rows.append(
+            f'<tr><th scope="row">{th.esc(x["title"])}</th>'
+            f'<td>{x["n"]} 筆 / {x["n_classes"]} 類</td>'
+            f'<td>{x["baseline_accuracy"]}%</td>'
+            f'<td><b>{x["accuracy"]}%</b></td>'
+            f'<td>{x["macro_f1"]}</td>'
+            f'<td>{op.get("coverage", "—")}%</td>'
+            f'<td>{op.get("accuracy", "—")}%</td></tr>')
+    table = ('<table class="metrics"><thead><tr><th>欄位</th><th>資料</th>'
+             '<th>baseline</th><th>準確率</th><th>macro-F1</th>'
+             '<th>自動填覆蓋率</th><th>自動填準確率</th></tr></thead>'
+             f'<tbody>{"".join(rows)}</tbody></table>')
+
+    lift = [{"t": x["title"], "lift": round(x["accuracy"] - x["baseline_accuracy"], 1)}
+            for x in (ft, mt, cat)]
+    result = f"""
+  <p>baseline 是「永遠猜最大宗的那一類」。581 筆是小資料，不先釘住這條線，
+    很容易把「猜對多數類」當成學會了。三個任務都贏過 baseline，但贏的幅度差很多。</p>
+  {table}
+  <p class="caption">比 baseline 多出來的百分點</p>
+  {ch.hbar(lift, label="t", value="lift", unit=" pp", label_w=84,
+           title="三個任務比 baseline 進步多少")}
+  <p>模型本身是字元 n-gram TF-IDF ＋ 羅吉斯迴歸（平衡類別）。
+    比過 ComplementNB 跟校準過的線性 SVM，三個任務都是這組 macro-F1 最高。
+    不斷詞是刻意的：中文斷詞器對「大麥克或勁辣雞腿堡＋小薯$89」這種混了品名、
+    數字、符號的句子常切壞，字元 2–4 gram 反而穩。</p>
+"""
+
+    op = ft["operating_point"]
+    pts = [{"cov": c["coverage"], "acc": c["accuracy"], "th": f'門檻 {c["threshold"]}'}
+           for c in ft["coverage"] if c["accuracy"] is not None]
+    tradeoff = f"""
+  <p>模型不需要每一筆都答。只要「有把握的那些」夠準，就可以自動預填，
+    其餘留白給人。所以真正要挑的不是準確率，是<b>門檻</b>：
+    信心超過多少才敢填。</p>
+  <p class="caption">優惠型態：每一點是一個信心門檻，橫軸是會自動填的比例，
+    縱軸是這些自動填的準確率</p>
+  {ch.scatter(pts, x="cov", y="acc", name="th", log_x=False,
+              xlabel="覆蓋率（%）", ylabel="準確率（%）",
+              xticks=[0, 20, 40, 60, 80, 100],
+              annotate=[(f'門檻 {op["threshold"]}', -9, -8)],
+              title="覆蓋率與準確率的取捨")}
+  <p>選的是<b>門檻 {op["threshold"]}：{op["coverage"]}% 的投稿會被自動填，
+    這些填的 {op["accuracy"]}% 是對的。</b>挑法是「自動填的至少九成正確之下，
+    覆蓋率最大」。九成是自己定的——預填錯一欄的代價是審稿的人改回來，不是災難；
+    如果這個欄位錯了會直接影響使用者，門檻要再拉高。</p>
+  <p>另外兩個欄位用同一條規則挑，結果是入會方式只敢填 {mt["operating_point"]["coverage"]}%、
+    類別只敢填 {cat["operating_point"]["coverage"]}%。這就是下一節的事。</p>
+"""
+
+    cm_rows = []
+    for lab, row in zip(cat["labels"], cat["confusion"]):
+        d = {"真實": lab}
+        d.update({c: n for c, n in zip(cat["labels"], row)})
+        cm_rows.append(d)
+    honest = f"""
+  <h3>入會方式這個任務，不該用這組特徵做</h3>
+  <p>準確率 {mt["accuracy"]}%，比 baseline 的 {mt["baseline_accuracy"]}% 好，
+    但按門檻只敢自動填 {mt["operating_point"]["coverage"]}%——九成的投稿還是得人填。
+    原因很單純：<b>優惠文字裡通常根本沒寫怎麼入會</b>，模型只能從品牌名猜。</p>
+  <p>要證明這點可以做個反面實驗：把 <code>membership</code> 那欄自由文字
+    （「麥當勞 APP 會員」）也餵進去，準確率立刻從 {ab["membership_type"]["before"]["accuracy"]}%
+    跳到 {ab["membership_type"]["after"]["accuracy"]}%。但那是作弊——那一欄跟答案是
+    同一個人在同一個畫面填的，投稿當下還不存在。
+    <b>會跳 {round(ab["membership_type"]["after"]["accuracy"] - ab["membership_type"]["before"]["accuracy"], 1)}
+    個百分點，正好說明這個資訊只能從別的地方來</b>，例如品牌官網或同集團既有品牌。</p>
+  <h3>類別的瓶頸是分類法，不是模型</h3>
+  <p>類別只有 {cat["accuracy"]}%。看混淆矩陣就知道錯在哪：火鍋、燒肉、速食、甜點
+    全部往「餐廳」跑。這四類在語意上互相包含——燒肉店也是餐廳，人在標的時候也會猶豫。</p>
+  <p>把餐廳／火鍋／燒肉／速食合併成「餐飲」再分一次，準確率從
+    {ab["category"]["before"]["accuracy"]}% 跳到 {ab["category"]["after"]["accuracy"]}%。
+    <b>那 {round(ab["category"]["after"]["accuracy"] - ab["category"]["before"]["accuracy"], 1)}
+    個百分點是分類法要負的責任，不是模型不夠強。</b>
+    產品上的選擇因此變成：要嘛接受細類只能半自動，要嘛重新設計分類（例如主類＋子標籤）。</p>
+  <p class="caption">類別的混淆矩陣（橫軸是模型猜的，直軸是實際的；對角線才是對的）</p>
+  {ch.heat_table(cm_rows, row_label="真實", cols=[(c, c) for c in cat["labels"]])}
+"""
+
+    use = """
+  <ul class="plain">
+    <li><b>預填，不自動送出。</b>模型填好的欄位還是要人按確認。信心低於門檻的留白，
+      不要填一個「看起來合理」的值——審稿的人會信它。</li>
+    <li><b>把信心值留在資料庫裡。</b>之後可以回頭算「模型填的 vs 人改掉的」，
+      那是真正的線上指標，比交叉驗證誠實。</li>
+    <li><b>定期重訓。</b>資料每個月都在長，重訓一次 20 秒。</li>
+    <li><b>不要拿去跑別的網站的優惠。</b>訓練資料全部是壽星日自己的寫法。</li>
+  </ul>
+  <p class="note">完整的限制與不該拿它做什麼，寫在
+    <a href="https://github.com/afortunadofu-bot/birthday-deals/blob/main/ml/MODEL_CARD.md">model
+    card</a>。程式在 <code>ml/</code>：<code>dataset.py</code>、<code>train.py</code>、
+    <code>predict.py</code>，裝好 scikit-learn 就能重跑。</p>
+"""
+
+    body = (th.card("", intro)
+            + th.card("結果：三個任務，差很多", result)
+            + th.card("真正要挑的是門檻，不是準確率", tradeoff)
+            + th.card("兩件做不起來的事，以及為什麼", honest)
+            + th.card("產品上怎麼用", use))
+    return th.page(
+        filename="ml-autofill.html",
+        title="投稿欄位自動預填",
+        lead="把人工判斷的三個欄位交給分類器，沒把握的留白——以及兩個做不起來的任務。",
+        desc="用 581 筆已標註的生日優惠訓練文字分類器，做投稿審核的欄位預填；"
+             "含 baseline 對照、信心門檻與覆蓋率取捨、兩個消融實驗。",
+        meta=f"資料 {ft['n']} 筆　·　scikit-learn ＋ 五折交叉驗證　·　更新 {STAMP}",
+        body=body,
+    )
+
+
 # ─────────────────────── 組裝 ───────────────────────
 
 def main():
@@ -492,6 +637,9 @@ def main():
         "bandary.html": bandary(),
         "relatestats.html": relatestats(),
     }
+    ml_page = ml_autofill()
+    if ml_page:
+        pages["ml-autofill.html"] = ml_page
     for name, doc in pages.items():
         (DOCS / name).write_text(doc, encoding="utf-8")
         print(f"寫好 docs/{name}（{len(doc):,} 字元）")
