@@ -371,6 +371,33 @@ def bandary():
   <p>跟壽星日一樣是一個人做完：企劃、Android 開發、雲端設定、上架。
     這一頁講的是「這個產品要怎麼知道做得好不好」。</p>
 """
+    work = f"""
+  {th.stats([
+      th.stat("已上架", "1.121.2", "Google Play，2026-05 開始做"),
+      th.stat("程式規模", "59,526 行", "197 個 Kotlin 檔（2026-11-25 實測）"),
+      th.stat("回饋管道", "App 內建", "表單直接寫進 Firestore，含 1–5 星滿意度"),
+      th.stat("後台", "自己做的", "使用者數、活躍度、Pro 轉換、內容統計"),
+  ])}
+  <h3>回饋是自己收的，不是等 Play 評論</h3>
+  <p>Play 的評論量少又慢，而且只有已經很不爽或很喜歡的人會留。所以 App 裡做了
+    「我的 → 支持與回饋 → 意見回饋」，送出直接寫進 Firestore 的
+    <code>feedback</code>：分類（bug／功能／其他）、內容、<b>1–5 星滿意度</b>、
+    選填聯絡方式。滿意度那一欄是刻意加的——沒有它，回饋只能讀，不能算。</p>
+  <p>收集方式跟統計口徑寫在 <code>docs/USER_FEEDBACK.md</code>：
+    平均滿意度怎麼算、NPS 近似值怎麼換算、每期要更新哪幾節，
+    還有一張「使用者說了什麼 → 哪一版改了什麼 → 之後反應」的迭代表。
+    <b>表格目前是空的</b>，因為還沒有匯出資料來填——這就是這一頁待補的那一塊。</p>
+  <h3>產出的不只是 App</h3>
+  <ul class="plain">
+    <li><code>PORTFOLIO.md</code>　產品定位、功能總覽、架構、技術決策、專案數據</li>
+    <li><code>USER_FEEDBACK.md</code>　回饋收集與滿意度追蹤的方法</li>
+    <li><code>ROADMAP.md</code>　功能排序</li>
+    <li><code>PLAY_STORE_COPY.md</code>、<code>COPY_GUIDE.md</code>　商店文案與全站文案規範</li>
+    <li><code>CONSOLE_SETUP.md</code>、<code>PLAY_RELEASE.md</code>　雲端設定與上架流程</li>
+  </ul>
+  <p class="note">App 連結：<a href="https://play.google.com/store/apps/details?id=com.bandary.app">Google Play</a></p>
+"""
+
     frame = th.metric_table([
         ("核心行為", "有沒有真的拿它記錄演出（新增場次的人數／頻率）",
          th.pending("Firebase 匯出")),
@@ -402,6 +429,7 @@ def bandary():
   <p class="note">拿到之後這一頁會長成跟壽星日那頁一樣：指標框架 → 分析 → 決策 → 回看。</p>
 """
     body = (th.card("", intro)
+            + th.card("已經做出來的東西", work)
             + th.card("要衡量什麼", frame)
             + th.card("為什麼不看下載數", why)
             + th.card("還缺什麼才寫得下去", need))
@@ -423,6 +451,36 @@ def relatestats():
     算成數字，做社交人格與數位健康分析。不 root、不碰任何資料庫，
     只靠通知監聽與無障礙服務兩個引擎。已在 Google Play 上架。</p>
 """
+    work = f"""
+  {th.stats([
+      th.stat("已上架", "1.1.12", "Google Play，versionCode 119"),
+      th.stat("程式規模", "16,513 行", "Kotlin + Compose（2026-11-25 實測）"),
+      th.stat("網路權限", "沒有", "連 INTERNET 都沒宣告"),
+      th.stat("隱私權政策", "公開頁", "另開一個 repo 放，App 內可直接開"),
+  ])}
+  <h3>一條規則，牽動五份文件</h3>
+  <p>「資料傳不出這支手機」不是一句行銷話，是同時寫在五個地方的承諾：</p>
+  <ul class="plain">
+    <li>隱私權政策（<code>docs/privacy-policy.html</code>，另有公開網頁版）</li>
+    <li>Play Console 的資料安全性（Data safety）申報</li>
+    <li>無障礙 API 使用聲明（這支 App 靠無障礙服務讀通知）</li>
+    <li>商店的簡短說明與完整說明</li>
+    <li>App 內的權限揭露對話框</li>
+  </ul>
+  <p>所以開發守則裡直接寫死：<b>不要加 <code>INTERNET</code> 權限</b>。
+    加了，這五個地方全部要重寫、重新申報。這條規則的代價就是上面那張表——
+    產品端一筆遙測都收不到。</p>
+  <h3>許願板只好做成外部網頁</h3>
+  <p>使用者想要「看別人許了什麼願、互相投票」。做在 App 裡就要連線，
+    而且 Play 對使用者自建內容另有要求（檢舉、封鎖、審核），沒做會被拒。
+    最後的解法是：許願板是一個<b>一般網頁</b>，App 只丟一個
+    <code>ACTION_VIEW</code> 給瀏覽器，跟開隱私權政策同一條路，App 本身完全不連線。</p>
+  <p>這是一個約束一路往下傳的實例：一句承諾 → 五份文件 → 一個不能做在 App 裡的功能
+    → 一個繞道的設計。寫在 <code>docs/WISHLIST.md</code>。</p>
+  <p class="note">App 連結：<a href="https://play.google.com/store/apps/details?id=com.relatestats.app">Google Play</a>　·　
+    <a href="https://afortunadofu-bot.github.io/relatestats-privacy/">隱私權政策</a></p>
+"""
+
     decision = """
   <p>這個 App 的開發守則裡有一條寫死的硬規則：<b>不要加 <code>INTERNET</code> 權限。</b>
     因為「資料傳不出手機」是隱私權政策、資料安全性表單、無障礙服務聲明三份文件的共同前提，
@@ -458,6 +516,7 @@ def relatestats():
     而且預設關閉。那會是一個要重新寫三份文件的決定，所以得先確定值得。</p>
 """
     body = (th.card("", intro)
+            + th.card("已經做出來的東西", work)
             + th.card("核心產品決策：不要網路權限", decision)
             + th.card("那要怎麼知道做得好不好", howto + frame)
             + th.card("這個取捨值不值得", tradeoff))

@@ -199,6 +199,26 @@ ul.plain b{color:var(--ink)}
     已經在 Google Play 上架，版本 1.117.2。</p>
   <p>跟壽星日一樣是一個人做完：企劃、Android 開發、雲端設定、上架。
     這一頁講的是「這個產品要怎麼知道做得好不好」。</p>
+</section><section class="card"><h2>已經做出來的東西</h2>
+  <div class="stats"><div class="stat"><div class="stat-label">已上架</div><div class="stat-value">1.121.2</div><div class="stat-sub">Google Play，2026-05 開始做</div></div><div class="stat"><div class="stat-label">程式規模</div><div class="stat-value">59,526 行</div><div class="stat-sub">197 個 Kotlin 檔（2026-11-25 實測）</div></div><div class="stat"><div class="stat-label">回饋管道</div><div class="stat-value">App 內建</div><div class="stat-sub">表單直接寫進 Firestore，含 1–5 星滿意度</div></div><div class="stat"><div class="stat-label">後台</div><div class="stat-value">自己做的</div><div class="stat-sub">使用者數、活躍度、Pro 轉換、內容統計</div></div></div>
+  <h3>回饋是自己收的，不是等 Play 評論</h3>
+  <p>Play 的評論量少又慢，而且只有已經很不爽或很喜歡的人會留。所以 App 裡做了
+    「我的 → 支持與回饋 → 意見回饋」，送出直接寫進 Firestore 的
+    <code>feedback</code>：分類（bug／功能／其他）、內容、<b>1–5 星滿意度</b>、
+    選填聯絡方式。滿意度那一欄是刻意加的——沒有它，回饋只能讀，不能算。</p>
+  <p>收集方式跟統計口徑寫在 <code>docs/USER_FEEDBACK.md</code>：
+    平均滿意度怎麼算、NPS 近似值怎麼換算、每期要更新哪幾節，
+    還有一張「使用者說了什麼 → 哪一版改了什麼 → 之後反應」的迭代表。
+    <b>表格目前是空的</b>，因為還沒有匯出資料來填——這就是這一頁待補的那一塊。</p>
+  <h3>產出的不只是 App</h3>
+  <ul class="plain">
+    <li><code>PORTFOLIO.md</code>　產品定位、功能總覽、架構、技術決策、專案數據</li>
+    <li><code>USER_FEEDBACK.md</code>　回饋收集與滿意度追蹤的方法</li>
+    <li><code>ROADMAP.md</code>　功能排序</li>
+    <li><code>PLAY_STORE_COPY.md</code>、<code>COPY_GUIDE.md</code>　商店文案與全站文案規範</li>
+    <li><code>CONSOLE_SETUP.md</code>、<code>PLAY_RELEASE.md</code>　雲端設定與上架流程</li>
+  </ul>
+  <p class="note">App 連結：<a href="https://play.google.com/store/apps/details?id=com.bandary.app">Google Play</a></p>
 </section><section class="card"><h2>要衡量什麼</h2><table class="metrics"><thead><tr><th>指標</th><th>怎麼算</th><th>現況</th></tr></thead><tbody><tr><th scope="row">核心行為</th><td>有沒有真的拿它記錄演出（新增場次的人數／頻率）</td><td><span class="pending">待補：Firebase 匯出</span></td></tr><tr><th scope="row">啟用</th><td>安裝後七天內至少記錄過一場的比例</td><td><span class="pending">待補：Firebase 匯出</span></td></tr><tr><th scope="row">留存</th><td>看團是不定期的事，要看「月活」跟「有演出那週的回訪」</td><td><span class="pending">待補：Play Console</span></td></tr><tr><th scope="row">社群功能</th><td>好友日曆、免費活動共享的使用比例</td><td><span class="pending">待補：Firebase 匯出</span></td></tr><tr><th scope="row">匯入</th><td>Google 日曆匯入的成功率與失敗原因</td><td><span class="pending">待補：Firebase 匯出</span></td></tr><tr><th scope="row">下載與評分</th><td>Play Console 的安裝數、解除安裝率、評分</td><td><span class="pending">待補：Play Console</span></td></tr></tbody></table></section><section class="card"><h2>為什麼不看下載數</h2>
   <p>下載數對這個產品不是好指標。聽團是不定期的事：有人一個月跑三場，
     有人半年一場，所以「日活」「次日留存」這種通用指標會把它判死。
