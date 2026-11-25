@@ -9,6 +9,7 @@
 """
 
 import html
+import os
 import sqlite3
 import sys
 from datetime import datetime, timezone, timedelta
@@ -21,10 +22,11 @@ HERE = Path(__file__).resolve().parent
 DB = HERE / "analysis.db"
 QUERIES = HERE / "queries"
 OUT = HERE / "report.html"
-# GitHub Pages 的來源是 repo 根目錄的 docs/（Settings → Pages 設成 main /docs）。
+# 作品集已經搬到個人網站底下（celine.fu/work/），這裡跟著寫過去。
 # 同一份內容寫兩個地方，是為了讓「看原始碼的人」跟「只想看報告的人」都不用多跑一步；
 # 由這支程式一起寫，就不會有一邊更新、另一邊還是舊的。
-PAGES = HERE.parent / "docs" / "sql-report.html"
+PAGES = Path(os.environ.get("PORTFOLIO_OUT")
+             or HERE.parent.parent.parent / "celine.fu") / "work" / "sql-report.html"
 TPE = timezone(timedelta(hours=8))
 
 TITLE = "壽星日資料分析"

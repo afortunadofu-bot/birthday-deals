@@ -16,6 +16,7 @@
 用 th.pending() 標成「待補」放在頁面上，不要先填一個看起來合理的數字。
 """
 
+import os
 import sqlite3
 import subprocess
 import sys
@@ -26,7 +27,15 @@ import charts as ch
 import theme as th
 
 HERE = Path(__file__).resolve().parent
-DOCS = HERE.parent / "docs"
+# 作品集的產出位置＝個人網頁 repo 的 work/。
+# 個人網頁是門面，作品集從它的漢堡選單點進去，所以兩個放同一個站、同一個 repo。
+# 這支程式還是留在壽星日這邊，因為它要讀 analysis.db、../ml、../geo。
+# 要換地方輸出就設環境變數 PORTFOLIO_OUT。
+SITE_REPO = Path(os.environ.get("PORTFOLIO_OUT")
+                 or HERE.parent.parent.parent / "celine.fu")
+DOCS = SITE_REPO / "work"
+# 舊網址（壽星日 repo 的 Pages）留轉址頁，之前發出去的連結才不會壞
+OLD_DOCS = HERE.parent / "docs"
 DB = HERE / "analysis.db"
 TPE = timezone(timedelta(hours=8))
 TODAY = datetime.now(TPE)
@@ -836,6 +845,34 @@ def write_stats(con, f):
 
 
 
+
+def write_redirects(names):
+    """舊網址 /birthday-deals/<頁> → 新網址 /celine.fu/work/<頁>。
+
+    之前貼出去的連結不能壞，所以每一頁都留一個轉址檔，不是只轉首頁。"""
+    base = "https://afortunadofu-bot.github.io/celine.fu/work/"
+    OLD_DOCS.mkdir(exist_ok=True)
+    tpl = """<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<link rel="canonical" href="{t}">
+<meta http-equiv="refresh" content="0; url={t}">
+<meta name="robots" content="noindex, follow">
+<title>作品集搬家了</title>
+<style>body{{margin:0;min-height:100vh;display:grid;place-items:center;
+background:#f9f9f7;color:#0b0b0b;font:15px/1.8 system-ui,-apple-system,
+"Noto Sans TC",sans-serif;padding:24px;text-align:center}}a{{color:#2a78d6}}</style>
+</head><body><div>
+<p>作品集搬到個人網站底下了。</p>
+<p><a href="{t}">前往新的網址 →</a></p>
+<script>location.replace("{t}");</script>
+</div></body></html>
+"""
+    for name in names:
+        target = base + ("" if name == "index.html" else name)
+        (OLD_DOCS / name).write_text(tpl.format(t=target), encoding="utf-8")
+    print(f"舊網址留了 {len(names)} 個轉址頁 → {OLD_DOCS.name}/")
+
+
 # ─────────────────────── 組裝 ───────────────────────
 
 def main():
@@ -894,6 +931,7 @@ def main():
         (DOCS / name).write_text(doc, encoding="utf-8")
         print(f"寫好 docs/{name}（{len(doc):,} 字元）")
     write_stats(con, f)
+    write_redirects(list(pages) + ["sql-report.html", "billing-forecast.html"])
     con.close()
 
 

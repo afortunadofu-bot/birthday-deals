@@ -20,6 +20,7 @@
 """
 
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -27,7 +28,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 SRC = HERE / "source" / "billing.html"
 MAP = HERE / "names.local.json"
-OUT = HERE.parent / "docs" / "billing-forecast.html"
+OUT = (Path(os.environ.get("PORTFOLIO_OUT")
+       or HERE.parent.parent.parent / "celine.fu") / "work" / "billing-forecast.html")
 
 BANNER = """<div style="max-width:1100px;margin:0 auto;padding:14px 18px;
   font:14px/1.7 system-ui,-apple-system,'Noto Sans TC',sans-serif;
@@ -35,7 +37,8 @@ BANNER = """<div style="max-width:1100px;margin:0 auto;padding:14px 18px;
   <b>這是一份真實專案的工作成果，已去識別化。</b>
   業主、下包廠商、案名一律改成代號（總包 T、廠商 A…），檔名與單據編號也拿掉了；
   <b>金額、時程、比例全部是原始數字</b>，分析結論沒有被改動。
-  <a href="index.html" style="color:#7a5c12;">← 回作品集</a>
+  <a href="index.html" style="color:#7a5c12;">← 回作品集</a>　·　
+  <a href="../" style="color:#7a5c12;">個人網頁</a>
 </div>
 """
 
@@ -63,7 +66,7 @@ def main():
         sys.exit(f"還有沒換乾淨的：{leaks}")
 
     OUT.write_text(html, encoding="utf-8")
-    print(f"寫好 {OUT.relative_to(HERE.parent)}（{len(html):,} 字元）")
+    print(f"寫好 {OUT.parent.name}/{OUT.name}（{len(html):,} 字元）")
     print(f"  換掉 {len(pairs)} 組名稱，檢查後沒有殘留")
 
 

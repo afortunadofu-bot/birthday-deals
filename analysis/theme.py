@@ -93,7 +93,7 @@ def page(*, filename, title, lead, meta, body, desc=""):
 <body>
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="index.html">小數據所</a>
+    <a class="brand" href="../">← 傅聖嵐 Fu Sheng-Lan</a>
     <h1>{esc(title)}</h1>
     <p class="sub">{lead}</p>
     <p class="byline">{meta}</p>
@@ -106,7 +106,7 @@ def page(*, filename, title, lead, meta, body, desc=""):
 </main>
 <footer class="wrap foot-note">
   <p class="site-links">
-    <a href="https://afortunadofu-bot.github.io/celine.fu/">個人網頁</a>　·　
+    <a href="../">個人網頁</a>　·　
     <a href="https://afortunadofu-bot.github.io/celinefubrandpage/">小數據所</a>　·　
     <a href="index.html">作品集（你在這）</a>
   </p>
