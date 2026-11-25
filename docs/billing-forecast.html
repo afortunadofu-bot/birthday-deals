@@ -1,0 +1,1277 @@
+<!doctype html><html><head><!-- frame-runtime --><script>window.__FRAME_PREAMBLE={"v":1,"capabilities":{"artifact":"artifact.qX3cvjCP.js","assets":"assets.DblGe3uy.js","call":"call.CVoYmyGP.js","comments":"comments.JKEzJr0r.js","db":"db.DM2o29RC.js","desktop":"desktop.CXuIZ5Ts.js","dictation":"dictation.CVPpurMy.js","downloads":"downloads.DnCW5sFN.js","embed":"embed.vMwZNoAB.js","endpoints":"endpoints.BklHYiLS.js","files":"files.C9J360vx.js","mcp":"mcp.BUJKV3_8.js","network":"network.B5UA9Su4.js","paste":"paste.40xLJMHt.js","permissions":"permissions.D-Yk9Ucs.js","reads":"reads.B0yO7GRe.js","room":"room.DIwoe5_k.js","sample":"sample.D65_io2g.js","self":"artifact.qX3cvjCP.js","tts":"tts.Cw-q9HhC.js","user":"user.BcLAVLEd.js"},"transforms":"_transforms.B0Peb_DM.js","comments":"_comments.B0IPjg-l.js","translate":"_translate.4yvrS3QV.js"}                                                                                                                                                                        </script><script>(function(){"use strict";function or(t){return t==="cookie"||t==="query"?t:void 0}function ar(t){return typeof t=="number"&&Number.isSafeInteger(t)&&t>0?t:void 0}var Fn=3e5;function ir(t,e){try{const r=t("navigation")[0],o=[r.responseStart,r.redirectEnd-r.redirectStart,r.domContentLoadedEventStart,e(),r.connectEnd-r.domainLookupStart,r.responseStart-r.requestStart];r.requestStart>0||(o.length=4);for(let a=0;a<o.length;a++)if(o[a]>=0&&o[a]<=3e5)o[a]=o[a]|0;else{if(a<4)return;o.length=4}return o}catch{return}}var sr=["light","dark","system"];function lr(t){if(t===null||typeof t!="object")return!1;const e=t.__frame_init;return e!==null&&typeof e=="object"}function cr(t){return t!==null&&typeof t=="object"&&t.__frame_size_poke===!0}function ur(t){if(t===null||typeof t!="object")return!1;const e=t.__frame_host_visible;return e!==null&&typeof e=="object"&&typeof e.visible=="boolean"}function fr(t){if(t===null||typeof t!="object")return!1;const e=t.__frame_theme;if(e===null||typeof e!="object")return!1;const r=e.theme;return typeof r=="string"&&sr.includes(r)}var dr=["ok","empty","snapshot_error","snapshot_timeout","unclonable","oversize","unavailable","restore_error","withheld"],pr=["TypeError","RangeError","ReferenceError","SyntaxError","DataCloneError","QuotaExceededError","AbortError","TimeoutError","SecurityError","Error","other"];function hr(t){return typeof t=="string"&&pr.includes(t)?t:"other"}var mr=Object.freeze({until:null,now:!1}),vr="__claude_hot",yr="__claude_hot_in",_r=/^__claude_hot(?:_in)?(?::|$)/,tt=/^[0-9a-z]{1,32}$/,rt=t=>t===void 0?vr:"__claude_hot:"+t,Le=t=>t===void 0?yr:"__claude_hot_in:"+t;function gr(t,e){const r=[];for(let o=0;o<t.length;o++){const a=t.key(o);a!==null&&a!==e&&_r.test(a)&&r.push(a)}for(const o of r)t.removeItem(o)}function wr(t){try{const e=JSON.parse(t)?.tab;return typeof e=="string"&&tt.test(e)?e:void 0}catch{return}}function br(t){let e=null;try{e=Y(JSON.parse(t)?.hot)}catch{return null}return e===null||typeof e.k!="string"||!tt.test(e.k)?null:ye(e.g)?{k:e.k,g:e.g}:{k:e.k}}var In=262144,Er=5e3,St=/^[a-z0-9._:-]{1,64}$/,Sr=["none","hot-restart","hard-reload"],kr=["asset","doc","added","removed"],Rr=1500,Tr=/^[0-9a-f]{64}$/;function Y(t){return t!==null&&typeof t=="object"?t:null}function ye(t){return typeof t=="number"&&Number.isInteger(t)&&t>=0&&t<2**31}function kt(t){return t===void 0||typeof t=="number"&&Number.isFinite(t)}function Ar(t){return t===void 0||typeof t=="string"&&St.test(t)}function Rt(t){const e=Y(t);return e!==null&&(e.until===null||typeof e.until=="number"&&Number.isFinite(e.until))&&typeof e.now=="boolean"}function nt(t){const e=Y(t);return e!==null&&typeof e.ver=="string"&&e.ver.length<=128&&kt(e.seq)&&typeof e.handoff=="string"&&dr.includes(e.handoff)&&Ar(e.note)}function Tt(t){const e=Y(t);return e!==null&&ye(e.gen)&&(e.phase==="final"||e.phase==="pending")&&(e.from===null||nt(e.from))}function Or(t){const e=Y(t);return e!==null&&e.kv===1&&ye(e.gen)&&nt(e.from)&&Object.hasOwn(e,"data")}function Lr(t){const e=Y(t);return e!==null&&e.__frame_hot_snapshot===!0&&ye(e.gen)&&typeof e.timeoutMs=="number"&&e.timeoutMs>=0&&e.timeoutMs<=6e4&&(e.handoff===void 0||typeof e.handoff=="boolean")&&(e.deadline===void 0||Rt(e.deadline))&&kt(e.seq)&&(e.note===void 0||typeof e.note=="string")&&(e.key===void 0||typeof e.key=="string")}function Mr(t){const e=Y(t);return e!==null&&e.__frame_hot_start===!0&&ye(e.gen)&&nt(e.from)}function Pr(t){return typeof t=="string"&&t.length>=1&&t.length<=128}function At(t){return Y(t)!==null&&!Array.isArray(t)}function Nr(t){const e=Y(t);return e!==null&&e.__frame_cap_grant===!0&&typeof e.cap=="string"&&Pr(e.ver)&&(e.grant===void 0||At(e.grant))&&(e.budgets===void 0||At(e.budgets)&&Object.values(e.budgets).every(Number.isFinite))&&(e.brokerGen===void 0||ye(e.brokerGen))}function Cr(t){const e=Y(t);return e!==null&&e.__frame_cap_rewired===!0&&(e.caps===void 0||Array.isArray(e.caps)&&e.caps.every(r=>typeof r=="string"))&&(e.brokerGen===void 0||ye(e.brokerGen))}function Ke(t){const e=Y(t);return e!==null&&typeof e.ver=="string"&&e.ver.length<=128&&Number.isFinite(e.seq)}function Ot(t){if(t==null||typeof t=="string")return!0;const e=Y(t);return e!==null&&typeof e.doc=="string"&&typeof e.profile=="string"}function Fr(t){const e=Y(t);return e!==null&&typeof e.path=="string"&&kr.includes(e.kind)&&Ot(e.from)&&Ot(e.to)}function Ir(t){return t===null?null:Object.freeze(t.filter(Fr))}function Hr(t){const e=Y(t);return e!==null&&e.__frame_hot_update===!0&&Number.isFinite(e.id)&&Ke(e.from)&&Ke(e.to)&&(e.changed===null||Array.isArray(e.changed))&&Sr.includes(e.required)&&Rt(e.deadline)&&typeof e.verdictTimeoutMs=="number"&&e.verdictTimeoutMs>=0&&e.verdictTimeoutMs<=6e4&&(e.preflight===void 0||typeof e.preflight=="string"&&Tr.test(e.preflight))}function jr(t){const e=Y(t);return e!==null&&e.__frame_hot_readdress===!0&&Ke(e.from)&&Ke(e.to)}var _e=/^[\w.-]+\.js$/;function qr(t,e,r){return r?"inert":typeof e=="string"&&_e.test(e)?t?[e]:"inert":t?"inert":"framed"}var Lt=Object.freeze({[Symbol("claude.hot.restart")]:!0});function Mt(t,e){let r;try{r=t??sessionStorage}catch{return null}const o=rt(e?.k),a=Le(e?.k);let l=null;try{l=r.getItem(o)}catch{}try{r.removeItem(o)}catch{}try{gr(r,a)}catch{}let c=null;if(l!==null&&!(e!==null&&e.g===void 0))try{const d=JSON.parse(l);Or(d)&&(e===null||d.gen===e.g)&&(c=d)}catch{}if(c===null)try{r.removeItem(a)}catch{}return c}function Pt(){const t=/^\/_f\/([^/]{1,128})\//.exec(location.pathname);return t?t[1]:""}var Br=/^[^/\\?#]{1,128}$/,ot=t=>Br.test(t)&&t!=="."&&t!=="..";function Nt(t,e,r){const o=new URL(t),a="/_f/"+e+"/";if(!e||!o.pathname.startsWith(a)||!ot(r))return null;const l=o.search.slice(1).split("&").filter(c=>!/^__frame_t(?:=|$)/.test(c)).join("&");return o.origin+"/_f/"+r+"/"+o.pathname.slice(a.length)+(l?"?"+l:"")+o.hash}var ze="{}";function Me(t){if(!t)return null;const e={ver:t.ver,handoff:t.handoff};return t.seq!==void 0&&(e.seq=t.seq),t.note!==void 0&&(e.note=t.note),e}function Ct(t,e){return t!==null&&t.note===void 0&&e?.note!==void 0?{...t,note:e.note}:t}function Ft(t){const e=t?.k;return e!==null&&typeof e=="object"?e:void 0}function Dr(t,e,r,o=null){const a=setTimeout,l=clearTimeout,c=queueMicrotask,d=performance.now.bind(performance),N=new TextEncoder;let C=null,R=null;try{C=history,R=C.replaceState.bind(C)}catch{}const _=(...n)=>{try{console.warn(...n)}catch{}};let M=Pt(),A=null;try{A=sessionStorage}catch{}const w={storage:A,fetch:typeof fetch=="function"?fetch.bind(globalThis):null,entry:location.origin+location.pathname+location.search,ver:M,priors:[],key:o?.k};let I=o?.k;const H=typeof requestAnimationFrame=="function"?requestAnimationFrame:n=>a(()=>n(d()),16);let m=e?.data??{},Z=Me(e?.from),K=e?.gen??0,J=e!==null,B=!1,D=!1,W=null,ae=!1;const pe=new AbortController;let he=null,F=null,b=null,j=!1,z=()=>{};const $=new Promise(n=>{z=n});let ee=!1,be=!1,me=!1,s,h=null,g=null,T=!1,U=!1,q=!1,x=!1;const ie=n=>{for(const u of[rt(n),Le(n)])try{A?.removeItem(u)}catch{}},G=(n,u)=>{try{u!==null&&r.post(n,u)}catch{}},Ye=()=>q||=T&&(F===null||U),oe=()=>{const n={__frame_hot:!0,ready:F!==null,accept:b!==null,demand:!0};x=!q,x&&(n.booting=!0),ee&&(n.readData=!0),me&&(n.threw=!0),h?.assess&&(n.preflight=!0),G(n,W)};let Ie=!1,He=!1,ve=!1,se=0,je=!1;const qe=()=>{Ie||!ae||ve||(Ie=!0,G({__frame_reveal_hold:!0},"*"))},Be=()=>new Promise(n=>{let u,f=0;const y=O=>{if(u===void 0)u=O;else if(O!==u||++f>=8){n();return}try{H(y)}catch{n()}};try{H(y)}catch{n()}}),Ee=()=>{ve||(se=d()),ve=!0,G({__frame_reveal_ready:!0},"*")},Se=n=>{He||(He=!0,n.then(u=>{if(u===!1)return;let f=null;try{f=h?.settle?.()??null}catch{}return(f===null?Be():new Promise(y=>{a(y,50),Promise.resolve(f).then(y,y)}).then(Be)).then(Ee)}))},Je=()=>{if(je||!ve)return;je=!0;const n=()=>{try{h?.afterReveal?.()}catch{}};n(),Be().then(()=>{n(),Ee()})},ke=(n=!1)=>{if(j||F===null||!J||!D)return;j=!0;const u=F,f=m;c(()=>{let y;try{y=u(f)}catch(L){throw z(!1),L}let O=!1;try{O=typeof y?.then=="function"}catch{}if(!O){z(!0);return}Promise.resolve(y).then(()=>z(!0),L=>{z(!1),c(()=>{throw L})})}),Se(n?$:r.dcl.then(()=>$))},Re=n=>typeof n=="string"&&St.test(n)?n:void 0,le=n=>{const u={__frame_hot_restart:!0},f=Re(n?.note);f!==void 0&&(u.note=f),n?.required==="hard-reload"&&(u.required="hard-reload"),G(u,W)},De=Object.freeze({get data(){return D||(be=!0),!J&&!ee&&(ee=!0,D&&oe()),m},get from(){return Z},get gen(){return K},signal:pe.signal,snapshot(n){typeof n=="function"&&(he=n)},ready(n){typeof n!="function"||F!==null||(F=n,qe(),oe(),B&&G({__frame_hot_ready:!0,gen:K},W),ke())},accept(n){typeof n=="function"&&(b=n,oe())},restart(n){const u={note:n?.note,required:n?.required};if(D){le(u);return}const f=s;s={note:Re(f?.note)??u.note,required:f?.required==="hard-reload"||u.required==="hard-reload"?"hard-reload":void 0}}}),Ue=()=>{if(g===null||h===null||p>=0&&!re)return;const[n,u]=g;g=null;try{h.afterStart(n,u,ve?d()-se:void 0)}catch{}},Xe=(n,u,f)=>{n.then(y=>{y!==!1&&(g=[u,f],Ue())})},xe=n=>{e!==null&&be&&(ee=!0),m={},Z=null,K=0;try{A?.removeItem(Le(o?.k))}catch{}e!==null&&!n&&Se(r.dcl.then(()=>F!==null?$:void 0))},i=()=>{Se(r.dcl.then(()=>F!==null?$:void 0)),Xe(r.dcl,Ft(e),!1)};try{addEventListener("error",()=>{me||F!==null||(me=!0,oe())})}catch{}const v=()=>{a(()=>{!q&&Ye()&&x&&oe()},0)};try{T=document.readyState==="complete",T||addEventListener("load",()=>{T=!0,v()},{once:!0})}catch{T=!0}Ye(),$.then(()=>{U=!0,v()});let p=-1,E,te,V=!0,re=!1,_t,Qe=null;const gt=n=>{const u=Qe===null;Qe=V&&n[0]!=="withheld"?n:["withheld",n[1],ze];let f=n[0];if(V&&f!=="withheld"){const O={ver:M,handoff:f};E!==void 0&&(O.seq=E),te!==void 0&&(O.note=te);try{if(A===null)throw new Error("no storage");A.setItem(rt(I),'{"kv":1,"gen":'+p+',"from":'+JSON.stringify(O)+(_t!==void 0?',"k":'+JSON.stringify(_t):"")+',"data":'+(f==="ok"?n[2]:ze)+"}")}catch{f="unavailable"}}else{f="withheld",ie(I);try{h?.release?.()}catch{}}const y={__frame_hot_snapshotted:!0,gen:p,handoff:f,bytes:n[1]};n[3]!==void 0&&(y.errName=n[3]),G(y,W),u&&(f==="snapshot_error"||f==="unclonable"||f==="oversize")&&_("claude.hot: snapshot",f,n[3])},Te=n=>{try{return hr(n?.name)}catch{return"other"}},Ae=(n,u,f=0)=>gt(u===void 0?[n,f,ze]:[n,f,ze,Te(u)]),Rn=n=>{if(n.gen<=p)return;const u=p>=0;if(p=n.gen,E=n.seq,te=Re(n.note),typeof n.key=="string"&&tt.test(n.key)&&n.key!==I&&(ie(I),I=n.key),V&&=n.handoff!==!1,u){Qe!==null?gt(Qe):re&&G({__frame_hot_held:!0,gen:p},W);return}pe.abort();const f=Object.freeze({handoff:V,timeoutMs:n.timeoutMs,deadline:n.deadline??mr}),y=he,O=()=>{if(V)try{_t=h?.capture()}catch{}if(y===null){Ae("empty");return}let S=!1;const X=a(()=>{S||(S=!0,Ae("snapshot_timeout"))},Math.max(0,f.timeoutMs));Promise.resolve().then(()=>y(f)).then(Oe=>{if(S)return;S=!0,l(X);let ce;try{ce=JSON.stringify(Oe)}catch(wt){Ae("unclonable",wt);return}if(typeof ce!="string"){Ae("unclonable");return}let ue=ce.length;try{ue=N.encode(ce).length}catch{}if(ue>262144){Ae("oversize",void 0,ue);return}gt(["ok",ue,ce])},Oe=>{S||(S=!0,l(X),Ae("snapshot_error",Oe))})};let L=null;try{L=h?.holdForIme()??null}catch{}if(L===null)O();else{re=!0,G({__frame_hot_held:!0,gen:p},W);const S=()=>{re=!1,O()};L.then(S,S)}},Tn=n=>{if(!B||J||F===null||n.gen!==K)return;let u=null;try{u=Mt(A,o&&{k:o.k,g:n.gen})}catch{}if(u!==null&&u.gen!==n.gen){u=null;try{A?.removeItem(Le(o?.k))}catch{}}m=u?.data??{},Z=Ct(Me(u?.from??n.from),Me(n.from)),u!==null&&(K=u.gen),J=!0,B=!1,Xe($,Ft(u),!0),ke(!0)},er=n=>{const u=M,f=w.entry;let y="",O,L=null;try{if(y=location.href,O=C.state,L=Nt(y,u,n),L!==null)if(R(O,"",L),location.pathname.startsWith("/_f/"+n+"/"))L=location.href;else return{failed:"navigate event canceled"}}catch(S){return{failed:Te(S)}}M=w.ver=n,w.priors.push(u)>8&&w.priors.splice(1,1);try{w.entry=Nt(f,u,n)??f}catch{}return[L,u,f,y,O]},An=({from:n,to:u})=>{let f,y;if(!ot(u.ver))f="adopt_failed",y="not a version path segment";else if(u.ver===M)f="adopted";else if(!M||n.ver!==M)f="stale";else{const L=er(u.ver);"failed"in L?(f="adopt_failed",y=L.failed):f=L[0]===null?"adopt_skipped":"adopted"}y!==void 0&&_(`claude.hot: could not move this page's URL to its new version folder /_f/${u.ver}/ (${y})`);const O={__frame_hot_readdressed:!0,to:u.ver,at:M,outcome:f};G(O,W)};let Ze=0;const On=n=>{const u=b;if(u===null||n.id<=Ze)return;Ze=n.id;const f=h?.assess;if(n.preflight===void 0||f===void 0){tr(n,u);return}let y=!1;const O=X=>{y||(y=!0,l(S),n.id===Ze&&tr(n,u,X))},L=()=>O(f.timeout(n)),S=a(L,Rr+100);f.run(n,window).then(O,L)},tr=(n,u,f)=>{let y,O=!1,L=!1,S,X,Oe=null;const ce=P=>{if(L)return!1;if(S!==void 0&&S!==P)return _(`claude.hot: u.${P}() ignored - u.${S}() was called first`),!1;const fe=S===void 0;return S=P,fe},ue=P=>{S="restart",_(`claude.hot: ${P} - restarting`)},wt=()=>{if(!ce("adopt")||n.id!==Ze)return;const P=n.to.ver;if(et.required!=="none"){ue(`u.adopt() needs required 'none', it is '${et.required}'`);return}if(!ot(P)){ue("u.adopt() cannot address this version");return}if(!M||P===M)return;const fe=er(P);if("failed"in fe){X="adopt_failed",ue(`adopt_failed ${fe.failed}; URL not changed`);return}const[ne,Et,Pn,nr,Nn]=fe;ne===null?(X="adopt_skipped",_(`claude.hot: adopt_skipped - page already left /_f/${Et}/; URL not changed, update still applied`)):X="adopted",Oe=()=>{if(M===P){if(ne!==null)try{if(location.href!==ne)_("claude.hot: adopt_revert_skipped - update not applied; URL left where the page navigated");else{if(R(Nn,"",nr),location.href!==nr){_("claude.hot: adopt_revert_failed navigate event canceled - URL still at the new version");return}X="adopt_reverted",_("claude.hot: adopt_reverted - adopt() was called but the handler threw; URL restored")}}catch(Cn){_(`claude.hot: adopt_revert_failed ${Te(Cn)} - URL still at the new version`);return}M=w.ver=Et,w.entry=Pn,w.priors[w.priors.length-1]===Et&&w.priors.pop(),ne===null&&(X=void 0)}}},et=Object.freeze({from:{ver:n.from.ver,seq:n.from.seq},to:{ver:n.to.ver,seq:n.to.seq},changed:Ir(n.changed),required:n.required,deadline:n.deadline,adopt:wt,defer(){return ce("defer")&&et.deadline.now&&ue("u.defer() past the deadline"),Lt},restart(P){return ce("restart"),S==="restart"&&!L&&(y??=Re(P?.note),O||=P?.required==="hard-reload"),Lt},...f?.update}),Ln=(P,fe)=>{L=!0,P==="threw"?(Oe?.(),y??=Te(fe).toLowerCase()):S===void 0&&_(P==="timeout"?"claude.hot: accept handler did not answer in time - restarting":"claude.hot: accept handler settled without defer/restart/adopt - restarting");const ne={__frame_hot_verdict:!0,id:n.id};ne.verdict=P==="threw"||S===void 0||S==="restart"?"restart":S==="adopt"?"applied":"deferred",ne.verdict==="restart"&&(O&&(ne.required="hard-reload"),y!==void 0&&(ne.note=y)),X!==void 0&&(ne.verdict==="applied"||X!=="adopted")&&(ne.adopt=X),G(Object.assign(ne,f?.verdict),W)};let rr=!1;const bt=(P,fe)=>rr?!1:(rr=!0,l(Mn),Ln(P,fe),!0),Mn=a(()=>bt("timeout"),n.verdictTimeoutMs);Promise.resolve().then(()=>u(et)).then(()=>bt("settled"),P=>{!bt("threw",P)&&S==="adopt"&&le({note:Te(P).toLowerCase()}),_("claude.hot: accept",Te(P))})};try{t.hot===void 0&&Object.defineProperty(t,"hot",{value:De,writable:!1,configurable:!1,enumerable:!1})}catch{}return{hot:De,boot:w,afterConnect(){ae=!0,(e!==null||F!==null)&&qe()},onInit(n,u){W=u,D=!0;const f=Tt(n)?n:null;f?.phase==="final"&&e!==null&&e.gen===f.gen?(J=!0,Z=Ct(Z,Me(f.from)),i()):(B=f?.phase==="pending",xe(B),J=!B,K=f?.gen??0,Z=Me(f?.from)),oe(),x&&a(()=>{q||(q=!0,oe())},Er),B&&F!==null&&G({__frame_hot_ready:!0,gen:K},u),s!==void 0&&(le(s),s=void 0),ke()},onNoInit(){D=!0,xe(!1),J=!0,ke()},onShell(n){return n?.__frame_revealed===!0?(Je(),!1):Lr(n)?(Rn(n),!0):Mr(n)?(Tn(n),!0):Hr(n)?(On(n),!0):jr(n)?(An(n),!0):!1},attachExtras(n){h=n,Ue(),n.assess&&oe()},inSlot:()=>Le(I)}}var Ur=256;function at(t,e,r){for(const o of t)r(o)&&t.delete(o);t.size>=Ur&&!t.has(e)&&t.delete(t.values().next().value),t.add(e)}function Pe(t,e,r,o){try{const a=t[e];if(typeof a!="function")return;t[e]=function(...l){if(o){let d;try{d=o(this)}catch{}if(d!==void 0)return d}const c=a.apply(this,l);try{r?.(this)}catch{}return c}}catch{}}var xr=()=>{},it;function Kr(){if(it)return it;const t={media:new Set,contexts:new Set,wakeLocks:new Set,gate:null,refuse:null,onStart:null,onStop:null};it=t;const e=c=>t.gate?.(c),r=c=>{t.onStop?.(c)},o=window.HTMLMediaElement?.prototype;o&&(Pe(o,"play",c=>{at(t.media,c,d=>d.paused),t.onStart?.(c)},e),Pe(o,"pause",r));const a=window.AudioContext,l=window.AudioNode?.prototype;a&&l&&(Pe(l,"connect",c=>{const d=c.context;d instanceof a&&(at(t.contexts,d,N=>N.state==="closed"),t.onStart?.(d))}),Pe(a.prototype,"resume",void 0,e),Pe(a.prototype,"suspend",r));try{const c=window.WakeLock?.prototype,d=c?.request;c&&typeof d=="function"&&(c.request=function(...N){if(t.refuse)return t.refuse();const C=d.apply(this,N);return Promise.resolve(C).then(R=>{at(t.wakeLocks,R,_=>_.released),t.onStart?.(R)},xr),C})}catch{}return t}function zr(t){let e=window;for(let r=0;e.parent&&e.parent!==e&&r<8;r++)if(e=e.parent,t(e))return!0;return!1}function Wr(){let t=null;const e=()=>t??parent,r=o=>t?o===t:zr(a=>a===o);return{post(o,a){if(t){e().postMessage(o,a);return}let l=parent;for(let c=0;c<8&&(l.postMessage(o,a),!(!l.parent||l.parent===l));c++)l=l.parent},on(o){const a=l=>{const c=l.source;r(c)&&o(l.data,l.origin,l.isTrusted,()=>{t??=c})};return addEventListener("message",a),()=>removeEventListener("message",a)},port:o=>({post(a,l){if(l?.activation){e().postMessage(a,{targetOrigin:o,includeUserActivation:!0,...l.transfer&&{transfer:l.transfer}});return}if(l?.transfer){e().postMessage(a,o,l.transfer);return}e().postMessage(a,o)},on(a,l){const c=d=>{r(d.source)&&d.origin===o&&a(d.data,d)};return addEventListener("message",c,l),()=>removeEventListener("message",c,l)}})}}function $r(){const t={post:()=>{},on:()=>()=>{}};return{...t,port:()=>t}}var Gr=500,Vr=2e4,Yr="data-token-reads",Jr="data-frame-refused-watch",Xr="data-frame-unsupported",Qr=/(?:^|\s)stylesheet(?:\s|$)/i;function Zr(t,e){let r="";if(t instanceof HTMLScriptElement?r=t.src:t instanceof HTMLLinkElement&&Qr.test(t.rel)&&(r=t.href),!r)return null;try{const o=new URL(r);return o.origin===location.origin&&o.pathname.startsWith(e)?o.origin+o.pathname:null}catch{return null}}function en(t,e,r){if(!t||e!=="query")return;const o="/_f/"+t+"/";document.documentElement.setAttribute(Jr,"");const a=location.href,l=fetch,c=setTimeout,d={method:"HEAD",cache:"no-store",credentials:"same-origin"},N=w=>w.ok||w.status===304;let C=!1,R=!1;const _=()=>removeEventListener("error",A,!0),M=async w=>{const I=await l(w,d);if(N(I))R=!0;else if(I.status===403){const H=await l(a,d);if(N(H)){const m=(await l(w,d)).status;m===403?(R=!0,document.documentElement.setAttribute(Xr,""),r()):m<500&&(R=!0)}else H.status>=400&&H.status<500&&(R=!0)}},A=w=>{if(R||C)return;if(document.documentElement.hasAttribute(Yr)){R=!0,_();return}const I=Zr(w.target,o);I&&(C=!0,c(()=>{M(I).catch(()=>{}).finally(()=>{C=!1,R&&_()})},Gr))};addEventListener("error",A,!0),addEventListener("load",_,{once:!0}),c(_,Vr)}var It="__frame_scroll",Ht="__frame_scroll_framed",tn=150,rn=310,nn=160,on=3e4,jt="p,h1,h2,h3,h4,h5,h6,li,pre,blockquote,tr,dt,dd,figcaption,summary",qt=()=>innerWidth<=rn&&innerHeight<=nn,Bt=t=>{const e=document.createTreeWalker(t,NodeFilter.SHOW_TEXT);let r="";for(;r.length<600&&e.nextNode();)r+=e.currentNode.nodeValue.slice(0,600-r.length);const o=r.replace(/\s+/g," ").trim().slice(0,120);let a=2166136261;for(let l=0;l<o.length;l++)a=Math.imul(a^o.charCodeAt(l),16777619);return o.length>11?a>>>0||1:0},Dt=t=>{for(let e=t;e&&e!==document.scrollingElement;e=e.parentElement){const r=getComputedStyle(e).position;if(r==="fixed"||r==="sticky"||e!==t&&e.scrollTop)return!1}return!0},an=()=>{const t=[],e=[];try{for(let r=0;r<16;r++){const o=document.elementFromPoint(innerWidth/(r%2?4:2),innerHeight*(r>>1)/8+1);let a=o?.closest(jt)??o;for(;a&&!a.matches(jt)&&![...a.childNodes].some(c=>c.nodeType===3&&c.nodeValue?.trim());)a=a.parentElement;const l=a&&!e.includes(a)?Bt(a):0;l&&!t.some(c=>c[0]===l&&c[2]===a.tagName)&&Dt(a)&&(e.push(a),t.push([l,Math.round(a.getBoundingClientRect().top),a.tagName]))}}catch{}return t.sort((r,o)=>+(r[1]<0)-+(o[1]<0)),t.length?t.slice(0,3):void 0},sn=t=>{try{for(const[e,r,o]of t.a??[]){const a=document.getElementsByTagName(o);let l;for(let d=0;d<a.length&&a.length<5e3;d++)Bt(a[d])===e&&(l=l===void 0||l?.contains(a[d])?a[d]:null);const c=l?.getBoundingClientRect();if(c?.height&&l.checkVisibility?.()!==!1&&Dt(l)&&isFinite(r))return Math.max(0,Math.round(scrollY+c.top-r))}}catch{}return t.y};function ln(){try{const t=location.ancestorOrigins;return t&&(origin==="null"||t[0]!==origin)?{frame:null}:{frame:frameElement??null,nested:t&&t[1]===origin}}catch{return{frame:null}}}function cn(t){const e=t===void 0?It:It+":"+t,{frame:r,nested:o}=ln(),a=r!==null,l=()=>{try{return r.inert===!0||(o??!!r?.ownerDocument.defaultView?.frameElement)}catch{return!0}};let c;const d=()=>{if(c===void 0)try{c=location.pathname.replace(/^\/_f\/[^/]{1,128}\//,"")}catch{c=null}return c};let N;try{N=/^\/_f\/[^/]+\/(.*?)(index\.html)?$/.exec(location.pathname)?.[1]||void 0}catch{}let C=0,R=!1,_=!1,M=!1,A={y:0},w=null;const I=b=>{try{if(!a){sessionStorage.setItem(e,JSON.stringify({...b,p:N}));return}const j=d();j!==null&&!l()&&sessionStorage.setItem(Ht,JSON.stringify({...b,p:j}))}catch{}},H=b=>{if(clearTimeout(C),w===null)return;const j=w;w=null,I({y:j,a:b&&j>0?an():void 0})},m=()=>{if(R){R=!1;return}_=!0,w=scrollY,clearTimeout(C),C=setTimeout(H,tn,!0)};try{addEventListener("scroll",m,{passive:!0}),addEventListener("pagehide",()=>H())}catch{}let Z=!1;const K=()=>{if(a&&l())return null;const b=a?Ht:e;let j;try{j=sessionStorage.getItem(b)}catch{return null}if(j===null)return null;let z;try{z=JSON.parse(j)}catch{z=null}const{y:$,a:ee,p:be}=z??{};if(!(typeof $=="number"&&Number.isFinite($)&&$>=0)){try{sessionStorage.removeItem(b)}catch{}return null}if(be!==(a?d():N))return Z=!0,null;const me=s=>Array.isArray(s)&&typeof s[0]=="number"&&Number.isFinite(s[1])&&typeof s[2]=="string";return{y:$,a:Array.isArray(ee)&&ee.length<4&&ee.every(me)?ee:void 0}};let J=!1,B=-1;const D=b=>{try{const j=scrollY,z=sn(b);scrollTo({top:z,left:0,behavior:"instant"}),A=qt()?b:{y:z,a:b.a},M=!0,clearTimeout(C),w=null,I(A),B=scrollY,B!==j&&(R=!0);const $=z!==b.y&&document.readyState!=="complete";(B!==z||$)&&!J&&(J=!0,addEventListener("load",()=>{try{scrollY===B&&D(K()??A)}catch{}},{once:!0}))}catch{}},W=()=>{try{return!!location.hash}catch{return!0}};let ae=!1;const pe=()=>{try{if(ae||!qt())return;ae=!0;const b=Date.now(),j=()=>{try{removeEventListener("resize",j)}catch{}Date.now()-b>on||_||W()||D(K()??A)};addEventListener("resize",j)}catch{}};let he=!1,F=!1;return{short:()=>J,restore(){if(he)return;if(he=!0,!a&&!innerHeight&&addEventListener("resize",()=>document.readyState==="complete"&&document.querySelector(":target")?.scrollIntoView({behavior:"instant"}),{once:!0}),K()===null&&(a||Z)){I({y:0});return}if(W())return;const b=K();b!==null&&(D(b),pe())},promoted(){if(F||(F=!0,W()))return;const b=K();b!==null?(D(b),pe()):M&&D(A)}}}function un(t,e,r,o){let a=null;try{a=window.trustedTypes?.createPolicy("frame-runtime",{createScriptURL:N=>N})??null}catch{}const l=window.Worker,c=l?.prototype,d=Object.freeze({Worker:l,workerOn:c?.addEventListener,workerPost:c?.postMessage,workerTerminate:c?.terminate,fetch:window.fetch.bind(window),preventDefault:Event.prototype.preventDefault,now:Date.now,policy:a,origins:e});r(t).then(N=>N?.bootTopLevel?N.bootTopLevel(d,o):o.settle()).catch(()=>o.settle())}var Hn="modulepreload",jn=function(t){return"/"+t},qn={},Bn=function(e){return e.pathname.endsWith(".css")},Dn=function(e,r,o){if(r in e)return e[r];const a=o();if(!a){e[r]=void 0;return}const l=a.then(()=>{e[r]=void 0},c=>{throw e[r]=void 0,c});return e[r]=l,l},fn=function(e,r,o){let a=Promise.resolve();function l(c){const d=new Event("vite:preloadError",{cancelable:!0});if(d.payload=c,window.dispatchEvent(d),!d.defaultPrevented)throw c}return a.then(c=>{for(const d of c||[])d.status==="rejected"&&l(d.reason);return e().catch(l)})},dn=window===top,Ut=Object.getOwnPropertyDescriptor(window,"claude"),We=qr(dn,window.__FRAME_PREAMBLE?.topLevel,Ut?.writable===!1),st=typeof We=="object"&&We[0],k=st?$r():Wr();(function(){const t=Object.defineProperty,e=globalThis,r=["RTCPeerConnection","webkitRTCPeerConnection","RTCDataChannel","RTCIceCandidate","RTCSessionDescription","RTCRtpSender","RTCRtpReceiver"];let o=0;for(let a=0;a<r.length;a++){const l=r[a];try{t(e,l,{value:void 0,writable:!1,configurable:!1})}catch{try{delete e[l]}catch{}try{t(e,l,{value:void 0,writable:!1,configurable:!0})}catch{}}typeof e[l]=="function"&&o++}if(o&&We==="framed")try{k.post({__frame_rtc_lockdown_failed:o},"*")}catch{}})();var xt=1e4,pn=35e3,hn=2e3,lt=2e3,ct=Object.freeze([...window.__FRAME_PREAMBLE?.origins??["https://claude.ai","https://preview.claude.ai"]]),mn="https://*.";function Kt(t){for(const e of ct)if(e.endsWith(":*"))try{const r=new URL(t);if(`${r.protocol}//${r.hostname}:*`===e)return!0}catch{}else if(e.startsWith(mn)){if(vn(e.slice(10),t))return!0}else if(t===e)return!0;return!1}function vn(t,e){if(!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(t))return!1;let r;try{r=new URL(e)}catch{return!1}if(r.protocol!=="https:"||r.port!==""||r.origin!==e)return!1;const o=r.hostname;if(!o.endsWith(`.${t}`))return!1;const a=o.slice(0,o.length-t.length-1);return/^[a-z0-9-]+$/.test(a)}var Ne=Object.freeze({...window.__FRAME_PREAMBLE?.capabilities}),Ce=window.__FRAME_PREAMBLE?.transforms,ut=window.__FRAME_PREAMBLE?.comments,ft=window.__FRAME_PREAMBLE?.translate,$e=or(window.__FRAME_PREAMBLE?.cred),zt=(()=>{try{const[t]=performance.getEntriesByType("navigation"),e=t?.serverTiming?.find(r=>r.name==="frame-cred-exp");return e!==void 0&&/^\d{1,15}$/.test(e.description)?ar(Number(e.description)):void 0}catch{return}})();function Wt(t){return fn(()=>import("/_runtime/"+t),void 0)}var Ge=new Set,$t=setTimeout,yn=fetch,_n=AbortController,gn=800+800*Math.random(),wn=3e3,Ve=null,Gt=new Map;function bn(t,e){let r=Gt.get(t);return r||Gt.set(t,r=En(t,e)),r}function En(t,e){if(Ve?.has(t))return Promise.resolve("csp");if(navigator.onLine===!1)return Promise.resolve("offline");const r=new _n;let o=!1;return $t(()=>{o=!0,r.abort()},wn),yn("/_runtime/"+t,{signal:r.signal}).then(a=>(r.abort(),a.ok?/javascript/i.test(a.headers.get("content-type")??"")?e instanceof Error&&/:\d+:\d+\)?$/m.test(e.stack??"")?"eval":"served":"mime":"http"),()=>o?"timeout":Ve?.has(t)?"csp":"net")}function ge(t){if(!Ve){const e=Ve=new Set;try{document.addEventListener("securitypolicyviolation",r=>{const o=/\/_runtime\/([^/?#]+)/.exec(r.blockedURI);o&&r.disposition!=="report"&&e.add(o[1])})}catch{}}return Wt(t).catch(()=>new Promise(e=>$t(e,gn)).then(()=>Wt(t+"?r=1")).then(e=>(e!==void 0&&Ge.add(t),e)))}function Vt(t,e,r){return{contract:t.contract,changes:new Set(t.changes??[]),flags:new Set(t.flags??[]),capabilities:t.capabilities??{},capBudgets:t.capBudgets??{},brokerGen:t.brokerGen,transforms:new Map,shellOrigin:e,shell:r,mount:yt,pipe:()=>({wrap:(o,a)=>(...l)=>{try{return a(...l)}catch(c){return Promise.reject(c)}}})}}var we=null,Q=null;function Yt(t,e,r){try{Object.defineProperty(t,e,{value:r,writable:!1,configurable:!1,enumerable:!0})}catch{try{Object.defineProperty(t,e,{value:r,writable:!1,configurable:!0,enumerable:!0})}catch{}}}var dt=!1;function Jt(t){if(t.hostBackground===!0)return 0;const e=t.hostBackgroundPaceMs;return typeof e=="number"&&e>0&&e<1/0?e:void 0}function Xt(t){const e=document.documentElement;t==="light"||t==="dark"?(e.dataset.theme=t,e.style.colorScheme=t,dt=!0):dt&&(delete e.dataset.theme,e.style.colorScheme="",dt=!1)}var de=new Map,Sn=(t,e)=>Array.isArray(t)&&t.includes(e),pt=null;function ht(){let t;const e={u:new Promise(r=>{t=r}),r:r=>{e.done=!0,t(r)},done:!1,nulled:!1};return e}function Fe(t,e){t.nulled=!0,t.ver=e,t.r(null)}function mt(t,e){for(const[r,o]of de)o.done||(e&&o.asked?e(r,o):Fe(o,t))}function Qt(){for(const t of de.values())if(t.asked&&!t.done)return!0;return!1}var kn=Object.freeze(Object.assign(Object.create(null),{call:Function.prototype.call,apply:Function.prototype.apply,bind:Function.prototype.bind})),vt=!1,yt=(t,e)=>{let r=de.get(t);if(r?.nulled&&vt)r=ht(),de.set(t,r);else if(!r||r.done){r?.nulled&&Q&&k.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:t,phase:"install"}},Q);return}const o=typeof e=="function"?Object.setPrototypeOf(e,kn):Object.assign(Object.create(null),e);typeof o.then=="function"&&delete o.then,r.want=void 0,r.r(Object.freeze(o))};function Zt(){const t=Ut?.value??{};Yt(window,"claude",t);for(const e of Object.keys(Ne)){if(t[e]!==void 0){Yt(t,e,t[e]);continue}de.set(e,ht())}if(t.use===void 0){const e=r=>{if(typeof r!="string"||!Object.hasOwn(Ne,r))return Promise.resolve(null);let o=de.get(r);return o?(pt&&(o.nulled||o.want!==void 0)&&(o=pt(r,o)),o.asked=!0,o.u):Promise.resolve(t[r]??null)};try{Object.defineProperty(t,"use",{value:e,writable:!0,configurable:!0,enumerable:!1})}catch{}}return t}if(We==="framed"){let t;const e=Ce&&_e.test(Ce)?ge(Ce).catch(s=>{t={f:Ce,e:s}}):Promise.resolve(void 0),r=s=>{if(s.type==="auxclick"&&s.button!==1)return;const h=s.target,g=h&&h.closest?h.closest("a[href],area[href]"):null;if(!g)return;const T=g.getAttribute("href");if(!T)return;let U;try{U=new URL(T,document.baseURI)}catch{return}if((U.protocol==="http:"||U.protocol==="https:")&&U.origin!==location.origin){s.preventDefault();const q=(g.getAttribute("target")??"").toLowerCase(),x=s.type==="auxclick"||s.metaKey||s.ctrlKey||s.shiftKey||s.altKey||!["","_self","_top","_parent"].includes(q);k.post({__frame_nav:!0,url:U.href,newTab:x},"*")}};addEventListener("click",r,!0),addEventListener("auxclick",r,!0);const o={},a=s=>{s.isTrusted&&(o.pointer=!0)},l=s=>{s.isTrusted&&(o.click=!0)};addEventListener("pointermove",a,{capture:!0,passive:!0}),addEventListener("click",l,{capture:!0,passive:!0});const c={cb:null};addEventListener("keydown",s=>c.cb?.(s),!0);const d={cb:null};addEventListener("keydown",s=>d.cb?.(s));const N=Kr();e.then(s=>s?.installEscapeForward?.(c,h=>{Q&&k.post(h,Q)})),e.then(s=>{try{s?.installFocusKeep?.()}catch{}}),e.then(s=>{try{s?.installLightDark?.()}catch{}}),e.then(s=>{if(!s?.wireNav)return;const h=k.port("*");s.wireNav(h,()=>m&&Object.hasOwn(m,"nativeNewTab")?m.nativeNewTab:void 0),removeEventListener("click",r,!0),removeEventListener("auxclick",r,!0),removeEventListener("pointermove",a,!0),removeEventListener("click",l,!0),s.wireEngagement?.(o,h,N)});let C=null;try{C=cn(wr(window.name))}catch{}const R=document.readyState==="loading"?new Promise(s=>document.addEventListener("DOMContentLoaded",()=>s(),{once:!0})):Promise.resolve();let _="dcl",M=!1;R.then(()=>{M=!0});let A=null,w=null;try{w=br(window.name),A=Mt(null,w)}catch{}const I=Zt();let H=null;try{H=Dr(I,A,{post:(s,h)=>k.post(s,h),dcl:R},w)}catch{}e.then(s=>{try{H&&s?.installHotExtras?.(H)}catch{}});let m=null,Z=null,K=0;const J=k.on((s,h,g,T)=>{Kt(h)&&lr(s)&&(T(),m=s.__frame_init,Q=h,J(),clearTimeout(K),Z?.())});if($e){const s=zt===void 0?{__frame_cred:$e}:{__frame_cred:$e,exp:zt};for(const h of ct)try{h.includes("*")||k.post(s,h)}catch{}}k.post({__frame_connect:!0},"*");try{H?.afterConnect()}catch{}const B=setTimeout,D=clearTimeout,W=()=>new Promise(s=>B(s,0));let ae=()=>NaN,pe=()=>[];try{ae=performance.now.bind(performance),pe=performance.getEntriesByType.bind(performance)}catch{}let he=0,F=null;const b=()=>{try{k.post({__frame_alive:!0},"*"),F&&!m&&!M&&!Qt()&&ae()<pn&&(F(),k.post({__frame_init_wait:!0},"*"))}catch{}he=B(b,hn)},j=()=>D(he);addEventListener("load",j,{once:!0});const z=new Promise(s=>{Z=s,F=()=>{D(K),K=B(()=>{F=null,J(),s()},xt)},F()});b();const $=new WeakSet;addEventListener("error",s=>{s.target&&$.add(s.target)},!0);try{en(Pt(),$e,()=>{e.then(s=>{try{s?.drawRefusedNotice?.()}catch{}})})}catch{}const ee=()=>{let s=[];try{s=[...document.querySelectorAll("link[rel~=stylesheet]:not([rel~=alternate])")].filter(g=>!g.sheet&&!g.disabled&&!$.has(g)&&g.getAttribute("href")&&URL.canParse(g.href)&&(!g.media||matchMedia(g.media).matches))}catch{}let h=s.length;return h===0?Promise.resolve():new Promise(g=>{try{const T=lt-ae();T>0&&(_="sheets");const U=B(g,T>0?T<lt?T:lt:0),q=()=>{--h===0&&(D(U),g())};for(const x of s)x.addEventListener("load",q,{once:!0}),x.addEventListener("error",q,{once:!0})}catch{g()}})};R.then(()=>{try{C?.restore()}catch{}});const be=Promise.all([z,R,e]).then(s=>{if(!m||!Q)return;const h=Jt(m),g=m.hostOverlays===!0;if(!g&&!h)return;const T=s[2],U=ie=>{try{return ie?.()===!0}catch{return!1}},q={cover:U(T?.declaresCover),...m.hostSides===!0&&{sides:U(T?.declaresSides)},...T?.answerLayoutCheck&&{checks:!0},...U(T?.declaresNoJump)&&{noJump:!0}};if(g&&k.post({__frame_layout:q},Q),h===void 0)return;const x=Q;return W().then(ee).then(()=>{try{T?.watchBackground?.(ie=>k.post({__frame_layout:{...q,background:ie}},x),h)}catch{}})}),me={cb:null};k.on((s,h)=>{if(Kt(h)&&cr(s)){try{C?.promoted()}catch{}me.cb?.()}}),z.then(async()=>{if(!m||!Q){mt();try{H?.onNoInit()}catch{}return}if(Xt(m.theme),m.hostVisible===!1&&e.then(i=>i?.applyHostVisible?.(!1,N)),m.hostKeys!==void 0){const i=Q,v=m.hostKeys;e.then(p=>p?.installHostKeyForward?.(d,v,E=>k.post(E,i),k.port(i)))}try{H?.onInit(m.hot,Q)}catch{}const s=Q,h=k.port(s),g=(i,v)=>k.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:i,phase:v}},s),T=(i,v,p)=>{new Promise(E=>E(bn(v,p))).then(E=>g(i,E),()=>g(i))},U=i=>k.post({__frame_cap_recovered:{cap:i}},s);let q=m.brokerGen;const x=()=>H?.boot.ver??"",ie=x(),G=(i,v)=>{const p=x();D(v.t),v.sent=!0,v.want=p,v.t=B(()=>{v.done||(v.sent=!1,Fe(v,p))},xt),k.post({__frame_cap_want:!0,cap:i,ver:p},s)},Ye=(i,v)=>{const p=de.get(i.cap),E=Ne[i.cap];if(!v||!p||p.done||p.want!==i.ver||!_e.test(E))return;if(D(p.t),p.want=void 0,q=i.brokerGen??q,i.ver!==x()){G(i.cap,p);return}if(!i.grant||i.cap==="network"){Fe(p,i.ver);return}const te=we,V=we={...te,capabilities:{...te.capabilities,[i.cap]:i.grant},capBudgets:{...te.capBudgets,[i.cap]:{...te.capBudgets[i.cap],...i.budgets}}};ge(E).then(re=>{Ge.has(E)&&U(i.cap),V.brokerGen=q,vt=!0;try{re?.install?.(V)}catch{g(i.cap,"install")}finally{vt=!1}},re=>T(i.cap,E,re)).then(()=>{p.done||Fe(p,i.ver)})};let oe=!1,Ie=!1;k.on((i,v,p)=>{if(v!==s)return;try{if(H?.onShell(i))return}catch{}if(fr(i)&&Xt(i.__frame_theme.theme),Nr(i)&&Ye(i,p),p&&Cr(i)&&(q=i.brokerGen??q),ur(i)){const V=i.__frame_host_visible.visible;e.then(re=>re?.applyHostVisible?.(V,N))}i?.__frame_native_new_tab_off&&delete m?.nativeNewTab,i?.__frame_layout_check&&e.then(V=>V?.answerLayoutCheck?.(i,re=>k.post({__frame_layout_verdict:re},s)));const E=i?.__fc_mode;E&&typeof E=="object"&&!oe&&ut&&_e.test(ut)&&(oe=!0,ge(ut).then(V=>V.install?.(s,E.on===!0,h)).catch(()=>{}));const te=i?.__ft_cmd;te&&typeof te=="object"&&!Ie&&ft&&_e.test(ft)&&(Ie=!0,ge(ft).then(V=>V.install?.(s,te,h)).catch(()=>{}))});const He=Object.keys(m.capabilities??{}),ve=He.filter(i=>Object.hasOwn(Ne,i)).map(i=>[i,Ne[i]]).filter(i=>typeof i[1]=="string"&&_e.test(i[1])),se=s;let je=!1,qe=()=>{};const Be=new Promise(i=>{qe=()=>{je=!0,i()}}),Ee=()=>(je||(_="caps"),Be),Se=A!==null||Tt(m.hot)||m.hostVisible===!1||m.hostOverlays===!0;M&&(_="init");const Je=Jt(m)!==void 0,ke=R.then(()=>(Je&&Ee(),Je?be:void 0)).then(()=>Se?Ee():W()).then(ee).then(()=>{let i=!0;try{i=Se||Qt()}catch{}return i?Ee():void 0}).then(()=>{j();const i=ir(pe,ae);let v=!1;try{v=!C?.short()&&!location.hash&&!document.querySelector("iframe,video,object,embed")&&![...document.querySelectorAll("script")].some(p=>p.src&&p.async)&&[...document.querySelectorAll("img")].every(p=>p.complete)}catch{}k.post(i?{__frame_ready:!0,nav:i,gate:_,steady:v}:{__frame_ready:!0,gate:_,steady:v},se),e.then(p=>{p?.installSizeReporter?.(se,me,h),p?.installPaintReporter?.(h),p?.installDrawnReporter?.(h,m?.drawnAtRest===!0)}),e.then(p=>{try{p?.installTabStop?.(E=>k.post(E,se))}catch{}})}),Re=await Promise.allSettled(ve.map(([,i])=>ge(i))),le=await e;if(le?.buildBoot||(t?T("_transforms",t.f,t.e):g("_transforms")),le?.buildBoot)try{we=le.buildBoot(m,le.TRANSFORMS??{},{shellOrigin:se,mount:yt,shell:h},i=>k.post({__frame_cap_telemetry:i},se))}catch{g("_transforms","install"),we=Vt(m,se,h)}else we=Vt(m,se,h);le?.buildBoot&&Ge.has(Ce??"")&&U("_transforms");const De=we;De.brokerGen=q;try{le?.installAnchorMirror?.(h)}catch{}Re.forEach((i,v)=>{const[p,E]=ve[v];if(i.status!=="fulfilled"){T(p,E,i.reason);return}Ge.has(E)&&U(p);try{i.value?.install?.(De)}catch{g(p,"install")}});const Ue=m.capWants===!0,Xe=m.usable,xe=i=>!!x()&&Sn(Xe,i)&&!He.includes(i);Ue&&(pt=(i,v)=>{const p=x();if(!p)return v;if(!v.nulled)return v.want!==p&&G(i,v),v;if(p===v.ver&&(v.sent||!xe(i)))return v;const E=ht();return de.set(i,E),G(i,E),E}),mt(ie,Ue?(i,v)=>x()!==ie||xe(i)?G(i,v):Fe(v,ie):void 0),qe(),await ke})}else st&&(Zt(),un(st,ct,ge,{settle:mt,mount:yt}))})();</script><!-- /frame-runtime --><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<div style="max-width:1100px;margin:0 auto;padding:14px 18px;
+  font:14px/1.7 system-ui,-apple-system,'Noto Sans TC',sans-serif;
+  background:#fff8e6;border:1px solid #f0d9a0;border-radius:10px;color:#4a3c1a;">
+  <b>這是一份真實專案的工作成果，已去識別化。</b>
+  業主、下包廠商、案名一律改成代號（總包 T、廠商 A…），檔名與單據編號也拿掉了；
+  <b>金額、時程、比例全部是原始數字</b>，分析結論沒有被改動。
+  <a href="index.html" style="color:#7a5c12;">← 回作品集</a>
+</div>
+
+<title>機電工程請款預估</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --ground:#f3f4f1; --surface:#fcfcfb; --surface-2:#eceeea; --line:#dfe2dd; --grid:#e6e8e4;
+  --ink:#16191a; --ink-2:#4f5553; --ink-3:#7e8481;
+  --accent:#2a78d6; --today:#d03b3b;
+  --act:#34403b; --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#0e8a6e; --s7:#4a3aa7; --c1:#2a78d6; --c2:#eb6834; --c3:#1baf7a; --c4:#eda100; --c5:#e87ba4; --c6:#4a3aa7; --c7:#0f9bc4; --c8:#b5642c; --c9:#7aa63a; --c10:#c0459a; --c11:#5a6b7a; --c12:#9e2f3d;
+  --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --serif:"Noto Serif TC","PMingLiU",serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#111312; --surface:#1a1c1b; --surface-2:#232625; --line:#2e3230; --grid:#2a2d2b;
+    --ink:#f1f2ef; --ink-2:#c1c5c1; --ink-3:#8d928f;
+    --accent:#3987e5; --today:#e66767;
+    --act:#d3dbd7; --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#19a082; --s7:#9085e9; --c1:#3987e5; --c2:#d95926; --c3:#199e70; --c4:#c98500; --c5:#d55181; --c6:#9085e9; --c7:#2eb3d9; --c8:#cc8352; --c9:#93bd4e; --c10:#d470b4; --c11:#8b9aa8; --c12:#d95a68;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#111312; --surface:#1a1c1b; --surface-2:#232625; --line:#2e3230; --grid:#2a2d2b;
+  --ink:#f1f2ef; --ink-2:#c1c5c1; --ink-3:#8d928f;
+  --accent:#3987e5; --today:#e66767;
+  --act:#d3dbd7; --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#19a082; --s7:#9085e9; --c1:#3987e5; --c2:#d95926; --c3:#199e70; --c4:#c98500; --c5:#d55181; --c6:#9085e9; --c7:#2eb3d9; --c8:#cc8352; --c9:#93bd4e; --c10:#d470b4; --c11:#8b9aa8; --c12:#d95a68;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6;margin:0;padding-inline:clamp(16px,4vw,48px);padding-block:32px 64px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header{display:grid;gap:10px;border-bottom:1px solid var(--line);padding-bottom:22px}
+.eyebrow{font-size:12px;letter-spacing:.08em;color:var(--ink-2)}
+h1{font-family:var(--serif);font-weight:900;font-size:clamp(28px,4.4vw,42px);line-height:1.15;margin:0;text-wrap:balance}
+.meta{display:flex;flex-wrap:wrap;gap:6px 22px;color:var(--ink-2);font-size:13px}
+.meta b{color:var(--ink);font-weight:500}
+h2{font-size:17px;margin:0;font-weight:700;text-wrap:balance}
+.sub{color:var(--ink-2);font-size:13px;margin:2px 0 0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.kpi{background:var(--surface);padding:16px 18px;display:grid;gap:4px;align-content:start}
+.kpi .k{font-size:12px;color:var(--ink-2);letter-spacing:.04em}
+.kpi .v{font-family:var(--mono);font-size:28px;font-weight:600;line-height:1.2}
+.kpi .v small{font-size:14px;font-weight:500;color:var(--ink-2);margin-left:4px;font-family:var(--sans)}
+.kpi .d{font-size:12px;color:var(--ink-3)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px clamp(14px,2.4vw,24px);display:grid;gap:14px}
+.phead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:10px 24px}
+.controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:end;padding:14px 18px;border:1px dashed var(--line);border-radius:10px;background:var(--surface)}
+.controls .t{font-weight:700;font-size:13px;margin-right:4px;align-self:center}
+.ctl{display:grid;gap:3px}
+.ctl label{font-size:12px;color:var(--ink-2)}
+.ctl select{font:inherit;font-family:var(--mono);font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink);min-width:96px}
+.ctl select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.controls .note{font-size:12px;color:var(--ink-3);flex-basis:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.legend i.ln{height:3px;border-radius:2px;width:16px}
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tip{position:fixed;pointer-events:none;z-index:10;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:12px;box-shadow:0 6px 24px rgba(0,0,0,.14);min-width:180px;max-width:290px}
+.tip .h{font-weight:700;margin-bottom:4px}
+.tip .r{display:flex;justify-content:space-between;gap:14px}
+.tip .r span:first-child{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2)}
+.tip .r i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.tip .tot{border-top:1px solid var(--line);margin-top:4px;padding-top:4px;font-weight:600}
+.two{display:grid;grid-template-columns:1fr;gap:28px;align-items:start}
+@media (min-width:980px){.two{grid-template-columns:1.25fr 1fr}}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-weight:500;color:var(--ink-2);text-align:right;font-size:12px;background:var(--surface-2);position:sticky;top:0}
+th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
+td{text-align:right}
+tr.past td{color:var(--ink-3)}
+tr.now td{background:color-mix(in srgb,var(--today) 8%,transparent)}
+tr.sum td{font-weight:700;border-top:2px solid var(--ink-3)}
+td.note{text-align:left;color:var(--ink-2);white-space:normal;min-width:200px}
+.pill{display:inline-block;font-size:11px;padding:1px 7px;border-radius:99px;border:1px solid currentColor;margin-right:6px;vertical-align:1px}
+.pill.past{color:var(--ink-3)} .pill.now{color:var(--today)} .pill.pipe{color:#0ca30c}
+.find{display:grid;gap:10px}
+.tag{display:inline-block;font-size:11px;padding:0 7px;border-radius:99px;margin-right:6px;border:1px solid var(--line);color:var(--ink-2);background:var(--surface-2)}
+.tag.warn{border-color:#ec835a;color:var(--ink)}
+.stat{display:inline-flex;align-items:center;gap:5px;font-size:12px}
+.stat i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.bar-mini{height:6px;border-radius:3px;background:var(--surface-2);position:relative;min-width:70px}
+.bar-mini span{position:absolute;left:0;top:0;bottom:0;border-radius:3px}
+.foot{color:var(--ink-2);font-size:13px;display:grid;gap:6px;max-width:80ch}
+.foot ol{margin:0;padding-left:1.3em;display:grid;gap:4px}
+.srcbar{display:grid;gap:6px}
+.srcbar-track{display:flex;height:26px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.srcbar-track i{display:block;height:100%}
+.srcbar-lab{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2)}
+tr.hi td{background:color-mix(in srgb,var(--s4) 14%,transparent);font-weight:600}
+
+/* ---- 側邊導覽 ---- */
+#navbtn{position:fixed;left:14px;top:14px;z-index:60;width:42px;height:42px;border-radius:10px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.10)}
+#navbtn:hover{background:var(--surface-2)}
+#navbtn span{display:block;width:18px;height:2px;background:currentColor;border-radius:2px;position:relative}
+#navbtn span::before,#navbtn span::after{content:'';position:absolute;left:0;width:18px;height:2px;background:currentColor;border-radius:2px;transition:.18s}
+#navbtn span::before{top:-6px} #navbtn span::after{top:6px}
+body.navopen #navbtn span{background:transparent}
+body.navopen #navbtn span::before{top:0;transform:rotate(45deg)}
+body.navopen #navbtn span::after{top:0;transform:rotate(-45deg)}
+#navpane{position:fixed;left:0;top:0;bottom:0;width:272px;z-index:55;background:var(--surface);border-right:1px solid var(--line);
+  transform:translateX(-100%);transition:transform .22s ease;overflow-y:auto;padding:66px 10px 20px;box-shadow:2px 0 18px rgba(0,0,0,.08)}
+body.navopen #navpane{transform:none}
+#navpane .nt{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);padding:10px 10px 6px}
+#navpane a{display:block;padding:7px 10px;border-radius:7px;font-size:13px;color:var(--ink-2);text-decoration:none;line-height:1.35}
+#navpane a:hover{background:var(--surface-2);color:var(--ink)}
+#navpane a.on{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--ink);font-weight:600}
+#navscrim{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .22s}
+body.navopen #navscrim{opacity:1;pointer-events:auto}
+@media(min-width:1400px){body.navpin{padding-left:272px} body.navpin #navscrim{display:none}}
+section.panel{scroll-margin-top:16px}
+@media(max-width:860px){#navbtn{left:10px;top:10px;width:38px;height:38px}}
+#f-vp-v{max-width:220px}
+#t-vp td.sc,#t-vp th.sc{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.legend button{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:12px;color:var(--ink-2);
+  background:transparent;border:1px solid transparent;border-radius:999px;padding:3px 9px;cursor:pointer;transition:.14s}
+.legend button:hover{background:var(--surface-2);border-color:var(--line)}
+.legend button[aria-pressed="false"]{opacity:.34;text-decoration:line-through}
+.legend button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.legend .rst{font-size:11px;color:var(--ink-3);border:1px dashed var(--line)}
+.chk{display:flex;flex-wrap:wrap;gap:4px 6px}
+.chk label{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);background:var(--surface);
+  border:1px solid var(--line);border-radius:999px;padding:4px 10px 4px 7px;cursor:pointer;user-select:none;transition:.12s}
+.chk label:hover{background:var(--surface-2)}
+.chk label:has(input:checked){color:var(--ink);border-color:color-mix(in srgb,var(--accent) 45%,var(--line));background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+.chk input{accent-color:var(--accent);width:14px;height:14px;margin:0;cursor:pointer}
+.chk i{width:11px;height:11px;border-radius:3px;display:inline-block}
+.chk i.ln{height:3px;width:15px;border-radius:2px}
+.ctlrow{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:flex-end}
+.ctlgrp{display:grid;gap:5px}
+.ctlgrp>span{font-size:12px;color:var(--ink-2)}
+</style>
+<button id="navbtn" aria-label="目錄" aria-expanded="false"><span></span></button>
+<div id="navscrim"></div>
+<nav id="navpane" aria-label="目錄"><div class="nt">目錄</div><div id="navlist"></div></nav>
+<div class="wrap">
+<header>
+  <div class="eyebrow">某市民活動中心新建工程・機電、弱電及空調系統工程</div>
+  <h1>本案請款預估</h1>
+  <div class="meta">
+    <span>甲方 <b>總包商</b></span>
+    <span>合約 <b class="num">42,420,000</b>（含稅）</span>
+    <span>主契約完工 <b class="num">2027/11/08</b></span>
+    <span>已請到 <b class="num">4 期（2026/10/31）</b></span>
+    <span>間接成本 <b class="num">3,500,000</b>（8.66%）</span>
+    <span>預估淨利 <b class="num">3,644,192</b>（9.02%）</span>
+    <span>未決標 <b class="num">788,939</b>（1 包 3 項）</span>
+    <span>製表 <b class="num">2026/11/10</b></span>
+  </div>
+</header>
+
+<section class="kpis" id="kpis"></section>
+
+<section class="controls" aria-label="假設">
+  <span class="t">假設</span>
+  <div class="ctl"><label for="c-lag">計價→入帳</label><select id="c-lag"><option value="1">1 個月</option><option value="2" selected>2 個月（預設）</option><option value="3">3 個月</option></select></div>
+  <div class="ctl"><label for="c-ret">保留款退還月</label><select id="c-ret"><option value="2028-02">2028/02</option><option value="2028-04" selected>2028/04（預設）</option><option value="2028-07">2028/07</option></select></div>
+  <div class="ctl"><label for="c-scen">未決標那包成本</label><select id="c-scen"><option value="A" selected>維持現有報價</option><option value="B">未定那包抓上包 95%</option></select></div>
+  <div class="ctl"><label for="c-cost">成本率假設（2027 起）</label><select id="c-cost"><option value="0.65">65%</option><option value="0.7">70%</option><option value="0.75">75%</option><option value="0.8">80%</option><option value="0.82" selected>82%（金流表）</option><option value="0.84">84%</option><option value="0.85">85%</option></select></div>
+  <div class="ctl"><label>預付款／保留款</label><select disabled><option>15%／10%（合約第七條）</option></select></div>
+  <div class="note">合約：每月 25 日前送計價，經查驗核可才能請；每期付 90%（訂金 15% 於工程款內扣回），保留 10% 於正式驗收後請領並開發票。開票次月 1 日起算付款期限，計價表註 30 天。成本率用來推估 2027 年起的下包支出，2026/12 以前用實際請款單；82% 是金流表 1123 下包合約 33,255,808 ÷ 40,400,000 算出來的；間接成本 3,500,000（含辦公室等營業費用）另計。</div>
+</section>
+
+<section class="panel">
+  <div class="phead">
+    <div><h2>各期估驗金額</h2><p class="sub">未稅。1～4 期為計價表實際數（深色，4 期含管材核定後補請）；5 期起依工種排程預估，對齊計價單的 5 期～18 期。</p></div>
+    <div class="legend" id="lg-a"></div>
+  </div>
+  <div class="scroll"><div class="chart" id="ch-a" style="min-width:660px"></div></div>
+</section>
+
+<section class="panel">
+  <div class="phead">
+    <div><h2>9～11 月合併計價（依 11/23 施工日誌重算）</h2><p class="sub" id="p5-sub"></p></div>
+    <div class="legend"><span><i style="background:var(--s3)"></i>比原 4 期增加</span><span><i style="background:var(--today)"></i>比原 4 期減少</span><span><i style="background:var(--ink-3)"></i>不變</span></div>
+  </div>
+  <div class="scroll"><div class="chart" id="ch-p5" style="min-width:600px"></div></div>
+  <div class="scroll" style="margin-top:12px"><table id="t-p5"></table></div>
+  <p class="sub" id="p5-note"></p>
+  <details class="sub" style="margin-top:10px"><summary style="cursor:pointer;font-weight:600">原 4 期（9、10 月）本期計價明細（未請到款，已併入本期）</summary>
+    <div class="scroll" style="margin-top:8px"><table id="t-p4"></table></div></details>
+</section>
+
+<div class="two">
+<section class="panel">
+  <div class="phead">
+    <div><h2>總包商付我們：累計請款與入帳</h2><p class="sub">含稅。這張是「總包商 → 本公司」的收款，不是我們付給下包的錢。起點那一段 636 萬是我們<b>向總包商領到的 15% 訂金 6,363,000</b>（簽約並交履保票後月結 30 天），不是付出去的訂金。兩線距離＝已請未收。</p></div>
+    <div class="legend"><span><i class="ln" style="background:var(--s1)"></i>累計已請款（總包商核可）</span><span><i class="ln" style="background:var(--s2)"></i>累計實際入帳</span></div>
+  </div>
+  <div class="chart" id="ch-b"></div>
+</section>
+<section class="panel">
+  <div class="phead">
+    <div><h2>剩餘工程排程假設</h2><p class="sub">各工種每月完成比例。假設結構約每月一層、2027/03 完成，2027/11 完工、12 月收尾測試。</p></div>
+  </div>
+  <div class="scroll"><div class="chart" id="ch-c" style="min-width:520px"></div></div>
+</section>
+</div>
+
+<section class="panel">
+  <div class="phead">
+    <div><h2>淨獲利：現在手上的錢是從哪來的</h2><p class="sub">含稅。手上 5,281,285 裡有 6,363,000 是訂金——那是預收的，要從後面每期工程款一路扣回去。</p></div>
+  </div>
+  <div class="srcbar"><div class="srcbar-track" id="srcbar"></div><div class="srcbar-lab"><span>訂金 6,363,000（92%）</span><span>1～4 期工程款 566,092（8%）</span></div></div>
+  <div class="scroll"><div class="chart" id="ch-wf" style="min-width:680px"></div></div>
+  <p class="sub">把預收的訂金、已付給下包的預付款、雙邊卡住的保留款都還原後，實質是 <b>−509,484</b>；用損益角度看（未稅）是 收入 718,848 − 成本 1,370,110 ＝ <b>−651,262</b>。兩個數字角度不同，都指向同一件事：目前還在墊錢。</p>
+</section>
+
+<section class="panel">
+  <div class="phead">
+    <div><h2>獲利來自哪裡：各廠商的毛利</h2><p class="sub">未稅。上包對應金額＝4040 萬明細各項次複價、依材料分類歸到各供料／施工廠商；下包金額取自廠商分工表。注意：這張表的下包金額與金流表略有出入（例如給排水泵廠商分工表寫廠商 A 750,000、金流表已改廠商 B 1,577,000），且沒有扣間接成本，所以加總會比損益總表樂觀。看誰賺誰賠用這張，看全案數字用損益總表。</p></div>
+    <div class="legend"><span><i style="background:var(--s3)"></i>賺</span><span><i style="background:var(--s2)"></i>倒貼</span></div>
+  </div>
+  <div class="scroll"><div class="chart" id="ch-vm" style="min-width:680px"></div></div>
+  <div class="scroll"><table id="t-vm"></table></div>
+</section>
+
+<section class="panel">
+  <div class="phead">
+    <div><h2>合約狀態：只剩一包還沒決標</h2><p class="sub" id="cstat-sub"></p></div>
+    <div class="legend"><span><i style="background:var(--s3)"></i>✓ 已用印／已回簽</span><span><i style="background:var(--s4)"></i>△ 已談妥（送審後簽正式合約）</span><span><i style="background:var(--today)"></i>✗ 詢價中未定</span></div>
+  </div>
+  <div class="scroll"><div class="chart" id="ch-cstat" style="min-width:620px"></div></div>
+  <div class="scroll" style="margin-top:12px"><table id="t-scen"></table></div>
+  <div class="scroll" style="margin-top:12px"><div class="chart" id="ch-scen" style="min-width:620px"></div></div>
+  <p class="sub" id="cstat-note"></p>
+</section>
+
+<section class="panel">
+  <div class="phead">
+    <div><h2>損益總表：間接成本 3,500,000 版</h2><p class="sub">未稅。直接成本取總包商金流表 20261123 的 23 家下包合約並套用上面選的「未決標那包」情境，間接成本 3,500,000 已含辦公室等營業費用，不再另扣 8%；A 版預算編的是 1,891,000。</p></div>
+  </div>
+  <div class="scroll"><div class="chart" id="ch-pnl" style="min-width:660px"></div></div>
+  <div class="scroll"><table id="t-pnl"></table></div>
+  <p class="sub" id="pnl-note"></p>
+</section>
+
+<section class="panel">
+  <div class="phead">
+    <div><h2>跟 A 版預算差在哪</h2><p class="sub">未稅。紅＝比預算貴、綠＝比預算省。</p></div>
+  </div>
+  <div class="scroll"><div class="chart" id="ch-diff" style="min-width:680px"></div></div>
+  <p class="sub">多花的主要是廠商 C給排水 +500,000、廠商 D線 +443,863、廠商 E管閥 +394,092；省下來的是雨水回收＋跑照 −503,728、廠商 F −365,966、<b>廠商 A給排水泵 −355,000</b>（泵浦改用廠商 A報價 750,000，原編廠商 B 1,577,000）、廠商 G −350,000、廠商 H −100,000。相抵後直接成本比 A 版<b>省了 649,325</b>。</p>
+</section>
+
+<section class="panel">
+  <div class="phead">
+    <div><h2>間接成本 3,500,000（佔 8.66%，已含辦公室等營業費用）</h2><p class="sub">A 版預算的間接成本編 1,891,000；本版調整為 3,500,000，多 1,609,000，而且已把辦公室等費用含在內（A 版另列的「營業費用 8% 3,232,000」是公司總部的標準分攤率，不在這裡的比較基礎內）。</p></div>
+  </div>
+  <div class="scroll"><table id="t-ind"></table></div>
+  <p class="sub">人力 3,269,000 佔 93.4%，平均每月約 166,667 元（以 21 個月計）；工期若再延，這筆會跟著加。<b>這一筆同時涵蓋了 A 版另列的營業費用 8%（3,232,000）所指的辦公室與管銷</b>——若 350 萬實際涵蓋不到總部管理與業務開發的分攤，淨利就會被高估。仍未編列的有：工務所組合屋、宿舍租金、水電瓦斯、影印機租金、交通費燃料費、清潔費分攤、運費、銀行手續費（履保／預付款保證／保固各為保證金額 1.5%／年）；實際發生的「工程餐費」7,800（實際是給總包商的影印費）也不在內。</p>
+</section>
+
+
+
+<section class="panel">
+  <div class="phead">
+    <div><h2>訂金比整個案子賺的還多</h2><p class="sub">訂金 6,060,000（未稅）＝情境A 預估淨利 3,644,192 的 <b>1.66 倍</b>。管銷已併入間接成本 3,500,000，不再另扣 8% 營業費用；毛利與淨利在本版是同一個數。</p></div>
+  </div>
+  <div class="scroll"><table id="t-dep"></table></div>
+</section>
+
+<section class="panel">
+  <div class="phead">
+    <div><h2>為什麼施工期每個月都在倒貼</h2><p class="sub">每做 100 元的估驗，收得到 78.75 元，卻要付出去 86.05 元（直接成本 81.95% × 1.05）——差的 7.30 元就是在還訂金。</p></div>
+  </div>
+  <div class="scroll"><div class="chart" id="ch-unit" style="min-width:620px"></div></div>
+  <ul class="find" style="list-style:disc;padding-left:1.2em">
+    <li><b>比例問題：</b>每期只收 75%（扣 15% 預付款＋10% 保留款），但下包直接成本是估驗的 82%，加稅後要付 86.1%；間接成本 3,500,000（每月約 16.7 萬，含辦公室費用）還沒算在內。</li>
+    <li><b>時間差問題：</b>總包商的錢是計價後約 2 個月才入帳，下包的錢計價後約 1 個月就要付。在金額往上衝的階段，這 1 個月的差距會放大——收的是兩個月前的小數字，付的是上個月的大數字。</li>
+    <li><b>所以這不是虧，是在還訂金。</b>簽約時一次收了 636 萬，施工期就要一路吐回去；真正把毛利變成現金，是驗收後領回保留款 424 萬那一刻。</li>
+  </ul>
+  <div class="scroll"><div class="chart" id="ch-life" style="min-width:560px"></div></div>
+</section>
+
+<section class="panel">
+  <div class="phead">
+    <div><h2>各下包的付款條件與進場時間</h2><p class="sub">付款條件來源：總包商金流表 20260714（設備類多是驗收後 60~90 天票期，工程類是月結＋保留款）。<b>「最早可進場／最晚需進場」已依 115/11/13 的工進重排</b>：最早＝現場條件與交期允許的最早時點，最晚＝不影響 2027/11/08 竣工的底線。成本已更新為總包商金流表 20261123（廠商 A泵浦 700,000、雨水回收＋跑照馬達 450,000）。</p></div>
+    <div class="legend"><span><i style="background:var(--s3)"></i>工程</span><span><i style="background:var(--s4)"></i>設備</span><span><i style="background:var(--ink-3)"></i>其他</span></div>
+  </div>
+  <div class="scroll"><table id="t-pay"></table></div>
+  <p class="sub">依重排後的進場日，<b>2026 年底前幾乎沒有新的訂金要付</b>——廠商 G 817,500（原訂 2026/12，改 2027/03）、廠商 I 228,571（改 2027/01）、廠商 A 225,000（改 2027/04）都往後移，壓力全部遞延到 2027 上半年。設備款大多落在 2027/08~2027/12，那時保留款還沒領回，是調度最緊的一段。</p>
+  <details class="sub" style="margin-top:10px"><summary style="cursor:pointer;font-weight:600">泵浦（廠商 A：給排水泵＋變頻加壓機）進場時程推估</summary>
+  <div class="scroll" style="margin-top:8px"><table id="t-pump"></table></div>
+  <p class="sub" id="pump-note" style="margin-top:8px"></p></details>
+</section>
+
+<section class="panel">
+  <div class="phead">
+    <div><h2>現金收支：每月（PDF）與累計（CDF）</h2><p class="sub">含稅（間接成本為薪資，不計稅）。上圖是每個月實際發生多少，下圖是從開工累計到該月為止的總額。2026/12 以前為實際，2027 起依成本率推估。下包的保留款與保固／消檢／送電款在施工期間扣住不付，驗收後才一次付出。</p></div>
+    
+  </div>
+  <div class="controls" style="margin:0 0 12px;padding:12px 14px;display:block">
+    <div class="ctlrow" style="margin-bottom:10px">
+      <div class="ctl"><label for="c-cpre">快速檢視</label><select id="c-cpre" style="min-width:170px">
+        <option value="all">全部顯示</option>
+        <option value="cash">只看現金部位</option>
+        <option value="flow">只看每月收支</option>
+        <option value="cum">只看累計曲線</option>
+        <option value="ind">只看間接成本的影響</option>
+        <option value="noind">不含間接成本</option>
+      </select></div>
+      <div class="ctl"><label for="c-crng">期間</label><select id="c-crng" style="min-width:150px">
+        <option value="">全部（26/04～28/05）</option>
+        <option value="2026-04|2026-12">只看 2026（實際）</option>
+        <option value="2027-01|2027-12">只看 2027</option>
+        <option value="2026-04|2027-12">施工期 26/04～27/12</option>
+        <option value="2028-01|2028-12">驗收後 2028</option>
+      </select></div>
+      <div class="ctl"><label>&nbsp;</label><button type="button" id="c-creset" style="font:inherit;font-size:13px;padding:6px 14px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink);cursor:pointer">重設</button></div>
+    </div>
+    <div class="ctlgrp"><span>顯示項目（可複選）</span><div class="chk" id="chk-cash"></div></div>
+  </div>
+  <div class="scroll"><div class="chart" id="ch-cash" style="min-width:700px"></div></div>
+  <p class="sub" id="cash-note"></p>
+  <details class="sub" style="margin:10px 0"><summary style="cursor:pointer;font-weight:600">下包保留／保固款明細（施工期間扣住不付的部分）</summary>
+  <div class="scroll" style="margin-top:8px"><table id="t-subret"></table></div></details>
+  <p class="sub"><b>上面的「顯示項目」可以勾選要看哪幾條線／哪幾種棒子</b>，Y 軸會跟著重算刻度；「快速檢視」是常用組合，「期間」可以只放大某一段。下圖：實線＝含間接成本、虛線＝不含間接成本；粉線是累計間接成本，走右軸（金額小，用同一刻度看不出陡度）。綠橘兩條累計線交叉後藍線轉負，就是公司要開始墊錢的時點。<br>注意：收入是「計價後 2 個月」入帳、支出是「成本發生後 1 個月」付款，所以上升期的每月淨額會是負的，不代表那個月虧錢。</p>
+</section>
+
+<section class="panel">
+  <div class="phead">
+    <div><h2>各廠商進場時間（依 11/13 工進重估）</h2><p class="sub" id="sch-sub"></p></div>
+    <div class="legend"><span><i style="background:var(--s1)"></i>進場窗口（最早～最晚）</span><span><i style="background:var(--s1);opacity:.28"></i>到必須完成</span><span><i style="background:var(--s3)"></i>已進場</span><span><i style="background:var(--today)"></i>未發包</span><span><i style="background:var(--s4);clip-path:polygon(50% 0,100% 100%,0 100%)"></i>最晚下單日</span></div>
+  </div>
+  <div class="scroll"><table id="t-ms" style="max-width:760px"></table></div>
+  <div class="scroll" style="margin-top:14px"><div class="chart" id="ch-gantt" style="min-width:860px"></div></div>
+  <div class="scroll" style="margin-top:12px"><table id="t-sch"></table></div>
+  <p class="sub" id="sch-note"></p>
+</section>
+
+<section class="panel">
+  <div class="phead">
+    <div><h2>廠商別每月預計支出</h2><p class="sub">未稅。依總包商金流表各家的付款條件與預計進場推算；含稅＝×1.05。合計 <b>33,255,808</b>，與直接成本完全相符。工程類已扣掉 2026 年的實際付款，剩下的金額依各家原訂工期<b>重新攤到 2027/01 起</b>（金流表的預計進場多半已過，工程進度落後）；設備類的單筆款原訂在 2026 年但未發生者順延到 2027/01。每格可以滑過去看是哪幾筆。雨水回收那兩段（設備 450,000＋跑照 150,000）到現在<b>還沒有廠商</b>，與水箱陰井同一家詢價中（1120 已發詢價單）。</p></div>
+    <div class="legend" id="lg-vp"></div>
+  </div>
+  <div class="controls" style="margin:0 0 10px;padding:10px 12px">
+    <div class="ctl"><label for="f-vp-v">廠商</label><select id="f-vp-v"></select></div>
+    <div class="ctl"><label for="f-vp-k">款項類別</label><select id="f-vp-k"></select></div>
+    <div class="ctl"><label for="f-vp-y">期間</label><select id="f-vp-y"><option value="">全部</option><option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option></select></div>
+    <div class="ctl"><label for="f-vp-t">含稅／未稅</label><select id="f-vp-t"><option value="1">未稅</option><option value="1.05">含稅</option></select></div>
+  </div>
+  <div class="scroll"><div class="chart" id="ch-vp" style="min-width:860px"></div></div>
+  <div class="legend" id="lg-vp2" style="margin:10px 0 2px"></div>
+  <p class="sub" id="vp-peak"></p>
+  <div class="scroll" style="margin-top:12px"><table id="t-vp" style="font-size:12px"></table></div>
+  <p class="sub" id="vp-note"></p>
+  <details class="sub" style="margin-top:10px"><summary style="cursor:pointer;font-weight:600">逐筆明細（依上面的篩選）</summary>
+    <div class="scroll" style="margin-top:8px"><table id="t-vpd"></table></div></details>
+</section>
+
+<section class="panel">
+  <div class="phead">
+    <div><h2>已發生的收支（逐筆）</h2><p class="sub">含稅，依入帳／付款月。到目前為止收 6,929,092、付 1,647,807，淨現金 +5,281,285——幾乎全靠 15% 訂金撐著。</p></div>
+  </div>
+  <div class="controls" style="margin:0 0 10px;padding:10px 12px">
+    <div class="ctl"><label for="f-c-k">收／支</label><select id="f-c-k"><option value="">全部</option><option value="收">只看收入</option><option value="支">只看支出</option></select></div>
+    <div class="ctl"><label for="f-c-v">對象</label><select id="f-c-v"></select></div>
+    <div class="ctl"><label for="f-c-m">月份</label><select id="f-c-m"></select></div>
+    <div class="ctl"><label for="f-c-q">關鍵字</label><input id="f-c-q" type="search" placeholder="項目／說明" style="font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);color:var(--ink);min-width:140px"></div>
+  </div>
+  <div class="scroll"><table id="t-cash"></table></div>
+  <p class="sub" id="cashf-note"></p>
+</section>
+
+<section class="panel">
+  <div class="phead">
+    <div><h2>下包合約與已計價</h2><p class="sub">只列本資料夾內有計價表的 7 家。廠商 H（配電盤）、廠商 D（線材）、廠商 J／台辰（開關插座燈具）、廠商 K（消防）等已簽約但還沒計價，不在這裡。</p></div>
+  </div>
+  <div class="scroll"><table id="t-vend"></table></div>
+  <p class="sub" id="margin-note"></p>
+</section>
+
+<section class="panel">
+  <div class="phead"><div><h2>需要跟總包商確認的事</h2></div></div>
+  <ol class="find">
+    <li><span class="tag warn">待確認</span><b>間接工程費 2,400,000 還沒計入任何一期。</b>1～4 期的本期計價都只取工程小計；本頁假設 5 期起依完成比例攤。</li>
+    <li><span class="tag warn">成本面</span><b>已投入成本比請到的錢多 1,035,896 元。</b>上包 1～3 期只入帳 334,214（原 4 期 387,486 未請到款，已併入 9~11 月合併計價），但下包已計價／已請 1,370,110（廠商 L 971,216、廠商 C 203,592、管材 169,502、點工 18,000、工程餐費 7,800＝給總包商的影印費）。主因是廠商 L中央監控一次計價到 900,860，上包端的監視、門禁、求救系統都還在前期。</li>
+    <li><span class="tag warn">核對</span><b>廠商 L 2 期計價表的「實付金額」410,630 比請款單的 470,358 少 59,728。</b>計價表把保留款扣了兩次（發票淨額已扣一次，實付又扣一次）；1 期的算法則是實付＝發票總額。兩期不一致，付款前要確認用哪一個。</li>
+    <li><span class="tag warn">待確認</span><b>三.6.12 接地施工另料 2,852 元從沒開過票。</b>計價表累計 721,700 比 1～4 期發票面合計 718,848 多的就是這筆：3 期累計欄有列，但本期從未列入。要補請就放進 5 期。</li>
+  </ol>
+</section>
+
+<section class="panel">
+  <div class="phead"><div><h2>各期請款</h2><p class="sub">單位：新台幣元。1～4 期為實際（保留款一併開票、付款時扣回）；5 期起發票只開 90% 部分。</p></div></div>
+  <div class="scroll"><table id="tbl"></table></div>
+</section>
+
+<section class="foot">
+  <h2>資料來源與假設</h2>
+  <ol>
+    <li>實際：本案計價單 9-10 月合併請款（1151103）——1～3 期原數不變，4 期為原 9 月與 10 月合併，計價期間 2026/07/01–10/31。</li>
+    <li>剩餘直接工程 37,278,300（＝38,000,000 − 4 期累計 721,700）依六個工種排到 2026/11–2027/12，對齊計價單的 5 期～18 期；工種分類用計價單自己的「材料類型」欄。</li>
+    <li>6 期（12 月）計價單已預填不銹鋼管 11,572，本頁的 12 月預估已涵蓋在內。</li>
+    <li>付款條件：分包合約第七條。保留款須於驗收後請領，請領時另交合約總額 10% 保固本票。</li>
+    <li>收支來源：1廠商請款表 資料夾的各廠商計價表與請款單（廠商 L、廠商 C、廠商 E／璇豐／宏銘、廠商 M、廠商 N、餐費），以及 202606 的金流對帳表。</li>
+    <li>完整公式版見 Excel「請款預估.xlsx」。</li>
+  </ol>
+</section>
+</div>
+<div class="tip" id="tip" hidden></div>
+<script>
+const D = {"months": ["2026-11", "2026-12", "2027-01", "2027-02", "2027-03", "2027-04", "2027-05", "2027-06", "2027-07", "2027-08", "2027-09", "2027-10", "2027-11", "2027-12"], "bytype": [[165679, 281398, 0, 0, 0, 0], [165679, 281398, 0, 0, 0, 0], [165679, 562797, 0, 0, 0, 0], [124259, 562797, 0, 0, 0, 0], [124259, 562797, 174443, 0, 0, 0], [82839, 562797, 348885, 811679, 0, 0], [0, 844195, 348885, 811679, 0, 0], [0, 844195, 523328, 1623358, 365498, 0], [0, 562797, 523328, 1623358, 365498, 0], [0, 281398, 523328, 2435039, 730996, 189477], [0, 281398, 523328, 3246716, 1096494, 378954], [0, 0, 348885, 2435037, 1827490, 757909], [0, 0, 174443, 1623358, 1827490, 1136863], [0, 0, 0, 1623358, 1096494, 1326341]], "ind": [28783, 28783, 46900, 44233, 55464, 116284, 129068, 216086, 197969, 267839, 355825, 345680, 306590, 260496], "W": {"EMB": [20, 20, 20, 15, 15, 10, 0, 0, 0, 0, 0, 0, 0, 0], "ROUGH": [5, 5, 10, 10, 10, 10, 15, 15, 10, 5, 5, 0, 0, 0], "WIRE": [0, 0, 0, 0, 5, 10, 10, 15, 15, 15, 15, 10, 5, 0], "EQUIP": [0, 0, 0, 0, 0, 5, 5, 10, 10, 15, 20, 15, 10, 10], "FIX": [0, 0, 0, 0, 0, 0, 0, 5, 5, 10, 15, 25, 25, 15], "TEST": [0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 10, 20, 30, 35]}, "rem": {"EMB": 828393.9123306569, "ROUGH": 5627969.1282843985, "WIRE": 3488851.43597282, "EQUIP": 16233582.065702371, "FIX": 7309958.522654803, "TEST": 3789544.9849684555}, "tot": {"EMB": 1032202.5156629676, "ROUGH": 5820158.847595092, "WIRE": 3640689.9158284524, "EQUIP": 16329440.554968713, "FIX": 7363056.933700601, "TEST": 3814451.232244179}, "act": [{"id": "1期", "m": "2026-04", "est": 94840, "dp": -14226, "tax": 4031, "ret": 9484, "pay": 74686.8, "period": "2026/03/06–04/30", "note": "接地銅棒、接地線、弱電接地"}, {"id": "2期", "m": "2026-05", "est": 71864, "dp": -10780, "tax": 3054, "ret": 7186.4, "pay": 56592.28, "period": "2026/05/01–05/31", "note": "一樓以下 PVC 導線管"}, {"id": "3期", "m": "2026-06", "est": 164658, "dp": -24699, "tax": 6998, "ret": 16465.8, "pay": 129667.91, "period": "2026/06/01–06/30", "note": "電力管線另料、工資、給排水工資、雨水回收預埋"}, {"id": "5期（9~11月合併）", "m": "2026-11", "est": 545287, "dp": -81793, "tax": 20448, "ret": 54529, "pay": 429413.51, "period": "2026/07/01–2026/11/30", "note": "原 4 期（9、10 月）未請到款，併入 11 月一起請；數量以 11/23 施工日誌累計為準"}], "p4": [{"code": "三.2.13", "name": "預留警示燈電源出線口 含盲蓋板", "unit": "式", "cq": 1, "p": 626, "prev": 0, "q": 0.2, "v": 125, "cum": 0.2, "pipe": false}, {"code": "三.2.14", "name": "預留馬達出線口 含蓋板 (用途另詳標示)", "unit": "式", "cq": 1, "p": 7843, "prev": 0, "q": 0.2, "v": 1569, "cum": 0.2, "pipe": false}, {"code": "三.2.15", "name": "預留電熱水器電源出線口 含蓋板", "unit": "式", "cq": 1, "p": 626, "prev": 0, "q": 0.2, "v": 125, "cum": 0.2, "pipe": false}, {"code": "三.2.16", "name": "預留電源出線口 含蓋板 (用途另詳標示)", "unit": "式", "cq": 1, "p": 1882, "prev": 0, "q": 0.2, "v": 376, "cum": 0.2, "pipe": false}, {"code": "三.2.17", "name": "預留循環扇出線口 含蓋板", "unit": "式", "cq": 1, "p": 6588, "prev": 0, "q": 0.2, "v": 1318, "cum": 0.2, "pipe": false}, {"code": "三.2.37", "name": "產品，接地導線，標稱截面積100mm2，裸銅線(BCW)", "unit": "M", "cq": 70, "p": 459, "prev": 10, "q": 60, "v": 27540, "cum": 70, "pipe": false}, {"code": "三.2.39", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，CNS 1302 20mm∮", "unit": "M", "cq": 5960, "p": 19, "prev": 240, "q": 1380, "v": 26220, "cum": 1620, "pipe": true}, {"code": "三.2.40", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，標稱20mm", "unit": "M", "cq": 670, "p": 16, "prev": 400, "q": 113.88, "v": 1822, "cum": 513.88, "pipe": true}, {"code": "三.2.41", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，標稱28mm", "unit": "M", "cq": 420, "p": 26, "prev": 200, "q": 58.25, "v": 1514, "cum": 258.25, "pipe": true}, {"code": "三.2.42", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，標稱35mm", "unit": "M", "cq": 70, "p": 45, "prev": 0, "q": 4.38, "v": 197, "cum": 4.38, "pipe": true}, {"code": "三.2.43", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，標稱41mm", "unit": "M", "cq": 230, "p": 53, "prev": 24, "q": 200, "v": 10600, "cum": 224, "pipe": true}, {"code": "三.2.46", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，標稱100mm", "unit": "M", "cq": 100, "p": 257, "prev": 0, "q": 3.75, "v": 964, "cum": 3.75, "pipe": true}, {"code": "三.2.47", "name": "產品，導線管，硬質聚氯乙烯塑膠管，ES-1管，標稱150mm", "unit": "M", "cq": 220, "p": 504, "prev": 108, "q": 44, "v": 22176, "cum": 152, "pipe": true}, {"code": "三.2.48", "name": "PVC配管另料", "unit": "式", "cq": 1, "p": 43182, "prev": 0.3, "q": 0.12382637692958, "v": 5347, "cum": 0.42382637692958, "pipe": false}, {"code": "三.2.54", "name": "接地施工另料", "unit": "式", "cq": 1, "p": 17111, "prev": 0, "q": 0.770089285714286, "v": 13177, "cum": 0.770089285714286, "pipe": false}, {"code": "三.2.59", "name": "零雜料損耗", "unit": "式", "cq": 1, "p": 74401, "prev": 0.046, "q": 0.0301867485644458, "v": 2246, "cum": 0.0761867485644458, "pipe": false}, {"code": "三.2.60", "name": "運什費", "unit": "式", "cq": 1, "p": 74401, "prev": 0.046, "q": 0.0301867485644458, "v": 2246, "cum": 0.0761867485644458, "pipe": false}, {"code": "三.2.61", "name": "工資", "unit": "式", "cq": 1, "p": 875301, "prev": 0.046, "q": 0.0301867485644458, "v": 26422, "cum": 0.0761867485644458, "pipe": false}, {"code": "三.3.9", "name": "產品，吊架、凡而、消耗品及五金另料", "unit": "式", "cq": 1, "p": 5704, "prev": 0, "q": 0.0129243550844478, "v": 74, "cum": 0.0129243550844478, "pipe": false}, {"code": "三.3.11", "name": "產品，電線及電纜，600V聚氯乙烯絕緣電線，絞線，14mm2", "unit": "M", "cq": 50, "p": 71, "prev": 0, "q": 30, "v": 2130, "cum": 30, "pipe": false}, {"code": "三.3.13", "name": "產品，配線另料", "unit": "式", "cq": 1, "p": 3250, "prev": 0, "q": 0.163468917881811, "v": 531, "cum": 0.163468917881811, "pipe": false}, {"code": "三.3.14", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，標稱28mm", "unit": "M", "cq": 20, "p": 26, "prev": 0, "q": 1.25, "v": 32, "cum": 1.25, "pipe": false}, {"code": "三.3.15", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，標稱20mm", "unit": "M", "cq": 60, "p": 16, "prev": 0, "q": 60, "v": 960, "cum": 60, "pipe": false}, {"code": "三.3.16", "name": "配管線另件，PVC配管另件", "unit": "式", "cq": 1, "p": 240, "prev": 0, "q": 0.670608108108108, "v": 161, "cum": 0.670608108108108, "pipe": false}, {"code": "三.3.23", "name": "零雜料損耗", "unit": "式", "cq": 1, "p": 8240, "prev": 0, "q": 0.003522338223433, "v": 29, "cum": 0.003522338223433, "pipe": false}, {"code": "三.3.24", "name": "運什費", "unit": "式", "cq": 1, "p": 26615, "prev": 0, "q": 0.003522338223433, "v": 94, "cum": 0.003522338223433, "pipe": false}, {"code": "三.3.25", "name": "工資", "unit": "式", "cq": 1, "p": 28786, "prev": 0, "q": 0.003522338223433, "v": 101, "cum": 0.003522338223433, "pipe": false}, {"code": "三.5.4", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，標稱20mm", "unit": "M", "cq": 80, "p": 16, "prev": 0, "q": 80, "v": 1280, "cum": 80, "pipe": false}, {"code": "三.5.5", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，標稱28mm", "unit": "M", "cq": 92, "p": 26, "prev": 0, "q": 17.75, "v": 462, "cum": 17.75, "pipe": false}, {"code": "三.5.6", "name": "配管另料", "unit": "式", "cq": 1, "p": 626, "prev": 0, "q": 0.474264705882353, "v": 297, "cum": 0.474264705882353, "pipe": false}, {"code": "三.5.14", "name": "零星材料", "unit": "式", "cq": 1, "p": 169, "prev": 0, "q": 0.35173386685573, "v": 59, "cum": 0.35173386685573, "pipe": false}, {"code": "三.5.15", "name": "運什費", "unit": "式", "cq": 1, "p": 6730, "prev": 0, "q": 0.35173386685573, "v": 2367, "cum": 0.35173386685573, "pipe": false}, {"code": "三.5.16", "name": "工資", "unit": "式", "cq": 1, "p": 71270, "prev": 0, "q": 0.35173386685573, "v": 25068, "cum": 0.35173386685573, "pipe": false}, {"code": "三.6.13", "name": "單聯鍍鋅鐵盒 2.0t", "unit": "式", "cq": 1, "p": 4658, "prev": 0, "q": 0.1875, "v": 873, "cum": 0.1875, "pipe": false}, {"code": "三.6.22", "name": "產品，配線另料", "unit": "式", "cq": 1, "p": 10780, "prev": 0, "q": 0.0867909128009795, "v": 936, "cum": 0.0867909128009795, "pipe": false}, {"code": "三.6.23", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，標稱20mm", "unit": "M", "cq": 1570, "p": 16, "prev": 0, "q": 428, "v": 6848, "cum": 428, "pipe": false}, {"code": "三.6.24", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，標稱28mm", "unit": "M", "cq": 3450, "p": 26, "prev": 0, "q": 32, "v": 832, "cum": 32, "pipe": false}, {"code": "三.6.25", "name": "配管另料", "unit": "式", "cq": 1, "p": 20039, "prev": 0, "q": 0.0527668228601267, "v": 1057, "cum": 0.0527668228601267, "pipe": false}, {"code": "三.6.28", "name": "零雜料損耗", "unit": "式", "cq": 1, "p": 11850, "prev": 0, "q": 0.068075087821147, "v": 807, "cum": 0.068075087821147, "pipe": false}, {"code": "三.6.29", "name": "運雜費", "unit": "式", "cq": 1, "p": 11850, "prev": 0, "q": 0.068075087821147, "v": 807, "cum": 0.068075087821147, "pipe": false}, {"code": "三.6.30", "name": "工資", "unit": "式", "cq": 1, "p": 118505, "prev": 0, "q": 0.068075087821147, "v": 8067, "cum": 0.068075087821147, "pipe": false}, {"code": "三.8.10", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，標稱20mm", "unit": "M", "cq": 20, "p": 16, "prev": 0, "q": 20, "v": 320, "cum": 20, "pipe": false}, {"code": "三.8.12", "name": "配管另料", "unit": "式", "cq": 1, "p": 96, "prev": 0, "q": 0.440771349862259, "v": 42, "cum": 0.440771349862259, "pipe": false}, {"code": "三.8.15", "name": "零雜料損耗", "unit": "式", "cq": 1, "p": 1398, "prev": 0, "q": 0.00707995929023408, "v": 10, "cum": 0.00707995929023408, "pipe": false}, {"code": "三.8.16", "name": "運什費", "unit": "式", "cq": 1, "p": 1398, "prev": 0, "q": 0.00707995929023408, "v": 10, "cum": 0.00707995929023408, "pipe": false}, {"code": "三.8.17", "name": "工資", "unit": "式", "cq": 1, "p": 13988, "prev": 0, "q": 0.00707995929023408, "v": 99, "cum": 0.00707995929023408, "pipe": false}, {"code": "三.10.21", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，標稱20mm", "unit": "M", "cq": 1800, "p": 16, "prev": 0, "q": 492, "v": 7872, "cum": 492, "pipe": false}, {"code": "三.10.22", "name": "配管另料", "unit": "式", "cq": 1, "p": 24239, "prev": 0, "q": 0.273333333333333, "v": 6625, "cum": 0.273333333333333, "pipe": false}, {"code": "三.10.27", "name": "零雜料損耗", "unit": "式", "cq": 1, "p": 30514, "prev": 0, "q": 0.00543265972585496, "v": 166, "cum": 0.00543265972585496, "pipe": false}, {"code": "三.10.30", "name": "運雜費", "unit": "式", "cq": 1, "p": 74810, "prev": 0, "q": 0.00543265972585496, "v": 406, "cum": 0.00543265972585496, "pipe": false}, {"code": "三.10.31", "name": "工資", "unit": "式", "cq": 1, "p": 460270, "prev": 0, "q": 0.00543265972585496, "v": 2500, "cum": 0.00543265972585496, "pipe": false}, {"code": "三.11.10", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，標稱20mm", "unit": "M", "cq": 912, "p": 16, "prev": 0, "q": 240, "v": 3840, "cum": 240, "pipe": false}, {"code": "三.11.11", "name": "配管另料", "unit": "式", "cq": 1, "p": 12357, "prev": 0, "q": 0.263157894736842, "v": 3252, "cum": 0.263157894736842, "pipe": false}, {"code": "三.11.18", "name": "預埋盒及另料", "unit": "式", "cq": 1, "p": 3042, "prev": 0, "q": 0.00583384480757428, "v": 18, "cum": 0.00583384480757428, "pipe": false}, {"code": "三.11.19", "name": "零雜料損耗", "unit": "式", "cq": 1, "p": 12261, "prev": 0, "q": 0.00583384480757428, "v": 72, "cum": 0.00583384480757428, "pipe": false}, {"code": "三.11.22", "name": "運雜費", "unit": "式", "cq": 1, "p": 29943, "prev": 0, "q": 0.00583384480757428, "v": 175, "cum": 0.00583384480757428, "pipe": false}, {"code": "三.11.23", "name": "工資", "unit": "式", "cq": 1, "p": 510651, "prev": 0, "q": 0.00583384480757428, "v": 2979, "cum": 0.00583384480757428, "pipe": false}, {"code": "三.12.9", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，標稱20mm", "unit": "M", "cq": 2304, "p": 16, "prev": 0, "q": 628, "v": 10048, "cum": 628, "pipe": false}, {"code": "三.12.10", "name": "配管另料", "unit": "式", "cq": 1, "p": 30894, "prev": 0, "q": 0.272569444444444, "v": 8421, "cum": 0.272569444444444, "pipe": false}, {"code": "三.12.17", "name": "零雜料損耗", "unit": "式", "cq": 1, "p": 27376, "prev": 0, "q": 0.00774426656061461, "v": 212, "cum": 0.00774426656061461, "pipe": false}, {"code": "三.12.20", "name": "運雜費", "unit": "式", "cq": 1, "p": 42682, "prev": 0, "q": 0.00774426656061461, "v": 331, "cum": 0.00774426656061461, "pipe": false}, {"code": "三.12.21", "name": "工資", "unit": "式", "cq": 1, "p": 613788, "prev": 0, "q": 0.00774426656061461, "v": 4753, "cum": 0.00774426656061461, "pipe": false}, {"code": "三.14.97.2", "name": "產品，硬質聚氯乙烯塑膠管(B管橘紅色)，標稱50mm", "unit": "M", "cq": 115, "p": 94, "prev": 0, "q": 24, "v": 2256, "cum": 24, "pipe": true}, {"code": "三.14.97.3", "name": "產品，硬質聚氯乙烯塑膠管(B管橘紅色)，標稱75mm", "unit": "M", "cq": 98, "p": 185, "prev": 0, "q": 12, "v": 2220, "cum": 12, "pipe": true}, {"code": "三.14.97.4", "name": "產品，硬質聚氯乙烯塑膠管(B管橘紅色)，標稱100mm", "unit": "M", "cq": 256, "p": 287, "prev": 0, "q": 64, "v": 18368, "cum": 64, "pipe": true}, {"code": "三.14.97.6", "name": "產品，聚氯乙烯管(B管厚管)，配管另件", "unit": "式", "cq": 1, "p": 34394, "prev": 0, "q": 0.166618041778504, "v": 5731, "cum": 0.166618041778504, "pipe": true}, {"code": "三.14.98.1", "name": "產品，聚氯乙烯管(B管厚管)，標稱50mm", "unit": "M", "cq": 8, "p": 85, "prev": 0, "q": 0.2, "v": 17, "cum": 0.2, "pipe": true}, {"code": "三.14.98.4", "name": "產品，聚氯乙烯管(B管厚管)，標稱125mm", "unit": "M", "cq": 45, "p": 363, "prev": 0, "q": 2.81, "v": 1020, "cum": 2.81, "pipe": true}, {"code": "三.14.98.5", "name": "產品，聚氯乙烯管(B管厚管)，標稱150mm", "unit": "M", "cq": 92, "p": 509, "prev": 0, "q": 32, "v": 16288, "cum": 32, "pipe": true}, {"code": "三.14.98.6", "name": "產品，聚氯乙烯管(B管厚管)，配管另件", "unit": "式", "cq": 1, "p": 12401, "prev": 0, "q": 0.209588807432678, "v": 2599, "cum": 0.209588807432678, "pipe": true}, {"code": "三.14.99.1", "name": "產品，聚氯乙烯管(A管薄管)，透氣管2\"", "unit": "M", "cq": 154, "p": 40, "prev": 0, "q": 29, "v": 1160, "cum": 29, "pipe": true}, {"code": "三.14.99.2", "name": "產品，聚氯乙烯管(A管薄管)，標稱75mm", "unit": "M", "cq": 134, "p": 88, "prev": 0, "q": 36, "v": 3168, "cum": 36, "pipe": true}, {"code": "三.14.99.3", "name": "產品，聚氯乙烯管(A管薄管)，標稱100mm", "unit": "M", "cq": 39, "p": 132, "prev": 0, "q": 2.44, "v": 322, "cum": 2.44, "pipe": true}, {"code": "三.14.99.4", "name": "產品，聚氯乙烯管(A管薄管)，配管另件", "unit": "式", "cq": 1, "p": 5797, "prev": 0, "q": 0.201302164502165, "v": 1167, "cum": 0.201302164502165, "pipe": true}, {"code": "三.14.101", "name": "管路吊架及固定", "unit": "式", "cq": 1, "p": 153527, "prev": 0, "q": 0.2, "v": 30705, "cum": 0.2, "pipe": false}, {"code": "三.14.103", "name": "給水試壓消毒", "unit": "式", "cq": 1, "p": 28518, "prev": 0, "q": 0.10718169561762, "v": 3057, "cum": 0.10718169561762, "pipe": false}, {"code": "三.14.105", "name": "零雜料損耗", "unit": "式", "cq": 1, "p": 110132, "prev": 0, "q": 0.0217285258771807, "v": 2393, "cum": 0.0217285258771807, "pipe": false}, {"code": "三.14.106", "name": "運什費", "unit": "式", "cq": 1, "p": 110133, "prev": 0, "q": 0.0217285258771807, "v": 2393, "cum": 0.0217285258771807, "pipe": false}, {"code": "三.16.1.17", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，CNS 1302 20mm∮", "unit": "M", "cq": 717, "p": 19, "prev": 0, "q": 90, "v": 1710, "cum": 90, "pipe": false}, {"code": "三.16.1.18", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，CNS 1302 28mm∮", "unit": "M", "cq": 79, "p": 23, "prev": 0, "q": 20, "v": 460, "cum": 20, "pipe": false}, {"code": "三.16.1.19", "name": "產品，導線管，配管另料", "unit": "式", "cq": 1, "p": 3788, "prev": 0, "q": 0.140544041450777, "v": 532, "cum": 0.140544041450777, "pipe": false}, {"code": "三.16.1.20", "name": "零雜料損耗", "unit": "式", "cq": 1, "p": 24484, "prev": 0, "q": 0.00446734616991973, "v": 109, "cum": 0.00446734616991973, "pipe": false}, {"code": "三.16.1.21", "name": "運什費", "unit": "式", "cq": 1, "p": 29382, "prev": 0, "q": 0.00446734616991973, "v": 131, "cum": 0.00446734616991973, "pipe": false}, {"code": "三.16.1.22", "name": "工資", "unit": "式", "cq": 1, "p": 342786, "prev": 0, "q": 0.00446734616991973, "v": 1531, "cum": 0.00446734616991973, "pipe": false}, {"code": "三.16.4.17", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，CNS 1302 20mm∮", "unit": "M", "cq": 12, "p": 19, "prev": 0, "q": 4, "v": 76, "cum": 4, "pipe": false}, {"code": "三.16.4.18", "name": "產品，導線管，硬質聚氯乙烯塑膠管，E管，CNS 1302 28mm∮", "unit": "M", "cq": 114, "p": 23, "prev": 0, "q": 20, "v": 460, "cum": 20, "pipe": false}, {"code": "三.16.4.19", "name": "產品，導線管，配管另料", "unit": "式", "cq": 1, "p": 576, "prev": 0, "q": 0.188070175438597, "v": 108, "cum": 0.188070175438597, "pipe": false}, {"code": "三.16.4.20", "name": "運雜費", "unit": "式", "cq": 1, "p": 25382, "prev": 0, "q": 0.000209415737905264, "v": 5, "cum": 0.000209415737905264, "pipe": false}, {"code": "三.16.4.21", "name": "施工費，工資", "unit": "式", "cq": 1, "p": 84605, "prev": 0, "q": 0.000209415737905264, "v": 18, "cum": 0.000209415737905264, "pipe": false}, {"code": "四.5.2.2", "name": "產品，中央監視主控制設備-管線材料及另料", "unit": "式", "cq": 1, "p": 81221, "prev": 0, "q": 0.2, "v": 16244, "cum": 0.2, "pipe": false}, {"code": "四.5.2.3", "name": "產品，中央監視主控制設備-管線施工工資", "unit": "式", "cq": 1, "p": 105756, "prev": 0, "q": 0.2, "v": 21151, "cum": 0.2, "pipe": false}, {"code": "四.5.2.4", "name": "產品，中央監視主控制設備-運雜費合計〔空調自動控制工程〕", "unit": "式", "cq": 1, "p": 13198, "prev": 0, "q": 0.157377589180182, "v": 2077, "cum": 0.157377589180182, "pipe": false}], "p6": [{"code": "三.14.90.1", "name": "產品，自來水用鋼管，不鏽鋼管，標稱管徑13mm", "v": 1224}, {"code": "三.14.90.2", "name": "產品，自來水用鋼管，不鏽鋼管，標稱管徑20mm", "v": 996}, {"code": "三.14.90.6", "name": "產品，不銹鋼管及管件，另料及另件，壓接式", "v": 3337}, {"code": "三.14.92.1", "name": "產品，不銹鋼管及管件，標稱厚度Sch-20S， 2\"(符合CNS 6", "v": 3420}, {"code": "三.14.92.2", "name": "產品，自來水用鋼管，不鏽鋼管，配管另件(氬焊式)", "v": 1821}, {"code": "三.14.103", "name": "給水試壓消毒", "v": 302}, {"code": "三.14.105", "name": "零雜料損耗", "v": 236}, {"code": "三.14.106", "name": "運什費", "v": 236}], "cum4": 879501, "billed": 334214, "gap": 545287, "vend": [{"v": "廠商 L", "scope": "機電／中央監控", "amt": 8480000, "pp": 0.15, "rt": 0.1, "billed": 900860, "note": "1期 303,580（115/05/25）＋2期 597,280（115/10/16）"}, {"v": "廠商 G工業", "scope": "空調設備", "amt": 5450000, "pp": 0.15, "rt": 0.1, "billed": 0, "note": "計價表已開，尚未計價"}, {"v": "廠商 C社", "scope": "給排水工程", "amt": 2700000, "pp": 0.15, "rt": 0.1, "billed": 203592, "note": "預付款 405,000 已付（115/08）；1期 203,592（115/09/20）"}, {"v": "廠商 I", "scope": "消防設備", "amt": 1547059, "pp": 0.15, "rt": 0.1, "billed": 0, "note": "尚未計價"}, {"v": "廠商 O防火", "scope": "防火相關", "amt": 1350000, "pp": 0.15, "rt": 0.1, "billed": 0, "note": "尚未計價；合約 135 萬 vs 上包防火填塞 234,317，範圍待確認"}, {"v": "廠商 E配管材料", "scope": "管材（含璇豐、宏銘代供）", "amt": 1145165, "pp": 0, "rt": 0, "billed": 169502, "note": "1期 65,972（廠商 E8月）、2期 54,404（璇豐8月）；另宏銘8月 17,862、廠商 E9月 29,480、璇豐10月 1,784 尚未入計價表"}, {"v": "廠商 M", "scope": "發電機", "amt": 900000, "pp": 0.1, "rt": 0.1, "billed": 0, "note": "預付款 90,000 已付（115/09/07）；本體尚未計價"}], "inflow": [["2026-04", "訂金 15%", "總包商", 6363000, "合約七、1(1)，月結30天"], ["2026-06", "1期 工程款", "總包商", 74686.8, "計價 94,840"], ["2026-07", "2期 工程款", "總包商", 56592.28, "計價 71,864"], ["2026-08", "3期 工程款", "總包商", 129667.91, "計價 164,658"], ["2027-01", "5期 工程款（9~11月合併）", "總包商", 429413.51, "計價 545,287（原 4 期 387,486 未請到款，併入 11 月）"]], "outflow": [["2026-06", "給排水材料費", "廠商 L", 73874, "額外工程，115/05/25 全額開票"], ["2026-06", "中央監控 1期", "廠商 L", 239069, "計價 303,580，扣預付15%、保留10%"], ["2026-08", "預付款", "廠商 C社", 405000, "合約 270 萬的 15%"], ["2026-09", "預付款", "廠商 M", 94500, "合約 90 萬的 10%＋稅"], ["2026-09", "8月管材", "璇豐水電材料行", 57124, "月結30天"], ["2026-09", "8月管材", "宏銘五金", 18755, "月結30天"], ["2026-09", "工程餐費（給總包商的影印費）", "傅聖嵐", 5200, "8、9月各 2,600，現金；實際是給總包商的影印費"], ["2026-11", "點工 6工×3,000", "廠商 N", 18900, "發票 115/10/01，付款 115/11/15"], ["2026-11", "中央監控 2期", "廠商 L", 470358, "計價 597,280，付款 115/11/16"], ["2026-11", "給排水 1期", "廠商 C社", 160329, "計價 203,592，發票 115/10/08"], ["2026-11", "8月管材", "廠商 E配管材料", 69271, "月結90天，付款 115/11/30"], ["2026-11", "10月管材", "璇豐水電材料行", 1873, "付款 115/11/30"], ["2026-11", "工程餐費（給總包商的影印費）", "傅聖嵐", 2600, "10月；實際是給總包商的影印費"], ["2026-12", "9月配管材料", "廠商 E配管材料", 30954, "付款 115/12/15"]], "awarded": 21572224, "accrual": {"廠商 L": 971216, "廠商 C": 203592, "管材": 169502, "點工": 18000, "餐費": 7800}, "cost_tot": 1370110, "vm": [{"v": "廠商 H", "scope": "配電盤（設備）", "rng": "乙.壹.三.1 低壓開關箱（盤體、斷路器、儀表）", "sub": 3500000, "up": 4803302, "stat": "未請款"}, {"v": "廠商 L（廠商 P）", "scope": "電力及弱電施工＋弱電設備（含 NCC）", "rng": "乙.壹.三.1~13 施工（盤體甲方供料、只做安裝）、乙.壹.三.6~13 弱電設備、乙.壹.四.5 空調自控", "sub": 8480000, "up": 10109382, "stat": "已請：預付款、1期（0521）、0526~0618 計價"}, {"v": "廠商 E（＋璇豐、宏銘）", "scope": "管材、閥件（純設備）", "rng": "乙.壹.三.2.39~50 導線管、乙.壹.三.5.4~5、乙.壹.三.14 給排水管材閥件、乙.壹.四.4.4", "sub": 1145165, "up": 1389708, "stat": "已請：8月（廠商 E＋璇豐＋宏銘合併）、9月"}, {"v": "廠商 D", "scope": "電線電纜（設備）", "rng": "乙.壹.三.2.19~37、3、5 段電線 共 25 項", "sub": 2400000, "up": 1984720, "stat": "訂金 252,000 已開票"}, {"v": "廠商 J", "scope": "開關插座（設備）", "rng": "乙.壹.三.2.1~18、乙.壹.三.6.7~6.8", "sub": 108385, "up": 154285, "stat": "未請款"}, {"v": "廠商 G", "scope": "空調設備含施工", "rng": "乙.壹.四.1、乙.壹.四.6（VRF）", "sub": 5450000, "up": 6701850, "stat": "有請款計價表"}, {"v": "廠商 O", "scope": "風管工程（設備＋工程）", "rng": "乙.壹.三.4 發電機室通風、乙.壹.四.2、乙.壹.四.3", "sub": 1350000, "up": 1517377, "stat": "有請款計價表"}, {"v": "廠商 M", "scope": "發電機（含簽證）", "rng": "乙.壹.三.3.1~24（純發電機）", "sub": 900000, "up": 855301, "stat": "預付款 20260907"}, {"v": "廠商 K", "scope": "消防設備（含消檢）", "rng": "乙.壹.三.16 消設（設備）", "sub": 2280000, "up": 3792228, "stat": "未請款"}, {"v": "廠商 I", "scope": "消防工程（施工）", "rng": "乙.壹.三.16 消工（配管配線、施工）", "sub": 1523809, "up": 1365138, "stat": "有請款計價表"}, {"v": "廠商 Q", "scope": "防火填塞（連工帶料）", "rng": "乙.壹.三.17.1~5", "sub": 220000, "up": 234317, "stat": "未請款"}, {"v": "廠商 R／雷可利", "scope": "接地避雷（含簽證）", "rng": "乙.壹.三.5.1~3 避雷針、計數器、固定架（接地銅棒由廠商 L連工帶料）", "sub": 72000, "up": 146379, "stat": "—"}, {"v": "廠商 C", "scope": "給排水施工（甲方供料）", "rng": "乙.壹.三.14 施工、乙.壹.三.15 部分施工", "sub": 2700000, "up": 1803378, "stat": "訂金 405,000、第一期（202608）"}, {"v": "廠商 F", "scope": "衛生設備（純設備）", "rng": "乙.壹.三.14.1~41", "sub": 480000, "up": 979296, "stat": "未請款"}, {"v": "廠商 A", "scope": "給排水泵、變頻加壓機（純設備）", "rng": "乙.壹.三.14.78~87", "sub": 750000, "up": 1253814, "stat": "—"}, {"v": "廠商 S", "scope": "水箱、陰井（純設備）", "rng": "乙.壹.三.14.42~45 陰井、14.88 消防水箱、14.89 油脂截留器", "sub": null, "up": 194870, "stat": "—"}, {"v": "（未定）", "scope": "雨水回收設備＋汙水雨水跑照", "rng": "乙.壹.三.15 全部 19 項；跑照無標單項次", "sub": null, "up": 719124, "stat": "—"}, {"v": "廠商 T", "scope": "送水送電代辦", "rng": "無標單項次", "sub": 180000, "up": null, "stat": "—"}, {"v": "廠商 U", "scope": "施工圖繪製及送審", "rng": "無標單項次", "sub": 820000, "up": null, "stat": "已請 1~3 期"}, {"v": "本公司自辦", "scope": "BA 中央監控軟體", "rng": "乙.壹.四.5.1.1.7~12、19", "sub": null, "up": null, "stat": "—"}], "seg": {"乙.壹.三.1": [4630430, 4038000, 68680], "乙.壹.三.2": [3641401, 4800522, 875301], "乙.壹.三.3": [1008751, 1012978, 127216], "乙.壹.三.4": [396347, 271100, 0], "乙.壹.三.5": [302070, 293629, 71270], "乙.壹.三.6": [517963, 845170, 118505], "乙.壹.三.7": [63474, 70940, 19487], "乙.壹.三.8": [63316, 51520, 13988], "乙.壹.三.9": [367644, 529600, 61598], "乙.壹.三.10": [2176016, 1286358, 460270], "乙.壹.三.11": [1318308, 732720, 564579], "乙.壹.三.12": [2091495, 973840, 1070064], "乙.壹.三.13": [56321, 67000, 12120], "乙.壹.三.14": [5226542, 3449176, 1405805], "乙.壹.三.15": [719124, 0, 719124], "乙.壹.三.16": [5157366, 3950423, 0], "乙.壹.三.17": [234317, 220000, 0], "乙.壹.四.1": [574378, 454930, 0], "乙.壹.四.2": [85950, 78300, 0], "乙.壹.四.3": [1035080, 1050600, 74960], "乙.壹.四.4": [1057370, 60730, 1005240], "乙.壹.四.5": [1153334, 645284, 560252], "乙.壹.四.6": [5823666, 4995071, 12660], "乙.壹.四.7": [303806, 0, 303806]}, "bud": {"contract": 40400000, "direct_a": 33755133, "indirect": 1891000, "sub_a": 35646133, "gross_a": 4753867, "opex": 3232000, "net_a": 1521867}, "cf": {"direct": 33255807.85, "indirect": 3500000, "sub": 36755807.85, "gross": 3644192.1499999985, "net": 3644192.1499999985}, "ind_unused": [["專案人員薪資C（LOT）", 400000], ["專案人員薪資D（LOT）", 500000]], "vendflow": [{"no": 1, "v": "廠商 U", "scope": "圖說規劃及送審", "net": 820000, "gross": 861000, "typ": "其他", "pay": "定金 15% (月結 30 天)；其餘依分樓層比例請款", "dep": 123000, "deppct": 0.15, "note": "合約用印完成；訂金20260430匯款", "enter": null, "dur": 4, "k": "廠商 U", "ni": "2026-04", "ne": "2027-03", "dly": 0, "st": "進行中", "e": "2026-04", "l": "2026-04", "fl": 0, "must": "2027-06", "lt": 0, "po": null, "poLate": false}, {"no": 2, "v": "廠商 L", "scope": "電力及弱電(含NCC)", "net": 8480000, "gross": 8904000, "typ": "工程", "pay": "定金 15% (月結 30 天)；工程款 85% (每月 25 日結算，付該期 90%，保留 10% 驗收後付)", "dep": 1272000, "deppct": 0.15, "note": "20260401訂金已付款；20260625請款接地，雨水回收工程 弱電工程款$25萬", "enter": 2026.04, "dur": 18, "k": "廠商 L", "ni": "2026-04", "ne": "2027-10", "dly": 0, "st": "進行中", "e": "2026-04", "l": "2026-04", "fl": 0, "must": "2027-10", "lt": 0, "po": null, "poLate": false}, {"no": 3, "v": "廠商 C", "scope": "給排水及雨水回收工程", "net": 2700000, "gross": 2835000, "typ": "工程", "pay": "定金 15% (月結 30 天)；工程款 85% (每月 25 日結算，付該期 90%，保留 10% 驗收後付)", "dep": 405000, "deppct": 0.15, "note": "20260520 合約已回簽，訂金已付款", "enter": 2026.04, "dur": 12, "k": "廠商 C", "ni": "2026-04", "ne": "2027-09", "dly": 0, "st": "進行中", "e": "2026-04", "l": "2026-04", "fl": 0, "must": "2027-09", "lt": 0, "po": null, "poLate": false}, {"no": 4, "v": "廠商 F", "scope": "衛生設備", "net": 480000, "gross": 504000, "typ": "設備", "pay": "設備款 100% (驗收合格後，90 天期票據)", "dep": 0, "deppct": 0, "note": "", "enter": 2027.01, "dur": 3, "k": "廠商 F", "ni": "2027-08", "ne": "2027-09", "dly": 7, "st": "未進場", "e": "2027-07", "l": "2027-08", "fl": 1, "must": "2027-09", "lt": 2, "po": "2027-06", "poLate": false}, {"no": 5, "v": "廠商 A", "scope": "給排水泵、變頻加壓機", "net": 700000, "gross": 735000, "typ": "設備", "pay": "訂金 30%（開立 12 月發票，支票兌現日 116/01/30）；出貨 70% 當月結 30 天兌現支票", "dep": 210000, "deppct": 0.3, "note": "訂金還未付款，一月給訂金；成本由 750,000 改為 700,000（金流表 1123）", "enter": 2026.1, "dur": 2, "k": "廠商 A（泵浦）", "ni": "2027-05", "ne": "2027-06", "dly": 7, "st": "未進場", "e": "2027-05", "l": "2027-07", "fl": 2, "must": "2027-09", "lt": 3, "po": "2027-04", "poLate": false}, {"no": 6, "v": "廠商 E", "scope": "管閥、管", "net": 1200000, "gross": 1260000, "typ": "設備", "pay": "設備款 100% (驗收合格後，60 天期票據)", "dep": 0, "deppct": 0, "note": "", "enter": 2026.05, "dur": 12, "k": "廠商 E", "ni": "2027-02", "ne": "2027-06", "dly": 9, "st": "部分進場", "e": "2027-01", "l": "2027-03", "fl": 2, "must": "2027-07", "lt": 1, "po": "2027-02", "poLate": false}, {"no": 7, "v": "廠商 S", "scope": "水箱陰井", "net": 188938.84999999998, "gross": 198385.79249999998, "typ": "設備", "pay": "設備款 100% (驗收合格後，90 天期票據)", "dep": 0, "deppct": 0, "note": "7、8、14 同一家詢價中", "enter": 2026.07, "dur": 4, "k": "廠商 S", "ni": "2027-04", "ne": "2027-05", "dly": 9, "st": "未進場", "e": "2027-03", "l": "2027-06", "fl": 3, "must": "2027-08", "lt": 2, "po": "2027-04", "poLate": false}, {"no": 8, "v": "（廠商未定）", "scope": "雨水回收設備（含施工）＋汙水雨水跑照馬達", "net": 450000, "gross": 472500, "typ": "設備", "pay": "設備款 100% (驗收合格後，90 天期票據)", "dep": 0, "deppct": 0, "note": "7、8、14 同一家詢價中（1120 已發詢價單）；金額由 250,000 提高為 450,000", "enter": 2026.05, "dur": 4, "k": "雨水回收設備（廠商未定）", "ni": "2027-06", "ne": "2027-08", "dly": 13, "st": "未發包", "e": "2027-05", "l": "2027-07", "fl": 2, "must": "2027-09", "lt": 3, "po": "2027-04", "poLate": false}, {"no": 14, "v": "（廠商未定）", "scope": "汙水雨水跑照", "net": 150000, "gross": 157500, "typ": "其他", "pay": "送件完成 50%，取照/結案 50%", "dep": 0, "deppct": 0, "note": "7、8、14 同一家詢價中", "enter": 2026.1, "dur": 2, "k": "汙水雨水跑照（廠商未定）", "ni": "2027-08", "ne": "2027-10", "dly": 10, "st": "未發包", "e": "2027-06", "l": "2027-08", "fl": 2, "must": "2027-10", "lt": 0, "po": null, "poLate": false}, {"no": 9, "v": "廠商 O", "scope": "風管工程", "net": 1350000, "gross": 1417500, "typ": "工程", "pay": "定金 15% (月結 30 天)；工程款 85% (每月 25 日結算，付該期 90%，保留 10% 驗收後付)", "dep": 202500, "deppct": 0.15, "note": "訂金20260430匯款", "enter": 2026.1, "dur": 10, "k": "廠商 O", "ni": "2027-03", "ne": "2027-09", "dly": 5, "st": "未進場", "e": "2027-03", "l": "2027-04", "fl": 1, "must": "2027-09", "lt": 1.5, "po": "2027-02", "poLate": false}, {"no": 10, "v": "廠商 I", "scope": "消防工程", "net": 1523809, "gross": 1600000, "typ": "工程", "pay": "定金 15% (月結 30 天)；工程款 85% (每月 25 日結算，驗收後付)", "dep": 228571.35, "deppct": 0.15, "note": "合約已用印；訂金還未付款，開工後才開訂金發票，預計 12 月付款", "enter": 2026.04, "dur": 12, "k": "廠商 I", "ni": "2027-01", "ne": "2027-10", "dly": 9, "st": "未進場", "e": "2027-01", "l": "2027-01", "fl": 0, "must": "2027-10", "lt": 1, "po": "2026-12", "poLate": false}, {"no": 11, "v": "本公司", "scope": "弱電工程(本公司)", "net": "N/A", "gross": null, "typ": "本公司", "pay": "N/A", "dep": null, "deppct": null, "note": "", "enter": 2027.01, "dur": 8, "k": null}, {"no": 12, "v": "廠商 Q", "scope": "防火填塞(連工帶料)", "net": 220000, "gross": 231000, "typ": "設備", "pay": "設備款 100% (交貨七天後起算，60 天票期)", "dep": 0, "deppct": 0, "note": "", "enter": 2026.1, "dur": 3, "k": "廠商 Q", "ni": "2027-08", "ne": "2027-09", "dly": 10, "st": "未進場", "e": "2027-07", "l": "2027-08", "fl": 1, "must": "2027-09", "lt": 1, "po": "2027-07", "poLate": false}, {"no": 13, "v": "廠商 T", "scope": "送水送電", "net": 180000, "gross": 189000, "typ": "其他", "pay": "送件完成 50%，取照/結案 50%，60 天票期", "dep": 0, "deppct": 0, "note": "", "enter": 2026.09, "dur": 2, "k": "廠商 T", "ni": "2027-08", "ne": "2027-10", "dly": 11, "st": "未進場", "e": "2027-06", "l": "2027-08", "fl": 2, "must": "2027-10", "lt": 0, "po": null, "poLate": false}, {"no": 15, "v": "廠商 H", "scope": "配電盤", "net": 3500000, "gross": 3675000, "typ": "設備", "pay": "交貨款(90%)，正式送電款(10%)，票期90天", "dep": 0, "deppct": 0, "note": "", "enter": 2026.1, "dur": 4, "k": "廠商 H", "ni": "2027-06", "ne": "2027-08", "dly": 8, "st": "未進場", "e": "2027-05", "l": "2027-06", "fl": 1, "must": "2027-08", "lt": 4, "po": "2027-02", "poLate": false}, {"no": 16, "v": "廠商 G", "scope": "空調設備含施工", "net": 5450000, "gross": 5722500, "typ": "工程", "pay": "定金 15% (月結 30 天)；工程款 85% (每月 25 日結算，付該期 90%，保留 10% 驗收後付)", "dep": 817500, "deppct": 0.15, "note": "合約已用印；訂金還未付款（送審後付款，預計一月）", "enter": 2026.12, "dur": 8, "k": "廠商 G", "ni": "2027-03", "ne": "2027-10", "dly": 3, "st": "未進場", "e": "2027-03", "l": "2027-03", "fl": 0, "must": "2027-10", "lt": 3, "po": "2026-12", "poLate": false}, {"no": 17, "v": "廠商 K", "scope": "消防設備(含消檢)", "net": 2280000, "gross": 2394000, "typ": "設備", "pay": "90% 交貨款，5% 消檢款，5% 驗收款（月結 90 天票期）。", "dep": 0, "deppct": 0, "note": "", "enter": 2026.04, "dur": 4, "k": "廠商 K", "ni": "2027-07", "ne": "2027-09", "dly": 15, "st": "未進場", "e": "2027-06", "l": "2027-07", "fl": 1, "must": "2027-09", "lt": 3, "po": "2027-04", "poLate": false}, {"no": 18, "v": "廠商 M", "scope": "發電機(含簽證)", "net": 900000, "gross": 945000, "typ": "設備", "pay": "10% 訂金款： 送審完成（即期票）。 80% 交貨款： 廠驗完成或設備交付後支付（ 60 天票期）。 5% 消檢款： 消防檢查通過後或交貨後180天支付（60 天票期）。 5% 驗收款： 業主驗收完成後或消檢後120天支付支付（60 天票期）。", "dep": 90000, "deppct": 0.1, "note": "合約已提供，訂金已付款", "enter": 2027.03, "dur": 3, "k": "廠商 M", "ni": "2027-05", "ne": "2027-06", "dly": 2, "st": "未進場", "e": "2027-04", "l": "2027-06", "fl": 2, "must": "2027-08", "lt": 4, "po": "2027-02", "poLate": false}, {"no": 19, "v": "廠商 R", "scope": "接地避雷(含簽證)", "net": 72000, "gross": 75600, "typ": "設備", "pay": "設備款 100% (驗收合格後，90 天期票據)", "dep": 0, "deppct": 0, "note": "", "enter": 2026.04, "dur": 2, "k": "廠商 R", "ni": "2027-02", "ne": "2027-03", "dly": 10, "st": "未進場", "e": "2027-02", "l": "2027-06", "fl": 4, "must": "2027-08", "lt": 1.5, "po": "2027-04", "poLate": false}, {"no": 20, "v": "廠商 J", "scope": "開關插座", "net": 108385, "gross": 113804.25, "typ": "設備", "pay": "設備款 100% (驗收合格後，90 天期票據)", "dep": 0, "deppct": 0, "note": "", "enter": 2027.12, "dur": 2, "k": "廠商 J", "ni": "2027-09", "ne": "2027-10", "dly": -3, "st": "未進場", "e": "2027-08", "l": "2027-09", "fl": 1, "must": "2027-10", "lt": 1, "po": "2027-08", "poLate": false}, {"no": 22, "v": "廠商 D", "scope": "線", "net": 2400000, "gross": 2520000, "typ": "設備", "pay": "設備款 100% (開發票後，60 天期票付款)預收定金 10  %於最後一筆扣除，票期採當月結 60 天期票", "dep": 418842, "deppct": 0.1745175, "note": "第一期 20260316開票 $144,714；第二期 20260413開票 $34,128；第三期 追加接地電線採購 20260615左右 $10124 尚未付款；第四期 20260708 簽約款訂金 $240000 尚未付款", "enter": null, "dur": 10, "k": "廠商 D", "ni": "2027-04", "ne": "2027-12", "dly": 6, "st": "未進場", "e": "2027-03", "l": "2027-05", "fl": 2, "must": "2027-12", "lt": 1.5, "po": "2027-03", "poLate": false}, {"no": 3.1, "v": "廠商 V", "scope": "人孔蓋", "net": 24675, "gross": 25908.75, "typ": "設備", "pay": "設備款 100% (月結30天)", "dep": 24675, "deppct": 1, "note": "202605購買", "enter": null, "dur": null, "k": "廠商 V", "ni": "2026-05", "ne": "2026-06", "dly": 0, "st": "已完成", "e": "2026-05", "l": "2026-05", "fl": 0, "must": "2026-06", "lt": 0, "po": null, "poLate": false}, {"no": 3.2, "v": "廠商 E", "scope": "油脂節流槽", "net": 78000, "gross": 81900, "typ": "設備", "pay": "設備款 100% (月結30天)", "dep": null, "deppct": 0, "note": "202605購買", "enter": null, "dur": null, "k": "廠商 E（材料）", "ni": "2026-05", "ne": "2027-06", "dly": 0, "st": "進行中", "e": "2026-05", "l": "2026-05", "fl": 0, "must": "2027-06", "lt": 0, "po": null, "poLate": false}], "diff": [["廠商 A 給排水泵", 1105000, 700000], ["廠商 C 給排水工程", 2200000, 2700000], ["廠商 E 管閥", 805908, 1200000], ["廠商 D 線", 1956137, 2400000], ["廠商 J 開關插座", 86556, 108385], ["廠商 F 衛生設備", 845966, 480000], ["雨水回收＋跑照", 903728, 600000], ["消防工程（廠商 I）", 1450000, 1523809], ["空調（廠商 G）", 5800000, 5450000], ["配電盤（廠商 H）", 3600000, 3500000], ["其他項目合計", 15001838, 14593614]], "indCost": [["專案人員薪資A（管理人員 18 人月 × 70,000）", 1260000], ["專案人員薪資B（LOT）", 400000], ["專案人員薪資C（LOT）", 400000], ["專案人員薪資D（LOT）", 500000], ["人事費用調整", 709000], ["臨時水電費分攤", 50000], ["印花稅（承攬額 0.1%）", 40400], ["工程保險（承攬額 0.15%）", 60600], ["公關交際費", 80000]], "indUnused": [], "scen": [{"v": "廠商 H", "up": 4803302, "cur": 3500000, "c95": 4563137, "use": 3500000, "add": 0, "tag": "△", "note": "買賣契約書未用印，議價函已用印；0709：送審後正式簽約"}, {"v": "廠商 E（＋璇豐、宏銘）", "up": 1389708, "cur": 1278000, "c95": 1320223, "use": 1278000, "add": 0, "tag": "△", "note": "買賣契約書 docx 未用印（金流表：管閥 1,200,000＋油脂 78,000）"}, {"v": "廠商 J", "up": 154285, "cur": 108385, "c95": 146571, "use": 108385, "add": 0, "tag": "△", "note": "只有下包報價單已用印，先送審後回簽"}, {"v": "廠商 K", "up": 3792228, "cur": 2280000, "c95": 3602617, "use": 2280000, "add": 0, "tag": "△", "note": "買賣契約書及議價函 pdf；送審完再寄合約"}, {"v": "廠商 R／雷可利", "up": 146379, "cur": 72000, "c95": 139060, "use": 72000, "add": 0, "tag": "△", "note": "廠商 R已用印掃描；雷可利只有報價"}, {"v": "廠商 F", "up": 979296, "cur": 480000, "c95": 930331, "use": 480000, "add": 0, "tag": "△", "note": "只有下包報價單已用印，先送審後回簽"}, {"v": "廠商 A（泵浦）", "up": 1253814, "cur": 700000, "c95": 1191123, "use": 1191123, "add": 491123, "tag": "✗", "note": "無合約；金流表 1123 報價 700,000"}, {"v": "廠商 S", "up": 194870, "cur": 188939, "c95": 185126, "use": 188939, "add": 0, "tag": "✗", "note": "無合約，無報價單"}, {"v": "雨水回收＋跑照（廠商未定）", "up": 719124, "cur": 450000, "c95": 683168, "use": 683168, "add": 233168, "tag": "✗", "note": "7、8、14 同一家詢價中；金流表 1123 暫編 450,000"}], "sc": {"A 維持現有報價": {"direct": 33255807.85, "indirect": 3500000, "sub": 36755807.85, "gm1": 7144192.1499999985, "gm1pct": 0.17683643935643562, "gross": 3644192.1499999985, "gpct": 0.09020277599009897, "net": 3644192.1499999985, "npct": 0.09020277599009897, "add": 0.0}, "B 未定那包抓上包 95%": {"direct": 33335162.85, "indirect": 3500000, "sub": 36835162.85, "gm1": 7064837.1499999985, "gm1pct": 0.17487220668316827, "gross": 3564837.1499999985, "gpct": 0.08823854331683165, "net": 3564837.1499999985, "npct": 0.08823854331683165, "add": 79355.0}}, "addX": 79355, "addD": 0, "IND": 3500000, "indSrc": ["A版原編", "A版原編", "A版有單價未入合計，本版計入", "A版有單價未入合計，本版計入", "使用者更新（工期由 18 人月延長、人力配置調整）", "A版原編", "A版原編", "A版原編", "A版原編"], "subret": [["廠商 L", 720800, "工程款 85% 的保留 10%，驗收後付"], ["廠商 C", 229500, "工程款 85% 的保留 10%，驗收後付"], ["廠商 O", 114750, "工程款 85% 的保留 10%，驗收後付"], ["廠商 G", 463250, "工程款 85% 的保留 10%，驗收後付"], ["廠商 I", 129524, "工程款 85%「驗收後付」，暫按保留 10% 估（條款待確認）"], ["廠商 K", 228000, "5% 消檢款＋5% 驗收款（月結 90 天）"], ["廠商 M", 90000, "5% 消檢款（交貨後 180 天）＋5% 驗收款（消檢後 120 天）"], ["廠商 H", 350000, "正式送電款 10%（票期 90 天）"]], "subretNet": 2325824, "subretRate": 0.0699373778706747, "subretActual": 115967, "subretRel": "2028-05", "vpay": [["廠商 U", "2026-04", 123000, "已付實際", "訂金 15%（2026/04 已匯）"], ["廠商 L", "2026-06", 70356, "已付實際", "實際付款（給排水材料費）"], ["廠商 L", "2026-06", 227685, "已付實際", "實際付款（中央監控 1期）"], ["廠商 V", "2026-06", 24675, "已付實際", "2026/05 購買，月結 30 天"], ["廠商 C", "2026-08", 385714, "已付實際", "實際付款（預付款）"], ["廠商 M", "2026-09", 90000, "已付實際", "訂金 10%（預付款）"], ["廠商 E（材料）", "2026-09", 54404, "已付實際", "實際付款（8月管材）"], ["廠商 E（材料）", "2026-09", 17862, "已付實際", "實際付款（8月管材）"], ["廠商 L", "2026-11", 447960, "已付實際", "實際付款（中央監控 2期）"], ["廠商 U", "2026-11", 174250, "已付實際", "第三期進度款（2026/11 已請）"], ["廠商 C", "2026-11", 152694, "已付實際", "實際付款（給排水 1期）"], ["廠商 E（材料）", "2026-11", 65972, "已付實際", "實際付款（8月管材）"], ["廠商 E（材料）", "2026-11", 1784, "已付實際", "實際付款（10月管材）"], ["廠商 E（材料）", "2026-12", 29480, "已付實際", "實際付款（9月配管材料）"], ["廠商 A（泵浦）", "2027-01", 210000, "訂金", "訂金 30%，開立 12 月發票、支票兌現日 116/01/30"], ["廠商 L", "2027-01", 637564, "工程款", "每月計價付 90%（1/11）"], ["廠商 U", "2027-01", 130688, "服務費", "依分樓層比例請款（1/4）"], ["廠商 C", "2027-01", 193209, "工程款", "每月計價付 90%（1/10）"], ["廠商 L", "2027-02", 637564, "工程款", "每月計價付 90%（2/11）"], ["廠商 U", "2027-02", 130688, "服務費", "依分樓層比例請款（2/4）"], ["廠商 C", "2027-02", 193209, "工程款", "每月計價付 90%（2/10）"], ["廠商 E（材料）", "2027-02", -91502, "材料", "實付已超出原編，差額沖回"], ["廠商 I", "2027-02", 228571, "訂金", "合約訂金 15%，月結 30 天"], ["廠商 L", "2027-03", 637564, "工程款", "每月計價付 90%（3/11）"], ["廠商 U", "2027-03", 130688, "服務費", "依分樓層比例請款（3/4）"], ["廠商 C", "2027-03", 193209, "工程款", "每月計價付 90%（3/10）"], ["廠商 I", "2027-03", 129524, "工程款", "每月計價付 90%（1/9）"], ["廠商 G", "2027-04", 817500, "訂金", "合約訂金 15%，月結 30 天"], ["廠商 L", "2027-04", 637564, "工程款", "每月計價付 90%（4/11）"], ["廠商 U", "2027-04", 130688, "服務費", "依分樓層比例請款（4/4）"], ["廠商 C", "2027-04", 193209, "工程款", "每月計價付 90%（4/10）"], ["廠商 O", "2027-04", 202500, "訂金", "合約訂金 15%，月結 30 天"], ["廠商 I", "2027-04", 129524, "工程款", "每月計價付 90%（2/9）"], ["廠商 G", "2027-05", 595607, "工程款", "每月計價付 90%（1/7）"], ["廠商 A（泵浦）", "2027-05", 490000, "設備款", "出貨 70%，當月結 30 天兌現支票"], ["廠商 L", "2027-05", 637564, "工程款", "每月計價付 90%（5/11）"], ["廠商 C", "2027-05", 193209, "工程款", "每月計價付 90%（5/10）"], ["廠商 O", "2027-05", 172125, "工程款", "每月計價付 90%（1/6）"], ["廠商 I", "2027-05", 129524, "工程款", "每月計價付 90%（3/9）"], ["廠商 G", "2027-06", 595607, "工程款", "每月計價付 90%（2/7）"], ["廠商 L", "2027-06", 637564, "工程款", "每月計價付 90%（6/11）"], ["廠商 C", "2027-06", 193209, "工程款", "每月計價付 90%（6/10）"], ["廠商 O", "2027-06", 172125, "工程款", "每月計價付 90%（2/6）"], ["廠商 I", "2027-06", 129524, "工程款", "每月計價付 90%（4/9）"], ["廠商 R", "2027-06", 72000, "設備款", "2027-03 交貨／驗收後 90 天票期"], ["廠商 D", "2027-06", 266667, "設備款", "開票後當月結 60 天票（1/9）"], ["廠商 G", "2027-07", 595607, "工程款", "每月計價付 90%（3/7）"], ["廠商 L", "2027-07", 637564, "工程款", "每月計價付 90%（7/11）"], ["廠商 C", "2027-07", 193209, "工程款", "每月計價付 90%（7/10）"], ["廠商 O", "2027-07", 172125, "工程款", "每月計價付 90%（3/6）"], ["廠商 I", "2027-07", 129524, "工程款", "每月計價付 90%（5/9）"], ["廠商 D", "2027-07", 266667, "設備款", "開票後當月結 60 天票（2/9）"], ["廠商 G", "2027-08", 595607, "工程款", "每月計價付 90%（4/7）"], ["廠商 M", "2027-08", 720000, "設備款", "交貨款 80%，60 天票期"], ["廠商 L", "2027-08", 637564, "工程款", "每月計價付 90%（8/11）"], ["廠商 C", "2027-08", 193209, "工程款", "每月計價付 90%（8/10）"], ["廠商 S", "2027-08", 188939, "設備款", "2027-05 交貨／驗收後 90 天票期"], ["廠商 O", "2027-08", 172125, "工程款", "每月計價付 90%（4/6）"], ["廠商 E", "2027-08", 1200000, "設備款", "2027-06 交貨／驗收後 60 天票期"], ["廠商 I", "2027-08", 129524, "工程款", "每月計價付 90%（6/9）"], ["廠商 D", "2027-08", 266667, "設備款", "開票後當月結 60 天票（3/9）"], ["廠商 G", "2027-09", 595607, "工程款", "每月計價付 90%（5/7）"], ["廠商 L", "2027-09", 637564, "工程款", "每月計價付 90%（9/11）"], ["廠商 C", "2027-09", 193209, "工程款", "每月計價付 90%（9/10）"], ["廠商 O", "2027-09", 172125, "工程款", "每月計價付 90%（5/6）"], ["廠商 I", "2027-09", 129524, "工程款", "每月計價付 90%（7/9）"], ["廠商 D", "2027-09", 266667, "設備款", "開票後當月結 60 天票（4/9）"], ["廠商 G", "2027-10", 595607, "工程款", "每月計價付 90%（6/7）"], ["廠商 L", "2027-10", 637564, "工程款", "每月計價付 90%（10/11）"], ["廠商 C", "2027-10", 193209, "工程款", "每月計價付 90%（10/10）"], ["廠商 O", "2027-10", 172125, "工程款", "每月計價付 90%（6/6）"], ["汙水雨水跑照（廠商未定）", "2027-10", 75000, "其他", "送件完成 50%"], ["廠商 I", "2027-10", 129524, "工程款", "每月計價付 90%（8/9）"], ["廠商 D", "2027-10", 266667, "設備款", "開票後當月結 60 天票（5/9）"], ["廠商 T", "2027-10", 90000, "其他", "送件完成 50%，60 天票期"], ["廠商 G", "2027-11", 595607, "工程款", "每月計價付 90%（7/7）"], ["廠商 L", "2027-11", 637564, "工程款", "每月計價付 90%（11/11）"], ["廠商 Q", "2027-11", 220000, "設備款", "2027-09 交貨／驗收後 60 天票期"], ["廠商 H", "2027-11", 3150000, "設備款", "交貨款 90%，票期 90 天"], ["廠商 I", "2027-11", 129524, "工程款", "每月計價付 90%（9/9）"], ["廠商 D", "2027-11", 266667, "設備款", "開票後當月結 60 天票（6/9）"], ["雨水回收設備（廠商未定）", "2027-11", 450000, "設備款", "驗收後 90 天票期；7、8、14 同一家詢價中"], ["廠商 F", "2027-12", 480000, "設備款", "2027-09 交貨／驗收後 90 天票期"], ["汙水雨水跑照（廠商未定）", "2027-12", 75000, "其他", "取照／結案 50%"], ["廠商 K", "2027-12", 2052000, "設備款", "交貨款 90%，月結 90 天"], ["廠商 D", "2027-12", 266667, "設備款", "開票後當月結 60 天票（7/9）"], ["廠商 T", "2027-12", 90000, "其他", "取照／結案 50%"], ["廠商 J", "2028-01", 108385, "設備款", "2027-10 交貨／驗收後 90 天票期"], ["廠商 D", "2028-01", 266667, "設備款", "開票後當月結 60 天票（8/9）"], ["廠商 D", "2028-02", 266667, "設備款", "開票後當月結 60 天票（9/9）"], ["廠商 G", "2028-05", 463250, "保留款", "保留 10%，驗收後付"], ["廠商 M", "2028-05", 45000, "保固／消檢款", "消檢款 5%"], ["廠商 M", "2028-05", 45000, "保固／驗收款", "驗收款 5%"], ["廠商 L", "2028-05", 720800, "保留款", "保留 10%，驗收後付"], ["廠商 C", "2028-05", 229500, "保留款", "保留 10%，驗收後付"], ["廠商 O", "2028-05", 114750, "保留款", "保留 10%，驗收後付"], ["廠商 K", "2028-05", 114000, "保固／消檢款", "消檢款 5%"], ["廠商 K", "2028-05", 114000, "保固／驗收款", "驗收款 5%"], ["廠商 H", "2028-05", 350000, "保固／送電款", "正式送電款 10%"], ["廠商 I", "2028-05", 129524, "保留款", "保留 10%，驗收後付"]], "vpayTot": 33255817, "vscope": {"廠商 U": "圖說規劃及送審", "廠商 L": "電力及弱電（含 NCC）", "廠商 C": "給排水及雨水回收工程", "廠商 F": "衛生設備", "廠商 A（泵浦）": "給排水泵、變頻加壓機", "廠商 E": "管閥、管", "廠商 S": "水箱、陰井", "雨水回收設備（廠商未定）": "雨水回收設備（含施工）＋汙水雨水跑照馬達", "汙水雨水跑照（廠商未定）": "汙水雨水跑照", "廠商 O": "風管工程", "廠商 I": "消防工程", "廠商 Q": "防火填塞（連工帶料）", "廠商 T": "送水送電", "廠商 H": "配電盤", "廠商 G": "空調設備含施工", "廠商 K": "消防設備（含消檢）", "廠商 M": "發電機（含簽證）", "廠商 R": "接地避雷（含簽證）", "廠商 J": "開關插座", "廠商 D": "線", "廠商 V": "人孔蓋", "廠商 E（材料）": "油脂節流槽、零星管材"}, "sched": {"ms": [["3F 樓板灌漿", "2026-11", "已排定 11/21，二樓柱牆同時灌漿"], ["4F 樓板灌漿", "2026-12", "以 5 週／層推算"], ["RF 樓板灌漿", "2027-01", "以 5 週／層推算"], ["屋突完成、結構體封頂", "2027-03", "含女兒牆、樓梯、水箱座"], ["外牆門窗、砌磚隔間", "2027-04", "結構完成後隨即展開"], ["粉刷、天花輕鋼架", "2027-06", "機電穿線、天花內管線須先完成"], ["裝修、油漆、地坪", "2027-08", "器具細裝同步"], ["機電設備安裝、測試調整", "2027-09", "送電、消檢、功能測試"], ["竣工（主契約）", "2027-11", "契約完工日 2027/11/08"]], "rows": [{"v": "廠商 U", "scope": "圖說規劃及送審", "net": 820000, "o": "2026-04", "dur": 4, "ni": "2026-04", "ne": "2027-06", "st": "進行中", "why": "圖說規劃及送審；第三期進度款 2026/11 已請，剩餘隨樓層出圖，結構完成後收尾", "dly": 0, "e": "2026-04", "l": "2026-04", "wk": null, "must": "2027-06", "whyE": "已進場，隨樓層出圖", "whyL": "施工圖必須領先現場 1~2 層，不能等", "float": 0, "lt": 0, "whyLT": "服務類，無備貨", "po": null, "poLate": false}, {"v": "廠商 L", "scope": "電力及弱電（含 NCC）", "net": 8480000, "o": "2026-04", "dur": 18, "ni": "2026-04", "ne": "2027-10", "st": "進行中", "why": "電力及弱電；現隨 2F/3F 結構做預埋，結構完成後轉粗配管（2027/03）、穿線（2027/06）、器具（2027/08）", "dly": 0, "e": "2026-04", "l": "2026-04", "wk": null, "must": "2027-10", "whyE": "已進場，隨結構逐層做預埋", "whyL": "全程在要徑上，沒有浮時——每層結構一完成就要接著做", "float": 0, "lt": 0, "whyLT": "工程類，材料隨進度分批叫；已進場", "po": null, "poLate": false}, {"v": "廠商 C", "scope": "給排水及雨水回收工程", "net": 2700000, "o": "2026-04", "dur": 12, "ni": "2026-04", "ne": "2027-09", "st": "進行中", "why": "給排水；現做 2F 牆面配管，與廠商 L同節奏往上；衛生器具安裝落在 2027/08~09", "dly": 0, "e": "2026-04", "l": "2026-04", "wk": null, "must": "2027-09", "whyE": "已進場，現做 2F 牆面配管", "whyL": "跟著廠商 L同節奏，器具安裝最晚 2027/09", "float": 0, "lt": 0, "whyLT": "工程類，材料隨進度分批叫；已進場", "po": null, "poLate": false}, {"v": "廠商 E（材料）", "scope": "油脂節流槽、零星管材", "net": 78000, "o": "2026-05", "dur": null, "ni": "2026-05", "ne": "2027-06", "st": "進行中", "why": "零星管材、油脂節流槽；隨配管進度分批進料", "dly": 0, "e": "2026-05", "l": "2026-05", "wk": null, "must": "2027-06", "whyE": "已進場，隨配管分批進料", "whyL": "配管做到哪就要供到哪", "float": 0, "lt": 0, "whyLT": "零星管材現貨，隨叫隨到", "po": null, "poLate": false}, {"v": "廠商 R", "scope": "接地避雷（含簽證）", "net": 72000, "o": "2026-04", "dur": 2, "ni": "2027-02", "ne": "2027-08", "st": "未進場", "why": "接地避雷；接地銅棒已隨基礎完成，避雷針與測試箱要等 RF 結構（2027/01）完成後才裝", "dly": 10, "e": "2027-02", "l": "2027-06", "wk": 2, "must": "2027-08", "whyE": "RF 樓板 2027/01 灌完即可裝避雷針", "whyL": "接地電阻測試要在 2027/08 送電前完成", "float": 4, "lt": 1.5, "whyLT": "避雷針、銅板、接地棒多為現貨；含簽證要留查驗時間", "po": "2027-04", "poLate": false}, {"v": "廠商 I", "scope": "消防工程", "net": 1523809, "o": "2026-04", "dur": 12, "ni": "2027-01", "ne": "2027-10", "st": "未進場", "why": "消防工程；11/11~11/17 剛在做分層數量表，配管要等結構體往上走，實際 2027/01 才會正式進場", "dly": 9, "e": "2027-01", "l": "2027-01", "wk": 10, "must": "2027-10", "whyE": "分層數量表 11 月做完即可進場配管", "whyL": "作業期 10 個月接到 2027/10 測試完，<b>零浮時</b>，1 月沒進場就壓到竣工", "float": 0, "lt": 1, "whyLT": "工程類；配管材料現貨，但要先付訂金、排人力。金流表註「訂金預計 12 月付款」", "po": "2026-12", "poLate": false}, {"v": "廠商 D", "scope": "線", "net": 2400000, "o": "2026-10", "dur": 10, "ni": "2027-03", "ne": "2027-12", "st": "未進場", "why": "電線電纜；穿線要等管路完成，2027/04 起分批進料到結案", "dly": 6, "e": "2027-03", "l": "2027-05", "wk": 9, "must": "2027-12", "whyE": "管路做到一定程度就可開始進線", "whyL": "穿線接 2027/12 結案，線材可分批補", "float": 2, "lt": 1.5, "whyLT": "電線電纜以現貨為主，可分批出；大截面電纜要備料", "po": "2027-03", "poLate": false}, {"v": "廠商 S", "scope": "水箱、陰井", "net": 188938.84999999998, "o": "2026-07", "dur": 4, "ni": "2027-03", "ne": "2027-08", "st": "未進場", "why": "水箱、陰井；水箱座在 RF（2027/01 完成），陰井在室外，排在外構期", "dly": 9, "e": "2027-03", "l": "2027-06", "wk": 2, "must": "2027-08", "whyE": "RF 完成即可吊水箱，陰井在室外不受限", "whyL": "泵浦 2027/09 試車前水箱必須到位", "float": 3, "lt": 2, "whyLT": "不銹鋼／FRP 水箱為訂製品，陰井現貨", "po": "2027-04", "poLate": false}, {"v": "廠商 O", "scope": "風管工程", "net": 1350000, "o": "2026-10", "dur": 10, "ni": "2027-03", "ne": "2027-09", "st": "未進場", "why": "風管工程；要等結構體封頂與隔間放樣，原訂 2026/10 完全不可能", "dly": 5, "e": "2027-03", "l": "2027-04", "wk": 7, "must": "2027-09", "whyE": "結構封頂＋隔間放樣後進場", "whyL": "風管主幹必須在 2027/07 天花封板前完成", "float": 1, "lt": 1.5, "whyLT": "風管為鍍鋅鋼板現場製作，但工廠要排生產與放樣", "po": "2027-02", "poLate": false}, {"v": "廠商 G", "scope": "空調設備含施工", "net": 5450000, "o": "2026-12", "dur": 8, "ni": "2027-03", "ne": "2027-10", "st": "未進場", "why": "空調設備含施工；室內配管 2027/03 起，主機吊裝落在 2027/07，測試 2027/09~10", "dly": 3, "e": "2027-03", "l": "2027-03", "wk": 8, "must": "2027-10", "whyE": "結構封頂後室內配管即可展開", "whyL": "室內管要趕天花封板、主機 2027/07 吊裝，<b>零浮時</b>", "float": 0, "lt": 3, "whyLT": "空調主機與箱型機要排生產排程；第一版送審 11/23 才送出，核准後才下單", "po": "2026-12", "poLate": false}, {"v": "廠商 A（泵浦）", "scope": "給排水泵、變頻加壓機", "net": 700000, "o": "2026-10", "dur": 2, "ni": "2027-05", "ne": "2027-09", "st": "未進場", "why": "給排水泵、變頻加壓機；裝在 1F 機房與滯洪池，要等機房地坪與水箱完成", "dly": 7, "e": "2027-05", "l": "2027-07", "wk": 2, "must": "2027-09", "whyE": "機房條件 2027/04 備妥、主幹管接到機房", "whyL": "2027/09 要試車，7 月沒到就來不及", "float": 2, "lt": 3, "whyLT": "泵浦＋變頻加壓機組裝；金流表註「一月給訂金」，訂金 30% 開 12 月發票", "po": "2027-04", "poLate": false}, {"v": "廠商 M", "scope": "發電機（含簽證）", "net": 900000, "o": "2027-03", "dur": 3, "ni": "2027-04", "ne": "2027-08", "st": "未進場", "why": "發電機含簽證；訂金 10% 已付，機房完成後吊裝，原訂 2027/03 略早", "dly": 2, "e": "2027-04", "l": "2027-06", "wk": 2, "must": "2027-08", "whyE": "機房地坪完成即可吊裝", "whyL": "要在 2027/08 送電前就位並完成簽證", "float": 2, "lt": 4, "whyLT": "發電機組為訂製／進口件，交期最長；訂金已付但正式下單要等送審核准", "po": "2027-02", "poLate": false}, {"v": "廠商 H", "scope": "配電盤", "net": 3500000, "o": "2026-10", "dur": 4, "ni": "2027-05", "ne": "2027-08", "st": "未進場", "why": "配電盤；要等電氣室地坪、門窗完成才能進盤，送電款落在 2027/09", "dly": 8, "e": "2027-05", "l": "2027-06", "wk": 3, "must": "2027-08", "whyE": "電氣室地坪、門窗完成即可進盤", "whyL": "2027/08 要送電，盤體進場後還要接線與測試", "float": 1, "lt": 4, "whyLT": "<b>訂製配電盤</b>：盤體製作＋斷路器計器採購＋廠驗，國產訂製盤典型 3~4 個月；買賣契約書仍未用印", "po": "2027-02", "poLate": false}, {"v": "雨水回收設備（廠商未定）", "scope": "雨水回收設備（含施工）＋汙水雨水跑照馬達", "net": 450000, "o": "2026-05", "dur": 4, "ni": "2027-05", "ne": "2027-09", "st": "未發包", "why": "雨水回收設備含施工＋馬達；<b>整段還沒廠商</b>，若要趕上 2027/06 進場，最晚 2027/03 前要發包", "dly": 13, "e": "2027-05", "l": "2027-07", "wk": 3, "must": "2027-09", "whyE": "與給排水系統同步", "whyL": "要趕 2027/09 試車；<b>現在還沒廠商，最晚 2027/03 前要發包</b>", "float": 2, "lt": 3, "whyLT": "處理設備為訂製品；<b>7、8、14 同一家詢價中</b>（1120 已發詢價單），還要先決標簽約", "po": "2027-04", "poLate": false}, {"v": "廠商 K", "scope": "消防設備（含消檢）", "net": 2280000, "o": "2026-04", "dur": 4, "ni": "2027-06", "ne": "2027-09", "st": "未進場", "why": "消防設備含消檢；設備要等配管與隔間完成，消檢排在 2027/09", "dly": 15, "e": "2027-06", "l": "2027-07", "wk": 3, "must": "2027-09", "whyE": "消防配管完成後即可裝設備", "whyL": "2027/09 要消檢，設備與配線要先完成", "float": 1, "lt": 3, "whyLT": "消防設備含消檢，部分品項進口", "po": "2027-04", "poLate": false}, {"v": "廠商 F", "scope": "衛生設備", "net": 480000, "o": "2027-01", "dur": 3, "ni": "2027-07", "ne": "2027-09", "st": "未進場", "why": "衛生設備；屬器具細裝，要等地坪、磁磚完成", "dly": 7, "e": "2027-07", "l": "2027-08", "wk": 2, "must": "2027-09", "whyE": "地坪磁磚完成即可裝衛生器具", "whyL": "要在 2027/09 功能測試前裝完", "float": 1, "lt": 2, "whyLT": "衛生設備多為備貨品，但指定款式要調貨", "po": "2027-06", "poLate": false}, {"v": "廠商 Q", "scope": "防火填塞（連工帶料）", "net": 220000, "o": "2026-10", "dur": 3, "ni": "2027-07", "ne": "2027-09", "st": "未進場", "why": "防火填塞；要等所有管線穿樓板、穿牆完成才能填塞", "dly": 10, "e": "2027-07", "l": "2027-08", "wk": 2, "must": "2027-09", "whyE": "管線穿樓板、穿牆完成後即可填塞", "whyL": "消防查驗前必須完成", "float": 1, "lt": 1, "whyLT": "防火填塞材料現貨，連工帶料", "po": "2027-07", "poLate": false}, {"v": "廠商 J", "scope": "開關插座", "net": 108385, "o": "2027-12", "dur": 2, "ni": "2027-08", "ne": "2027-10", "st": "未進場", "why": "開關插座；最後一批細裝，原訂 2027/12 已超過竣工日，必須提前", "dly": -3, "e": "2027-08", "l": "2027-09", "wk": 2, "must": "2027-10", "whyE": "油漆完成後裝面板", "whyL": "最後一批細裝，2027/10 測試前要裝完", "float": 1, "lt": 1, "whyLT": "開關插座現貨", "po": "2027-08", "poLate": false}, {"v": "廠商 T", "scope": "送水送電", "net": 180000, "o": "2026-09", "dur": 2, "ni": "2027-06", "ne": "2027-10", "st": "未進場", "why": "送水送電；送件 2027/08、取照 2027/10，接在送電測試之後", "dly": 11, "e": "2027-06", "l": "2027-08", "wk": 3, "must": "2027-10", "whyE": "送件可提前備件", "whyL": "取照最晚 2027/10，接在送電測試之後", "float": 2, "lt": 0, "whyLT": "服務類，無備貨；送件本身就是作業", "po": null, "poLate": false}, {"v": "汙水雨水跑照（廠商未定）", "scope": "汙水雨水跑照", "net": 150000, "o": "2026-10", "dur": 2, "ni": "2027-06", "ne": "2027-10", "st": "未發包", "why": "汙水雨水跑照；同上，<b>廠商未定</b>", "dly": 10, "e": "2027-06", "l": "2027-08", "wk": 3, "must": "2027-10", "whyE": "同廠商 T", "whyL": "<b>廠商未定</b>；取照最晚 2027/10", "float": 2, "lt": 0, "whyLT": "服務類，無備貨；但要先決標", "po": null, "poLate": false}, {"v": "廠商 V", "scope": "人孔蓋", "net": 24675, "o": "2026-05", "dur": null, "ni": "2026-05", "ne": "2026-06", "st": "已完成", "why": "人孔蓋；2026/05 已購、已付款", "dly": 0, "e": "2026-05", "l": "2026-05", "wk": null, "must": "2026-06", "whyE": "人孔蓋 2026/05 已購", "whyL": "已完成", "float": 0, "lt": 0, "whyLT": "已完成", "po": null, "poLate": false}, {"v": "廠商 E", "scope": "管閥、管", "net": 1200000, "o": "2026-05", "dur": 12, "ni": "2027-01", "ne": "2027-07", "st": "部分進場", "why": "管閥、管（1,200,000 本體）；大宗管閥隨配管需求 2027/02 起分批交貨", "dly": 9, "e": "2027-01", "l": "2027-03", "wk": 5, "must": "2027-07", "whyE": "配管主幹 2027/01 起就需要管閥供料", "whyL": "最後一批要趕在 2027/07 天花封板前到場", "float": 2, "lt": 1, "whyLT": "管閥為常規品現貨，大口徑閥件要備 1 個月", "po": "2027-02", "poLate": false}], "asof": "2026-11-23", "act": 0.28385, "plan": 0.2135, "floor": "3F（11/21 三樓板灌漿）", "cycle": 5, "top": "2027-03", "done": "2027-11-08"}, "pump": [["材料送審送出", "2026-11", "done", "已於 115/11/02 送出（給排水設備拆本：泵浦廠商 A＋衛生設備廠商 F）", ""], ["送審核准", "2026-12", "gate", "監造審查一般 1~2 個月；<b>若退件補件，後面整條線跟著往後推</b>", ""], ["簽正式合約、下單、付訂金 30%", "2027-01", "pay", "價格已談妥，送審核准後補簽正式合約；訂金開 12 月發票、支票兌現日 116/01/30", "210,000"], ["製造", "2027-02", "", "變頻加壓機組與水泵交期約 2~3 個月", ""], ["機房條件備妥", "2027-04", "site", "1F 泵浦機房砌磚隔間、地坪粉光、泵浦基礎墩座灌漿；水箱同期安裝（但水箱那包還在詢價中）", ""], ["出貨、付尾款 70%", "2027-05", "pay", "出貨 70%，當月結 30 天兌現支票", "490,000"], ["泵浦進場吊裝就位", "2027-05", "key", "1F 機房；給排水主幹管（廠商 C）須先接到機房", ""], ["配管接續、電源配線", "2027-06", "", "廠商 C接水路、廠商 L拉電源與控制線", ""], ["送電試車、水壓測試", "2027-09", "gate", "<b>要等廠商 H配電盤送電（2027/08）</b>才能試車，這是最後一道卡", ""], ["消檢、驗收", "2027-10", "", "併入全案測試調整與竣工查驗", ""]], "p5": {"rows": [["乙.壹.三.2.12", "產品，插座用蓋板，小便斗電源出線口 含盲蓋板", "式", 940.0, 1.0, 0.0, 0, 0.2, 188, 188, "電力系統", "開關插座"], ["乙.壹.三.2.13", "預留警示燈電源出線口 含盲蓋板", "式", 626.0, 1.0, 0.2, 125, 0.2, 125, 0, "電力系統", "開關插座"], ["乙.壹.三.2.14", "預留馬達出線口 含蓋板 (用途另詳標示)", "式", 7843.0, 1.0, 0.2, 1569, 0.2, 1569, 0, "電力系統", "開關插座"], ["乙.壹.三.2.15", "預留電熱水器電源出線口 含蓋板", "式", 626.0, 1.0, 0.2, 125, 0.2, 125, 0, "電力系統", "開關插座"], ["乙.壹.三.2.16", "預留電源出線口 含蓋板 (用途另詳標示)", "式", 1882.0, 1.0, 0.2, 376, 0.2, 376, 0, "電力系統", "開關插座"], ["乙.壹.三.2.17", "預留循環扇出線口 含蓋板", "式", 6588.0, 1.0, 0.2, 1318, 0.2, 1318, 0, "電力系統", "開關插座"], ["乙.壹.三.2.37", "產品，接地導線，標稱截面積100mm2，裸銅線(BCW)", "M", 459.0, 70.0, 70.0, 32130, 70.0, 32130, 0, "電力系統", "線"], ["乙.壹.三.2.39", "產品，導線管，E管，CNS 1302 20mm∮", "M", 19.0, 5960.0, 1620.0, 30780, 1470.0, 27930, -2850, "電力系統", "管"], ["乙.壹.三.2.40", "產品，導線管，E管，標稱20mm", "M", 16.0, 670.0, 513.88, 8222, 514.0, 8224, 2, "電力系統", "管"], ["乙.壹.三.2.41", "產品，導線管，E管，標稱28mm", "M", 26.0, 420.0, 258.25, 6714, 263.0, 6838, 124, "電力系統", "管"], ["乙.壹.三.2.42", "產品，導線管，E管，標稱35mm", "M", 45.0, 70.0, 4.38, 197, 19.0, 855, 658, "電力系統", "管"], ["乙.壹.三.2.43", "產品，導線管，E管，標稱41mm", "M", 53.0, 230.0, 224.0, 11872, 224.0, 11872, 0, "電力系統", "管"], ["乙.壹.三.2.44", "產品，導線管，E管，標稱65mm", "M", 109.0, 170.0, 0.0, 0, 48.0, 5232, 5232, "電力系統", "管"], ["乙.壹.三.2.45", "產品，導線管，E管，標稱80mm", "M", 156.0, 90.0, 0.0, 0, 40.0, 6240, 6240, "電力系統", "管"], ["乙.壹.三.2.46", "產品，導線管，E管，標稱100mm", "M", 257.0, 100.0, 3.75, 964, 28.0, 7196, 6232, "電力系統", "管"], ["乙.壹.三.2.47", "產品，導線管，ES-1管，標稱150mm", "M", 504.0, 220.0, 152.0, 76608, 152.0, 76608, 0, "電力系統", "管"], ["乙.壹.三.12.20", "運雜費", "式", 42682.0, 1.0, 0.0077, 331, 0.1, 4268, 3938, "弱電系統", "弱電工"], ["乙.壹.三.14.90.1", "產品，自來水用鋼管，不鏽鋼管，標稱管徑13mm", "M", 51.0, 246.0, 0.0, 0, 24.0, 1224, 1224, "給排水系統", "管"], ["乙.壹.三.14.90.2", "產品，自來水用鋼管，不鏽鋼管，標稱管徑20mm", "M", 83.0, 123.0, 0.0, 0, 12.0, 996, 996, "給排水系統", "管"], ["乙.壹.三.14.90.6", "產品，不銹鋼管及管件，另料及另件，壓接式", "式", 108497.0, 1.0, 0.0, 0, 0.063, 6835, 6835, "給排水系統", "管"], ["乙.壹.三.14.92.1", "產品，不銹鋼管及管件，Sch-20S 2\"", "M", 723.0, 63.0, 0.0, 0, 4.73, 3420, 3420, "給排水系統", "管"], ["乙.壹.三.14.92.2", "產品，自來水用鋼管，配管另件(氬焊式)", "式", 22757.0, 1.0, 0.0, 0, 0.08, 1821, 1821, "給排水系統", "管"], ["乙.壹.三.14.97.2", "產品，PVC管(B管橘紅色)，標稱50mm", "M", 94.0, 115.0, 24.0, 2256, 24.0, 2256, 0, "給排水系統", "管"], ["乙.壹.三.14.97.3", "產品，PVC管(B管橘紅色)，標稱75mm", "M", 185.0, 98.0, 12.0, 2220, 12.0, 2220, 0, "給排水系統", "管"], ["乙.壹.三.14.97.4", "產品，PVC管(B管橘紅色)，標稱100mm", "M", 287.0, 256.0, 64.0, 18368, 64.0, 18368, 0, "給排水系統", "管"], ["乙.壹.三.14.98.1", "產品，PVC管(B管厚管)，標稱50mm", "M", 85.0, 8.0, 0.2, 17, 0.2, 17, 0, "給排水系統", "管"], ["乙.壹.三.14.98.4", "產品，PVC管(B管厚管)，標稱125mm", "M", 363.0, 45.0, 2.81, 1020, 2.81, 1020, 0, "給排水系統", "管"], ["乙.壹.三.14.98.5", "產品，PVC管(B管厚管)，標稱150mm", "M", 509.0, 92.0, 32.0, 16288, 32.0, 16288, 0, "給排水系統", "管"], ["乙.壹.三.14.98.6", "產品，PVC管(B管厚管)，配管另件", "式", 12401.0, 1.0, 0.2096, 2599, 0.06, 744, -1855, "給排水系統", "管"], ["乙.壹.三.14.99.1", "產品，PVC管(A管薄管)，透氣管2\"", "M", 40.0, 154.0, 29.0, 1160, 29.0, 1160, 0, "給排水系統", "管"], ["乙.壹.三.14.99.2", "產品，PVC管(A管薄管)，標稱75mm", "M", 88.0, 134.0, 36.0, 3168, 36.0, 3168, 0, "給排水系統", "管"], ["乙.壹.三.14.99.3", "產品，PVC管(A管薄管)，標稱100mm", "M", 132.0, 39.0, 2.44, 322, 2.44, 322, 0, "給排水系統", "管"], ["乙.壹.三.14.99.4", "產品，PVC管(A管薄管)，配管另件", "式", 5797.0, 1.0, 0.2013, 1167, 0.06, 348, -819, "給排水系統", "管"], ["乙.壹.三.14.104", "敲打修補", "式", 23764.0, 1.0, 0.0, 0, 0.2, 4753, 4753, "給排水系統", "水工"], ["乙.壹.三.14.107", "工資", "式", 1295673.0, 1.0, 0.06, 77740, 0.06, 77740, 0, "給排水系統", "標題"], ["乙.壹.三.15.1.3", "產品，回填灌漿，預埋管，地樑上下連通套管", "式", 9506.0, 1.0, 1.0, 9506, 1.0, 9506, 0, "給排水系統", "雨水回收設備"], ["乙.壹.三.16.1.17", "產品，導線管，E管，CNS 1302 20mm∮", "M", 19.0, 717.0, 90.0, 1710, 187.04, 3554, 1844, "消防系統", "消工"], ["乙.壹.三.16.1.18", "產品，導線管，E管，CNS 1302 28mm∮", "M", 23.0, 79.0, 20.0, 460, 28.0, 644, 184, "消防系統", "消工"], ["乙.壹.三.16.1.19", "產品，導線管，配管另料", "式", 3788.0, 1.0, 0.1405, 532, 0.025, 95, -438, "消防系統", "消工"], ["乙.壹.三.16.1.20", "零雜料損耗", "式", 24484.0, 1.0, 0.0045, 109, 0.025, 612, 503, "消防系統", "消工"], ["乙.壹.三.16.3.24", "產品，導線管，E管，CNS 1302 20mm∮", "M", 19.0, 553.0, 0.0, 0, 160.0, 3040, 3040, "消防系統", "消工"], ["乙.壹.三.16.3.25", "產品，導線管，E管，CNS 1302 28mm∮", "M", 23.0, 12.0, 0.0, 0, 4.0, 92, 92, "消防系統", "消工"], ["乙.壹.三.16.3.26", "產品，導線管，E管，標稱28mm", "M", 26.0, 23.0, 0.0, 0, 4.0, 104, 104, "消防系統", "消工"], ["乙.壹.三.16.3.27", "產品，導線管，配管另料", "式", 1713.0, 1.0, 0.0, 0, 0.25, 428, 428, "消防系統", "消工"], ["乙.壹.三.16.3.30", "運雜費", "式", 30195.0, 1.0, 0.0, 0, 0.2, 6039, 6039, "消防系統", "消工"], ["乙.壹.三.16.4.17", "產品，導線管，E管，CNS 1302 20mm∮", "M", 19.0, 12.0, 4.0, 76, 8.0, 152, 76, "消防系統", "消工"], ["乙.壹.三.16.4.18", "產品，導線管，E管，CNS 1302 28mm∮", "M", 23.0, 114.0, 20.0, 460, 32.0, 736, 276, "消防系統", "消工"], ["乙.壹.四.4.4.2", "產品，導線管，E管，標稱28mm", "M", 26.0, 655.0, 0.0, 0, 180.0, 4680, 4680, "空調系統", "管"], ["乙.壹.四.4.4.3", "產品，導線管，E管，CNS 1302 28mm∮", "M", 23.0, 900.0, 0.0, 0, 200.0, 4600, 4600, "空調系統", "管"], ["乙.壹.四.4.5", "產品，導線管，E管-配管另件及另料", "式", 13000.0, 1.0, 0.0, 0, 0.25, 3250, 3250, "空調系統", "電工"], ["乙.壹.四.4.6", "產品，導線管，E管-配管工資", "式", 115000.0, 1.0, 0.0, 0, 0.25, 28750, 28750, "空調系統", "電工"], ["乙.壹.四.5.2.2", "產品，中央監視主控制設備-管線材料及另料", "式", 81221.0, 1.0, 0.2, 16244, 0.2, 16244, 0, "空調系統", "弱電工"], ["乙.壹.四.5.2.3", "產品，中央監視主控制設備-管線施工工資", "式", 105756.0, 1.0, 0.2, 21151, 0.2, 21151, 0, "空調系統", "弱電工"], ["乙.壹.四.6.3.4", "產品，管材-壓力測漏處理-氮氣", "M", 67684.0, 1.0, 0.0, 0, 1.0, 67684, 67684, "空調系統", "空工"], ["乙.壹.四.6.3.8", "產品，管材-排水管另料", "M", 54993.0, 1.0, 0.0, 0, 0.01, 550, 550, "空調系統", "空工"]], "prev": 334214, "cum4": 721700, "cum": 879501, "cur": 545287, "add": 157801}, "log": {"asof": "2026-11-23", "prog": 0.28385, "durTot": 718, "durUsed": 366, "durLeft": 352, "durExt": 18, "done": "2027/11/10"}, "cstat": {"rows": [["廠商 U", "圖說規劃及送審", 820000, "✓", "合約用印完成，訂金 2026/04/30 已匯"], ["廠商 L", "電力及弱電（含NCC）", 8480000, "✓", "2026/04/01 訂金已付款"], ["廠商 C", "給排水及雨水回收工程", 2700000, "✓", "2026/05/20 合約已回簽，訂金已付款"], ["廠商 O", "風管工程", 1350000, "✓", "訂金 2026/04/30 已匯"], ["廠商 I", "消防工程", 1523809, "✓", "合約已用印；訂金還未付款，預計 12 月付"], ["廠商 G", "空調設備含施工", 5450000, "✓", "合約已用印；訂金還未付款（送審後付款，預計一月）"], ["廠商 M", "發電機（含簽證）", 900000, "✓", "合約已提供，訂金已付款"], ["廠商 H", "配電盤", 3500000, "△", "已談妥，送審後簽正式合約"], ["廠商 K", "消防設備（含消檢）", 2280000, "△", "已談妥，送審後簽正式合約"], ["廠商 D", "線", 2400000, "△", "已談妥；已開四期發票共 418,842"], ["廠商 E", "管閥、管", 1200000, "△", "已談妥，送審後簽正式合約"], ["廠商 A", "給排水泵、變頻加壓機", 700000, "△", "已談妥；訂金 30% 一月付（開 12 月發票）"], ["廠商 F", "衛生設備", 480000, "△", "已談妥，送審後簽正式合約"], ["廠商 Q", "防火填塞（連工帶料）", 220000, "△", "已談妥，送審後簽正式合約"], ["廠商 T", "送水送電", 180000, "△", "已談妥，送審後簽正式合約"], ["廠商 R／雷可利", "接地避雷（含簽證）", 72000, "△", "已談妥，送審後簽正式合約"], ["廠商 J", "開關插座", 108385, "△", "已談妥，送審後簽正式合約"], ["廠商 E（材料）", "油脂節流槽", 78000, "△", "零星採購"], ["廠商 V", "人孔蓋", 24675, "✓", "2026/05 已購、已付款"], ["（廠商未定）", "水箱、陰井", 188939, "✗", "7、8、14 同一家詢價中（1120 已發詢價單）"], ["（廠商未定）", "雨水回收設備（含施工）＋汙水雨水跑照馬達", 450000, "✗", "同上，整段還沒決標"], ["（廠商未定）", "汙水雨水跑照", 150000, "✗", "同上，整段還沒決標"]], "tot": 33255808, "undCur": 788939, "undUp": 913994, "und95": 868294, "addX": 79355, "nOK": 8, "nDeal": 11, "nNo": 3, "amtOK": 21248484, "amtDeal": 11218385, "amtNo": 788939}};
+const CT=40400000, TAX=0.05, PP=0.15, RT=0.10, TODAY='2026-11';
+const TYPES=[{n:'結構預埋',d:'導線管、套管、接地',c:'--s1'},{n:'粗裝配管',d:'明管、托架、風管、冷媒管、不銹鋼管',c:'--s2'},
+ {n:'穿線配線',d:'電線電纜、控制線',c:'--s3'},{n:'設備盤體',d:'配電盤、發電機、泵、空調主機',c:'--s4'},
+ {n:'器具細裝',d:'插座、燈具、偵測器、衛浴、攝影機',c:'--s5'},{n:'測試調整',d:'TAB、系統整合、軟體、試壓',c:'--s6'},
+ {n:'間接工程費',d:'依完成比例攤',c:'--s7'}];
+const KEYS=['EMB','ROUGH','WIRE','EQUIP','FIX','TEST'];
+const $=s=>document.querySelector(s);
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const fmt=n=>Math.round(n).toLocaleString('en-US');
+const wan=n=>(n/10000).toLocaleString('en-US',{maximumFractionDigits:n<1e6?1:0});
+const ml=m=>m.replace('-','/');
+const addM=(m,k)=>{let[y,mo]=m.split('-').map(Number);mo+=k;y+=Math.floor((mo-1)/12);mo=((mo-1)%12+12)%12+1;return y+'-'+String(mo).padStart(2,'0');};
+const NS='http://www.w3.org/2000/svg';
+function el(t,a={},p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+function txt(p,x,y,s,a={}){const t=el('text',Object.assign({x,y,'font-size':11,fill:css('--ink-3')},a),p);t.textContent=s;return t;}
+function nice(v,n=5){const raw=v/n,p=Math.pow(10,Math.floor(Math.log10(raw)));const s=[1,2,2.5,5,10].find(x=>x*p>=raw)*p;return{max:Math.ceil(v/s)*s,step:s};}
+const tip=$('#tip');
+function showTip(ev,h){tip.innerHTML=h;tip.hidden=false;const r=tip.getBoundingClientRect();let x=ev.clientX+14,y=ev.clientY+14;if(x+r.width>innerWidth-8)x=ev.clientX-r.width-14;if(y+r.height>innerHeight-8)y=ev.clientY-r.height-14;tip.style.left=Math.max(8,x)+'px';tip.style.top=Math.max(8,y)+'px';}
+function hideTip(){tip.hidden=true;}
+const row=(c,l,v)=>`<div class="r"><span>${c?`<i style="background:var(${c})"></i>`:''}${l}</span><span class="num">${v}</span></div>`;
+const P=()=>({lag:+$('#c-lag').value, ret:$('#c-ret').value, cr:+$('#c-cost').value, sc:$('#c-scen').value});
+const FM=D.months, FN=FM.length;
+const ACT_IN={}, ACT_OUT={};
+D.inflow.forEach(([m,w,who,a])=>ACT_IN[m]=(ACT_IN[m]||0)+a);
+D.outflow.forEach(([m,w,who,a])=>ACT_OUT[m]=(ACT_OUT[m]||0)+a);
+const fest=FM.map((m,i)=>D.bytype[i].reduce((a,b)=>a+b,0)+D.ind[i]);
+
+function compute(p){
+  const rows=[], pre=Math.round(CT*PP);
+  rows.push({id:'訂金',m:'2026-03',est:0,dp:0,rt:0,net:pre,tax:Math.round(pre*TAX),pay:pre*(1+TAX),cash:'2026-04',note:'合約七、1(1)：簽約並交履約保證票後支付，月結 30 天'});
+  let sdp=0,srt=0;
+  D.act.forEach(a=>{
+    const net=a.est+a.dp, gross=net+a.tax, rt=-a.ret;
+    sdp+=a.dp; srt+=rt;
+    rows.push({id:a.id,m:a.m,est:a.est,dp:a.dp,rt,net,tax:a.tax,gross,pay:a.pay,cash:addM(a.m,p.lag),act:true,note:`${a.period}　${a.note}`});
+  });
+  FM.forEach((m,i)=>{
+    let e=fest[i], dp=-Math.round(e*PP), rt=-Math.round(e*RT);
+    if(i===FN-1){ dp=-pre-sdp; rt=-Math.round(CT*RT)-srt; }
+    sdp+=dp; srt+=rt;
+    const net=e+dp+rt, tax=Math.round(net*TAX), gross=net+tax;
+    let note={'2026-11':'本月 25 日前可送（計價單 5 期目前空白）','2026-12':'含不銹鋼管 11,572（6 期已預填）','2027-11':'主契約完工 2027/11/08','2027-12':'最後一期調整預付款、保留款尾差'}[m]||'';
+    rows.push({id:`${5+i}期`,m,est:e,dp,rt,net,tax,gross,pay:gross,cash:addM(m,p.lag),fc:true,note});
+  });
+  const back=-srt;
+  rows.push({id:'保留款',m:p.ret,est:0,dp:0,rt:0,net:back,tax:Math.round(back*TAX),gross:0,pay:back*(1+TAX),cash:addM(p.ret,p.lag),note:'驗收後請領：開 5 期起保留款發票（1～4 期已開），並交合約總額 10% 保固本票'});
+  const last=rows[rows.length-1]; last.gross=last.net+last.tax;
+  let c=0; rows.forEach(r=>{c+=r.pay; r.cum=c;});
+  return rows;
+}
+
+function renderKPI(rows){
+  const got=D.act.reduce((a,x)=>a+x.pay,0);
+  const r5=rows.find(r=>r.m===TODAY);
+  const y27=rows.filter(r=>r.m>='2027-01'&&r.m<='2027-12').reduce((a,r)=>a+r.pay,0);
+  const pk=rows.filter(r=>r.fc).reduce((a,r)=>r.pay>a.pay?r:a);
+  const k=[
+   ['1～3 期已入帳估驗',fmt(D.billed),`含稅實付 ${fmt(got)}；另訂金 6,363,000 已請領`],
+   ['累計完成',(D.cum4/38000000*100).toFixed(1)+'%',`直接工程 ${fmt(D.cum4)} ／ 38,000,000`],
+   ['9~11 月合併可請',fmt(Math.round(D.p5.cur*0.75*1.05)),`含稅實付；估驗 ${fmt(D.p5.cur)}（原 4 期 387,486 未請到款）`],
+   ['2027 年實付合計',wan(y27)+' 萬',`高峰 ${ml(pk.m)} 約 ${wan(pk.pay)} 萬`],
+  ];
+  $('#kpis').innerHTML=k.map(([a,b,d])=>`<div class="kpi"><div class="k">${a}</div><div class="v">${b}${/萬|%/.test(b)?'':'<small>元</small>'}</div><div class="d">${d}</div></div>`).join('');
+}
+
+function renderA(){
+  const box=$('#ch-a'); box.innerHTML=''; const W=Math.max(660,box.clientWidth), H=350;
+  const m={l:58,r:12,t:26,b:38}, iw=W-m.l-m.r, ih=H-m.t-m.b;
+  const bars=D.act.map(a=>({lab:a.id.slice(0,2),m:a.m,tot:a.est,act:true,pipe:0}))
+    .concat(FM.map((mm,i)=>({lab:`${5+i}期`,m:mm,tot:fest[i],seg:[...D.bytype[i],D.ind[i]]})));
+  const n=bars.length;
+  const {max,step}=nice(Math.max(...bars.map(b=>b.tot)));
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'各期估驗金額'},box);
+  const y=v=>m.t+ih-v/max*ih, bw=iw/n, barW=Math.min(32,bw*.6);
+  for(let v=0;v<=max+1;v+=step){el('line',{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),stroke:css('--grid')},svg);txt(svg,m.l-8,y(v)+4,v?wan(v)+'萬':'0',{'text-anchor':'end','font-family':css('--mono')});}
+  el('rect',{x:m.l,y:m.t,width:bw*4,height:ih,fill:css('--surface-2'),opacity:.55},svg);
+  const rtop=(x0,yy,w,hh,fill,g)=>{if(hh<=0)return;if(hh>4){const r=4;el('path',{d:`M${x0},${yy+hh}V${yy+r}Q${x0},${yy} ${x0+r},${yy}H${x0+w-r}Q${x0+w},${yy} ${x0+w},${yy+r}V${yy+hh}Z`,fill},g);}else el('rect',{x:x0,y:yy,width:w,height:hh,fill},g);};
+  bars.forEach((b,i)=>{
+    const cx=m.l+bw*i+bw/2, x0=cx-barW/2, g=el('g',{},svg);
+    if(b.act){
+      rtop(x0,y(b.tot),barW,y(0)-y(b.tot),css('--act'),g);
+      if(b.pipe){ el('rect',{x:x0,y:y(b.pipe),width:barW,height:y(0)-y(b.pipe),fill:'#0ca30c'},g); }
+      txt(svg,cx,y(b.tot)-6,wan(b.tot)+'萬',{'text-anchor':'middle','font-family':css('--mono'),fill:css('--ink'),'font-size':10});
+    } else {
+      let acc=0; const segs=b.seg.map((v,k)=>({v,k})).filter(s=>s.v>0);
+      segs.forEach((s,j)=>{const y0=y(acc),y1=y(acc+s.v);acc+=s.v;const hh=Math.max(0,y0-y1-(j?2:0));
+        if(j===segs.length-1) rtop(x0,y1,barW,hh,css(TYPES[s.k].c),g); else if(hh>0) el('rect',{x:x0,y:y1,width:barW,height:hh,fill:css(TYPES[s.k].c)},g);});
+    }
+    const [yy,mo]=b.m.split('-');
+    txt(svg,cx,H-m.b+15,(mo==='01'||i===0)?`${yy.slice(2)}/${mo}`:+mo,{'text-anchor':'middle','font-family':css('--mono'),fill:css(mo==='01'||i===0?'--ink':'--ink-2'),'font-weight':(mo==='01'||i===0)?600:400});
+    txt(svg,cx,H-m.b+28,b.lab,{'text-anchor':'middle','font-size':9,fill:css('--ink-3')});
+    const hit=el('rect',{x:m.l+bw*i,y:m.t,width:bw,height:ih,fill:'transparent'},svg);
+    hit.addEventListener('mousemove',ev=>{
+      let h=`<div class="h">${b.lab}　${ml(b.m)}</div>`;
+      if(b.act){ h+=row('--act','實際估驗',fmt(b.tot)); if(b.pipe) h+=row('','　其中管材補請',fmt(b.pipe)); }
+      else b.seg.forEach((v,k)=>{ if(v>0) h+=row(TYPES[k].c,TYPES[k].n,fmt(v)); });
+      h+=`<div class="r tot"><span>${b.act?'本期計價':'預估估驗'}</span><span class="num">${fmt(b.tot)}</span></div>`;
+      showTip(ev,h);});
+    hit.addEventListener('mouseleave',hideTip);
+  });
+  const tx=m.l+bw*4; el('line',{x1:tx,x2:tx,y1:m.t-8,y2:m.t+ih,stroke:css('--today'),'stroke-width':1.5,'stroke-dasharray':'4 3'},svg);
+  txt(svg,tx+5,m.t-1,'今天 11/10',{fill:css('--today'),'font-weight':600});
+  txt(svg,m.l+6,m.t-1,'已請',{fill:css('--ink-2'),'font-weight':600});
+  el('line',{x1:m.l,x2:W-m.r,y1:y(0),y2:y(0),stroke:css('--ink-3')},svg);
+  $('#lg-a').innerHTML=`<span><i style="background:var(--act)"></i>實際已請</span><span><i style="background:#0ca30c"></i>管材補請</span>`+TYPES.map(t=>`<span title="${t.d}"><i style="background:var(${t.c})"></i>${t.n}</span>`).join('');
+}
+
+function renderP4(){
+  const its=D.p4.slice().sort((a,b)=>(b.pipe-a.pipe)||b.v-a.v);
+  const q=v=>v==null?'–':(+v).toLocaleString('en-US',{maximumFractionDigits:3});
+  const body=its.map(x=>{const pct=x.cq?Math.min(1,x.cum/x.cq):0;
+    return `<tr><td class="num">${x.code}</td><td style="text-align:left;white-space:normal;min-width:220px">${x.name}</td><td>${x.unit}</td><td class="num">${q(x.cq)}</td><td class="num">${fmt(x.p)}</td><td class="num">${q(x.prev)}</td><td class="num">${q(x.q)}</td><td class="num" style="font-weight:600">${fmt(x.v)}</td><td class="num">${q(x.cum)}</td><td><div class="bar-mini" title="累計 ${Math.round(pct*100)}%"><span style="width:${pct*100}%;background:${x.pipe?'#0ca30c':'var(--act)'}"></span></div></td><td style="text-align:left">${x.pipe?'<span class="stat"><i style="background:#0ca30c"></i>管材補請</span>':''}</td></tr>`;}).join('');
+  $('#t-p4').innerHTML=`<thead><tr><th>項次</th><th style="text-align:left">品名</th><th>單位</th><th>合約數量</th><th>單價</th><th>前期數量</th><th>本期數量</th><th>本期金額</th><th>累計數量</th><th>累計進度</th><th style="text-align:left">備註</th></tr></thead><tbody>${body}<tr class="sum"><td>合計</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmt(its.reduce((a,x)=>a+x.v,0))}</td><td></td><td></td><td></td></tr></tbody>`;
+}
+
+
+function renderP5(){
+  const P=D.p5, L=D.log;
+  $('#p5-sub').innerHTML=`原 4 期（9、10 月）計價 387,486 <b>最後沒有請到款</b>，改與 11 月一起請。數量改以 <b>11/23 施工日誌的累計完成數量</b>為準重算：`
+   +`新累計 <b>${fmt(P.cum)}</b>（原 4 期累計 ${fmt(P.cum4)}，多 ${fmt(P.add)}），扣前期 ${fmt(P.prev)} 後，`
+   +`<b>本期（9~11 月合併）可請 ${fmt(P.cur)}</b>。施工日誌 11/23 實際進度 ${(L.prog*100).toFixed(2)}%、累計工期 ${L.durUsed}/${L.durTot} 天、剩餘 ${L.durLeft} 天、展延 ${L.durExt} 天，完工日 ${L.done}。`;
+  // 分系統增減長條
+  const bySys={};
+  P.rows.forEach(r=>{bySys[r[10]]=(bySys[r[10]]||0)+r[9];});
+  const ent=Object.entries(bySys).sort((a,b)=>b[1]-a[1]);
+  const box=$('#ch-p5'); box.innerHTML='';
+  const W=Math.max(600,box.clientWidth), m={l:110,r:70,t:14,b:26}, rh=30, H=m.t+rh*ent.length+m.b, iw=W-m.l-m.r;
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'各系統比原 4 期的增減'},box);
+  const mx=Math.max(...ent.map(([,v])=>Math.abs(v)))*1.15;
+  const x=v=>m.l+iw/2+v/mx*(iw/2);
+  el('line',{x1:x(0),x2:x(0),y1:m.t,y2:m.t+rh*ent.length,stroke:css('--ink-3')},svg);
+  ent.forEach(([k,v],i)=>{const y0=m.t+rh*i+6, w=Math.abs(x(v)-x(0));
+    txt(svg,m.l-8,y0+14,k,{'text-anchor':'end','font-size':12,fill:css('--ink')});
+    el('rect',{x:v>=0?x(0):x(v),y:y0,width:Math.max(2,w),height:18,fill:css(v>=0?'--s3':'--today'),rx:3},svg);
+    txt(svg,v>=0?x(v)+6:x(v)-6,y0+13,(v>=0?'+':'')+fmt(v),{'text-anchor':v>=0?'start':'end','font-size':11,'font-family':css('--mono'),'font-weight':600,fill:css('--ink')});});
+  txt(svg,x(0),H-6,'0',{'text-anchor':'middle','font-family':css('--mono'),fill:css('--ink-2')});
+  // 明細表（只列有增減的）
+  const rs=P.rows.slice().sort((a,b)=>b[9]-a[9]);
+  const q=v=>(+v).toLocaleString('en-US',{maximumFractionDigits:3});
+  const body=rs.map(r=>{const d=r[9];
+    return `<tr><td class="num">${r[0].replace('乙.壹.','')}</td><td style="text-align:left;white-space:normal;min-width:220px">${r[1]}</td><td>${r[2]}</td>`
+    +`<td class="num">${q(r[4])}</td><td class="num">${fmt(r[3])}</td>`
+    +`<td class="num" style="color:var(--ink-2)">${q(r[5])}</td><td class="num" style="font-weight:600">${q(r[7])}</td>`
+    +`<td class="num" style="color:var(--ink-2)">${fmt(r[6])}</td><td class="num" style="font-weight:600">${fmt(r[8])}</td>`
+    +`<td class="num" style="font-weight:700;color:${d>0?'var(--s3)':(d<0?'#d03b3b':'var(--ink-3)')}">${d?(d>0?'+':'')+fmt(d):'–'}</td>`
+    +`<td class="note">${r[10]}・${r[11]}</td></tr>`;}).join('');
+  $('#t-p5').innerHTML=`<thead><tr><th>項次</th><th style="text-align:left">品名</th><th>單位</th><th>合約數量</th><th>單價</th>`
+    +`<th>計價單累計數量</th><th>日誌累計數量</th><th>計價單累計金額</th><th>日誌累計金額</th><th>差額</th><th style="text-align:left">系統</th></tr></thead><tbody>${body}`
+    +`<tr class="sum"><td>合計</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="num">${fmt(rs.reduce((a,r)=>a+r[6],0))}</td><td class="num">${fmt(rs.reduce((a,r)=>a+r[8],0))}</td><td class="num">${fmt(rs.reduce((a,r)=>a+r[9],0))}</td><td></td></tr></tbody>`;
+  const dn=rs.filter(r=>r[9]<0);
+  $('#p5-note').innerHTML=`<b>多出來的 ${fmt(P.add)} 主要在空調（+109,514）</b>——壓力測漏氮氣 +67,684、E 管配管工資 +28,750、E 管 28mm 兩項 +9,280，這幾項原本 4 期一毛都沒報。其餘：給排水 +16,375、電力 +15,826、消防 +12,148、弱電 +3,938。`
+   +`<br><b>有 ${dn.length} 項日誌數量比計價單少，要先跟總包商對清楚</b>：${dn.map(r=>`${r[0].replace('乙.壹.','')} ${r[1].slice(0,14)}（${fmt(r[9])}）`).join('、')}。其中 2.39 的 20mm∮ E 管計價單報 1,620M、日誌只有 1,470M，差 150M。`
+   +`<br>合併後 <b>本期 ${fmt(P.cur)}</b>，扣 15% 預付款回扣與 10% 保留款、加 5% 稅，<b>實付約 ${fmt(Math.round(P.cur*0.75*1.05))}</b>，11/25 前送計價、預計 2027/01 入帳。間接工程費 2,400,000 仍然一期都沒請。`;
+}
+function renderB(rows){
+  const box=$('#ch-b'); box.innerHTML=''; const W=Math.max(320,box.clientWidth), H=290;
+  const m={l:52,r:14,t:18,b:32}, iw=W-m.l-m.r, ih=H-m.t-m.b;
+  const end=addM(rows[rows.length-1].cash,1); const mons=[]; for(let k='2026-03';k<=end;k=addM(k,1)) mons.push(k);
+  const bill=mons.map(mm=>rows.filter(r=>r.m<=mm).reduce((a,r)=>a+r.pay,0));
+  const cash=mons.map(mm=>rows.filter(r=>r.cash<=mm).reduce((a,r)=>a+r.pay,0));
+  const max=45e6, step=1e7; const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'總包商付我們的累計請款與入帳'},box);
+  const x=i=>m.l+i/(mons.length-1)*iw, y=v=>m.t+ih-v/max*ih;
+  for(let v=0;v<=max;v+=step){el('line',{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),stroke:css('--grid')},svg);txt(svg,m.l-8,y(v)+4,v?wan(v)+'萬':'0',{'text-anchor':'end','font-family':css('--mono')});}
+  el('line',{x1:m.l,x2:W-m.r,y1:y(42420000),y2:y(42420000),stroke:css('--ink-3'),'stroke-dasharray':'2 3'},svg);
+  txt(svg,m.l+4,y(42420000)-5,'合約含稅 4,242 萬',{fill:css('--ink-2')});
+  mons.forEach((mm,i)=>{if(mm.endsWith('-01')||i===0) txt(svg,x(i),H-m.b+16,ml(mm),{'text-anchor':'middle','font-family':css('--mono'),fill:css('--ink-2')});});
+  const ti=mons.indexOf(TODAY); el('line',{x1:x(ti),x2:x(ti),y1:m.t,y2:m.t+ih,stroke:css('--today'),'stroke-dasharray':'4 3','stroke-width':1.5},svg);
+  const sp=a=>a.map((v,i)=>i?`H${x(i).toFixed(1)}V${y(v).toFixed(1)}`:`M${x(0)},${y(v).toFixed(1)}`).join('');
+  el('path',{d:sp(cash),fill:'none',stroke:css('--s2'),'stroke-width':2},svg);
+  el('path',{d:sp(bill),fill:'none',stroke:css('--s1'),'stroke-width':2},svg);
+  el('line',{x1:m.l,x2:W-m.r,y1:y(0),y2:y(0),stroke:css('--ink-3')},svg);
+  const cr=el('line',{y1:m.t,y2:m.t+ih,stroke:css('--ink-3'),visibility:'hidden'},svg);
+  const hit=el('rect',{x:m.l,y:m.t,width:iw,height:ih,fill:'transparent'},svg);
+  hit.addEventListener('mousemove',ev=>{const b=svg.getBoundingClientRect();const px=(ev.clientX-b.left)*W/b.width;const i=Math.max(0,Math.min(mons.length-1,Math.round((px-m.l)/iw*(mons.length-1))));
+    cr.setAttribute('x1',x(i));cr.setAttribute('x2',x(i));cr.setAttribute('visibility','visible');
+    showTip(ev,`<div class="h">${ml(mons[i])} 月底</div>`+row('--s1','累計已請款',fmt(bill[i]))+row('--s2','累計實際入帳',fmt(cash[i]))+`<div class="r tot"><span>已請未收</span><span class="num">${fmt(bill[i]-cash[i])}</span></div>`);});
+  hit.addEventListener('mouseleave',()=>{cr.setAttribute('visibility','hidden');hideTip();});
+}
+
+function renderC(){
+  const box=$('#ch-c'); box.innerHTML=''; const W=Math.max(520,box.clientWidth);
+  const m={l:70,r:4,t:4,b:26}, rh=32, H=m.t+rh*6+m.b, cw=(W-m.l-m.r)/FN;
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'剩餘工程排程'},box);
+  KEYS.forEach((k,r)=>{const yy=m.t+r*rh; txt(svg,0,yy+rh/2+4,TYPES[r].n,{fill:css('--ink'),'font-size':12});
+    FM.forEach((mm,i)=>{const v=D.W[k][i]/100, xx=m.l+i*cw;
+      el('rect',{x:xx+1,y:yy+2,width:cw-2,height:rh-4,rx:3,fill:css('--surface-2')},svg);
+      if(v>0){el('rect',{x:xx+1,y:yy+2,width:cw-2,height:rh-4,rx:3,fill:css(TYPES[r].c),'fill-opacity':(0.25+0.75*v/0.35).toFixed(2)},svg);
+        if(cw>=24) txt(svg,xx+cw/2,yy+rh/2+4,Math.round(v*100),{'text-anchor':'middle','font-size':10,fill:css('--ink'),'font-family':css('--mono')});}
+      const hit=el('rect',{x:xx,y:yy,width:cw,height:rh,fill:'transparent'},svg);
+      hit.addEventListener('mousemove',ev=>showTip(ev,`<div class="h">${TYPES[r].n}・${ml(mm)}（${5+i}期）</div><div class="sub">${TYPES[r].d}</div>`+row(TYPES[r].c,'本月完成',Math.round(v*100)+'%')+row('','本月金額',fmt(D.bytype[i][r]))+row('','剩餘總額',fmt(D.rem[k]))));
+      hit.addEventListener('mouseleave',hideTip);});});
+  FM.forEach((mm,i)=>{const[yy,mo]=mm.split('-');txt(svg,m.l+i*cw+cw/2,H-8,(mo==='01'||i===0)?`${yy.slice(2)}/${mo}`:+mo,{'text-anchor':'middle','font-size':10,'font-family':css('--mono'),fill:css(mo==='01'||i===0?'--ink':'--ink-3')});});
+}
+
+function renderTable(rows){
+  const h=['期別','計價月','估驗（未稅）','扣回預付款','扣保留款','發票淨額','營業稅','發票總額','本期實付','累計實付','入帳月','備註'];
+  const pk=rows.filter(r=>r.fc).reduce((a,r)=>r.pay>a.pay?r:a);
+  const f0=v=>v?fmt(v):'–';
+  const body=rows.map(r=>{const cls=[r.act?'past':'',r.m===TODAY?'now':''].join(' ');
+    const note=(r.act?'<span class="pill past">實際</span>':'')+(r.m===TODAY?'<span class="pill now">本月送</span>':'')+(r.note||'')+(r===pk?'　單月高峰':'');
+    return `<tr class="${cls}"><td>${r.id}</td><td class="num">${ml(r.m)}</td><td class="num">${f0(r.est)}</td><td class="num">${f0(r.dp)}</td><td class="num">${f0(r.rt)}</td><td class="num">${f0(r.net)}</td><td class="num">${f0(r.tax)}</td><td class="num">${f0(r.gross)}</td><td class="num" style="font-weight:600">${f0(r.pay)}</td><td class="num">${fmt(r.cum)}</td><td class="num">${ml(r.cash)}</td><td class="note">${note}</td></tr>`;}).join('');
+  const S=k=>rows.reduce((a,r)=>a+r[k],0);
+  $('#tbl').innerHTML=`<thead><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${body}<tr class="sum"><td>合計</td><td></td><td class="num">${fmt(S('est'))}</td><td class="num">${fmt(S('dp'))}</td><td class="num">${fmt(S('rt'))}</td><td class="num">${fmt(S('net'))}</td><td class="num">${fmt(S('tax'))}</td><td class="num">${fmt(S('gross'))}</td><td class="num">${fmt(S('pay'))}</td><td></td><td></td><td class="note">比含稅合約 42,420,000 少 ${fmt(42420000-S('pay'))}＝三.6.12 的 2,852×1.05</td></tr></tbody>`;
+}
+
+function renderAll(){const p=P();const rows=compute(p);renderKPI(rows);renderA();renderP5();renderP4();renderB(rows);renderC();renderWF();renderVM();renderScen();renderPNL();renderDiff();renderInd();renderPay();renderPump();renderDep();renderUnit();renderLife();renderCash(rows,p);renderSubret();renderSched();renderVP();renderCashTable();renderVend();renderTable(rows);}
+['#c-lag','#c-ret','#c-cost','#c-scen'].forEach(s=>$(s).addEventListener('change',renderAll));
+let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(renderAll,120);});
+new MutationObserver(renderAll).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',renderAll);
+
+function cashSeries(rows,p){
+  const inc={}; rows.forEach(r=>inc[r.cash]=(inc[r.cash]||0)+r.pay);
+  const cost={};
+  FM.forEach((m,i)=>{const e=D.bytype[i].reduce((a,b)=>a+b,0)+D.ind[i]; cost[m]=e*p.cr*1.05;});
+  const keys=new Set([...Object.keys(inc),...Object.keys(ACT_IN),...Object.keys(ACT_OUT),...FM]);
+  let last=[...keys].sort().pop();
+  if(D.subretRel>last) last=D.subretRel;
+  const mons=[]; for(let k='2026-04';k<=last;k=addM(k,1)) mons.push(k);
+  const indFrom='2026-04', indTo=FM[FN-1];
+  const indN=mons.filter(m=>m>=indFrom&&m<=indTo).length;
+  const indPM=D.IND/indN;
+  let cum=0,cI=0,cO=0,cOx=0,cInd=0,held=D.subretActual;
+  return mons.map((m,i)=>{
+    const I=inc[m]||0;
+    let Osub, hold=0, rel=0;
+    if(m<='2026-12') Osub=ACT_OUT[m]||0;        // 實際付款，廠商 L／廠商 C的保留款已扣在裡面
+    else { const src=addM(m,-1); Osub=FM.includes(src)?(cost[src]||0):0;
+           hold=Osub*D.subretRate; Osub-=hold; held+=hold; }
+    if(m===D.subretRel){ rel=held; held=0; }
+    const Oind=(m>=indFrom&&m<=indTo)?indPM:0;
+    const O=Osub+Oind+rel;
+    cum+=I-O; cI+=I; cO+=O; cOx+=Osub+rel; cInd+=Oind;
+    return {m,I,Osub,Oind,Orel:rel,O,net:I-O,cum,cI,cO,cOx,cInd,cumx:cI-cOx,indPM,hold};
+  });
+}
+function renderSubret(){
+  const body=D.subret.map(([v,a,n])=>`<tr><td style="text-align:left">${v}</td><td class="num">${fmt(a)}</td><td class="num">${fmt(Math.round(a*1.05))}</td><td class="note">${n}</td></tr>`).join('');
+  $('#t-subret').innerHTML=`<thead><tr><th style="text-align:left">廠商</th><th>未稅</th><th>含稅</th><th style="text-align:left">條款</th></tr></thead><tbody>${body}<tr class="sum"><td>合計</td><td class="num">${fmt(D.subretNet)}</td><td class="num">${fmt(Math.round(D.subretNet*1.05))}</td><td class="note">佔直接成本 ${(D.subretRate*100).toFixed(2)}%，於 ${ml(D.subretRel)} 一次付出</td></tr></tbody>`;
+}
+const CSER=[
+ {id:'I',   g:'bar', t:'收入',              c:'--s3'},
+ {id:'Osub',g:'bar', t:'下包與雜支',        c:'--s2'},
+ {id:'Oind',g:'bar', t:'間接成本（平均分攤）',c:'--s5'},
+ {id:'Orel',g:'bar', t:'保留／保固款釋出',  c:'--s4'},
+ {id:'cI',  g:'ln',  t:'累計收入',          c:'--s3'},
+ {id:'cO',  g:'ln',  t:'累計支出（含間接）', c:'--s2'},
+ {id:'cOx', g:'ln',  t:'累計支出（不含間接）',c:'--s2',d:1},
+ {id:'cInd',g:'ln',  t:'累計間接成本（右軸）',c:'--s5'},
+ {id:'cum', g:'ln',  t:'累計現金',          c:'--s1',w:2.8},
+ {id:'cumx',g:'ln',  t:'累計現金（不含間接）',c:'--s1',d:1}];
+const CVIS={}; CSER.forEach(x=>CVIS[x.id]=true);
+const CPRE={all:CSER.map(x=>x.id),
+ cash:['cum','cumx'],
+ flow:['I','Osub','Oind','Orel'],
+ cum:['cI','cO','cum'],
+ ind:['Oind','cInd','cum','cumx'],
+ noind:['I','Osub','Orel','cI','cOx','cumx']};
+function cashChk(){
+  const box=$('#chk-cash'); if(!box) return;
+  const grp=(g,lab)=>`<label style="background:transparent;border:none;padding:4px 2px 4px 0;color:var(--ink-3);font-size:11px;letter-spacing:.04em">${lab}</label>`
+    +CSER.filter(x=>x.g===g).map(x=>`<label><input type="checkbox" data-id="${x.id}"${CVIS[x.id]?' checked':''}>`
+      +`<i class="${x.g==='ln'?'ln':''}" style="${x.d?'background:repeating-linear-gradient(90deg,var('+x.c+') 0 5px,transparent 5px 9px)':'background:var('+x.c+')'}"></i>${x.t}</label>`).join('');
+  box.innerHTML=grp('bar','每月（PDF）')+'<span style="width:100%;height:0"></span>'+grp('ln','累計（CDF）');
+  box.querySelectorAll('input').forEach(i=>i.addEventListener('change',()=>{
+    CVIS[i.dataset.id]=i.checked; $('#c-cpre').value=''; redrawCash();}));
+}
+function redrawCash(){ renderCash(compute(P()),P()); }
+function cashCtlInit(){
+  cashChk();
+  const pre=$('#c-cpre');
+  if(!pre.querySelector('option[value=""]')) pre.insertAdjacentHTML('afterbegin','<option value="">自訂</option>');
+  pre.value='all';
+  pre.addEventListener('change',()=>{const k=pre.value; if(!k||!CPRE[k])return;
+    CSER.forEach(x=>CVIS[x.id]=CPRE[k].includes(x.id)); cashChk(); pre.value=k; redrawCash();});
+  $('#c-crng').addEventListener('change',redrawCash);
+  $('#c-creset').addEventListener('click',()=>{CSER.forEach(x=>CVIS[x.id]=true);$('#c-crng').value='';cashChk();$('#c-cpre').value='all';redrawCash();});
+}
+function renderCash(rows,p){
+  const full=cashSeries(rows,p);
+  const rg=($('#c-crng')&&$('#c-crng').value||'').split('|');
+  const data=rg.length===2?full.filter(d=>d.m>=rg[0]&&d.m<=rg[1]):full;
+  if(!data.length) return;
+  const box=$('#ch-cash'); box.innerHTML='';
+  const W=Math.max(760,box.clientWidth), n=data.length;
+  const m={l:66,r:76}, iw=W-m.l-m.r, bw=iw/n;
+  const iPast=data.findIndex(d=>d.m==='2026-12'), tx=iPast<0?-99:m.l+bw*(iPast+1);
+  const xlab=(svg,H,bot)=>data.forEach((d,i)=>{const [yy,mo]=d.m.split('-');
+    if(mo==='01'||i===0||mo==='07') txt(svg,m.l+bw*i+bw/2,H-bot+15,`${yy.slice(2)}/${mo}`,{'text-anchor':'middle','font-family':css('--mono'),fill:css(mo==='01'||i===0?'--ink':'--ink-2')});});
+  const on=id=>CVIS[id];
+  const outKeys=['Osub','Oind','Orel'].filter(on);
+  const stack=d=>outKeys.reduce((a,k)=>a+d[k],0);
+
+  /* ---------- 上：PDF ---------- */
+  if(on('I')||outKeys.length){
+  const H1=260, m1={t:24,b:30}, ih1=H1-m1.t-m1.b;
+  const mx=Math.max(1,...data.map(d=>Math.max(on('I')?d.I:0,stack(d))));
+  const {max,step}=nice(mx);
+  const s1=el('svg',{viewBox:`0 0 ${W} ${H1}`,role:'img','aria-label':'每月現金收支'},box);
+  const y=v=>m1.t+ih1-v/max*ih1, half=Math.min(9,bw*.32);
+  if(iPast>=0) el('rect',{x:m.l,y:m1.t,width:bw*(iPast+1),height:ih1,fill:css('--surface-2'),opacity:.55},s1);
+  for(let v=0;v<=max+1;v+=step){el('line',{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),stroke:css('--grid')},s1);txt(s1,m.l-8,y(v)+4,v?wan(v)+'萬':'0',{'text-anchor':'end','font-family':css('--mono')});}
+  txt(s1,m.l-8,m1.t-8,'每月（PDF）',{'text-anchor':'start','font-weight':600,fill:css('--ink-2')});
+  data.forEach((d,i)=>{
+    const cx=m.l+bw*i+bw/2;
+    if(on('I')&&d.I>0) el('rect',{x:cx-half-1,y:y(d.I),width:half,height:y(0)-y(d.I),fill:css('--s3'),rx:2},s1);
+    let acc=0;
+    outKeys.forEach(k=>{ if(d[k]<=0) return;
+      const y0=y(acc), y1=y(acc+d[k]); acc+=d[k];
+      el('rect',{x:cx+1,y:y1,width:half,height:Math.max(1.5,y0-y1),fill:css(CSER.find(x=>x.id===k).c),rx:k===outKeys[0]?2:0,stroke:css('--surface'),'stroke-width':.5},s1);});
+    const hit=el('rect',{x:m.l+bw*i,y:m1.t,width:bw,height:ih1,fill:'transparent'},s1);
+    hit.addEventListener('mousemove',ev=>showTip(ev,`<div class="h">${ml(d.m)}${d.m<='2026-12'?'（實際）':'（預估）'}</div>`
+      +row('--s3','收入',fmt(d.I))+row('--s2','下包與雜支',fmt(d.Osub))
+      +row('--s5','間接成本（平均分攤）',d.Oind?fmt(d.Oind):'–')
+      +(d.Orel?row('--s4','下包保留／保固款釋出',fmt(d.Orel)):'')
+      +(d.hold>0?row('','本月扣住下包保留款','−'+fmt(d.hold)):'')
+      +row('','當月淨額',fmt(d.net))
+      +`<div class="r tot"><span>累計現金</span><span class="num">${fmt(d.cum)}</span></div>`));
+    hit.addEventListener('mouseleave',hideTip);
+  });
+  el('line',{x1:m.l,x2:W-m.r,y1:y(0),y2:y(0),stroke:css('--ink-3')},s1);
+  if(iPast>=0&&iPast<data.length-1){el('line',{x1:tx,x2:tx,y1:m1.t-6,y2:m1.t+ih1,stroke:css('--today'),'stroke-width':1.5,'stroke-dasharray':'4 3'},s1);
+  txt(s1,tx+5,m1.t+2,'以後為預估',{fill:css('--today'),'font-weight':600});}
+  xlab(s1,H1,m1.b);
+  }
+
+  /* ---------- 下：CDF ---------- */
+  const lnKeys=CSER.filter(x=>x.g==='ln'&&x.id!=='cInd'&&on(x.id)).map(x=>x.id);
+  if(lnKeys.length||on('cInd')){
+  const H2=280, m2={t:30,b:30}, ih2=H2-m2.t-m2.b;
+  const all=lnKeys.length?data.flatMap(d=>lnKeys.map(k=>d[k])):[0];
+  const hi=Math.max(0,...all), lo=Math.min(0,...all);
+  const cmax=Math.max(1e6,Math.ceil(hi/1e6)*1e6), cmin=Math.floor(lo/1e6)*1e6;
+  const s2=el('svg',{viewBox:`0 0 ${W} ${H2}`,role:'img','aria-label':'累計現金收支'},box);
+  const yc=v=>m2.t+ih2-(v-cmin)/(cmax-cmin)*ih2;
+  if(iPast>=0) el('rect',{x:m.l,y:m2.t,width:bw*(iPast+1),height:ih2,fill:css('--surface-2'),opacity:.55},s2);
+  for(let k=0;k<=5;k++){const v=cmin+(cmax-cmin)/5*k;
+    el('line',{x1:m.l,x2:W-m.r,y1:yc(v),y2:yc(v),stroke:Math.abs(v)<1?css('--ink-3'):css('--grid')},s2);
+    txt(s2,m.l-8,yc(v)+4,wan(v)+'萬',{'text-anchor':'end','font-family':css('--mono')});}
+  txt(s2,m.l-8,m2.t-6,'累計（CDF）',{'text-anchor':'start','font-weight':600,fill:css('--ink-2')});
+  if(on('cInd')){
+    const indMax=Math.ceil(D.IND/5e5)*5e5, yi=v=>m2.t+ih2-v/indMax*ih2;
+    for(let k=0;k<=4;k++){const v=indMax/4*k; txt(s2,W-m.r+6,yi(v)+4,v?wan(v)+'萬':'0',{'text-anchor':'start','font-family':css('--mono'),fill:css('--s5')});}
+    txt(s2,W-m.r+6,m2.t-18,'累計間接成本',{'text-anchor':'start',fill:css('--s5'),'font-weight':600,'font-size':10});
+    txt(s2,W-m.r+6,m2.t-7,'（右軸）',{'text-anchor':'start',fill:css('--s5'),'font-weight':600,'font-size':10});
+    el('path',{d:data.map((d,i)=>`${i?'L':'M'}${(m.l+bw*i+bw/2).toFixed(1)},${yi(d.cInd).toFixed(1)}`).join(''),fill:'none',stroke:css('--s5'),'stroke-width':2.6},s2);
+  }
+  CSER.filter(x=>x.g==='ln'&&x.id!=='cInd'&&on(x.id)).forEach(x=>{
+    el('path',Object.assign({d:data.map((d,i)=>`${i?'L':'M'}${(m.l+bw*i+bw/2).toFixed(1)},${yc(d[x.id]).toFixed(1)}`).join(''),
+      fill:'none',stroke:css(x.c),'stroke-width':x.w||(x.d?1.6:2.1)},x.d?{'stroke-dasharray':'5 4'}:{}),s2);});
+  data.forEach((d,i)=>{
+    const hit=el('rect',{x:m.l+bw*i,y:m2.t,width:bw,height:ih2,fill:'transparent'},s2);
+    hit.addEventListener('mousemove',ev=>showTip(ev,`<div class="h">${ml(d.m)} 累計</div>`
+      +CSER.filter(x=>x.g==='ln'&&on(x.id)&&x.id!=='cum'&&x.id!=='cumx').map(x=>row(x.c,x.t.replace('（右軸）',''),fmt(d[x.id]))).join('')
+      +(on('cum')?row('--s1','累計現金（含間接）',fmt(d.cum)):'')
+      +(on('cumx')?`<div class="r tot"><span>累計現金（不含間接）</span><span class="num">${fmt(d.cumx)}</span></div>`:'')));
+    hit.addEventListener('mouseleave',hideTip);
+  });
+  if(iPast>=0&&iPast<data.length-1) el('line',{x1:tx,x2:tx,y1:m2.t-6,y2:m2.t+ih2,stroke:css('--today'),'stroke-width':1.5,'stroke-dasharray':'4 3'},s2);
+  if(on('cum')){
+    const lo2=data.reduce((a,d)=>d.cum<a.cum?d:a), xl=m.l+bw*data.indexOf(lo2)+bw/2;
+    el('circle',{cx:xl,cy:yc(lo2.cum),r:4,fill:css('--today')},s2);
+    txt(s2,xl,yc(lo2.cum)-11,'最低 '+wan(lo2.cum)+'萬',{'text-anchor':'middle',fill:css('--today'),'font-weight':600,'font-family':css('--mono')});
+  }
+  xlab(s2,H2,m2.b);
+  }
+  if(!box.childNodes.length) box.innerHTML='<p class="sub" style="padding:24px 0">顯示項目全部取消勾選了，按「重設」可以還原。</p>';
+  const L=full[full.length-1], lo2=full.reduce((a,d)=>d.cum<a.cum?d:a);
+  $('#cash-note').innerHTML=`成本率 ${Math.round(p.cr*100)}%：累計現金最低點在 ${ml(lo2.m)} 約 <b>${fmt(lo2.cum)}</b> 元；期末（含保留款入帳）約 <b>${fmt(L.cum)}</b> 元。`
+   +`　間接成本 ${fmt(D.IND)} 以 ${full.filter(d=>d.Oind>0).length} 個月平均分攤，每月 <b>${fmt(full[0].indPM)}</b>（已另色標示，薪資不計營業稅）。`
+   +`　累計收入 ${fmt(L.cI)}、累計支出 ${fmt(L.cO)}。`
+   +(data.length!==full.length?`　<b>目前只顯示 ${ml(data[0].m)}～${ml(data[data.length-1].m)}</b>（共 ${data.length} 個月），上面的最低點與期末仍以全期計算。`:'')
+   +`<br>藍虛線＝不含間接成本的累計現金，與藍實線的距離就是人力等管銷燒掉的錢（到期末 ${fmt(D.IND)}）。`
+   +`<br>下包保留／保固款 <b>${fmt(D.subretNet*1.05)}</b>（未稅 ${fmt(D.subretNet)}，佔直接成本 ${(D.subretRate*100).toFixed(2)}%）在施工期間扣住不付，於 ${ml(D.subretRel)} 驗收後一次付出——這筆讓施工期的低點少掉約 ${fmt(D.subretNet*1.05)}。`;
+}
+const VPK=['已付實際','訂金','工程款','設備款','服務費','材料','其他','保留款','保固／送電款','保固／消檢款','保固／驗收款'];
+const VPC={'已付實際':'--ink-3','訂金':'--s4','工程款':'--s2','設備款':'--s1','服務費':'--ink-3','材料':'--ink-3','其他':'--ink-3','保留款':'--s5','保固／送電款':'--s5','保固／消檢款':'--s5','保固／驗收款':'--s5'};
+function vpInit(){
+  const vs=[...new Set(D.vpay.map(r=>r[0]))].sort();
+  $('#f-vp-v').innerHTML='<option value="">全部廠商</option>'+vs.map(v=>`<option value="${v}">${v}${D.vscope[v]?'｜'+D.vscope[v]:''}</option>`).join('');
+  const ks=[...new Set(D.vpay.map(r=>r[3]))];
+  $('#f-vp-k').innerHTML='<option value="">全部款項</option>'+VPK.filter(k=>ks.includes(k)).map(k=>`<option>${k}</option>`).join('');
+  $('#lg-vp').innerHTML=[['訂金','--s4'],['工程款','--s2'],['設備款','--s1'],['保留／保固款','--s5']].map(([t,c])=>`<span><i style="background:var(${c})"></i>${t}</span>`).join('');
+  ['#f-vp-v','#f-vp-k','#f-vp-y','#f-vp-t'].forEach(x=>$(x).addEventListener('change',renderVP));
+}
+
+function renderSched(){
+  const S=D.sched;
+  $('#sch-sub').innerHTML=`基準：工務每週進度表 115/11/07~11/13——<b>累計實際 ${(S.act*100).toFixed(2)}%</b>、預定 ${(S.plan*100).toFixed(2)}%、<b>超前 ${((S.act-S.plan)*100).toFixed(2)}%</b>。結構做到 <b>${S.floor}</b>，建築物為地上 4 層＋RF，樓層循環約 ${S.cycle} 週，推估 <b>${ml(S.top)} 結構封頂</b>，主契約完工 ${S.done}。下面是以這條結構線重排的各家進場時間。`;
+  $('#t-ms').innerHTML='<thead><tr><th style="text-align:left">結構／裝修里程碑</th><th>推估時點</th><th style="text-align:left">依據</th></tr></thead><tbody>'
+    +S.ms.map(([t,m,n])=>`<tr><td style="text-align:left">${t}</td><td class="num" style="font-weight:600">${ml(m)}</td><td class="note">${n}</td></tr>`).join('')+'</tbody>';
+
+  const R=[...S.rows].sort((a,b)=>a.e.localeCompare(b.e)||b.net-a.net);
+  const ms=[]; for(let k='2026-04';k<='2027-12';k=addM(k,1)) ms.push(k);
+  const box=$('#ch-gantt'); box.innerHTML='';
+  const W=Math.max(880,box.clientWidth), m={l:190,r:58,t:34,b:26}, rh=22, H=m.t+rh*R.length+m.b, iw=W-m.l-m.r;
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'各廠商進場區間'},box);
+  const cw=iw/ms.length, xi=k=>m.l+Math.max(0,ms.indexOf(k))*cw;
+  ms.forEach((k,i)=>{ if(k.endsWith('-01')||k.endsWith('-07')||i===0){
+    el('line',{x1:m.l+i*cw,x2:m.l+i*cw,y1:m.t-6,y2:m.t+rh*R.length,stroke:css('--grid')},svg);
+    txt(svg,m.l+i*cw+2,m.t-12,k.slice(2).replace('-','/'),{'text-anchor':'start','font-family':css('--mono'),fill:css('--ink-2')});}});
+  const ti=ms.indexOf('2026-11');
+  el('rect',{x:m.l,y:m.t,width:cw*(ti+1),height:rh*R.length,fill:css('--surface-2'),opacity:.5},svg);
+  el('line',{x1:m.l+cw*(ti+1),x2:m.l+cw*(ti+1),y1:m.t-8,y2:m.t+rh*R.length,stroke:css('--today'),'stroke-width':1.5,'stroke-dasharray':'4 3'},svg);
+  txt(svg,m.l+cw*(ti+1)+4,m.t-24,'今天',{fill:css('--today'),'font-weight':600});
+  const topi=ms.indexOf(S.top);
+  el('line',{x1:m.l+cw*topi,x2:m.l+cw*topi,y1:m.t-8,y2:m.t+rh*R.length,stroke:css('--s4'),'stroke-width':1.5},svg);
+  txt(svg,m.l+cw*topi+4,m.t-24,'結構封頂',{fill:css('--s4'),'font-weight':600});
+  R.forEach((r,i)=>{
+    const y0=m.t+rh*i, live=r.st==='進行中'||r.st==='已完成';
+    txt(svg,m.l-8,y0+15,r.v.length>11?r.v.slice(0,10)+'…':r.v,{'text-anchor':'end','font-size':11,fill:css('--ink')});
+    const xe=xi(r.e), xl=xi(r.l)+cw, xm=xi(r.must)+cw;
+    // 作業區間（最早進場 → 必須完成）
+    el('rect',{x:xe,y:y0+6,width:Math.max(4,xm-xe),height:10,fill:css(live?'--s3':(r.st==='未發包'?'--today':'--s1')),opacity:live?.9:.28,rx:3},svg);
+    // 進場窗口（最早 → 最晚）
+    el('rect',{x:xe,y:y0+6,width:Math.max(4,xl-xe),height:10,fill:css(live?'--s3':(r.st==='未發包'?'--today':'--s1')),rx:3},svg);
+    if(r.po){const xp=xi(r.po)+cw/2;
+      el('path',{d:`M${xp},${y0+4} l5,-6 l-10,0 z`,fill:css(r.poLate?'--today':'--s4')},svg);
+      el('line',{x1:xp,x2:xp,y1:y0+4,y2:y0+6,stroke:css(r.poLate?'--today':'--s4'),'stroke-width':1.5},svg);}
+    if(!live&&r.float>0) txt(svg,xl+4,y0+15,'浮 '+r.float,{'text-anchor':'start','font-size':10,'font-family':css('--mono'),fill:css('--ink-3')});
+    if(!live&&r.float===0) txt(svg,xl+4,y0+15,'零浮時',{'text-anchor':'start','font-size':10,'font-family':css('--mono'),fill:css('--today'),'font-weight':600});
+    const hit=el('rect',{x:m.l,y:y0,width:iw,height:rh,fill:'transparent'},svg);
+    hit.addEventListener('mousemove',ev=>showTip(ev,`<div class="h">${r.v}　${r.scope}</div>`
+      +row('','合約金額（未稅）',r.net?fmt(r.net):'—')
+      +row('--s1','最早可進場',ml(r.e))+row('--today','最晚需進場',ml(r.l))
+      +row('','浮時',r.float+' 個月')+row('','必須完成',ml(r.must))
+      +(r.po?row(r.poLate?'--today':'--s4','最晚下單',ml(r.po)+'（備貨 '+r.lt+' 個月）'):row('','採購','無備貨需求'))
+      +`<div class="note" style="max-width:360px;margin-top:6px"><b>最早：</b>${r.whyE}<br><b>最晚：</b>${r.whyL}${r.lt?'<br><b>備貨：</b>'+r.whyLT:''}</div>`));
+    hit.addEventListener('mouseleave',hideTip);
+  });
+  const body=R.map(r=>`<tr><td style="text-align:left">${r.v}</td><td class="note" style="text-align:left">${r.scope}</td>`
+    +`<td class="num">${r.net?fmt(r.net):'—'}</td>`
+    +`<td class="num" style="font-weight:600">${ml(r.e)}</td>`
+    +`<td class="num" style="font-weight:600;color:${r.float===0&&r.st!=='進行中'&&r.st!=='已完成'?'#d03b3b':'inherit'}">${ml(r.l)}</td>`
+    +`<td class="num">${r.st==='進行中'||r.st==='已完成'?'—':(r.float===0?'<b style="color:#d03b3b">0</b>':r.float)}</td>`
+    +`<td class="num">${ml(r.must)}</td>`
+    +`<td class="num">${r.lt?r.lt+' 月':'—'}</td>`
+    +`<td class="num" style="font-weight:700;color:${r.po?(r.poLate?'#d03b3b':'var(--ink)'):'var(--ink-3)'}">${r.po?ml(r.po)+(r.poLate?' ⚠':''):'—'}</td>`
+    +`<td><span class="pill ${r.st==='進行中'||r.st==='已完成'?'past':(r.st==='未發包'?'now':'pipe')}">${r.st}</span></td>`
+    +`<td class="note">${r.whyLT||r.whyL}</td></tr>`).join('');
+  $('#t-sch').innerHTML='<thead><tr><th style="text-align:left">廠商</th><th style="text-align:left">執行項目</th><th>合約金額</th><th>最早可進場</th><th>最晚需進場</th><th>浮時(月)</th><th>必須完成</th><th>備貨週期</th><th>最晚下單</th><th>狀態</th><th style="text-align:left">採購／備貨說明</th></tr></thead><tbody>'+body+'</tbody>';
+  const zero=R.filter(r=>r.float===0&&r.st==='未進場');
+  const po=R.filter(r=>r.po).sort((x,y)=>x.po.localeCompare(y.po));
+  const urgent=po.filter(r=>r.po<='2027-02');
+  $('#sch-note').innerHTML=`<b>零浮時（最早＝最晚）的有 ${zero.length} 家：${zero.map(r=>r.v).join('、')}</b>——晚一個月進場就直接壓到 2027/11/08 的竣工日。`
+   +`<br>圖上深色是<b>進場窗口</b>（最早～最晚），淡色延伸到<b>必須完成</b>；上方的小三角形是<b>最晚下單日</b>（紅色＝已經到期或就在眼前）。`
+   +`<br><b>把備貨週期倒扣回去，真正緊的是下單不是進場。</b>最晚下單在 2027/02 以前的有 ${urgent.length} 家：`
+   +urgent.map(r=>`${r.v}（${ml(r.po)}，備貨 ${r.lt} 月）`).join('、')+'。'
+   +`<br><b>下個月（2026/12）就要下單的兩家</b>：廠商 G 545 萬（備貨 3 個月，第一版送審 11/23 才送出，核准後才能下單）、廠商 I 152 萬（合約已用印，訂金預計 12 月付）。這兩家同時也是零浮時，沒有第二次機會。`
+   +`<br><b>交期最長的是廠商 H配電盤（350 萬）與廠商 M發電機（90 萬），都要 4 個月</b>，最晚 2027/02 下單。廠商 H的買賣契約書到現在還沒用印，等於要在 2027/Q1 內完成議價、用印、下單、排產四件事。`
+   +`<br>雨水回收設備＋跑照（金流表 1123 已由 25 萬提高到 45 萬，與水箱陰井同一家詢價中）最晚 2027/04 下單，但還要先決標簽約，實際應該在 <b>2027/01~02 完成決標</b>。`;
+
+}
+
+const VPAL=['--c1','--c2','--c3','--c4','--c5','--c6','--c7','--c8','--c9','--c10','--c11','--c12'];
+function renderVPChart(rs,tx){
+  const box=$('#ch-vp'); box.innerHTML='';
+  if(!rs.length){ $('#lg-vp2').innerHTML=''; $('#vp-peak').textContent=''; return; }
+  const mons=[...new Set(rs.map(r=>r[1]))].sort();
+  const totV={}; rs.forEach(r=>totV[r[0]]=(totV[r[0]]||0)+r[2]*tx);
+  const order=Object.keys(totV).sort((a,b)=>totV[b]-totV[a]);
+  const top=order.slice(0,11), rest=order.slice(11);
+  const key=v=>top.includes(v)?v:'其他';
+  const cats=rest.length?top.concat(['其他']):top;
+  const col={}; cats.forEach((v,i)=>col[v]=VPAL[i%VPAL.length]);
+  const cell={}; rs.forEach(r=>{const k=r[1]+'|'+key(r[0]); cell[k]=(cell[k]||0)+r[2]*tx;});
+  const mTot=mons.map(m=>cats.reduce((a,c)=>a+(cell[m+'|'+c]||0),0));
+  const W=Math.max(860,box.clientWidth), m={l:66,r:14,t:22,b:34}, H=330, iw=W-m.l-m.r, ih=H-m.t-m.b;
+  const {max,step}=nice(Math.max(...mTot));
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'各廠商每月預計支出堆疊圖'},box);
+  const y=v=>m.t+ih-v/max*ih, bw=iw/mons.length, barW=Math.min(42,bw*.68);
+  for(let v=0;v<=max+1;v+=step){el('line',{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),stroke:css('--grid')},svg);
+    txt(svg,m.l-8,y(v)+4,v?wan(v)+'萬':'0',{'text-anchor':'end','font-family':css('--mono')});}
+  const ti=mons.indexOf('2026-12');
+  if(ti>=0){el('rect',{x:m.l,y:m.t,width:bw*(ti+1),height:ih,fill:css('--surface-2'),opacity:.5},svg);
+    el('line',{x1:m.l+bw*(ti+1),x2:m.l+bw*(ti+1),y1:m.t-6,y2:m.t+ih,stroke:css('--today'),'stroke-width':1.5,'stroke-dasharray':'4 3'},svg);}
+  mons.forEach((mm,i)=>{
+    const cx=m.l+bw*i+bw/2; let acc=0;
+    cats.forEach(c=>{const v=cell[mm+'|'+c]; if(!v) return;
+      const y0=y(acc), y1=y(acc+v); acc+=v;
+      el('rect',{x:cx-barW/2,y:y1,width:barW,height:Math.max(1.2,y0-y1),fill:css(col[c]),stroke:css('--surface'),'stroke-width':.5},svg);});
+    if(mTot[i]>max*0.045) txt(svg,cx,y(mTot[i])-6,wan(mTot[i]),{'text-anchor':'middle','font-size':10,'font-family':css('--mono'),fill:css('--ink-2')});
+    const [yy,mo]=mm.split('-');
+    txt(svg,cx,H-m.b+16,`${yy.slice(2)}/${mo}`,{'text-anchor':'middle','font-size':10,'font-family':css('--mono'),fill:css(mo==='01'?'--ink':'--ink-2')});
+    const hit=el('rect',{x:m.l+bw*i,y:m.t,width:bw,height:ih,fill:'transparent'},svg);
+    hit.addEventListener('mousemove',ev=>{
+      const det=rs.filter(r=>r[1]===mm).sort((a,b)=>b[2]-a[2])
+        .map(r=>row(col[key(r[0])],`${r[0]}　<span style="color:var(--ink-3)">${r[3]}</span>`,fmt(Math.round(r[2]*tx)))).join('');
+      showTip(ev,`<div class="h">${ml(mm)}　要付 ${fmt(Math.round(mTot[i]))}</div>${det}`);});
+    hit.addEventListener('mouseleave',hideTip);
+  });
+  el('line',{x1:m.l,x2:W-m.r,y1:y(0),y2:y(0),stroke:css('--ink-3')},svg);
+  $('#lg-vp2').innerHTML=cats.map(c=>`<span><i style="background:var(${col[c]})"></i>${c}${c!=='其他'&&D.vscope[c]?'':''}</span>`).join('')
+    +(rest.length?`<span style="color:var(--ink-3)">（「其他」含 ${rest.length} 家小額廠商）</span>`:'');
+  const pi=mTot.indexOf(Math.max(...mTot));
+  const pk=rs.filter(r=>r[1]===mons[pi]).sort((a,b)=>b[2]-a[2]).slice(0,3);
+  $('#vp-peak').innerHTML=`<b>付款高峰是 ${ml(mons[pi])}，要付 ${fmt(Math.round(mTot[pi]))}</b>（${tx>1?'含稅':'未稅'}），主要是 `
+    +pk.map(r=>`${r[0]} ${fmt(Math.round(r[2]*tx))}`).join('、')+'。滑過任一根柱子可以看那個月每一家分別要付多少。';
+}
+function renderVP(){
+  const fv=$('#f-vp-v').value, fk=$('#f-vp-k').value, fy=$('#f-vp-y').value, tx=+$('#f-vp-t').value;
+  const rs=D.vpay.filter(r=>(!fv||r[0]===fv)&&(!fk||r[3]===fk)&&(!fy||r[1].startsWith(fy)));
+  const mons=[...new Set(rs.map(r=>r[1]))].sort(), vs=[...new Set(rs.map(r=>r[0]))].sort();
+  const cell={}; rs.forEach(r=>{const k=r[0]+'|'+r[1]; (cell[k]=cell[k]||[]).push(r);});
+  const sumOf=l=>l.reduce((a,r)=>a+r[2],0)*tx;
+  const rowT={}, colT={}; let tot=0;
+  rs.forEach(r=>{rowT[r[0]]=(rowT[r[0]]||0)+r[2]*tx; colT[r[1]]=(colT[r[1]]||0)+r[2]*tx; tot+=r[2]*tx;});
+  const mx=Math.max(1,...Object.values(cell).map(l=>Math.abs(sumOf(l))));
+  renderVPChart(rs,tx);
+  if(!rs.length){ $('#t-vp').innerHTML='<tbody><tr><td class="note">這個篩選沒有資料</td></tr></tbody>'; $('#t-vpd').innerHTML=''; $('#vp-note').textContent=''; return; }
+  const head=`<thead><tr><th style="text-align:left;position:sticky;left:0;background:var(--surface-2)">廠商</th><th class="sc" style="text-align:left">執行項目</th>${mons.map(m=>`<th style="font-family:var(--mono);font-size:11px">${m.slice(2).replace('-','/')}</th>`).join('')}<th>合計</th></tr></thead>`;
+  const body=vs.map(v=>`<tr><td style="text-align:left;position:sticky;left:0;background:var(--surface);white-space:nowrap">${v}</td><td class="note sc" style="text-align:left" title="${D.vscope[v]||''}">${D.vscope[v]||''}</td>`
+    +mons.map(m=>{const l=cell[v+'|'+m]; if(!l) return '<td></td>';
+      const a=sumOf(l), op=.12+.5*(Math.abs(a)/mx);
+      const tip=l.map(r=>`${r[3]} ${fmt(Math.round(r[2]*tx))}${r[4]?'　'+r[4]:''}`).join('<br>');
+      return `<td class="num vpc" data-tip="${tip.replace(/"/g,'&quot;')}" data-h="${v}・${m.replace('-','/')}" style="background:color-mix(in srgb, var(${VPC[l[0][3]]||'--ink-3'}) ${(Math.abs(op)*100).toFixed(0)}%, transparent);font-family:var(--mono);font-size:11px;color:${a<0?'#d03b3b':'inherit'}">${fmt(Math.round(a))}</td>`;}).join('')
+    +`<td class="num" style="font-weight:600">${fmt(Math.round(rowT[v]))}</td></tr>`).join('');
+  const foot=`<tr class="sum"><td style="position:sticky;left:0;background:var(--surface-2)">月合計</td><td></td>${mons.map(m=>`<td class="num" style="font-family:var(--mono);font-size:11px">${fmt(Math.round(colT[m]))}</td>`).join('')}<td class="num">${fmt(Math.round(tot))}</td></tr>`;
+  $('#t-vp').innerHTML=head+'<tbody>'+body+foot+'</tbody>';
+  $('#t-vp').querySelectorAll('.vpc').forEach(td=>{
+    td.addEventListener('mousemove',ev=>showTip(ev,`<div class="h">${td.dataset.h}</div><div class="note" style="max-width:320px">${td.dataset.tip}</div>`));
+    td.addEventListener('mouseleave',hideTip);});
+  const peak=mons.reduce((a,m)=>colT[m]>colT[a]?m:a,mons[0]);
+  $('#vp-note').innerHTML=`篩選後 ${vs.length} 家、${mons.length} 個月、合計 <b>${fmt(Math.round(tot))}</b>（${tx>1?'含稅':'未稅'}）。最高的一個月是 <b>${ml(peak)}</b>，要付 <b>${fmt(Math.round(colT[peak]))}</b>。`;
+  $('#t-vpd').innerHTML=`<thead><tr><th>月份</th><th style="text-align:left">廠商</th><th style="text-align:left">執行項目</th><th style="text-align:left">款項</th><th>金額</th><th style="text-align:left">說明</th></tr></thead><tbody>`
+    +rs.map(r=>`<tr><td class="num">${ml(r[1])}</td><td style="text-align:left">${r[0]}</td><td class="note" style="text-align:left">${D.vscope[r[0]]||''}</td><td style="text-align:left"><span class="stat"><i style="background:var(${VPC[r[3]]||'--ink-3'})"></i>${r[3]}</span></td><td class="num">${fmt(Math.round(r[2]*tx))}</td><td class="note">${r[4]||''}</td></tr>`).join('')
+    +`<tr class="sum"><td>合計</td><td></td><td></td><td></td><td class="num">${fmt(Math.round(tot))}</td><td></td></tr></tbody>`;
+}
+function cashInit(){
+  const rows=cashRows();
+  $('#f-c-v').innerHTML='<option value="">全部對象</option>'+[...new Set(rows.map(r=>r.who))].sort().map(v=>`<option>${v}</option>`).join('');
+  $('#f-c-m').innerHTML='<option value="">全部月份</option>'+[...new Set(rows.map(r=>r.m))].sort().map(v=>`<option value="${v}">${ml(v)}</option>`).join('');
+  ['#f-c-k','#f-c-v','#f-c-m'].forEach(x=>$(x).addEventListener('change',renderCashTable));
+  $('#f-c-q').addEventListener('input',renderCashTable);
+}
+function cashRows(){
+  return D.inflow.map(x=>({m:x[0],k:'收',who:x[2],what:x[1],a:x[3],note:x[4]}))
+   .concat(D.outflow.map(x=>({m:x[0],k:'支',who:x[2],what:x[1],a:x[3],note:x[4]})))
+   .sort((a,b)=>a.m.localeCompare(b.m)||(a.k==='收'?-1:1));
+}
+function renderCashTable(){
+  const all=cashRows();
+  let cum=0; all.forEach(r=>{cum+=r.k==='收'?r.a:-r.a; r.cum=cum;});   // 累計現金以全部資料計算，不受篩選影響
+  const fk=$('#f-c-k').value, fv=$('#f-c-v').value, fm=$('#f-c-m').value, q=$('#f-c-q').value.trim();
+  const rows=all.filter(r=>(!fk||r.k===fk)&&(!fv||r.who===fv)&&(!fm||r.m===fm)
+    &&(!q||[r.who,r.what,r.note].join(' ').includes(q)));
+  const body=rows.map(r=>`<tr><td class="num">${ml(r.m)}</td><td><span class="pill ${r.k==='收'?'pipe':'now'}">${r.k}</span></td><td style="text-align:left">${r.who}</td><td style="text-align:left">${r.what}</td><td class="num">${r.k==='收'?fmt(r.a):'–'}</td><td class="num">${r.k==='支'?fmt(r.a):'–'}</td><td class="num" style="font-weight:600">${fmt(r.cum)}</td><td class="note">${r.note}</td></tr>`).join('');
+  const SI=rows.filter(r=>r.k==='收').reduce((a,r)=>a+r.a,0), SO=rows.filter(r=>r.k==='支').reduce((a,r)=>a+r.a,0);
+  $('#t-cash').innerHTML=`<thead><tr><th>月份</th><th>收／支</th><th style="text-align:left">對象</th><th style="text-align:left">項目</th><th>收入</th><th>支出</th><th>累計現金</th><th style="text-align:left">說明</th></tr></thead><tbody>${body||'<tr><td class="note" colspan="8">這個篩選沒有資料</td></tr>'}<tr class="sum"><td>篩選小計</td><td></td><td></td><td></td><td class="num">${fmt(SI)}</td><td class="num">${fmt(SO)}</td><td class="num">${fmt(SI-SO)}</td><td></td></tr></tbody>`;
+  const n=rows.length, tot=all.length;
+  $('#cashf-note').innerHTML=n===tot?`全部 ${tot} 筆。「累計現金」欄一律以全部資料累計，所以篩選時仍看得到當下的真實餘額。`
+    :`篩選後 ${n} / ${tot} 筆，收 ${fmt(SI)}、支 ${fmt(SO)}、淨 ${fmt(SI-SO)}。「累計現金」欄仍以全部資料累計。`;
+}
+
+function renderVend(){
+  const body=D.vend.map(v=>{const p=v.billed/v.amt;
+    return `<tr><td style="text-align:left">${v.v}</td><td style="text-align:left">${v.scope}</td><td class="num">${fmt(v.amt)}</td><td class="num">${v.billed?fmt(v.billed):'–'}</td><td class="num">${fmt(v.amt-v.billed)}</td><td><div class="bar-mini" title="${(p*100).toFixed(1)}%"><span style="width:${Math.max(p*100,p>0?2:0)}%;background:var(--s4)"></span></div></td><td class="num">${(p*100).toFixed(1)}%</td><td class="note">${v.note}</td></tr>`;}).join('');
+  const SA=D.vend.reduce((a,v)=>a+v.amt,0), SB=D.vend.reduce((a,v)=>a+v.billed,0);
+  $('#t-vend').innerHTML=`<thead><tr><th style="text-align:left">廠商</th><th style="text-align:left">承攬範圍</th><th>合約金額（未稅）</th><th>已計價</th><th>剩餘</th><th>計價進度</th><th>%</th><th style="text-align:left">備註</th></tr></thead><tbody>${body}<tr class="sum"><td>合計</td><td></td><td class="num">${fmt(SA)}</td><td class="num">${fmt(SB)}</td><td class="num">${fmt(SA-SB)}</td><td></td><td class="num">${(SB/SA*100).toFixed(1)}%</td><td></td></tr></tbody>`;
+  $('#margin-note').textContent=`已發包 ${fmt(SA)} ＝上包合約 40,400,000 的 ${(SA/40400000*100).toFixed(1)}%。其餘 ${fmt(40400000-SA)} 還沒被這 7 家佔用，但廠商 H、廠商 D、廠商 J、廠商 K等已簽約的廠商不在這張表裡，實際毛利要等採購總表齊了才算得準。`;
+}
+
+const WF=[{l:'淨現金',v:5281285,t:'start'},
+ {l:'訂金尚未扣回',v:-6249781,t:'d',n:'訂金未稅 6,060,000，1～4 期已扣回 107,828，剩 5,952,172×1.05'},
+ {l:'已付下包預付款',v:499500,t:'u',n:'廠商 C 405,000＋廠商 M 94,500，將來從各自計價扣回'},
+ {l:'總包商扣住的保留款',v:75479,t:'u',n:'1～4 期保留 71,885×1.05，驗收後可收回'},
+ {l:'扣住下包的保留款',v:-115967,t:'d',n:'廠商 L 30,358＋59,728、廠商 C 20,359，合計 110,445×1.05'},
+ {l:'實質部位',v:-509484,t:'end'}];
+function renderWF(){
+  const box=$('#ch-wf'); box.innerHTML=''; const W=Math.max(680,box.clientWidth), H=300;
+  const m={l:62,r:12,t:26,b:56}, iw=W-m.l-m.r, ih=H-m.t-m.b, n=WF.length;
+  let run=0; const seg=WF.map(w=>{ if(w.t==='start'||w.t==='end'){const s={from:0,to:w.v};run=w.v;return s;} const s={from:run,to:run+w.v}; run+=w.v; return s;});
+  const lo=Math.min(0,...seg.map(s=>Math.min(s.from,s.to))), hi=Math.max(...seg.map(s=>Math.max(s.from,s.to)));
+  const {max}=nice(hi), min=Math.floor(lo/1e6)*1e6;
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'現金還原瀑布圖'},box);
+  const y=v=>m.t+ih-(v-min)/(max-min)*ih, bw=iw/n, barW=Math.min(58,bw*.56);
+  for(let k=0;k<=5;k++){const v=min+(max-min)/5*k; el('line',{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),stroke:css('--grid')},svg); txt(svg,m.l-8,y(v)+4,wan(v)+'萬',{'text-anchor':'end','font-family':css('--mono')});}
+  el('line',{x1:m.l,x2:W-m.r,y1:y(0),y2:y(0),stroke:css('--ink-3'),'stroke-width':1.5},svg);
+  WF.forEach((w,i)=>{
+    const s=seg[i], cx=m.l+bw*i+bw/2, x0=cx-barW/2;
+    const y1=y(Math.max(s.from,s.to)), y2=y(Math.min(s.from,s.to)), hh=Math.max(2,y2-y1);
+    const col= w.t==='start'?css('--s1') : w.t==='end'? (w.v<0?'#d03b3b':css('--s3')) : (w.v>0?css('--s3'):css('--s2'));
+    el('rect',{x:x0,y:y1,width:barW,height:hh,fill:col,rx:3},svg);
+    if(i<n-1 && w.t!=='end'){ el('line',{x1:x0+barW,x2:x0+barW+bw-barW,y1:y(s.to),y2:y(s.to),stroke:css('--ink-3'),'stroke-dasharray':'2 2'},svg); }
+    txt(svg,cx,y1-7,fmt(w.v),{'text-anchor':'middle','font-family':css('--mono'),'font-size':11,'font-weight':600,fill:css('--ink')});
+    const words=w.l.length>7?[w.l.slice(0,6),w.l.slice(6)]:[w.l];
+    words.forEach((t,k)=>txt(svg,cx,H-m.b+16+k*13,t,{'text-anchor':'middle','font-size':11,fill:css(w.t==='start'||w.t==='end'?'--ink':'--ink-2'),'font-weight':(w.t==='start'||w.t==='end')?600:400}));
+    const hit=el('rect',{x:m.l+bw*i,y:m.t,width:bw,height:ih,fill:'transparent'},svg);
+    hit.addEventListener('mousemove',ev=>showTip(ev,`<div class="h">${w.l}</div>${row('',w.t==='start'||w.t==='end'?'金額':'調整',fmt(w.v))}${w.n?`<div class="sub" style="margin-top:4px">${w.n}</div>`:''}`));
+    hit.addEventListener('mouseleave',hideTip);
+  });
+  $('#srcbar').innerHTML=`<i style="width:91.8%;background:var(--s4)"></i><i style="width:8.2%;background:var(--s3)"></i>`;
+}
+function renderScn(){
+  const sub=D.vm.reduce((a,v)=>a+(v.sub||0),0);
+  const miss=D.vm.filter(v=>(v.up||0)>0&&!v.sub).reduce((a,v)=>a+v.up,0);
+  const rows=[0.65,0.70,0.75,0.80].map(r=>{const cost=sub+miss*r, prof=CT-cost;
+    return `<tr><td>未發包以 ${(r*100).toFixed(0)}% 成本估</td><td class="num">${fmt(sub)}</td><td class="num">${fmt(miss*r)}</td><td class="num">${fmt(cost)}</td><td class="num" style="font-weight:600">${fmt(prof)}</td><td class="num">${(prof/CT*100).toFixed(1)}%</td></tr>`;}).join('');
+  $('#t-scn').innerHTML=`<thead><tr><th style="text-align:left">情境</th><th>下包已簽／已議</th><th>未發包估算</th><th>總成本</th><th>預估毛利</th><th>毛利率</th></tr></thead><tbody>
+  <tr class="sum"><td>目前已簽（未含未發包）</td><td class="num">${fmt(sub)}</td><td class="num">–</td><td class="num">${fmt(sub)}</td><td class="num" style="font-weight:600">${fmt(CT-sub)}</td><td class="num">${((CT-sub)/CT*100).toFixed(1)}%</td></tr>
+  ${rows}</tbody>`;
+}
+function renderVM(){
+  const have=D.vm.filter(v=>(v.up||0)&&(v.sub||0)).map(v=>({...v,m:v.up-v.sub,r:(v.up-v.sub)/v.up})).sort((a,b)=>b.m-a.m);
+  const box=$('#ch-vm'); box.innerHTML=''; const W=Math.max(680,box.clientWidth);
+  const m={l:96,r:70,t:10,b:28}, rh=24, H=m.t+rh*have.length+m.b, iw=W-m.l-m.r;
+  const lim=Math.max(...have.map(v=>Math.abs(v.m)));
+  const {max}=nice(lim);
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'各廠商毛利'},box);
+  const x0=m.l+iw/2, x=v=>x0+v/max*(iw/2);
+  for(let k=-2;k<=2;k++){const v=max/2*k; el('line',{x1:x(v),x2:x(v),y1:m.t,y2:m.t+rh*have.length,stroke:k?css('--grid'):css('--ink-3')},svg);
+    txt(svg,x(v),H-m.b+16,(v>0?'+':'')+wan(v)+'萬',{'text-anchor':'middle','font-family':css('--mono'),fill:css('--ink-3')});}
+  have.forEach((v,i)=>{
+    const yy=m.t+rh*i, pos=v.m>0;
+    el('rect',{x:pos?x0:x(v.m),y:yy+4,width:Math.max(2,Math.abs(x(v.m)-x0)),height:rh-8,fill:css(pos?'--s3':'--s2'),rx:2},svg);
+    txt(svg,m.l-8,yy+rh/2+4,v.v.replace('（廠商 P）','').replace('（＋璇豐、宏銘）',''),{'text-anchor':'end','font-size':11,fill:css('--ink')});
+    txt(svg,pos?x(v.m)+6:x(v.m)-6,yy+rh/2+4,fmt(v.m),{'text-anchor':pos?'start':'end','font-size':10,'font-family':css('--mono'),fill:css('--ink'),'font-weight':600});
+    const hit=el('rect',{x:0,y:yy,width:W,height:rh,fill:'transparent'},svg);
+    hit.addEventListener('mousemove',ev=>showTip(ev,`<div class="h">${v.v}</div><div class="sub">${v.scope}</div>`+row('','上包對應',fmt(v.up))+row('','下包金額',fmt(v.sub))+`<div class="r tot"><span>毛利（${(v.r*100).toFixed(1)}%）</span><span class="num">${fmt(v.m)}</span></div>`));
+    hit.addEventListener('mouseleave',hideTip);
+  });
+  const S=k=>have.reduce((a,v)=>a+v[k],0);
+  const miss=D.vm.filter(v=>!((v.up||0)&&(v.sub||0)));
+  const body=have.map(v=>`<tr><td style="text-align:left">${v.v}</td><td style="text-align:left">${v.scope}</td><td class="num">${fmt(v.up)}</td><td class="num">${fmt(v.sub)}</td><td class="num" style="font-weight:600;color:${v.m>0?'inherit':'#d03b3b'}">${fmt(v.m)}</td><td class="num">${(v.r*100).toFixed(1)}%</td><td class="note">${v.stat||''}</td><td class="note">${v.rng}</td></tr>`).join('')
+   +`<tr class="sum"><td>小計</td><td></td><td class="num">${fmt(S('up'))}</td><td class="num">${fmt(S('sub'))}</td><td class="num">${fmt(S('m'))}</td><td class="num">${(S('m')/S('up')*100).toFixed(1)}%</td><td></td><td></td></tr>`
+   +miss.map(v=>`<tr class="past"><td style="text-align:left">${v.v}</td><td style="text-align:left">${v.scope}</td><td class="num">${v.up?fmt(v.up):'–'}</td><td class="num">${v.sub?fmt(v.sub):'–'}</td><td class="num">–</td><td class="num">–</td><td class="note">${v.stat||''}</td><td class="note">${v.up&&!v.sub?'還沒有廠商／報價，成本未發生':(v.sub?'沒有對應標單項次，由間接工程費吸收':'自辦')}</td></tr>`).join('');
+  $('#t-vm').innerHTML=`<thead><tr><th style="text-align:left">廠商</th><th style="text-align:left">承攬範圍</th><th>上包對應</th><th>下包金額</th><th>毛利</th><th>毛利率</th><th style="text-align:left">請款狀況</th><th style="text-align:left">標單項次範圍</th></tr></thead><tbody>${body}</tbody>`;
+}
+
+
+const UNIT=[{l:'估驗金額',v:100,c:'--ink-3',n:'本期計價（未稅）'},
+ {l:'扣回預付款 15%',v:-15,c:'--s4',n:'合約七、1(3)：預付款於工程款內扣回'},
+ {l:'扣保留款 10%',v:-10,c:'--s5',n:'驗收後才能請領'},
+ {l:'＋營業稅 5%',v:3.75,c:'--s3',n:'發票淨額 75 × 5%'},
+ {l:'① 實際收到',v:78.75,t:'mid',c:'--s3',n:'估驗 × 78.75%'},
+ {l:'② 付下包（含稅）',v:-86.05,c:'--s2',n:'直接成本率 81.95% × 1.05；間接成本另計'},
+ {l:'① − ②',v:-7.30,t:'end',c:'--today',n:'每做 100 元倒貼 7.30 元'}];
+function renderUnit(){
+  const box=$('#ch-unit'); box.innerHTML=''; const W=Math.max(620,box.clientWidth), H=250;
+  const m={l:40,r:12,t:24,b:52}, iw=W-m.l-m.r, ih=H-m.t-m.b, n=UNIT.length;
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'每 100 元估驗的收支'},box);
+  const max=105, min=-15;
+  const y=v=>m.t+ih-(v-min)/(max-min)*ih, bw=iw/n, barW=Math.min(54,bw*.56);
+  [0,25,50,75,100].forEach(v=>{el('line',{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),stroke:v===0?css('--ink-3'):css('--grid')},svg);txt(svg,m.l-6,y(v)+4,v,{'text-anchor':'end','font-family':css('--mono')});});
+  let run=0;
+  UNIT.forEach((u,i)=>{
+    const cx=m.l+bw*i+bw/2, x0=cx-barW/2;
+    let from,to;
+    if(u.t==='mid'||u.t==='end'||i===0){ from=0; to=u.v; if(u.t==='mid') run=u.v; else if(i===0) run=u.v; }
+    else { from=run; to=run+u.v; run=to; }
+    const y1=y(Math.max(from,to)), hh=Math.max(2,y(Math.min(from,to))-y1);
+    el('rect',{x:x0,y:y1,width:barW,height:hh,fill:css(u.c),rx:3},svg);
+    txt(svg,cx,y1-7,(u.v>0&&i>0&&u.t!=='mid'?'+':'')+u.v.toFixed(u.v%1?2:0),{'text-anchor':'middle','font-family':css('--mono'),'font-size':11,'font-weight':600,fill:css('--ink')});
+    u.l.length>7? [u.l.slice(0,6),u.l.slice(6)].forEach((t,k)=>txt(svg,cx,H-m.b+16+k*13,t,{'text-anchor':'middle','font-size':11,fill:css(u.t?'--ink':'--ink-2'),'font-weight':u.t?600:400}))
+      : txt(svg,cx,H-m.b+16,u.l,{'text-anchor':'middle','font-size':11,fill:css(u.t?'--ink':'--ink-2'),'font-weight':u.t?600:400});
+    const hit=el('rect',{x:m.l+bw*i,y:m.t,width:bw,height:ih,fill:'transparent'},svg);
+    hit.addEventListener('mousemove',ev=>showTip(ev,`<div class="h">${u.l}</div>${row('',u.t==='end'?'差額':'金額',u.v.toFixed(2))}<div class="sub" style="margin-top:4px">${u.n}</div>`));
+    hit.addEventListener('mouseleave',hideTip);
+  });
+}
+const LIFE=[{l:'簽約收訂金',v:6363000,c:'--s3',n:'2026/04 入帳'},
+ {l:'施工期倒貼',v:-2896516,c:'--s2',n:'剩餘估驗 39,678,300 × −7.30%，訂金在這段還回去'},
+ {l:'驗收領回保留款',v:4242000,c:'--s3',n:'合約總額 10%，另交 10% 保固本票'},
+ {l:'結案現金',v:7708484,t:'end',c:'--s1',n:'≈ 預估淨利含稅 4,151,902 ＋ 保留款與保固款的時間差'}];
+function renderLife(){
+  const box=$('#ch-life'); box.innerHTML=''; const W=Math.max(560,box.clientWidth), H=230;
+  const m={l:58,r:12,t:26,b:46}, iw=W-m.l-m.r, ih=H-m.t-m.b, n=LIFE.length;
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'全案現金走勢'},box);
+  let run=0; const seg=LIFE.map(w=>{ if(w.t==='end'){return {from:0,to:w.v};} const s={from:run,to:run+w.v}; run+=w.v; return s;});
+  const max=9e6, min=0;
+  const y=v=>m.t+ih-(v-min)/(max-min)*ih, bw=iw/n, barW=Math.min(66,bw*.5);
+  for(let k=0;k<=3;k++){const v=max/3*k; el('line',{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),stroke:k?css('--grid'):css('--ink-3')},svg); txt(svg,m.l-8,y(v)+4,wan(v)+'萬',{'text-anchor':'end','font-family':css('--mono')});}
+  LIFE.forEach((w,i)=>{
+    const s=seg[i], cx=m.l+bw*i+bw/2, x0=cx-barW/2;
+    const y1=y(Math.max(s.from,s.to)), hh=Math.max(2,y(Math.min(s.from,s.to))-y1);
+    el('rect',{x:x0,y:y1,width:barW,height:hh,fill:css(w.c),rx:3},svg);
+    if(i<n-1) el('line',{x1:x0+barW,x2:x0+bw,y1:y(s.to),y2:y(s.to),stroke:css('--ink-3'),'stroke-dasharray':'2 2'},svg);
+    txt(svg,cx,y1-7,fmt(w.v),{'text-anchor':'middle','font-family':css('--mono'),'font-size':11,'font-weight':600,fill:css('--ink')});
+    txt(svg,cx,H-m.b+16,w.l,{'text-anchor':'middle','font-size':11,fill:css(w.t?'--ink':'--ink-2'),'font-weight':w.t?600:400});
+    const hit=el('rect',{x:m.l+bw*i,y:m.t,width:bw,height:ih,fill:'transparent'},svg);
+    hit.addEventListener('mousemove',ev=>showTip(ev,`<div class="h">${w.l}</div>${row('','金額',fmt(w.v))}<div class="sub" style="margin-top:4px">${w.n}</div>`));
+    hit.addEventListener('mouseleave',hideTip);
+  });
+}
+function renderDep(){
+  const A=D.sc['A 維持現有報價'];
+  const rows=[['訂金（合約 15%）','6,060,000','6,363,000','簽約後一次收，再從每期計價扣 15% 回去'],
+   ['情境A 毛利＝淨利（承攬 − 直接 − 間接）',fmt(A.gross),fmt(A.gross*1.05),'40,400,000 − '+fmt(A.direct)+' − 3,500,000'],
+   ['<b>訂金 ÷ 毛利</b>','<b>'+(6060000/A.gross).toFixed(2)+' 倍</b>','<b>'+(6060000/A.gross).toFixed(2)+' 倍</b>','訂金仍大於整個案子賺的'],
+   ['<b>結案現金</b>','<b>7,708,484</b>','<b>—</b>','訂金 6,363,000 − 施工期倒貼 2,896,516 ＋ 驗收領回保留款 4,242,000']];
+  $('#t-dep').innerHTML=`<thead><tr><th style="text-align:left">項目</th><th>未稅</th><th>含稅</th><th style="text-align:left">說明</th></tr></thead><tbody>`+
+   rows.map(r=>`<tr><td style="text-align:left">${r[0]}</td><td class="num">${r[1]}</td><td class="num">${r[2]}</td><td class="note">${r[3]}</td></tr>`).join('')+'</tbody>';
+}
+
+function scKey(){return {A:'A 維持現有報價',B:'B 未定那包抓上包 95%'}[P().sc]||'A 維持現有報價';}
+function renderPNL(){
+  const B=D.bud,CTx=40400000, F=D.sc[scKey()];
+  const aGM1=CTx-B.direct_a, aOH=B.indirect, aNet=aGM1-aOH;
+  const items=[['承攬金額',CTx,CTx,0],['直接成本（下包商）',-B.direct_a,-F.direct,0],
+   ['毛利（扣直接成本後）',aGM1,F.gm1,1],
+   ['間接＋營業費用',-aOH,-D.IND,0],
+   ['預估淨利',aNet,F.net,1]];
+  const body=items.map(([l,a,b,hi])=>{
+    const pc=v=>(hi&&v<0?'−':'')+(Math.abs(v)/CTx*100).toFixed(2)+'%';
+    return `<tr class="${hi?'hi':''}"><td style="text-align:left">${l}</td><td class="num">${fmt(a)}</td><td class="num">${pc(a)}</td><td class="num">${fmt(b)}</td><td class="num" style="color:${hi&&b<0?'#d03b3b':'inherit'}">${pc(b)}</td><td class="num" style="font-weight:600;color:${b-a<0?'#d03b3b':'inherit'}">${b-a?fmt(b-a):'–'}</td></tr>`;}).join('')
+;
+  $('#pnl-note').innerHTML=`<b>情境「${scKey()}」：扣直接成本後 ${fmt(F.gm1)}（${(F.gm1pct*100).toFixed(1)}%），再扣間接＋營業費用 ${fmt(D.IND)} 後淨利 ${fmt(F.net)}（${(F.npct*100).toFixed(1)}%）。</b>`
+   +(F.net<0?'　整個案子會虧。':`　比 A 版預算的 ${fmt(aNet)} 少 ${fmt(aNet-F.net)}——直接成本省了 ${fmt(B.direct_a-F.direct)}，但管銷多編了 ${fmt(D.IND-aOH)}。`)
+   +`<br><span style="color:var(--ink-2)">備註：A 版預算另有一列「營業費用 8%＝3,232,000」，那是公司總部費用的標準分攤率，不在本表的比較基礎內（A 版再扣掉它之後是 1,521,867、3.77%）。本版的 ${fmt(D.IND)} 已把辦公室等費用含在內，所以不再另扣 8%。</span>`;
+  $('#t-pnl').innerHTML=`<thead><tr><th style="text-align:left">成本類別</th><th>A版預算</th><th>%</th><th>目前（金流表）</th><th>%</th><th>差異</th></tr></thead><tbody>${body}</tbody>`;
+  // waterfall
+  const box=$('#ch-pnl'); box.innerHTML=''; const W=Math.max(660,box.clientWidth), H=300;
+  const m={l:62,r:12,t:26,b:48}, iw=W-m.l-m.r, ih=H-m.t-m.b;
+  const WF2=[{l:'承攬金額',v:CTx,t:'s',c:'--s1'},{l:'直接成本',v:-F.direct,c:'--s2'},
+   {l:'毛利',v:F.gm1,t:'m',c:F.gm1<0?'--today':'--s3'},
+   {l:'間接＋營業費用',v:-D.IND,c:'--s4'},
+   {l:'預估淨利',v:F.net,t:'e',c:F.net<0?'--today':'--s1'}];
+  let run=0; const seg=WF2.map(w=>{if(w.t==='s'){run=w.v;return{from:0,to:w.v};} if(w.t==='m'||w.t==='e'){const s={from:0,to:w.v};run=w.v;return s;} const s={from:run,to:run+w.v}; run=s.to; return s;});
+  const max=42e6, mn=0; const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'損益瀑布圖'},box);
+  const y=v=>m.t+ih-(v-mn)/(max-mn)*ih, bw=iw/WF2.length, barW=Math.min(60,bw*.55);
+  for(let k=0;k<=5;k++){const v=mn+(max-mn)/5*k; el('line',{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),stroke:Math.abs(v)<1?css('--ink-3'):css('--grid')},svg); txt(svg,m.l-8,y(v)+4,wan(v)+'萬',{'text-anchor':'end','font-family':css('--mono')});}
+  el('line',{x1:m.l,x2:W-m.r,y1:y(0),y2:y(0),stroke:css('--ink-3')},svg);
+  WF2.forEach((w,i)=>{
+    const sg=seg[i], cx=m.l+bw*i+bw/2, x0=cx-barW/2;
+    const y1=y(Math.max(sg.from,sg.to)), hh=Math.max(3,y(Math.min(sg.from,sg.to))-y1);
+    el('rect',{x:x0,y:y1,width:barW,height:hh,fill:css(w.c),rx:3},svg);
+    if(i<WF2.length-1&&w.t!=='e') el('line',{x1:x0+barW,x2:x0+bw,y1:y(sg.to),y2:y(sg.to),stroke:css('--ink-3'),'stroke-dasharray':'2 2'},svg);
+    txt(svg,cx,y1-7,fmt(w.v),{'text-anchor':'middle','font-family':css('--mono'),'font-size':11,'font-weight':600,fill:css('--ink')});
+    txt(svg,cx,H-m.b+16,w.l,{'text-anchor':'middle','font-size':11,fill:css(w.t?'--ink':'--ink-2'),'font-weight':w.t?600:400});
+    if(w.t==='m'||w.t==='e') txt(svg,cx,H-m.b+30,(w.v/CTx*100).toFixed(2)+'%',{'text-anchor':'middle','font-size':11,'font-family':css('--mono'),fill:css('--ink-2')});
+    const hit=el('rect',{x:m.l+bw*i,y:m.t,width:bw,height:ih,fill:'transparent'},svg);
+    hit.addEventListener('mousemove',ev=>showTip(ev,`<div class="h">${w.l}</div>${row('','金額',fmt(w.v))}${row('','佔承攬',(Math.abs(w.v)/CTx*100).toFixed(2)+'%')}`));
+    hit.addEventListener('mouseleave',hideTip);
+  });
+}
+function renderDiff(){
+  const box=$('#ch-diff'); box.innerHTML=''; const W=Math.max(680,box.clientWidth);
+  const ds=D.diff.map(([l,a,b])=>({l,a,b,d:b-a})).sort((x,y)=>y.d-x.d);
+  const m={l:118,r:60,t:10,b:26}, rh=24, H=m.t+rh*ds.length+m.b, iw=W-m.l-m.r;
+  const lim=Math.max(...ds.map(x=>Math.abs(x.d))); const {max}=nice(lim);
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'與A版預算的差異'},box);
+  const x0=m.l+iw/2, x=v=>x0+v/max*(iw/2);
+  for(let k=-2;k<=2;k++){const v=max/2*k; el('line',{x1:x(v),x2:x(v),y1:m.t,y2:m.t+rh*ds.length,stroke:k?css('--grid'):css('--ink-3')},svg);
+    txt(svg,x(v),H-m.b+16,(v>0?'+':'')+wan(v)+'萬',{'text-anchor':'middle','font-family':css('--mono'),fill:css('--ink-3')});}
+  ds.forEach((v,i)=>{const yy=m.t+rh*i, pos=v.d>0;
+    el('rect',{x:pos?x0:x(v.d),y:yy+4,width:Math.max(2,Math.abs(x(v.d)-x0)),height:rh-8,fill:css(pos?'--s2':'--s3'),rx:2},svg);
+    txt(svg,m.l-8,yy+rh/2+4,v.l,{'text-anchor':'end','font-size':11,fill:css('--ink')});
+    txt(svg,pos?x(v.d)+6:x(v.d)-6,yy+rh/2+4,(pos?'+':'')+fmt(v.d),{'text-anchor':pos?'start':'end','font-size':10,'font-family':css('--mono'),fill:css('--ink'),'font-weight':600});
+    const hit=el('rect',{x:0,y:yy,width:W,height:rh,fill:'transparent'},svg);
+    hit.addEventListener('mousemove',ev=>showTip(ev,`<div class="h">${v.l}</div>`+row('','A版預算',fmt(v.a))+row('','目前',fmt(v.b))+`<div class="r tot"><span>差異</span><span class="num">${(v.d>0?'+':'')+fmt(v.d)}</span></div>`));
+    hit.addEventListener('mouseleave',hideTip);});
+}
+function renderInd(){
+  const S=D.indCost.reduce((a,x)=>a+x[1],0);
+  const body=D.indCost.map(([l,v],i)=>`<tr><td style="text-align:left">${l}</td><td class="num">${fmt(v)}</td><td class="num">${(v/S*100).toFixed(1)}%</td><td><div class="bar-mini"><span style="width:${v/S*100}%;background:var(--s4)"></span></div></td><td class="note">${D.indSrc[i]}</td></tr>`).join('')
+   +`<tr class="sum"><td>合計</td><td class="num">${fmt(S)}</td><td class="num">100.0%</td><td></td><td class="note">佔承攬金額 ${(S/40400000*100).toFixed(2)}%</td></tr>`
+   +`<tr class="past"><td style="text-align:left">A 版預算原編</td><td class="num">1,891,000</td><td class="num">–</td><td></td><td class="note">本版比 A 版多 ${fmt(S-1891000)}</td></tr>`;
+  $('#t-ind').innerHTML=`<thead><tr><th style="text-align:left">項目</th><th>金額</th><th>佔比</th><th></th><th style="text-align:left">來源／說明</th></tr></thead><tbody>${body}</tbody>`;
+}
+
+
+function renderPump(){
+  const C={done:'--s3',gate:'--today',pay:'--s4',site:'--s2',key:'--s1'};
+  const L={done:'已完成',gate:'關卡',pay:'付款',site:'現場條件',key:'進場'};
+  const body=D.pump.map(([t,m,k,n,a])=>`<tr${k==='key'?' class="hi"':''}><td class="num" style="font-weight:600">${ml(m)}</td>`
+    +`<td style="text-align:left">${k?`<span class="stat"><i style="background:var(${C[k]})"></i>${L[k]}</span> `:''}${t}</td>`
+    +`<td class="num">${a||'–'}</td><td class="note">${n}</td></tr>`).join('');
+  $('#t-pump').innerHTML='<thead><tr><th>時點</th><th style="text-align:left">階段</th><th>付款(未稅)</th><th style="text-align:left">說明／卡在哪</th></tr></thead><tbody>'+body+'</tbody>';
+  $('#pump-note').innerHTML='<b>結論：泵浦進場（吊裝就位）估在 2027/05，試車要到 2027/09。</b>'
+   +'　往前推的理由是機房要等砌磚隔間與地坪（2027/04）、水箱（廠商 S）同期到位、給排水主幹管（廠商 C）先接到機房；往後卡的是廠商 H配電盤 2027/08 才送電，在那之前泵浦無法試車。'
+   +'<br><b>要注意</b>：金流表 1123 的付款條件是「訂金 30% 開 12 月發票、支票兌現日 116/01/30；出貨 70% 當月結 30 天」，<b>210,000 在 2027/01、490,000 在 2027/05 就要出去</b>，等於錢跟貨幾乎同時走；而那段正是累計現金往下走的時候。廠商 A價格已談妥，送審核准後補簽正式合約。'
+   +'<br>要壓時間的話，<b>送審核准後立刻簽約下單</b>是唯一有效的提前點——製造交期 2~3 個月是硬的，現場條件 2027/04 也動不了。';
+}
+function renderPay(){
+  const col={'工程':'var(--s3)','設備':'var(--s4)'};
+  const body=D.vendflow.filter(v=>v.v!=='本公司').map(v=>{
+    return `<tr><td style="text-align:left">${v.v}</td><td style="text-align:left">${v.scope||''}</td>`
+    +`<td class="num">${typeof v.net==='number'?fmt(v.net):(v.net||'–')}</td>`
+    +`<td style="text-align:left"><span class="stat"><i style="background:${col[v.typ]||'var(--ink-3)'}"></i>${v.typ}</span></td>`
+    +`<td class="note" style="max-width:260px">${v.pay}</td>`
+    +`<td class="num" style="font-weight:600">${v.e?ml(v.e):'–'}</td>`
+    +`<td class="num" style="font-weight:600;color:${v.fl===0&&v.st==='未進場'?'#d03b3b':'inherit'}">${v.l?ml(v.l):'–'}</td>`
+    +`<td class="num">${v.st==='進行中'||v.st==='已完成'?'—':(v.fl===0?'<b style="color:#d03b3b">0</b>':v.fl)}</td>`
+    +`<td class="num">${v.must?ml(v.must):'–'}</td>`
+    +`<td>${v.st?`<span class="pill ${v.st==='進行中'||v.st==='已完成'?'past':(v.st==='未發包'?'now':'pipe')}">${v.st}</span>`:''}</td>`
+    +`<td class="note">${v.note||''}</td></tr>`;}).join('');
+  const S=D.vendflow.reduce((a,v)=>a+(typeof v.net==='number'?v.net:0),0);
+  $('#t-pay').innerHTML=`<thead><tr><th style="text-align:left">廠商</th><th style="text-align:left">執行項目</th><th>合約（未稅）</th><th style="text-align:left">類型</th><th style="text-align:left">付款方式</th><th>最早可進場</th><th>最晚需進場</th><th>浮時(月)</th><th>必須完成</th><th>狀態</th><th style="text-align:left">備註</th></tr></thead><tbody>${body}<tr class="sum"><td>合計</td><td></td><td class="num">${fmt(S)}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody>`;
+}
+function renderScen(){
+  const C=D.cstat, TAG={'✓':['--s3','已用印／已回簽'],'△':['--s4','已談妥'],'✗':['--today','詢價中未定']};
+  $('#cstat-sub').innerHTML=`23 家下包裡，<b>${C.nOK} 家合約已用印或已回簽（${fmt(C.amtOK)}）、${C.nDeal} 家已談妥待送審後簽正式合約（${fmt(C.amtDeal)}）</b>，`
+   +`只剩 <b>${C.nNo} 項、${fmt(C.amtNo)} 還在詢價中（水箱陰井＋雨水回收設備＋汙水雨水跑照，同一家）</b>。價格有變數的就只有這一包。`;
+  // 金額佔比橫條
+  const box0=$('#ch-cstat'); box0.innerHTML='';
+  const W0=Math.max(620,box0.clientWidth), H0=86, m0={l:14,r:14,t:28,b:28}, iw0=W0-m0.l-m0.r;
+  const sv=el('svg',{viewBox:`0 0 ${W0} ${H0}`,role:'img','aria-label':'合約狀態金額佔比'},box0);
+  const segs=[['✓',C.amtOK,C.nOK],['△',C.amtDeal,C.nDeal],['✗',C.amtNo,C.nNo]];
+  let x0=m0.l;
+  segs.forEach(([t,v,n])=>{const w=v/C.tot*iw0;
+    el('rect',{x:x0,y:m0.t,width:w,height:30,fill:css(TAG[t][0]),rx:3},sv);
+    if(w>58){txt(sv,x0+w/2,m0.t+20,`${t} ${(v/C.tot*100).toFixed(1)}%`,{'text-anchor':'middle','font-size':12,'font-weight':700,fill:'#fff'});}
+    txt(sv,x0+(w>58?w/2:0)+(w>58?0:4),m0.t-8,`${TAG[t][1]}　${n} 項　${fmt(v)}`,{'text-anchor':w>58?'middle':'start','font-size':11,fill:css('--ink-2')});
+    x0+=w;});
+  txt(sv,W0-m0.r,H0-8,'合計 '+fmt(C.tot),{'text-anchor':'end','font-size':11,'font-family':css('--mono'),fill:css('--ink-2')});
+  // 明細表
+  const body=C.rows.map(r=>`<tr><td style="text-align:left">${r[0]}</td><td style="text-align:left">${r[1]}</td>`
+    +`<td class="num">${fmt(r[2])}</td>`
+    +`<td><span class="stat"><i style="background:var(${TAG[r[3]][0]})"></i>${r[3]} ${TAG[r[3]][1]}</span></td>`
+    +`<td class="note">${r[4]}</td></tr>`).join('');
+  $('#t-scen').innerHTML=`<thead><tr><th style="text-align:left">廠商</th><th style="text-align:left">執行項目</th><th>金額（未稅）</th><th>合約狀態</th><th style="text-align:left">說明</th></tr></thead><tbody>${body}<tr class="sum"><td>合計</td><td></td><td class="num">${fmt(C.tot)}</td><td></td><td></td></tr></tbody>`;
+  // 兩情境毛利／淨利
+  const box=$('#ch-scen'); box.innerHTML=''; const W=Math.max(560,box.clientWidth), H=240;
+  const keys=Object.keys(D.sc), cur=scKey();
+  const m={l:62,r:12,t:26,b:52}, iw=W-m.l-m.r, ih=H-m.t-m.b;
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'兩種情境的毛利與淨利'},box);
+  const max=8e6, min=0;
+  const y=v=>m.t+ih-(v-min)/(max-min)*ih, bw=iw/keys.length, barW=Math.min(48,bw*.26);
+  [0,2e6,4e6,6e6,8e6].forEach(v=>{el('line',{x1:m.l,x2:W-m.r,y1:y(v),y2:y(v),stroke:v===0?css('--ink-3'):css('--grid')},svg);txt(svg,m.l-8,y(v)+4,wan(v)+'萬',{'text-anchor':'end','font-family':css('--mono')});});
+  txt(svg,m.l,m.t-10,'左＝毛利（扣直接成本後）　右＝淨利（再扣間接 350 萬）；深色為目前選的情境',{'text-anchor':'start','font-size':11,fill:css('--ink-3')});
+  keys.forEach((k,i)=>{
+    const v=D.sc[k], cx=m.l+bw*i+bw/2, on=k===cur;
+    [[v.gm1,'--s3',-1],[v.net,'--s1',1]].forEach(([val,c,side])=>{
+      const x=cx+side*3+(side<0?-barW:0);
+      el('rect',{x:x,y:y(val),width:barW,height:Math.max(2,y(0)-y(val)),fill:css(c),rx:3,opacity:on?1:.4},svg);
+      txt(svg,x+barW/2,y(val)-6,fmt(val),{'text-anchor':'middle','font-family':css('--mono'),'font-size':10,'font-weight':on?700:400,fill:css('--ink')});});
+    txt(svg,cx,H-m.b+16,k.slice(2),{'text-anchor':'middle','font-size':11,fill:css(on?'--ink':'--ink-3'),'font-weight':on?700:400});
+    txt(svg,cx,H-m.b+30,`淨利率 ${(v.npct*100).toFixed(2)}%`,{'text-anchor':'middle','font-size':10,'font-family':css('--mono'),fill:css(on?'--ink-2':'--ink-3')});
+  });
+  $('#cstat-note').innerHTML=`<b>剩下的價格風險只有 ${fmt(C.addX)}。</b>詢價中那一包現有暫編 ${fmt(C.undCur)}（水箱陰井 188,939＋雨水回收設備 450,000＋跑照 150,000），`
+   +`對應上包金額 ${fmt(C.undUp)}；就算最後決標落在上包的 95%（${fmt(C.und95)}），也只多 <b>${fmt(C.addX)}</b>，淨利從 ${fmt(D.sc[keys[0]].net)}（${(D.sc[keys[0]].npct*100).toFixed(2)}%）降到 ${fmt(D.sc[keys[1]].net)}（${(D.sc[keys[1]].npct*100).toFixed(2)}%）。`
+   +`<br>其餘 ${C.nDeal} 家雖然還沒用印，但價格都已談妥、送審核准後補簽正式合約，成本視同鎖定——這跟先前假設「未用印會漲到上包 95%」差很多，原本估的 298 萬風險等於消失了。`
+   +`<br><b>真正要盯的不是價格而是時間</b>：那一包同時卡住水箱（泵浦 2027/09 試車前要到位）與雨水回收（2027/07 進場），最晚 2027/04 下單，所以<b>決標最好在 2027/01~02 完成</b>。`;
+}
+function navInit(){
+  const secs=[...document.querySelectorAll('section.panel')].filter(s=>s.querySelector('h2'));
+  secs.forEach((s,i)=>{if(!s.id) s.id='sec'+i;});
+  $('#navlist').innerHTML=secs.map(s=>`<a href="#${s.id}">${s.querySelector('h2').textContent}</a>`).join('');
+  const open=v=>{document.body.classList.toggle('navopen',v);$('#navbtn').setAttribute('aria-expanded',v);};
+  $('#navbtn').addEventListener('click',()=>open(!document.body.classList.contains('navopen')));
+  $('#navscrim').addEventListener('click',()=>open(false));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')open(false);});
+  $('#navlist').addEventListener('click',e=>{if(e.target.tagName==='A'&&!matchMedia('(min-width:1400px)').matches)open(false);});
+  const links=[...$('#navlist').querySelectorAll('a')];
+  const io=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting){
+    links.forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+en.target.id));}});},
+    {rootMargin:'-10% 0px -75% 0px'});
+  secs.forEach(s=>io.observe(s));
+  if(matchMedia('(min-width:1400px)').matches){document.body.classList.add('navpin','navopen');$('#navbtn').setAttribute('aria-expanded','true');}
+}
+navInit();cashCtlInit();vpInit();cashInit();
+renderAll();
+
+</script>
+
+</body></html>

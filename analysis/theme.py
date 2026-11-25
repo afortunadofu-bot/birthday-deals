@@ -16,6 +16,7 @@ NAV = [
     ("relatestats.html", "RelateStats"),
     ("ml-autofill.html", "ML 預填"),
     ("venue-clusters.html", "商圈聚類"),
+    ("billing-forecast.html", "請款預估"),
     ("sql-report.html", "SQL 報告"),
 ]
 

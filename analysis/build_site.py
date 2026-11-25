@@ -78,6 +78,14 @@ def home(f):
              "只能靠 Play Console、評論與許願板"],
             "沒有遙測的案例"),
     ])
+    work = th.case_card(
+        "billing-forecast.html", "機電工程請款預估與現金流",
+        "一個 4,242 萬的機電工程案，追四期請款、23 家下包、到 2028 年的現金流。",
+        ["手上 528 萬看起來是賺的，扣掉預收訂金與兩邊卡住的保留款，實質是 −51 萬",
+         "每收 100 元的估驗要付出去 86 元——施工期墊錢不是虧損，是在還簽約時收的訂金",
+         "順便抓出四個待確認：240 萬間接工程費沒進任何一期、保留款被雙扣 59,728 等"],
+        "本業・真實專案（已去識別化）")
+
     projects = "".join([
         th.case_card(
             "ml-autofill.html", "投稿欄位自動預填",
@@ -154,6 +162,7 @@ def home(f):
 
     body = (th.card("", how) + tiles
             + th.card("三個產品", cases)
+            + th.card("本業的分析工作", work)
             + th.card("資料與 ML 專題", projects)
             + th.card("我怎麼做產品分析", method)
             + th.card("具體會的東西", skills)
