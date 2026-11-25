@@ -1,0 +1,58 @@
+{
+ "updated": "2026-11-25",
+ "source": "https://afortunadofu-bot.github.io/birthday-deals/",
+ "note": "由 analysis/build_site.py 產生，請用 fetch 讀，不要抄成寫死的數字",
+ "products": 3,
+ "offers": 581,
+ "offer_data_date": "2026-11-22",
+ "wishes": 11205,
+ "reports": 4784,
+ "success_rate": 98,
+ "counties": 22,
+ "ml": {
+  "best_task": "優惠型態",
+  "accuracy": 81.7,
+  "baseline": 49.0,
+  "autofill_coverage": 64.0
+ },
+ "geo": {
+  "stores": 21209,
+  "auto_venues": 1149,
+  "manual_venues": 148,
+  "manual_recall": 79.7
+ },
+ "pages": [
+  {
+   "title": "首頁",
+   "url": "https://afortunadofu-bot.github.io/birthday-deals/index.html"
+  },
+  {
+   "title": "壽星日",
+   "url": "https://afortunadofu-bot.github.io/birthday-deals/birthday-deals.html"
+  },
+  {
+   "title": "Bandary",
+   "url": "https://afortunadofu-bot.github.io/birthday-deals/bandary.html"
+  },
+  {
+   "title": "RelateStats",
+   "url": "https://afortunadofu-bot.github.io/birthday-deals/relatestats.html"
+  },
+  {
+   "title": "ML 預填",
+   "url": "https://afortunadofu-bot.github.io/birthday-deals/ml-autofill.html"
+  },
+  {
+   "title": "商圈聚類",
+   "url": "https://afortunadofu-bot.github.io/birthday-deals/venue-clusters.html"
+  },
+  {
+   "title": "請款預估",
+   "url": "https://afortunadofu-bot.github.io/birthday-deals/billing-forecast.html"
+  },
+  {
+   "title": "SQL 報告",
+   "url": "https://afortunadofu-bot.github.io/birthday-deals/sql-report.html"
+  }
+ ]
+}

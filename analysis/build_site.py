@@ -794,6 +794,48 @@ def venue_clusters():
     )
 
 
+def write_stats(con, f):
+    """吐一份 stats.json 給其他兩個站（個人網頁、小數據所品牌頁）抓。
+
+    三個站都在 afortunadofu-bot.github.io 底下，同源，所以它們可以直接 fetch
+    這一份，不需要 CORS、不需要後端。數字只有這裡算一次，其他站不要再自己寫死——
+    寫死的數字一定會過期，而過期的數字比沒有數字糟。"""
+    import json
+    ml = {}
+    if ML_METRICS.exists():
+        m = json.loads(ML_METRICS.read_text(encoding="utf-8"))
+        best = max(m["tasks"], key=lambda x: x["accuracy"])
+        ml = {"best_task": best["title"], "accuracy": best["accuracy"],
+              "baseline": best["baseline_accuracy"],
+              "autofill_coverage": (best.get("operating_point") or {}).get("coverage")}
+    geo = {}
+    if GEO_METRICS.exists():
+        g = json.loads(GEO_METRICS.read_text(encoding="utf-8"))
+        geo = {"stores": g["n_stores"], "auto_venues": g["n_clusters"],
+               "manual_venues": g["n_manual"], "manual_recall": g["manual_recall"]}
+    stats = {
+        "updated": STAMP,
+        "source": "https://afortunadofu-bot.github.io/birthday-deals/",
+        "note": "由 analysis/build_site.py 產生，請用 fetch 讀，不要抄成寫死的數字",
+        "products": 3,
+        "offers": f["n_offers"],
+        "offer_data_date": f["data_date"],
+        "wishes": one(con, "select coalesce(sum(wish_count),0) from offer_demand"),
+        "reports": one(con, "select coalesce(sum(report_count),0) from offer_demand"),
+        "success_rate": one(con, "select cast(avg(success_rate) as integer) from offer_demand"),
+        "counties": one(con, "select count(*) from counties"),
+        "ml": ml,
+        "geo": geo,
+        "pages": [{"title": t, "url": f"https://afortunadofu-bot.github.io/birthday-deals/{h}"}
+                  for h, t in th.NAV],
+    }
+    (DOCS / "stats.json").write_text(
+        json.dumps(stats, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"寫好 docs/stats.json（{len(stats['pages'])} 頁、更新 {STAMP}）")
+    return stats
+
+
+
 # ─────────────────────── 組裝 ───────────────────────
 
 def main():
@@ -851,6 +893,7 @@ def main():
     for name, doc in pages.items():
         (DOCS / name).write_text(doc, encoding="utf-8")
         print(f"寫好 docs/{name}（{len(doc):,} 字元）")
+    write_stats(con, f)
     con.close()
 
 

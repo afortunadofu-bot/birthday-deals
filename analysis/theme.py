@@ -105,8 +105,14 @@ def page(*, filename, title, lead, meta, body, desc=""):
 {body}
 </main>
 <footer class="wrap foot-note">
+  <p class="site-links">
+    <a href="https://afortunadofu-bot.github.io/celine.fu/">個人網頁</a>　·　
+    <a href="https://afortunadofu-bot.github.io/celinefubrandpage/">小數據所</a>　·　
+    <a href="index.html">作品集（你在這）</a>
+  </p>
   <p>{esc(SITE)}　·　內容與圖表由 <code>analysis/</code> 的 Python 產生，
-     資料換一版重跑就會更新。</p>
+     資料換一版重跑就會更新；三個站共用一份
+     <a href="stats.json">stats.json</a>。</p>
 </footer>
 <script>
 (function () {{
@@ -293,6 +299,8 @@ ul.plain{margin:0; padding-left:20px; color:var(--ink-2)}
 ul.plain li{margin-bottom:9px}
 ul.plain b{color:var(--ink)}
 .foot-note{color:var(--muted); font-size:12px; padding-bottom:40px}
+.foot-note a{color:var(--ink-2)}
+.site-links{margin:0 0 6px; font-size:13px}
 @media (max-width:620px){
   .card{padding:20px 16px 16px}
   .top h1{font-size:25px}
