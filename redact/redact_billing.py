@@ -62,8 +62,11 @@ def main():
     for src in sorted(pairs, key=len, reverse=True):
         html = html.replace(src, pairs[src])
 
-    html = re.sub(r"<title>.*?</title>", "<title>機電工程請款預估</title>", html, count=1,
-                  flags=re.S)
+    html = re.sub(r"<title>.*?</title>",
+                  "<title>分析｜機電工程請款預估</title>\n"
+                  '<link rel="icon" href="../img/icon-work.svg" type="image/svg+xml">\n'
+                  '<link rel="alternate icon" href="../img/icon-work-32.png" sizes="32x32">',
+                  html, count=1, flags=re.S)
     html = re.sub(r"(<body[^>]*>)", r"\1\n" + BANNER, html, count=1)
 
     leaks = {s: html.count(s) for s in pairs if s in html}

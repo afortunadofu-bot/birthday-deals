@@ -176,11 +176,12 @@ def home(f):
             + th.card("我怎麼做產品分析", method)
             + th.card("具體會的東西", skills)
             + tools_card("index.html")
+            + links_card("index.html")
             + th.card("聯絡", contact))
 
     return th.page(
         filename="index.html",
-        title="小數據所｜產品分析作品集",
+        title="作品集總覽",
         lead="把沒人幫你算的事算出來。三個自己做的產品，跟它們背後的數字。",
         desc="BA／產品分析作品集：壽星日、Bandary 聽團曆、RelateStats 三個產品的指標設計、"
              "資料分析與產品決策。",
@@ -359,6 +360,7 @@ def birthday_deals(con, f):
             + th.card("分析三：使用者行為（等資料）", users)
             + th.card("決策紀錄（節錄）", decisions)
             + tools_card("birthday-deals.html")
+            + links_card("birthday-deals.html")
             + th.card("還沒做到的", todo))
 
     return th.page(
@@ -444,6 +446,7 @@ def bandary():
             + th.card("要衡量什麼", frame)
             + th.card("為什麼不看下載數", why)
             + tools_card("bandary.html")
+            + links_card("bandary.html")
             + th.card("還缺什麼才寫得下去", need))
     return th.page(
         filename="bandary.html",
@@ -532,6 +535,7 @@ def relatestats():
             + th.card("核心產品決策：不要網路權限", decision)
             + th.card("那要怎麼知道做得好不好", howto + frame)
             + tools_card("relatestats.html")
+            + links_card("relatestats.html")
             + th.card("這個取捨值不值得", tradeoff))
     return th.page(
         filename="relatestats.html",
@@ -667,6 +671,7 @@ def ml_autofill():
             + th.card("真正要挑的是門檻，不是準確率", tradeoff)
             + th.card("兩件做不起來的事，以及為什麼", honest)
             + tools_card("ml-autofill.html")
+            + links_card("ml-autofill.html")
             + th.card("產品上怎麼用", use))
     return th.page(
         filename="ml-autofill.html",
@@ -796,6 +801,7 @@ def venue_clusters():
             + th.card("對不上的那些，才是重點", limits)
             + th.card("資料結構：為什麼不能用暴力法", perf)
             + tools_card("venue-clusters.html")
+            + links_card("venue-clusters.html")
             + th.card("產品上怎麼用", use))
     return th.page(
         filename="venue-clusters.html",
@@ -955,6 +961,57 @@ def tools_card(page):
     return th.card("用到的技能與工具",
                    '<p class="answer">這一頁實際動用到的東西，沒用到的不列。</p>'
                    f'<table class="tools"><tbody>{body}</tbody></table>')
+
+
+GH = "https://github.com/afortunadofu-bot"
+
+LINKS = {
+    "index.html": [
+        ("個人網頁", "../"),
+        ("小數據所品牌頁", "https://afortunadofu-bot.github.io/celinefubrandpage/"),
+        ("壽星日（線上站）", "https://birthdaydeals.celine-fu-work.workers.dev/"),
+        ("好康地圖（線上站）", "https://tw-deals.pages.dev/"),
+        ("這個站的原始碼", GH + "/birthday-deals/tree/main/analysis"),
+    ],
+    "birthday-deals.html": [
+        ("壽星日（線上站）", "https://birthdaydeals.celine-fu-work.workers.dev/"),
+        ("十一題 SQL 報告", "sql-report.html"),
+        ("ETL 與查詢的原始碼", GH + "/birthday-deals/tree/main/analysis"),
+        ("產品原始碼", GH + "/birthday-deals"),
+    ],
+    "sql-report.html": [
+        ("壽星日（線上站）", "https://birthdaydeals.celine-fu-work.workers.dev/"),
+        ("十一支查詢", GH + "/birthday-deals/tree/main/analysis/queries"),
+        ("ETL 與分析庫 schema", GH + "/birthday-deals/tree/main/analysis"),
+    ],
+    "ml-autofill.html": [
+        ("Model card（弱點與不該拿它做什麼）", GH + "/birthday-deals/blob/main/ml/MODEL_CARD.md"),
+        ("訓練與預測程式", GH + "/birthday-deals/tree/main/ml"),
+        ("訓練資料來自壽星日", "https://birthdaydeals.celine-fu-work.workers.dev/"),
+    ],
+    "venue-clusters.html": [
+        ("好康地圖（店家資料來源）", "https://tw-deals.pages.dev/"),
+        ("分群與效能對照的程式", GH + "/birthday-deals/tree/main/geo"),
+        ("說明與授權（OpenStreetMap ODbL）", GH + "/birthday-deals/blob/main/geo/README.md"),
+    ],
+    "bandary.html": [
+        ("Google Play", "https://play.google.com/store/apps/details?id=com.bandary.app"),
+        ("原始碼（公開快照）", GH + "/bandary-app"),
+    ],
+    "relatestats.html": [
+        ("Google Play", "https://play.google.com/store/apps/details?id=com.relatestats.app"),
+        ("隱私權政策", "https://afortunadofu-bot.github.io/relatestats-privacy/"),
+        ("原始碼", GH + "/RelateStats"),
+    ],
+}
+
+
+def links_card(page):
+    rows = LINKS.get(page)
+    if not rows:
+        return ""
+    items = "".join(f'<li><a href="{th.esc(u)}">{th.esc(n)}</a></li>' for n, u in rows)
+    return th.card("連結", f'<ul class="links">{items}</ul>')
 
 
 # ─────────────────────── 組裝 ───────────────────────

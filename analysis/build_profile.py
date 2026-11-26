@@ -153,6 +153,10 @@ def shell(*, title, desc, body, depth=0, now=None, cases=()):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(title)}</title>
 <meta name="description" content="{esc(desc)}">
+<link rel="icon" href="{up}img/icon.svg" type="image/svg+xml">
+<link rel="alternate icon" href="{up}img/icon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="{up}img/icon-180.png">
+<meta name="theme-color" content="#15140f">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="{FONTS}">
@@ -296,6 +300,14 @@ def case_page(w, d, orgs, caps, prev_next, now, featured_all=()):
         f'<section class="step{" todo" if c.get("todo") else ""}">'
         f'<h2>{bi(c["k"])}</h2><p>{bi(c["v"])}</p></section>' for c in w.get("chain", []))
 
+    links = ""
+    if w.get("links"):
+        items = "".join(
+            f'<li><a href="{esc(k["href"])}">{bi(k)}</a></li>' for k in w["links"])
+        links = ('<div class="links"><p class="links-h">'
+                 '<span class="zh">連結</span><span class="en">Links</span></p>'
+                 f'<ul>{items}</ul></div>')
+
     cta = ""
     if w.get("cta"):
         cta = (f'<a class="cta" href="{esc(w["cta"]["href"])}">{bi(w["cta"])}</a>')
@@ -321,10 +333,11 @@ def case_page(w, d, orgs, caps, prev_next, now, featured_all=()):
   <div class="sts">{stats}</div>
   <div class="chain">{chain}</div>
   {cta}
+  {links}
   <div class="tags">{tags}</div>
   <nav class="pns">{''.join(nav)}</nav>
 </main>"""
-    return shell(title=f'{t(w["title"], "zh")} — 傅聖嵐',
+    return shell(title=f'案例｜{t(w["title"], "zh")}',
                  desc=t(w["result"], "zh"), body=body, depth=1, now=now, cases=featured_all)
 
 
@@ -365,7 +378,11 @@ def home(d, orgs, caps, featured, rest, now):
         f'<div class="row" data-caps="{" ".join(w["caps"])}">'
         f'<div class="row-m">{bi(w["title"], cls="row-t")}'
         f'<span class="row-o">{bi(orgs[w["org"]])}</span></div>'
-        f'<p class="row-r">{bi(w["result"])}</p></div>' for w in rest)
+        f'<p class="row-r">{bi(w["result"])}</p>'
+        + (('<p class="row-l">' + " · ".join(
+            f'<a href="{esc(k["href"].replace("../", ""))}">{t(k, "zh")}</a>'
+            for k in w["links"]) + "</p>") if w.get("links") else "")
+        + "</div>" for w in rest)
 
     tl = "".join(
         f'<li{" class=now" if o.get("current") else ""}>'
@@ -430,7 +447,7 @@ def home(d, orgs, caps, featured, rest, now):
     </dl>
   </section>
 </main>"""
-    return shell(title="傅聖嵐 — Fu Sheng-Lan", desc=t(d["tagline"], "zh"),
+    return shell(title="傅聖嵐｜專案交付與資料分析", desc=t(d["tagline"], "zh"),
                  body=body, depth=0, now=now, cases=featured)
 
 
@@ -596,6 +613,16 @@ h1,h2,h3{font-family:var(--serif);font-weight:700;letter-spacing:-.01em}
   color:var(--rule);font-variant-numeric:tabular-nums}
 .step p{margin:0;font-size:16.5px;line-height:1.95;color:var(--ink-2);max-width:38em}
 .step.todo p{color:var(--muted);border-left:2px solid var(--rule);padding-left:14px}
+.links{margin:0 0 30px;padding:20px 0 0;border-top:1px solid var(--line)}
+.links-h{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  margin:0 0 10px;font-weight:600}
+.links ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px 20px}
+.links a{font-size:14px;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--rule)}
+.links a:hover{border-color:var(--accent);color:var(--accent)}
+.links a::after{content:" ↗";color:var(--muted);font-size:11px}
+.row-l{margin:6px 0 0;font-size:13px}
+.row-l a{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent}
+.row-l a:hover{border-color:var(--accent)}
 .cta{display:inline-block;margin:6px 0 34px;padding:11px 22px;border:1px solid var(--ink);
   text-decoration:none;font-size:14px;border-radius:2px}
 .cta:hover{background:var(--ink);color:var(--page)}

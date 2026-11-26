@@ -86,8 +86,11 @@ def page(*, filename, title, lead, meta, body, desc=""):
 <html lang="zh-Hant"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{esc(title)}</title>
+<title>分析｜{esc(title)}</title>
 <meta name="description" content="{esc(desc or lead)}">
+<link rel="icon" href="../img/icon-work.svg" type="image/svg+xml">
+<link rel="alternate icon" href="../img/icon-work-32.png" sizes="32x32">
+<meta name="theme-color" content="#15140f">
 <style>{CSS}</style>
 </head>
 <body>
@@ -299,6 +302,11 @@ pre{
 }
 pre code,code{font:12.5px/1.65 ui-monospace,SFMono-Regular,Consolas,"Noto Sans Mono",monospace}
 code{color:var(--ink-2)}
+ul.links{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px 22px}
+ul.links a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--border);
+  font-size:14px}
+ul.links a:hover{border-color:var(--series-1);color:var(--series-1)}
+ul.links a::after{content:" \2197";color:var(--muted);font-size:11px}
 ul.plain{margin:0; padding-left:20px; color:var(--ink-2)}
 ul.plain li{margin-bottom:9px}
 ul.plain b{color:var(--ink)}

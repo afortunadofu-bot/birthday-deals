@@ -2,8 +2,11 @@
 <html lang="zh-Hant"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>壽星日資料分析</title>
+<title>分析｜SQL 十一題：壽星日資料</title>
 <meta name="description" content="139 筆台灣生日優惠的 SQL 分析：價值分布、取得門檻、資料可信度、縣市落差與檔期監控。">
+<link rel="icon" href="../img/icon-work.svg" type="image/svg+xml">
+<link rel="alternate icon" href="../img/icon-work-32.png" sizes="32x32">
+<meta name="theme-color" content="#15140f">
 <style>
 :root{
   color-scheme: light;
@@ -174,6 +177,11 @@ pre{
 }
 pre code,code{font:12.5px/1.65 ui-monospace,SFMono-Regular,Consolas,"Noto Sans Mono",monospace}
 code{color:var(--ink-2)}
+ul.links{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px 22px}
+ul.links a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--border);
+  font-size:14px}
+ul.links a:hover{border-color:var(--series-1);color:var(--series-1)}
+ul.links a::after{content:" 97";color:var(--muted);font-size:11px}
 ul.plain{margin:0; padding-left:20px; color:var(--ink-2)}
 ul.plain li{margin-bottom:9px}
 ul.plain b{color:var(--ink)}
@@ -191,9 +199,9 @@ ul.plain b{color:var(--ink)}
 <header class="top">
   <div class="wrap">
     <a class="brand" href="../">← 傅聖嵐 Fu Sheng-Lan</a>
-    <h1>壽星日資料分析</h1>
+    <h1>SQL 十一題：壽星日資料</h1>
     <p class="sub">台灣生日優惠資料，用 SQL 問十一個問題</p>
-    <p class="byline">資料：壽星日 <code>offers.json</code>（最後查證 2026-11-22）＋ Google Places 門市彙總　·　工具：SQLite ＋ Python 標準庫　·　產出 2026-11-26 14:07（UTC+8）</p>
+    <p class="byline">資料：壽星日 <code>offers.json</code>（最後查證 2026-11-22）＋ Google Places 門市彙總　·　工具：SQLite ＋ Python 標準庫　·　產出 2026-11-26 14:16（UTC+8）</p>
     <nav class="jump"><a href="index.html">首頁</a><a href="birthday-deals.html">壽星日</a><a href="bandary.html">Bandary</a><a href="relatestats.html">RelateStats</a><a href="ml-autofill.html">ML 預填</a><a href="venue-clusters.html">商圈聚類</a><a href="billing-forecast.html">請款預估</a><a href="sql-report.html" class="on">SQL 報告</a></nav>
     <button class="theme" type="button" aria-label="切換深淺色">◐</button>
   </div>
@@ -1125,7 +1133,7 @@ having coalesce(d.success_rate, 100) &lt; 80
   <p class="note">重跑：<code>python build_db.py &amp;&amp; python report.py</code>。
     門市明細在本機才有，缺的時候會自動改讀 <code>data/store_counts.csv</code>，
     所以 clone 下來就跑得完整份報告。</p>
-</section><section class="card"><h2>用到的技能與工具</h2><p class="answer">這一頁實際動用到的東西。</p><table class="tools"><tbody><tr><th scope="row">SQL</th><td>SQLite · CTE · window function · 自己實作 median／quartile／cumulative／ntile／pivot／Pearson 相關</td></tr><tr><th scope="row">資料治理</th><td>來源分級、複查延遲、過期自動下架的規則推導</td></tr><tr><th scope="row">Python</th><td>標準庫 ETL 與報告產生器，沒用 pandas／matplotlib</td></tr><tr><th scope="row">視覺化</th><td>自製 inline SVG：橫條、直條、散佈、熱度交叉表、diverging</td></tr></tbody></table></section>
+</section><section class="card"><h2>用到的技能與工具</h2><p class="answer">這一頁實際動用到的東西。</p><table class="tools"><tbody><tr><th scope="row">SQL</th><td>SQLite · CTE · window function · 自己實作 median／quartile／cumulative／ntile／pivot／Pearson 相關</td></tr><tr><th scope="row">資料治理</th><td>來源分級、複查延遲、過期自動下架的規則推導</td></tr><tr><th scope="row">Python</th><td>標準庫 ETL 與報告產生器，沒用 pandas／matplotlib</td></tr><tr><th scope="row">視覺化</th><td>自製 inline SVG：橫條、直條、散佈、熱度交叉表、diverging</td></tr></tbody></table></section><section class="card"><h2>連結</h2><ul class="links"><li><a href="https://birthdaydeals.celine-fu-work.workers.dev/">壽星日（線上站）</a></li><li><a href="https://github.com/afortunadofu-bot/birthday-deals/tree/main/analysis/queries">十一支查詢</a></li><li><a href="https://github.com/afortunadofu-bot/birthday-deals/tree/main/analysis">ETL 與分析庫 schema</a></li></ul></section>
 <section class="card" id="limits">
   <h2>資料限制</h2>
   <p class="answer">這份分析不能拿來說什麼，先寫在前面。</p>
