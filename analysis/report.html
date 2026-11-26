@@ -7,29 +7,33 @@
 <link rel="icon" href="../img/icon-work.svg" type="image/svg+xml">
 <link rel="alternate icon" href="../img/icon-work-32.png" sizes="32x32">
 <meta name="theme-color" content="#15140f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
 <style>
 :root{
   color-scheme: light;
-  --page:#f9f9f7; --surface:#fcfcfb; --card:#ffffff;
-  --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
-  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+  --page:#faf9f6; --surface:#fcfcfb; --card:#ffffff;
+  --ink:#15140f; --ink-2:#4a4740; --muted:#8a867c;
+  --grid:#e6e3da; --axis:#d8d4c8; --border:#e6e3da; --accent:#8a5a2b;
+  --serif:"Noto Serif TC",Georgia,"Times New Roman",serif;
   --series-1:#2a78d6; --series-dim:#9ec5f4;
   --good:#0ca30c; --warning:#fab219; --critical:#d03b3b;
 }
 @media (prefers-color-scheme: dark){
   :root:where(:not([data-theme=light])){
     color-scheme: dark;
-    --page:#0d0d0d; --surface:#1a1a19; --card:#1a1a19;
-    --ink:#f0efec; --ink-2:#c3c2b7; --muted:#898781;
-    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+    --page:#141311; --surface:#1b1a17; --card:#1b1a17;
+    --ink:#f0ede5; --ink-2:#c5c0b4; --muted:#8e8a7f;
+    --grid:#2b2924; --axis:#3a372f; --border:#2b2924; --accent:#d4a35e;
     --series-1:#3987e5; --series-dim:#1c5cab;
   }
 }
 :root[data-theme=dark]{
   color-scheme: dark;
-  --page:#0d0d0d; --surface:#1a1a19; --card:#1a1a19;
-  --ink:#f0efec; --ink-2:#c3c2b7; --muted:#898781;
-  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+  --page:#141311; --surface:#1b1a17; --card:#1b1a17;
+  --ink:#f0ede5; --ink-2:#c5c0b4; --muted:#8e8a7f;
+  --grid:#2b2924; --axis:#3a372f; --border:#2b2924; --accent:#d4a35e;
   --series-1:#3987e5; --series-dim:#1c5cab;
 }
 *{box-sizing:border-box}
@@ -48,13 +52,14 @@ body{
 .top h1{font-size:30px; line-height:1.25; margin:0 0 8px; letter-spacing:-.01em}
 .sub{margin:0 0 12px; color:var(--ink-2); font-size:17px}
 .byline{margin:0; color:var(--muted); font-size:13px}
-.jump{display:flex; flex-wrap:wrap; gap:6px; margin:18px 0 0}
+.jump{display:flex; flex-wrap:wrap; gap:0 26px; margin:22px 0 0;
+  padding-top:14px; border-top:1px solid var(--border)}
 .jump a{
-  font-size:13px; color:var(--ink-2); text-decoration:none;
-  border:1px solid var(--border); border-radius:999px; padding:3px 11px;
+  font-size:13px; letter-spacing:.02em; color:var(--muted); text-decoration:none;
+  padding:3px 0; border-bottom:1.5px solid transparent;
 }
-.jump a:hover{color:var(--ink); border-color:var(--axis)}
-.jump a.on{color:var(--card); background:var(--ink); border-color:var(--ink)}
+.jump a:hover{color:var(--ink)}
+.jump a.on{color:var(--ink); border-bottom-color:var(--accent); font-weight:600}
 .theme{
   position:absolute; top:34px; right:16px; width:34px; height:34px;
   border-radius:999px; border:1px solid var(--border); background:var(--card);
@@ -62,27 +67,31 @@ body{
 }
 main{padding:20px 0 40px}
 .card{
-  background:var(--card); border:1px solid var(--border); border-radius:14px;
-  padding:26px 26px 20px; margin:16px 0;
+  background:var(--card); border:1px solid var(--border); border-radius:3px;
+  padding:28px 28px 22px; margin:18px 0;
 }
 .card.intro{color:var(--ink-2)}
 .card p{margin:0 0 12px}
 .card p:last-child{margin-bottom:8px}
-.qno{font-size:12px; font-weight:600; letter-spacing:.08em; color:var(--series-1); margin-bottom:6px}
-.card h2{font-size:21px; line-height:1.35; margin:0 0 12px; letter-spacing:-.01em}
-.card h3{font-size:16px; margin:22px 0 8px}
+.qno{font-size:11.5px; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--accent); margin-bottom:8px}
+.card h2{font-family:var(--serif); font-weight:700; font-size:22px; line-height:1.4;
+  margin:0 0 12px; letter-spacing:-.01em}
+.card h3{font-family:var(--serif); font-weight:700; font-size:17px; margin:24px 0 8px}
 .answer{margin:0 0 18px; color:var(--ink-2)}
 .answer b{color:var(--ink)}
 .caption{margin:22px 0 6px; font-size:13px; color:var(--muted)}
 .note{margin:12px 0 0; font-size:13px; color:var(--muted)}
 .lede{font-size:17px; color:var(--ink-2)}
 .hero{display:flex; gap:18px; align-items:baseline; flex-wrap:wrap; margin:4px 0 22px}
-.hero-num{font-size:50px; font-weight:650; line-height:1; letter-spacing:-.02em}
+.hero-num{font-family:var(--serif); font-size:52px; font-weight:700; line-height:1;
+  letter-spacing:-.02em}
 .hero-lbl{flex:1 1 280px; color:var(--ink-2); font-size:14px}
 .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(168px,1fr)); gap:12px; margin:14px 0}
-.stat{border:1px solid var(--border); border-radius:10px; padding:12px 14px}
+.stat{border:1px solid var(--border); border-radius:2px; padding:13px 15px}
 .stat-label{font-size:12px; color:var(--muted)}
-.stat-value{font-size:24px; font-weight:620; line-height:1.3; margin:2px 0}
+.stat-value{font-family:var(--serif); font-size:25px; font-weight:700; line-height:1.3;
+  margin:2px 0}
 .stat-sub{font-size:12px; color:var(--ink-2)}
 .stat[data-tone=warn] .stat-value{color:var(--critical)}
 .stat[data-tone=good] .stat-value{color:var(--good)}
@@ -92,17 +101,17 @@ main{padding:20px 0 40px}
 }
 .case{
   display:block; text-decoration:none; color:inherit;
-  background:var(--card); border:1px solid var(--border); border-radius:14px;
-  padding:20px 22px 16px; margin:12px 0;
+  background:var(--card); border:1px solid var(--border); border-radius:3px;
+  padding:22px 24px 18px; margin:14px 0;
 }
 .case:hover{border-color:var(--axis)}
 .case-head{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
-.case-name{font-size:19px; font-weight:620}
+.case-name{font-family:var(--serif); font-size:20px; font-weight:700}
 .case-status{font-size:12px; color:var(--muted)}
 .case-line{margin:6px 0 10px; color:var(--ink-2)}
 .case-points{margin:0 0 12px; padding-left:20px; color:var(--ink-2); font-size:14px}
 .case-points li{margin-bottom:4px}
-.case-go{font-size:13px; color:var(--series-1)}
+.case-go{font-size:13px; color:var(--accent)}
 table{border-collapse:collapse; width:100%; font-size:13px; margin:6px 0 2px}
 th,td{text-align:left; padding:6px 9px; border-bottom:1px solid var(--border); vertical-align:top}
 thead th{color:var(--muted); font-weight:600; font-size:12px; white-space:nowrap}
@@ -180,7 +189,7 @@ code{color:var(--ink-2)}
 ul.links{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px 22px}
 ul.links a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--border);
   font-size:14px}
-ul.links a:hover{border-color:var(--series-1);color:var(--series-1)}
+ul.links a:hover{border-color:var(--accent);color:var(--accent)}
 ul.links a::after{content:" 97";color:var(--muted);font-size:11px}
 ul.plain{margin:0; padding-left:20px; color:var(--ink-2)}
 ul.plain li{margin-bottom:9px}
@@ -196,12 +205,13 @@ ul.plain b{color:var(--ink)}
 </style>
 </head>
 <body>
+<div class="prog" id="prog"></div>
 <header class="top">
   <div class="wrap">
     <a class="brand" href="../">← 傅聖嵐 Fu Sheng-Lan</a>
     <h1>SQL 十一題：壽星日資料</h1>
     <p class="sub">台灣生日優惠資料，用 SQL 問十一個問題</p>
-    <p class="byline">資料：壽星日 <code>offers.json</code>（最後查證 2026-11-22）＋ Google Places 門市彙總　·　工具：SQLite ＋ Python 標準庫　·　產出 2026-11-26 14:16（UTC+8）</p>
+    <p class="byline">資料：壽星日 <code>offers.json</code>（最後查證 2026-11-22）＋ Google Places 門市彙總　·　工具：SQLite ＋ Python 標準庫　·　產出 2026-11-26 14:23（UTC+8）</p>
     <nav class="jump"><a href="index.html">首頁</a><a href="birthday-deals.html">壽星日</a><a href="bandary.html">Bandary</a><a href="relatestats.html">RelateStats</a><a href="ml-autofill.html">ML 預填</a><a href="venue-clusters.html">商圈聚類</a><a href="billing-forecast.html">請款預估</a><a href="sql-report.html" class="on">SQL 報告</a></nav>
     <button class="theme" type="button" aria-label="切換深淺色">◐</button>
   </div>
@@ -1168,6 +1178,14 @@ having coalesce(d.success_rate, 100) &lt; 80
 </footer>
 <script>
 (function () {
+  var prog = document.getElementById('prog');
+  function onScroll() {
+    var h = document.documentElement, max = h.scrollHeight - h.clientHeight;
+    prog.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + '%';
+  }
+  addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('resize', onScroll); onScroll();
+
   var btn = document.querySelector('.theme'), root = document.documentElement;
   try { var s = localStorage.getItem('sdl-theme'); if (s) root.dataset.theme = s; } catch (e) {}
   btn.addEventListener('click', function () {
