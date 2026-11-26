@@ -106,6 +106,10 @@ thead th{color:var(--muted); font-weight:600; font-size:12px; white-space:nowrap
 td{color:var(--ink-2)}
 tbody th{font-weight:500; color:var(--ink)}
 table.metrics tbody th{white-space:nowrap}
+table.tools tbody th{white-space:nowrap;vertical-align:top;width:1%;padding-right:18px;
+  font-weight:600;color:var(--ink)}
+table.tools td{color:var(--ink-2);line-height:1.75}
+table.tools tr:first-child th,table.tools tr:first-child td{border-top:1px solid var(--border)}
 table.metrics td:last-child{font-variant-numeric:tabular-nums; white-space:nowrap}
 table.matrix{border-collapse:separate; border-spacing:2px}
 table.matrix td{text-align:center; color:var(--ink); border-radius:3px; border:0}
@@ -189,7 +193,7 @@ ul.plain b{color:var(--ink)}
     <a class="brand" href="../">← 傅聖嵐 Fu Sheng-Lan</a>
     <h1>壽星日資料分析</h1>
     <p class="sub">台灣生日優惠資料，用 SQL 問十一個問題</p>
-    <p class="byline">資料：壽星日 <code>offers.json</code>（最後查證 2026-11-22）＋ Google Places 門市彙總　·　工具：SQLite ＋ Python 標準庫　·　產出 2026-11-25 14:25（UTC+8）</p>
+    <p class="byline">資料：壽星日 <code>offers.json</code>（最後查證 2026-11-22）＋ Google Places 門市彙總　·　工具：SQLite ＋ Python 標準庫　·　產出 2026-11-26 14:07（UTC+8）</p>
     <nav class="jump"><a href="index.html">首頁</a><a href="birthday-deals.html">壽星日</a><a href="bandary.html">Bandary</a><a href="relatestats.html">RelateStats</a><a href="ml-autofill.html">ML 預填</a><a href="venue-clusters.html">商圈聚類</a><a href="billing-forecast.html">請款預估</a><a href="sql-report.html" class="on">SQL 報告</a></nav>
     <button class="theme" type="button" aria-label="切換深淺色">◐</button>
   </div>
@@ -481,7 +485,7 @@ select l.access,
 <section class="card" id="q5">
   <div class="qno">Q5</div>
   <h2>這些優惠是誰說的？多久沒複查了？</h2>
-  <p class="answer"><b>只有 24% 的優惠有品牌官方背書。</b>有 39% 的優惠，最好的來源只是部落格懶人包或社群貼文；其中社群貼文那 130 筆的人工複查率是 78%。複查的狀況是：186 筆從來沒查過，查過的裡面中位數是 77 天前，153 筆超過 90 天。這一節看的是資料本身可不可靠，跟優惠大不大沒關係。</p>
+  <p class="answer"><b>只有 24% 的優惠有品牌官方背書。</b>有 39% 的優惠，最好的來源只是部落格懶人包或社群貼文；其中社群貼文那 130 筆的人工複查率是 78%。複查的狀況是：186 筆從來沒查過，查過的裡面中位數是 78 天前，155 筆超過 90 天。這一節看的是資料本身可不可靠，跟優惠大不大沒關係。</p>
   <p class="caption">以「最可信來源」分組的優惠筆數</p><svg class="chart" viewBox="0 0 720 202" role="img" aria-label="優惠的最佳來源可信度分佈" preserveAspectRatio="xMidYMid meet">
 <line class="grid" x1="158.0" y1="6" x2="158.0" y2="174"/>
 <text class="tick" x="158.0" y="190" text-anchor="middle">0</text>
@@ -556,7 +560,7 @@ select tier_label,
        max(days_since_check)                                   as days_since_check
   from t
  group by tier_label, tier
- order by tier;</code></pre></details><details class="tablebox"><summary>看完整表格</summary><table class="data"><thead><tr><th>最佳來源</th><th>筆數</th><th>占比 %</th><th>複查過</th><th>複查率 %</th><th>平均面額</th><th>平均來源數</th><th>幾天沒查</th></tr></thead><tbody><tr><td>1 品牌官方</td><td>141</td><td>24.3</td><td>99</td><td>70</td><td>158</td><td>1.3</td><td>113</td></tr><tr><td>2 新聞媒體</td><td>3</td><td>0.5</td><td>3</td><td>100</td><td>473</td><td>1</td><td>113</td></tr><tr><td>3 部落格懶人包</td><td>97</td><td>16.7</td><td>85</td><td>88</td><td>187</td><td>1.1</td><td>113</td></tr><tr><td>4 社群貼文</td><td>130</td><td>22.4</td><td>102</td><td>78</td><td>205</td><td>1</td><td>113</td></tr><tr><td>未標註</td><td>14</td><td>2.4</td><td>9</td><td>64</td><td>170</td><td>1</td><td>77</td></tr><tr><td>未標註</td><td>196</td><td>33.7</td><td>89</td><td>45</td><td>158</td><td>0</td><td>100</td></tr></tbody></table></details></div>
+ order by tier;</code></pre></details><details class="tablebox"><summary>看完整表格</summary><table class="data"><thead><tr><th>最佳來源</th><th>筆數</th><th>占比 %</th><th>複查過</th><th>複查率 %</th><th>平均面額</th><th>平均來源數</th><th>幾天沒查</th></tr></thead><tbody><tr><td>1 品牌官方</td><td>141</td><td>24.3</td><td>99</td><td>70</td><td>158</td><td>1.3</td><td>114</td></tr><tr><td>2 新聞媒體</td><td>3</td><td>0.5</td><td>3</td><td>100</td><td>473</td><td>1</td><td>114</td></tr><tr><td>3 部落格懶人包</td><td>97</td><td>16.7</td><td>85</td><td>88</td><td>187</td><td>1.1</td><td>114</td></tr><tr><td>4 社群貼文</td><td>130</td><td>22.4</td><td>102</td><td>78</td><td>205</td><td>1</td><td>114</td></tr><tr><td>未標註</td><td>14</td><td>2.4</td><td>9</td><td>64</td><td>170</td><td>1</td><td>78</td></tr><tr><td>未標註</td><td>196</td><td>33.7</td><td>89</td><td>45</td><td>158</td><td>0</td><td>101</td></tr></tbody></table></details></div>
 </section>
 <section class="card" id="q6">
   <div class="qno">Q6</div>
@@ -1072,7 +1076,7 @@ select category,
   <div class="qno">Q11</div>
   <h2>哪幾筆回報失敗最多？</h2>
   <p class="answer"><b>4 筆要排進下一輪複查。</b>條件是回報三次以上、成功率低於 80%——回報太少不能下結論，一個人說失敗可能只是他那天運氣不好。整體成功率 98%，所以這張清單短是正常的，不是查詢壞了。</p>
-  <p class="caption">回報三次以上、成功率低於 80% 的優惠</p><table class="data"><thead><tr><th>品牌</th><th>類別</th><th>回報數</th><th>成功率 %</th><th>收藏</th><th>最後使用</th><th>幾天前</th><th>來源層級</th></tr></thead><tbody><tr><td>LINE禮物</td><td>其他</td><td>4</td><td>50</td><td>48</td><td>2026-11-15</td><td>10</td><td>—</td></tr><tr><td>人从众厚切牛排館</td><td>餐廳</td><td>4</td><td>75</td><td>59</td><td>2026-10-14</td><td>42</td><td>1</td></tr><tr><td>235巷義大利麵</td><td>餐廳</td><td>4</td><td>75</td><td>51</td><td>2026-11-08</td><td>17</td><td>1</td></tr><tr><td>雞湯大叔</td><td>餐廳</td><td>3</td><td>67</td><td>—</td><td>2026-10-19</td><td>37</td><td>4</td></tr></tbody></table>
+  <p class="caption">回報三次以上、成功率低於 80% 的優惠</p><table class="data"><thead><tr><th>品牌</th><th>類別</th><th>回報數</th><th>成功率 %</th><th>收藏</th><th>最後使用</th><th>幾天前</th><th>來源層級</th></tr></thead><tbody><tr><td>LINE禮物</td><td>其他</td><td>4</td><td>50</td><td>48</td><td>2026-11-15</td><td>11</td><td>—</td></tr><tr><td>人从众厚切牛排館</td><td>餐廳</td><td>4</td><td>75</td><td>59</td><td>2026-10-14</td><td>43</td><td>1</td></tr><tr><td>235巷義大利麵</td><td>餐廳</td><td>4</td><td>75</td><td>51</td><td>2026-11-08</td><td>18</td><td>1</td></tr><tr><td>雞湯大叔</td><td>餐廳</td><td>3</td><td>67</td><td>—</td><td>2026-10-19</td><td>38</td><td>4</td></tr></tbody></table>
   <div class="foot"><details class="sqlbox"><summary>看這一題的 SQL<code>queries/11_offer_health.sql</code></summary><pre><code>-- Q11 哪幾筆優惠「寫得好看但用不到」？（需求面，要 --live 才有資料）
 --
 -- 使用者回報「我用過了」的時候會標成功或失敗，offer_stats 把它算成 success_rate。
@@ -1121,12 +1125,12 @@ having coalesce(d.success_rate, 100) &lt; 80
   <p class="note">重跑：<code>python build_db.py &amp;&amp; python report.py</code>。
     門市明細在本機才有，缺的時候會自動改讀 <code>data/store_counts.csv</code>，
     所以 clone 下來就跑得完整份報告。</p>
-</section>
+</section><section class="card"><h2>用到的技能與工具</h2><p class="answer">這一頁實際動用到的東西。</p><table class="tools"><tbody><tr><th scope="row">SQL</th><td>SQLite · CTE · window function · 自己實作 median／quartile／cumulative／ntile／pivot／Pearson 相關</td></tr><tr><th scope="row">資料治理</th><td>來源分級、複查延遲、過期自動下架的規則推導</td></tr><tr><th scope="row">Python</th><td>標準庫 ETL 與報告產生器，沒用 pandas／matplotlib</td></tr><tr><th scope="row">視覺化</th><td>自製 inline SVG：橫條、直條、散佈、熱度交叉表、diverging</td></tr></tbody></table></section>
 <section class="card" id="limits">
   <h2>資料限制</h2>
   <p class="answer">這份分析不能拿來說什麼，先寫在前面。</p>
   <ul class="limits">
-    <li><b>資料來源與時間。</b>優惠是 2026-11-25 從線上資料庫的公開 view
+    <li><b>資料來源與時間。</b>優惠是 2026-11-26 從線上資料庫的公開 view
       （<code>offers_public</code>）抓下來的 581 筆已核可優惠，
       最後一筆查證日 2026-11-22。沒有 fetch 的時候會退回 repo 裡的
       2026-08 快照（139 筆），頁面上的日期會跟著變。</li>

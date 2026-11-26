@@ -1,0 +1,655 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""個人網頁：首頁＋每個精選案例一頁。內容在 celine.fu/data/profile.json。
+
+    python build_profile.py            # 產到 celine.fu/draft/
+    python build_profile.py --live     # 產到 celine.fu/（換掉正式版）
+
+第一版的草稿被打回來，理由是「很 AI、沒有質感」。問題出在：18 列長得一模一樣、
+沒有主次、沒有畫面、點進去也沒有東西。這一版的作法：
+
+  * **主次分明**：六件精選案例各自一頁，其餘收成一份緊湊的索引
+  * **有畫面**：真實截圖；沒有截圖的案子自己畫一張說明圖，不放佔位圖
+  * **邏輯跑得完**：背景 → 業主要求 → 問題 → 怎麼分析 → 解法 → 結果，
+    一頁讀完知道這個人怎麼想事情，而不是只知道他做過什麼
+  * **版面不對稱**：圖左文右交錯，標題用襯線體，數字大而安靜
+"""
+
+import argparse
+import json
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+SITE = HERE.parent.parent.parent / "celine.fu"
+DATA = SITE / "data" / "profile.json"
+TPE = timezone(timedelta(hours=8))
+FONTS = ("https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&"
+         "family=Noto+Sans+TC:wght@400;500;700&display=swap")
+
+
+def esc(s):
+    import html
+    return html.escape(str(s if s is not None else ""))
+
+
+def t(node, lang):
+    if isinstance(node, dict):
+        return node.get(lang) or node.get("zh") or ""
+    return node or ""
+
+
+def bi(node, tag="span", cls=""):
+    c = f" {cls}" if cls else ""
+    return (f'<{tag} class="zh{c}">{esc(t(node, "zh"))}</{tag}>'
+            f'<{tag} class="en{c}">{esc(t(node, "en"))}</{tag}>')
+
+
+# ── 自己畫的說明圖（沒有截圖的案子用）────────────────────────────
+#
+# 畫法上的幾條規矩，不然很容易畫成「簡報上的那種圖」：
+#   * 長度要有意義。四個月跟一個月就畫成 4:1，不要兩個一樣大的方塊配箭頭
+#   * 一張圖只用一次重點色，其餘是灰階
+#   * 寧可少畫。能用一行字講完的不要畫成流程圖
+#   * 對齊到 8 的倍數，字級只有兩種：13px 標籤、11.5px 附註
+
+def figure_flow():
+    """20 幾份長短不一的報價，收斂成一份。長度直接代表報價範圍。"""
+    bids = [196, 150, 232, 118, 174, 204, 136]
+    rows = []
+    y = 56
+    for i, w in enumerate(bids):
+        x = 24 + (i % 3) * 18          # 錯開，表示範圍互相重疊、對不齊
+        rows.append(f'<rect x="{x}" y="{y}" width="{w}" height="7" rx="1.5" class="f-bar"/>')
+        y += 14
+    return f"""<svg viewBox="0 0 720 230" class="fig" role="img"
+  aria-label="二十多份長短不一、互相重疊的報價，收斂成一份範圍清楚的契約">
+  <text x="24" y="32" class="f-h">20+ 份報價</text>
+  <text x="24" y="48" class="f-n">長度＝各自認定的範圍。彼此重疊，也彼此漏接</text>
+  {''.join(rows)}
+  <line x1="340" y1="40" x2="340" y2="170" class="f-rule"/>
+  <text x="364" y="96" class="f-h">成本 × 範圍</text>
+  <text x="364" y="114" class="f-n">每個工項逐一對照：誰有報、含不含</text>
+  <text x="364" y="130" class="f-n">輔料與測試、介面由誰負責</text>
+  <text x="24" y="196" class="f-h f-on">1 份執行契約</text>
+  <rect x="24" y="204" width="356" height="10" rx="2" class="f-bar-on"/>
+  <text x="396" y="213" class="f-n">範圍不重疊、責任有歸屬</text>
+  <text x="24" y="{230 - 2}" class="f-n"></text>
+</svg>"""
+
+
+def figure_timeline():
+    """四個月對一個月，寬度就照 4:1 畫。"""
+    return """<svg viewBox="0 0 720 180" class="fig" role="img"
+  aria-label="送審卡了四個月，接手後一個月核准">
+  <text x="24" y="34" class="f-h">修改四個月，沒有通過</text>
+  <rect x="24" y="48" width="432" height="18" rx="2" class="f-bar"/>
+  <text x="24" y="86" class="f-n">退件 → 改 → 再送 → 再退。沒有人去問到底是哪一條不過</text>
+  <line x1="472" y1="40" x2="472" y2="140" class="f-rule"/>
+  <text x="472" y="34" class="f-h" text-anchor="middle">接手</text>
+  <text x="496" y="116" class="f-h f-on">一個月內核准</text>
+  <rect x="496" y="126" width="108" height="18" rx="2" class="f-bar-on"/>
+  <text x="24" y="166" class="f-n">同一份文件、同一批規格。改的是比較表的排法，
+    讓審查委員一眼對得上規範與型錄</text>
+</svg>"""
+
+
+def figure_tiers():
+    """一份文件，三層讀者。用縮排表示深度，不是三個並排的框。"""
+    rows = [("C-level", "三分鐘看完結論", 0, True),
+            ("投資經理", "標準化財務指標", 1, False),
+            ("技術盡職調查", "模型細節與附錄", 2, False)]
+    out = ['<text x="24" y="32" class="f-h">一份白皮書，三層深度</text>']
+    for name, note, i, on in rows:
+        y = 52 + i * 38
+        x = 24 + i * 20
+        cls = "f-bar-on" if on else "f-bar"
+        out.append(f'<rect x="{x}" y="{y}" width="8" height="24" rx="1.5" class="{cls}"/>')
+        out.append(f'<text x="{x + 20}" y="{y + 11}" class="f-h{" f-on" if on else ""}">{name}</text>')
+        out.append(f'<text x="{x + 20}" y="{y + 28}" class="f-n">{note}</text>')
+    out.append('<line x1="400" y1="52" x2="400" y2="152" class="f-rule"/>')
+    out.append('<text x="424" y="96" class="f-n">改一次，三種讀者同時更新；</text>')
+    out.append('<text x="424" y="113" class="f-n">不用維護三個版本，也不會互相矛盾</text>')
+    return ('<svg viewBox="0 0 720 176" class="fig" role="img" '
+            'aria-label="一份白皮書分三層，服務三種讀者">' + "".join(out) + "</svg>")
+
+
+def figure_cash():
+    """一條錢的路徑切成三段，卡在哪一段決定要找誰。"""
+    seg = [("已發包", "採購", 0), ("已計價", "我們自己", 1), ("已收款", "業主", 2)]
+    out = ['<text x="24" y="32" class="f-h">同一筆錢，三個狀態</text>']
+    w = 212
+    for name, who, i in seg:
+        x = 24 + i * (w + 12)
+        on = i == 2
+        out.append(f'<rect x="{x}" y="50" width="{w}" height="28" rx="2" '
+                   f'class="{"f-bar-on" if on else "f-bar"}"/>')
+        out.append(f'<text x="{x}" y="100" class="f-h{" f-on" if on else ""}">{name}</text>')
+        out.append(f'<text x="{x}" y="118" class="f-n">卡住 → 找{who}</text>')
+    out.append('<text x="24" y="156" class="f-n">分開記之後，每一筆延遲都有歸屬；'
+               '20+ 個專案共用一張甘特主排程，</text>')
+    out.append('<text x="24" y="173" class="f-n">內部期限固定壓在契約里程碑前一週</text>')
+    return ('<svg viewBox="0 0 720 186" class="fig" role="img" '
+            'aria-label="金流拆成已發包、已計價、已收款三段">' + "".join(out) + "</svg>")
+
+
+FIGURES = {"flow": figure_flow, "timeline": figure_timeline,
+           "tiers": figure_tiers, "cash": figure_cash}
+
+
+# ── 版面 ──────────────────────────────────────────────────────
+
+def shell(*, title, desc, body, depth=0, now=None, cases=()):
+    up = "../" * depth
+    case_links = "".join(
+        f'<li><a href="{up}case/{c["id"]}.html">'
+        f'<span class="zh">{esc(t(c["title"], "zh"))}</span>'
+        f'<span class="en">{esc(t(c["title"], "en"))}</span></a></li>' for c in cases)
+    return f"""<!doctype html>
+<html lang="zh-Hant" data-lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{esc(title)}</title>
+<meta name="description" content="{esc(desc)}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="{FONTS}">
+<style>{CSS}</style>
+</head>
+<body>
+<div class="prog" id="prog"></div>
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="bname" href="{up}index.html"><span class="zh">傅聖嵐</span><span class="en">Fu Sheng-Lan</span></a>
+    <span class="bar-r">
+      <button class="lang" data-set="zh">中文</button><span class="sep">·</span>
+      <button class="lang" data-set="en">EN</button>
+      <button class="tog" type="button" aria-label="切換深淺色">◐</button>
+      <button class="burger" id="burger" aria-label="選單" aria-expanded="false">
+        <span></span><span></span>
+      </button>
+    </span>
+  </div>
+</header>
+<div class="menu" id="menu" hidden>
+  <div class="wrap menu-in">
+    <div class="menu-col">
+      <p class="menu-h"><span class="zh">精選案例</span><span class="en">Selected cases</span></p>
+      <ol class="menu-cases">{case_links}</ol>
+    </div>
+    <div class="menu-col menu-col-2">
+      <p class="menu-h"><span class="zh">頁面</span><span class="en">Pages</span></p>
+      <ul class="menu-list">
+        <li><a href="{up}index.html"><span class="zh">首頁</span><span class="en">Home</span></a></li>
+        <li><a href="{up}index.html#rest"><span class="zh">其他做過的事</span><span class="en">Everything else</span></a></li>
+        <li><a href="{up}index.html#where"><span class="zh">待過的地方</span><span class="en">Where</span></a></li>
+        <li><a href="{up}index.html#think"><span class="zh">怎麼想事情</span><span class="en">How I think</span></a></li>
+        <li><a href="{up}work/"><span class="zh">分析作品集</span><span class="en">Analysis portfolio</span></a></li>
+        <li><a href="https://afortunadofu-bot.github.io/celinefubrandpage/">小數據所</a></li>
+        <li><a href="{up}index.html#contact"><span class="zh">聯絡</span><span class="en">Contact</span></a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+{body}
+<footer class="wrap foot">
+  <p class="foot-links">
+    <a href="{up}index.html"><span class="zh">首頁</span><span class="en">Home</span></a>　·
+    <a href="{up}work/"><span class="zh">分析作品集</span><span class="en">Analysis</span></a>　·
+    <a href="https://afortunadofu-bot.github.io/celinefubrandpage/">小數據所</a>
+  </p>
+  <p class="foot-note"><span class="zh">內容由 <code>data/profile.json</code> 產生</span>
+     <span class="en">Generated from <code>data/profile.json</code></span>　·　{now:%Y-%m-%d}</p>
+</footer>
+<script>
+(function () {{
+  var root = document.documentElement;
+  function setLang(l) {{
+    root.dataset.lang = l; root.lang = (l === "en") ? "en" : "zh-Hant";
+    try {{ localStorage.setItem("fsl-lang", l); }} catch (e) {{}}
+    document.querySelectorAll(".lang").forEach(function (b) {{
+      b.classList.toggle("on", b.dataset.set === l);
+    }});
+  }}
+  try {{ setLang(localStorage.getItem("fsl-lang") || "zh"); }} catch (e) {{ setLang("zh"); }}
+  document.querySelectorAll(".lang").forEach(function (b) {{
+    b.addEventListener("click", function () {{ setLang(b.dataset.set); }});
+  }});
+  var tg = document.querySelector(".tog");
+  try {{ var s = localStorage.getItem("sdl-theme"); if (s) root.dataset.theme = s; }} catch (e) {{}}
+  tg.addEventListener("click", function () {{
+    var dark = root.dataset.theme === "dark" ||
+      (!root.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
+    root.dataset.theme = dark ? "light" : "dark";
+    try {{ localStorage.setItem("sdl-theme", root.dataset.theme); }} catch (e) {{}}
+  }});
+  // 數字只在作品集算一次，這裡 fetch 蓋上去；抓不到就留 JSON 裡的值
+  var cells = document.querySelectorAll("[data-live]");
+  if (cells.length && typeof fetch === "function") {{
+    fetch("{up}work/stats.json", {{ cache: "no-cache" }})
+      .then(function (r) {{ return r.ok ? r.json() : Promise.reject(0); }})
+      .then(function (s) {{
+        cells.forEach(function (el) {{
+          var k = el.getAttribute("data-live"), v = s[k];
+          if (v == null) return;
+          el.textContent = (k === "success_rate") ? v + "%" : Number(v).toLocaleString("en-US");
+        }});
+      }}).catch(function () {{}});
+  }}
+  var prog = document.getElementById("prog");
+  function onScroll() {{
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    prog.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+  }}
+  addEventListener("scroll", onScroll, {{ passive: true }});
+  addEventListener("resize", onScroll);
+  onScroll();
+
+  var burger = document.getElementById("burger"), menu = document.getElementById("menu");
+  function setMenu(open) {{
+    menu.hidden = !open;
+    burger.classList.toggle("on", open);
+    burger.setAttribute("aria-expanded", open ? "true" : "false");
+    document.body.style.overflow = open ? "hidden" : "";
+  }}
+  burger.addEventListener("click", function () {{ setMenu(menu.hidden); }});
+  menu.addEventListener("click", function (e) {{ if (e.target.closest("a")) setMenu(false); }});
+  addEventListener("keydown", function (e) {{ if (e.key === "Escape") setMenu(false); }});
+
+  var chips = document.querySelectorAll(".chip"), rows = document.querySelectorAll(".row");
+  chips.forEach(function (c) {{
+    c.addEventListener("click", function () {{
+      chips.forEach(function (x) {{ x.classList.toggle("on", x === c); }});
+      rows.forEach(function (r) {{
+        r.hidden = !(c.dataset.cap === "all" ||
+                     r.dataset.caps.split(" ").indexOf(c.dataset.cap) >= 0);
+      }});
+    }});
+  }});
+}})();
+</script>
+</body></html>"""
+
+
+def case_page(w, d, orgs, caps, prev_next, now, featured_all=()):
+    org = orgs[w["org"]]
+    imgs = ""
+    if w.get("images"):
+        figs = "".join(
+            f'<figure><img src="{esc(im["src"])}" alt="{esc(t(im, "zh"))}" loading="lazy">'
+            f'<figcaption>{bi(im)}</figcaption></figure>' for im in w["images"])
+        imgs = f'<div class="shots shots-{min(len(w["images"]), 3)}">{figs}</div>'
+    elif w.get("figure"):
+        imgs = f'<div class="figwrap">{FIGURES[w["figure"]["kind"]]()}</div>'
+
+    live_big = f' data-live="{w["big"]["live"]}"' if w.get("big", {}).get("live") else ""
+    stats = "".join(
+        f'<div class="st"><div class="st-v"'
+        + (f' data-live="{s["live"]}"' if s.get("live") else "")
+        + f'>{esc(s["v"])}</div>{bi(s, cls="st-l")}</div>'
+        for s in w.get("stats", []))
+
+    chain = "".join(
+        f'<section class="step{" todo" if c.get("todo") else ""}">'
+        f'<h2>{bi(c["k"])}</h2><p>{bi(c["v"])}</p></section>' for c in w.get("chain", []))
+
+    cta = ""
+    if w.get("cta"):
+        cta = (f'<a class="cta" href="{esc(w["cta"]["href"])}">{bi(w["cta"])}</a>')
+
+    tags = "".join(f'<span class="tag">{bi(caps[c])}</span>' for c in w["caps"] if c in caps)
+    prev, nxt = prev_next
+    nav = []
+    if prev:
+        nav.append(f'<a class="pn" href="{prev["id"]}.html"><span class="pn-k">←</span>'
+                   f'{bi(prev["title"])}</a>')
+    if nxt:
+        nav.append(f'<a class="pn pn-r" href="{nxt["id"]}.html">{bi(nxt["title"])}'
+                   f'<span class="pn-k">→</span></a>')
+
+    body = f"""
+<main class="wrap case">
+  <a class="back" href="../index.html"><span class="zh">← 回所有案例</span><span class="en">← All cases</span></a>
+  <p class="kicker">{bi(w["kicker"])}<span class="kdot">·</span>{esc(org["period"])}</p>
+  <h1>{bi(w["title"])}</h1>
+  <p class="lead">{bi(w["result"])}</p>
+  <div class="bignum"><span class="bn-v"{live_big}>{esc(w["big"]["v"])}</span>{bi(w["big"], cls="bn-l")}</div>
+  {imgs}
+  <div class="sts">{stats}</div>
+  <div class="chain">{chain}</div>
+  {cta}
+  <div class="tags">{tags}</div>
+  <nav class="pns">{''.join(nav)}</nav>
+</main>"""
+    return shell(title=f'{t(w["title"], "zh")} — 傅聖嵐',
+                 desc=t(w["result"], "zh"), body=body, depth=1, now=now, cases=featured_all)
+
+
+def home(d, orgs, caps, featured, rest, now):
+    nums = "".join(
+        f'<div class="hn"><span class="hn-v">{esc(h["value"])}</span>{bi(h, cls="hn-l")}'
+        f'{bi(h["note"], cls="hn-n")}</div>' for h in d["headline"])
+
+    cards = []
+    for i, w in enumerate(featured):
+        org = orgs[w["org"]]
+        thumb = ""
+        if w.get("images"):
+            thumb = (f'<div class="fc-img"><img src="{esc(w["images"][0]["src"][3:])}" '
+                     f'alt="{esc(t(w["title"], "zh"))}" loading="lazy"></div>')
+        elif w.get("figure"):
+            thumb = f'<div class="fc-img fc-fig">{FIGURES[w["figure"]["kind"]]()}</div>'
+        cards.append(f"""
+      <a class="fc{' fc-flip' if i % 2 else ''}" href="case/{esc(w["id"])}.html">
+        {thumb}
+        <div class="fc-t">
+          <p class="kicker">{bi(w["kicker"])}</p>
+          <h3>{bi(w["title"])}</h3>
+          <p class="fc-big"><b>{esc(w["big"]["v"])}</b>{bi(w["big"], cls="fc-big-l")}</p>
+          <p class="fc-r">{bi(w["result"])}</p>
+          <span class="fc-go"><span class="zh">看這個案例 →</span><span class="en">Read the case →</span></span>
+        </div>
+      </a>""")
+
+    chips = ['<button class="chip on" data-cap="all"><span class="zh">全部</span>'
+             f'<span class="en">All</span><i>{len(rest)}</i></button>']
+    for c in d["caps"]:
+        n = sum(1 for w in rest if c["id"] in w["caps"])
+        if n:
+            chips.append(f'<button class="chip" data-cap="{c["id"]}">{bi(c)}<i>{n}</i></button>')
+
+    rows = "".join(
+        f'<div class="row" data-caps="{" ".join(w["caps"])}">'
+        f'<div class="row-m">{bi(w["title"], cls="row-t")}'
+        f'<span class="row-o">{bi(orgs[w["org"]])}</span></div>'
+        f'<p class="row-r">{bi(w["result"])}</p></div>' for w in rest)
+
+    tl = "".join(
+        f'<li{" class=now" if o.get("current") else ""}>'
+        f'<span class="tl-p">{esc(o["period"])}</span>'
+        f'<span class="tl-o">{bi(o)}</span>{bi(o["role"], cls="tl-r")}'
+        f'{bi(o["note"], cls="tl-n")}</li>' for o in d["orgs"])
+
+    ap = "".join(f'<div class="ap"><h3>{bi(a)}</h3><p>{bi(a["body"])}</p></div>'
+                 for a in d["approach"])
+    c = d["contact"]
+
+    body = f"""
+<main class="wrap">
+  <section class="hero">
+    <h1>{bi(d["tagline"])}</h1>
+    <p class="sub">{bi(d["sub"])}</p>
+    <div class="hns">{nums}</div>
+  </section>
+
+  <section class="blk">
+    <div class="bh"><h2><span class="zh">精選案例</span><span class="en">Selected cases</span></h2>
+      <p class="bn"><span class="zh">六件寫完整的：遇到什麼問題、當初怎麼拆、最後怎麼解、結果是什麼。</span>
+        <span class="en">Six written in full: the problem, how I broke it down, what I did, what came out.</span></p></div>
+    <div class="fcs">{''.join(cards)}</div>
+  </section>
+
+  <section class="blk" id="rest">
+    <div class="bh"><h2><span class="zh">其他做過的事</span><span class="en">Everything else</span></h2>
+      <p class="bn"><span class="zh">{len(rest)} 件，按能力篩。</span>
+        <span class="en">{len(rest)} more, filtered by capability.</span></p></div>
+    <div class="chips">{''.join(chips)}</div>
+    <div class="rows">{rows}</div>
+  </section>
+
+  <section class="blk" id="where">
+    <div class="bh"><h2><span class="zh">待過的地方</span><span class="en">Where</span></h2></div>
+    <ol class="tl">{tl}</ol>
+  </section>
+
+  <section class="blk" id="think">
+    <div class="bh"><h2><span class="zh">怎麼想事情</span><span class="en">How I think</span></h2></div>
+    <div class="aps">{ap}</div>
+  </section>
+
+  <section class="blk cta-blk">
+    <div><h2><span class="zh">自己做的產品與分析</span><span class="en">Own products &amp; analysis</span></h2>
+      <p><span class="zh">三個上架的產品，加五份把它們算清楚的分析。數字是即時的。</span>
+         <span class="en">Three shipped products and five analyses. The numbers are live.</span></p></div>
+    <div class="btns">
+      <a class="btn" href="work/"><span class="zh">分析作品集 →</span><span class="en">Portfolio →</span></a>
+      <a class="btn ghost" href="https://afortunadofu-bot.github.io/celinefubrandpage/">小數據所 →</a>
+    </div>
+  </section>
+
+  <section class="blk" id="contact">
+    <div class="bh"><h2><span class="zh">聯絡</span><span class="en">Contact</span></h2></div>
+    <dl class="cl">
+      <dt>Email</dt><dd><a href="mailto:{esc(c["email"])}">{esc(c["email"])}</a></dd>
+      <dt><span class="zh">電話 / LINE</span><span class="en">Phone</span></dt>
+      <dd><a href="tel:{esc(c["phone"].replace("-", ""))}">{esc(c["phone"])}</a></dd>
+      <dt><span class="zh">地點</span><span class="en">Location</span></dt><dd>{bi(c["location"])}</dd>
+    </dl>
+  </section>
+</main>"""
+    return shell(title="傅聖嵐 — Fu Sheng-Lan", desc=t(d["tagline"], "zh"),
+                 body=body, depth=0, now=now, cases=featured)
+
+
+CSS = """
+:root{
+  color-scheme:light;
+  --page:#faf9f6; --card:#fff; --ink:#15140f; --ink-2:#4a4740; --muted:#8a867c;
+  --line:#e6e3da; --rule:#d8d4c8; --accent:#8a5a2b; --good:#2f7d32;
+  --serif:"Noto Serif TC",Georgia,"Times New Roman",serif;
+  --sans:system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme=light])){
+  color-scheme:dark;
+  --page:#141311; --card:#1b1a17; --ink:#f0ede5; --ink-2:#c5c0b4; --muted:#8e8a7f;
+  --line:#2b2924; --rule:#3a372f; --accent:#d4a35e;
+}}
+:root[data-theme=dark]{
+  color-scheme:dark;
+  --page:#141311; --card:#1b1a17; --ink:#f0ede5; --ink-2:#c5c0b4; --muted:#8e8a7f;
+  --line:#2b2924; --rule:#3a372f; --accent:#d4a35e;
+}
+:root[data-lang=zh] .en,:root[data-lang=en] .zh{display:none}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.85 var(--sans);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.wrap{max-width:940px;margin:0 auto;padding:0 24px}
+a{color:inherit}
+.prog{position:fixed;top:0;left:0;height:2px;width:0;background:var(--accent);z-index:20;
+  transition:width .08s linear}
+.burger{background:none;border:0;padding:8px 2px 8px 10px;cursor:pointer;display:flex;
+  flex-direction:column;gap:5px;margin-left:4px}
+.burger span{display:block;width:18px;height:1.5px;background:var(--ink-2);transition:transform .2s}
+.burger.on span:first-child{transform:translateY(3.2px) rotate(45deg)}
+.burger.on span:last-child{transform:translateY(-3.2px) rotate(-45deg)}
+.menu{position:fixed;inset:49px 0 0;background:var(--page);z-index:19;overflow:auto}
+.menu-in{display:grid;grid-template-columns:1.3fr 1fr;gap:48px;padding-top:54px;padding-bottom:54px}
+.menu-h{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  margin:0 0 18px;font-weight:600}
+.menu-cases{list-style:none;counter-reset:mc;margin:0;padding:0}
+.menu-cases li{border-top:1px solid var(--line)}
+.menu-cases a{display:block;padding:15px 0;text-decoration:none;font-family:var(--serif);
+  font-weight:700;font-size:19px;line-height:1.4}
+.menu-cases a::before{counter-increment:mc;content:counter(mc,decimal-leading-zero);
+  font-family:var(--sans);font-weight:400;font-size:12px;color:var(--muted);margin-right:14px;
+  font-variant-numeric:tabular-nums}
+.menu-cases a:hover{color:var(--accent)}
+.menu-list{list-style:none;margin:0;padding:0}
+.menu-list li{border-top:1px solid var(--line)}
+.menu-list a{display:block;padding:12px 0;text-decoration:none;font-size:15px;color:var(--ink-2)}
+.menu-list a:hover{color:var(--ink)}
+@media (max-width:760px){.menu-in{grid-template-columns:1fr;gap:34px}}
+.bar{position:sticky;top:0;z-index:18;background:color-mix(in srgb,var(--page) 88%,transparent);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.bar-in{display:flex;align-items:center;justify-content:space-between;padding:13px 24px}
+.bname{font-family:var(--serif);font-weight:700;letter-spacing:.02em;text-decoration:none;font-size:15px}
+.bar-r{display:flex;align-items:center;gap:5px}
+.lang,.tog{background:none;border:0;color:var(--muted);font:inherit;font-size:13px;cursor:pointer;padding:3px 5px}
+.lang.on{color:var(--ink);font-weight:600}
+.sep{color:var(--rule)}
+.tog{font-size:15px;margin-left:5px}
+h1,h2,h3{font-family:var(--serif);font-weight:700;letter-spacing:-.01em}
+.hero{padding:86px 0 24px}
+.hero h1{font-size:clamp(30px,4.6vw,50px);line-height:1.34;margin:0 0 22px;max-width:15em}
+.sub{color:var(--ink-2);font-size:16.5px;max-width:40em;margin:0 0 42px}
+.hns{display:flex;flex-wrap:wrap;gap:36px 52px;max-width:none;padding-bottom:10px}
+.hn{min-width:132px}
+.hn-v{display:block;font-family:var(--serif);font-size:34px;line-height:1.1;letter-spacing:-.02em}
+.hn-l{display:block;font-size:13.5px;color:var(--ink-2);margin-top:3px}
+.hn-n{display:block;font-size:12.5px;color:var(--muted)}
+.blk{padding:64px 0 0;margin-top:64px;border-top:1px solid var(--line)}
+.bh{margin-bottom:34px}
+.bh h2{font-size:25px;margin:0 0 8px}
+.bn{color:var(--muted);font-size:14px;margin:0;max-width:44em}
+.fcs{display:grid;gap:34px}
+.fc{display:grid;grid-template-columns:300px 1fr;gap:30px;align-items:center;
+  text-decoration:none;background:var(--card);border:1px solid var(--line);
+  border-radius:3px;padding:26px;transition:border-color .18s}
+.fc:hover{border-color:var(--rule)}
+.fc-flip .fc-img{order:2}
+.fc-img img{width:100%;height:190px;object-fit:cover;object-position:top;
+  border-radius:2px;display:block;background:var(--page)}
+.fc-fig{display:flex;align-items:center}
+.fc-fig .fig{width:100%;height:auto}
+.kicker{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);
+  margin:0 0 10px;font-weight:600}
+.kdot{margin:0 7px;color:var(--rule)}
+.fc h3{font-size:21px;margin:0 0 12px;line-height:1.4}
+.fc-big{margin:0 0 10px;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.fc-big b{font-family:var(--serif);font-size:27px;font-weight:700;letter-spacing:-.02em}
+.fc-big-l{font-size:13px;color:var(--muted)}
+.fc-r{margin:0 0 14px;color:var(--ink-2);font-size:15px}
+.fc-go{font-size:13.5px;color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.chip{background:none;border:1px solid var(--line);border-radius:2px;padding:5px 12px;
+  font:inherit;font-size:13px;color:var(--ink-2);cursor:pointer;display:inline-flex;gap:7px}
+.chip:hover{border-color:var(--rule)}
+.chip.on{background:var(--ink);color:var(--page);border-color:var(--ink)}
+.chip i{font-style:normal;font-size:11px;opacity:.55}
+.rows{margin-top:14px}
+.row{padding:17px 0;border-top:1px solid var(--line)}
+.row[hidden]{display:none}
+.row-m{display:flex;justify-content:space-between;gap:16px;align-items:baseline;flex-wrap:wrap}
+.row-t{font-weight:600;font-size:15.5px}
+.row-o{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.row-r{margin:5px 0 0;color:var(--ink-2);font-size:14.5px;max-width:52em}
+.tl{list-style:none;margin:0;padding:0}
+.tl li{display:grid;grid-template-columns:140px 1fr;gap:3px 22px;padding:16px 0;border-top:1px solid var(--line)}
+.tl li:first-child{border-top:0}
+.tl-p{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.tl-o{font-family:var(--serif);font-weight:700;font-size:16px}
+.tl-r{grid-column:2;color:var(--ink-2);font-size:14px}
+.tl-n{grid-column:2;color:var(--muted);font-size:12.5px}
+.tl li.now .tl-o::after{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--good);margin-left:8px;vertical-align:middle}
+.aps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:26px}
+.ap h3{font-size:16px;margin:0 0 7px}
+.ap p{margin:0;color:var(--ink-2);font-size:14.5px}
+.cta-blk{display:flex;justify-content:space-between;gap:26px;flex-wrap:wrap;align-items:flex-end}
+.cta-blk h2{font-size:25px;margin:0 0 8px}
+.cta-blk p{margin:0;color:var(--ink-2);max-width:33em}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-block;padding:10px 20px;background:var(--ink);color:var(--page);
+  text-decoration:none;font-size:14px;border-radius:2px}
+.btn.ghost{background:none;color:var(--ink-2);border:1px solid var(--line)}
+.cl{display:grid;grid-template-columns:auto 1fr;gap:9px 24px;margin:0;font-size:15.5px}
+.cl dt{color:var(--muted);font-size:13px;padding-top:3px}
+.cl dd{margin:0}
+.cl a{text-decoration:none;border-bottom:1px solid var(--line)}
+/* ── 案例頁 ── */
+.case{padding:40px 0 0;max-width:780px}
+.back{display:inline-block;margin-bottom:30px;font-size:13.5px;color:var(--muted);text-decoration:none}
+.back:hover{color:var(--ink)}
+.case h1{font-size:clamp(28px,4.4vw,42px);line-height:1.32;margin:0 0 18px;max-width:17em}
+.lead{font-size:18px;color:var(--ink-2);margin:0 0 34px;max-width:36em}
+.bignum{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding:22px 0;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:38px}
+.bn-v{font-family:var(--serif);font-size:clamp(34px,6vw,54px);line-height:1;letter-spacing:-.03em}
+.bn-l{color:var(--muted);font-size:14px}
+.shots{display:grid;gap:14px;margin:0 0 38px;justify-items:start}
+.shots-1{grid-template-columns:minmax(0,420px)}
+.shots-2{grid-template-columns:repeat(2,minmax(0,370px))}
+.shots-3{grid-template-columns:repeat(3,1fr)}
+.shots figure{margin:0}
+.shots img{width:100%;max-width:100%;border:1px solid var(--line);border-radius:2px;display:block}
+.shots figcaption{font-size:12px;color:var(--muted);margin-top:7px}
+.figwrap{margin:0 0 38px;padding:20px;border:1px solid var(--line);border-radius:2px;background:var(--card)}
+.fig{width:100%;height:auto;display:block}
+.fig text{font:13px var(--sans);fill:var(--ink)}
+.fig .f-h{font-size:13.5px;font-weight:600}
+.fig .f-n{font-size:11.5px;fill:var(--muted)}
+.fig .f-on{fill:var(--accent)}
+.fig .f-bar{fill:var(--rule)}
+.fig .f-bar-on{fill:var(--accent)}
+.fig .f-rule{stroke:var(--line);stroke-width:1}
+.sts{display:flex;flex-wrap:wrap;gap:30px 48px;margin:0 0 42px}
+.st-v{font-family:var(--serif);font-size:24px;line-height:1.2}
+.st-l{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;max-width:17em}
+.chain{counter-reset:step}
+.step{padding:0 0 30px}
+.step h2{font-size:14px;letter-spacing:.06em;color:var(--accent);margin:0 0 8px;
+  font-family:var(--sans);font-weight:600}
+.step h2::before{counter-increment:step;content:counter(step,decimal-leading-zero) "　";
+  color:var(--rule);font-variant-numeric:tabular-nums}
+.step p{margin:0;font-size:16.5px;line-height:1.95;color:var(--ink-2);max-width:38em}
+.step.todo p{color:var(--muted);border-left:2px solid var(--rule);padding-left:14px}
+.cta{display:inline-block;margin:6px 0 34px;padding:11px 22px;border:1px solid var(--ink);
+  text-decoration:none;font-size:14px;border-radius:2px}
+.cta:hover{background:var(--ink);color:var(--page)}
+.tags{display:flex;flex-wrap:wrap;gap:7px;padding-top:28px;border-top:1px solid var(--line)}
+.tag{font-size:11.5px;color:var(--muted);border:1px solid var(--line);padding:2px 9px;border-radius:2px}
+.pns{display:flex;justify-content:space-between;gap:20px;margin:40px 0 0;padding-top:26px;
+  border-top:1px solid var(--line)}
+.pn{text-decoration:none;color:var(--ink-2);font-size:14px;max-width:46%}
+.pn:hover{color:var(--ink)}
+.pn-r{text-align:right;margin-left:auto}
+.pn-k{color:var(--muted);margin:0 8px}
+.foot{padding:64px 0 56px;margin-top:64px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.foot-links{margin:0 0 6px}
+.foot-links a{text-decoration:none}
+.foot-note{margin:0;font-size:12px}
+@media (max-width:760px){
+  .fc{grid-template-columns:1fr;gap:18px}
+  .fc-flip .fc-img{order:0}
+  .fc-img img{height:150px}
+  .shots-3,.shots-1{grid-template-columns:minmax(0,420px)}
+.shots-2{grid-template-columns:repeat(2,minmax(0,370px))}
+  .tl li{grid-template-columns:1fr}
+  .tl-r,.tl-n{grid-column:1}
+  .hero{padding:56px 0 16px}
+  .hns{gap:26px 36px}
+}
+"""
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--live", action="store_true", help="產到 celine.fu/（換掉正式版）")
+    args = ap.parse_args()
+    sys.stdout.reconfigure(encoding="utf-8")
+    d = json.loads(DATA.read_text(encoding="utf-8"))
+    now = datetime.now(TPE)
+    orgs = {o["id"]: o for o in d["orgs"]}
+    caps = {c["id"]: c for c in d["caps"]}
+
+    featured = sorted((w for w in d["work"] if w.get("featured")),
+                      key=lambda w: w["featured"])
+    rest = [w for w in d["work"] if not w.get("featured")]
+
+    root = SITE if args.live else SITE / "draft"
+    (root / "case").mkdir(parents=True, exist_ok=True)
+    (root / "index.html").write_text(home(d, orgs, caps, featured, rest, now), encoding="utf-8")
+    for i, w in enumerate(featured):
+        pn = (featured[i - 1] if i else None,
+              featured[i + 1] if i + 1 < len(featured) else None)
+        (root / "case" / f'{w["id"]}.html').write_text(
+            case_page(w, d, orgs, caps, pn, now, featured), encoding="utf-8")
+    where = "celine.fu/" if args.live else "celine.fu/draft/"
+    print(f"寫好 {where}index.html 與 {len(featured)} 個案例頁（其餘 {len(rest)} 件在索引）")
+
+
+if __name__ == "__main__":
+    main()

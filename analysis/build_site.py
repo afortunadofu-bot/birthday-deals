@@ -175,6 +175,7 @@ def home(f):
             + th.card("資料與 ML 專題", projects)
             + th.card("我怎麼做產品分析", method)
             + th.card("具體會的東西", skills)
+            + tools_card("index.html")
             + th.card("聯絡", contact))
 
     return th.page(
@@ -357,6 +358,7 @@ def birthday_deals(con, f):
             + th.card("分析二：成本與可靠性", cost)
             + th.card("分析三：使用者行為（等資料）", users)
             + th.card("決策紀錄（節錄）", decisions)
+            + tools_card("birthday-deals.html")
             + th.card("還沒做到的", todo))
 
     return th.page(
@@ -441,6 +443,7 @@ def bandary():
             + th.card("已經做出來的東西", work)
             + th.card("要衡量什麼", frame)
             + th.card("為什麼不看下載數", why)
+            + tools_card("bandary.html")
             + th.card("還缺什麼才寫得下去", need))
     return th.page(
         filename="bandary.html",
@@ -528,6 +531,7 @@ def relatestats():
             + th.card("已經做出來的東西", work)
             + th.card("核心產品決策：不要網路權限", decision)
             + th.card("那要怎麼知道做得好不好", howto + frame)
+            + tools_card("relatestats.html")
             + th.card("這個取捨值不值得", tradeoff))
     return th.page(
         filename="relatestats.html",
@@ -662,6 +666,7 @@ def ml_autofill():
             + th.card("結果：三個任務，差很多", result)
             + th.card("真正要挑的是門檻，不是準確率", tradeoff)
             + th.card("兩件做不起來的事，以及為什麼", honest)
+            + tools_card("ml-autofill.html")
             + th.card("產品上怎麼用", use))
     return th.page(
         filename="ml-autofill.html",
@@ -790,6 +795,7 @@ def venue_clusters():
             + th.card("結果", result)
             + th.card("對不上的那些，才是重點", limits)
             + th.card("資料結構：為什麼不能用暴力法", perf)
+            + tools_card("venue-clusters.html")
             + th.card("產品上怎麼用", use))
     return th.page(
         filename="venue-clusters.html",
@@ -871,6 +877,84 @@ background:#f9f9f7;color:#0b0b0b;font:15px/1.8 system-ui,-apple-system,
         target = base + ("" if name == "index.html" else name)
         (OLD_DOCS / name).write_text(tpl.format(t=target), encoding="utf-8")
     print(f"舊網址留了 {len(names)} 個轉址頁 → {OLD_DOCS.name}/")
+
+
+# ───────────────── 用到的技能與工具 ─────────────────
+# 用人主管掃一頁的時間大概五秒，所以每一頁都要有這一塊：
+# 這份分析實際動用了什麼能力、什麼軟體。寫實際用到的，沒用到的不要列。
+
+TOOLS = {
+    "birthday-deals.html": [
+        ("SQL", "SQLite · CTE · window function · 自己實作中位數與四分位 · 純 SQL 算 Pearson 相關"),
+        ("Python", "標準庫 ETL（巢狀 JSON 攤平成可 join 的表）· 無第三方套件"),
+        ("資料建模", "分析用 schema 設計 · 多對多展開 · view 處理「全台連鎖」的縣市推導"),
+        ("指標設計", "供給／需求／品質／成本四組指標與定義 · 供需落差用占比相減"),
+        ("API 串接", "Supabase PostgREST 公開 view · Google Places Text Search"),
+        ("成本分析", "Egress 歸因與拆解 · 固定成本 vs 變動成本 · 風險排序"),
+        ("視覺化", "自製 inline SVG 圖表（橫條、直條、散佈、熱度交叉表、diverging）"),
+    ],
+    "ml-autofill.html": [
+        ("機器學習", "文字分類 · scikit-learn · 羅吉斯迴歸（class_weight 平衡）· ComplementNB · 校準過的線性 SVM"),
+        ("特徵工程", "字元 n-gram TF-IDF（char_wb 2–4）· 不斷詞的理由與取捨"),
+        ("模型評估", "五折 StratifiedKFold · out-of-fold 預測 · macro-F1 · 混淆矩陣 · baseline 對照"),
+        ("上線判斷", "信心門檻換覆蓋率 · 以「自動填的至少九成對」挑 operating point"),
+        ("實驗設計", "兩個消融實驗：資料洩漏的代價、分類法造成的誤差"),
+        ("工具", "scikit-learn · numpy · joblib · SQLite · model card"),
+    ],
+    "venue-clusters.html": [
+        ("非監督學習", "DBSCAN · haversine 距離 · 參數網格掃描（eps × min_samples 共 12 組）"),
+        ("空間資料", "BallTree 空間索引 · 經緯度分群 · 群中心與半徑比對"),
+        ("效能", "O(n²) 暴力法 vs O(log n) 索引：21,209 點實測 55.5 秒 → 2.6 秒"),
+        ("評估", "以 148 個人工商圈當對照組算 recall · silhouette · 參數取捨曲線"),
+        ("領域規則", "一群至少三個不同品牌，排除「同一條街五家同品牌」的假商圈"),
+        ("工具", "scikit-learn · numpy · OpenStreetMap 資料（ODbL）· SQLite"),
+    ],
+    "billing-forecast.html": [
+        ("財務建模", "工程請款與現金流模型 · 預收訂金／預付款／保留款還原 · 損益與金流雙軌對照"),
+        ("成本分析", "23 家下包的毛利拆解 · 與預算版本的差異分析 · 間接成本歸屬"),
+        ("風險", "檔期與收款時間差 · 墊款區間辨識 · 四項待確認差異（含保留款雙扣）"),
+        ("資料處理", "多來源單據彙整 · 情境參數（成本率、入帳延遲、保留款退還月）"),
+        ("視覺化", "互動式圖表 · 每月與累計現金流 · 廠商毛利排序"),
+        ("資料倫理", "對外版本去識別化：公司名代號化、檔名與單據編號移除、金額保留"),
+    ],
+    "sql-report.html": [
+        ("SQL", "十一題查詢全部用 CTE 與 window function · 自己實作 median／quartile／cumulative／ntile／pivot／Pearson"),
+        ("資料治理", "來源分級（官方／媒體／部落格／社群）· 複查延遲 · 過期自動下架的規則推導"),
+        ("Python", "標準庫 ETL 與報告產生器 · 無 pandas／matplotlib"),
+        ("工具", "SQLite 3.50 · Python 3.13 · 自製 SVG 圖表"),
+    ],
+    "bandary.html": [
+        ("產品分析", "為「不定期使用」的產品設計指標：不看日活、看有演出那週的回訪"),
+        ("回饋機制", "App 內意見回饋表單 → Firestore · 1–5 星滿意度欄位 · NPS 近似值定義"),
+        ("工具（產品端）", "Kotlin · Jetpack Compose · Room · Hilt · WorkManager · Firebase Auth／Firestore · Google Calendar API"),
+        ("待接上", "Play Console 匯出 · Firebase Analytics 事件匯出"),
+    ],
+    "relatestats.html": [
+        ("產品決策", "隱私優先架構的取捨分析：不加網路權限，代價是零遙測"),
+        ("衡量設計", "收不到行為資料時的替代指標：Play Console、評論主題分類、許願板投票"),
+        ("法遵", "資料安全性申報 · 無障礙 API 聲明 · 隱私權政策三份文件的一致性"),
+        ("工具（產品端）", "Kotlin · Jetpack Compose · 通知監聽 · 無障礙服務 · 全本地儲存"),
+    ],
+    "index.html": [
+        ("SQL", "SQLite · CTE · window function · 自己實作統計量"),
+        ("Python", "ETL · scikit-learn · 靜態站產生器 · 標準庫為主"),
+        ("機器學習", "文字分類 · 非監督分群 · 交叉驗證與 baseline 對照 · 消融實驗"),
+        ("資料視覺化", "自製 inline SVG 圖表系統（深色模式、無外部套件）"),
+        ("分析方法", "指標設計 · 供需落差 · 成本歸因 · 財務與現金流建模"),
+        ("工程", "Git · GitHub Pages · 自動化發布 · 回歸測試 · 資料去識別化"),
+    ],
+}
+
+
+def tools_card(page):
+    rows = TOOLS.get(page)
+    if not rows:
+        return ""
+    body = "".join(
+        f'<tr><th scope="row">{th.esc(k)}</th><td>{th.esc(v)}</td></tr>' for k, v in rows)
+    return th.card("用到的技能與工具",
+                   '<p class="answer">這一頁實際動用到的東西，沒用到的不列。</p>'
+                   f'<table class="tools"><tbody>{body}</tbody></table>')
 
 
 # ─────────────────────── 組裝 ───────────────────────

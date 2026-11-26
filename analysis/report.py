@@ -434,7 +434,7 @@ def build():
         meta=(f'資料：壽星日 <code>offers.json</code>（最後查證 {esc(meta_build)}）'
               f'＋ Google Places 門市彙總　·　工具：SQLite ＋ Python 標準庫　·　'
               f'產出 {now:%Y-%m-%d %H:%M}（UTC+8）'),
-        body=intro + "".join(secs) + method + limits,
+        body=intro + "".join(secs) + method + th.card("用到的技能與工具", '<p class="answer">這一頁實際動用到的東西。</p>' '<table class="tools"><tbody><tr><th scope="row">SQL</th><td>SQLite · CTE · window function · 自己實作 median／quartile／cumulative／ntile／pivot／Pearson 相關</td></tr><tr><th scope="row">資料治理</th><td>來源分級、複查延遲、過期自動下架的規則推導</td></tr><tr><th scope="row">Python</th><td>標準庫 ETL 與報告產生器，沒用 pandas／matplotlib</td></tr><tr><th scope="row">視覺化</th><td>自製 inline SVG：橫條、直條、散佈、熱度交叉表、diverging</td></tr></tbody></table>') + limits,
     )
     OUT.write_text(doc, encoding="utf-8")
     PAGES.parent.mkdir(exist_ok=True)

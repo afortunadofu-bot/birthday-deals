@@ -231,6 +231,10 @@ thead th{color:var(--muted); font-weight:600; font-size:12px; white-space:nowrap
 td{color:var(--ink-2)}
 tbody th{font-weight:500; color:var(--ink)}
 table.metrics tbody th{white-space:nowrap}
+table.tools tbody th{white-space:nowrap;vertical-align:top;width:1%;padding-right:18px;
+  font-weight:600;color:var(--ink)}
+table.tools td{color:var(--ink-2);line-height:1.75}
+table.tools tr:first-child th,table.tools tr:first-child td{border-top:1px solid var(--border)}
 table.metrics td:last-child{font-variant-numeric:tabular-nums; white-space:nowrap}
 table.matrix{border-collapse:separate; border-spacing:2px}
 table.matrix td{text-align:center; color:var(--ink); border-radius:3px; border:0}

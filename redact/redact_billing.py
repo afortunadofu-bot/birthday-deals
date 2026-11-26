@@ -39,6 +39,11 @@ BANNER = """<div style="max-width:1100px;margin:0 auto;padding:14px 18px;
   <b>金額、時程、比例全部是原始數字</b>，分析結論沒有被改動。
   <a href="index.html" style="color:#7a5c12;">← 回作品集</a>　·　
   <a href="../" style="color:#7a5c12;">個人網頁</a>
+  <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0d9a0;font-size:13px;">
+    <b>用到的技能與工具：</b>工程請款與現金流建模 · 預收訂金／預付款／保留款還原 ·
+    23 家下包的毛利拆解 · 預算版本差異分析 · 情境參數（成本率、入帳延遲、保留款退還月）·
+    互動式圖表 · 對外版本去識別化
+  </div>
 </div>
 """
 
