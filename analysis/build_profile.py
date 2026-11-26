@@ -326,6 +326,14 @@ def case_page(w, d, orgs, caps, prev_next, now, featured_all=()):
                  '<span class="zh">連結</span><span class="en">Links</span></p>'
                  f'<ul>{items}</ul></div>')
 
+    tools = ""
+    if w.get("tools"):
+        rows_t = "".join(f'<tr><th scope="row">{esc(r["k"])}</th>'
+                         f'<td>{esc(r["v"])}</td></tr>' for r in w["tools"])
+        tools = ('<div class="tools-b"><p class="tools-h">'
+                 '<span class="zh">實際做了什麼</span><span class="en">What I actually did</span>'
+                 '</p><table class="tools-t"><tbody>' + rows_t + "</tbody></table></div>")
+
     cta = ""
     if w.get("cta"):
         cta = (f'<a class="cta" href="{esc(w["cta"]["href"])}">{bi(w["cta"])}</a>')
@@ -352,6 +360,7 @@ def case_page(w, d, orgs, caps, prev_next, now, featured_all=()):
   {table}
   <div class="sts">{stats}</div>
   <div class="chain">{chain}</div>
+  {tools}
   {cta}
   {links}
   <div class="tags">{tags}</div>
@@ -407,10 +416,14 @@ def home(d, orgs, caps, featured, rest, now):
             for k in w["links"]) + "</p>") if w.get("links") else "")
         + "</div>" for w in rest)
 
+    def org_link(o):
+        inner = bi(o)
+        return f'<a href="{esc(o["url"])}" class="tl-a">{inner}</a>' if o.get("url") else inner
+
     tl = "".join(
         f'<li{" class=now" if o.get("current") else ""}>'
         f'<span class="tl-p">{esc(o["period"])}</span>'
-        f'<span class="tl-o">{bi(o)}</span>{bi(o["role"], cls="tl-r")}'
+        f'<span class="tl-o">{org_link(o)}</span>{bi(o["role"], cls="tl-r")}'
         f'{bi(o["note"], cls="tl-n")}</li>' for o in d["orgs"])
 
     ap = "".join(f'<div class="ap"><h3>{bi(a)}</h3><p>{bi(a["body"])}</p></div>'
@@ -443,14 +456,28 @@ def home(d, orgs, caps, featured, rest, now):
   <section class="hero">
     <h1>{bi(d["tagline"])}</h1>
     <p class="sub">{bi(d["sub"])}</p>
+    <div class="btns">
+      <a class="btn" href="work/"><span class="zh">分析作品集（八份）→</span><span class="en">Analysis portfolio →</span></a>
+      <a class="btn ghost" href="https://afortunadofu-bot.github.io/celinefubrandpage/">小數據所 →</a>
+    </div>
     <div class="hns">{nums}</div>
   </section>
 
   <section class="blk">
     <div class="bh"><h2><span class="zh">精選案例</span><span class="en">Selected cases</span></h2>
-      <p class="bn"><span class="zh">六件寫完整的：遇到什麼問題、當初怎麼拆、最後怎麼解、結果是什麼。</span>
-        <span class="en">Six written in full: the problem, how I broke it down, what I did, what came out.</span></p></div>
+      <p class="bn"><span class="zh">{len(featured)} 件寫完整的：遇到什麼問題、當初怎麼拆、最後怎麼解、結果是什麼。</span>
+        <span class="en">{len(featured)} written in full: the problem, how I broke it down, what I did, what came out.</span></p></div>
     <div class="fcs">{''.join(cards)}</div>
+  </section>
+
+  <section class="blk cta-blk">
+    <div><h2><span class="zh">自己做的產品與分析</span><span class="en">Own products &amp; analysis</span></h2>
+      <p><span class="zh">三個自己上架的產品，加八份把它們算清楚的分析：SQL、機器學習、空間分群都在裡面，數字是即時抓的。</span>
+         <span class="en">Three shipped products and eight analyses — SQL, machine learning and spatial clustering. The numbers are live.</span></p></div>
+    <div class="btns">
+      <a class="btn" href="work/"><span class="zh">分析作品集（八份）→</span><span class="en">Analysis portfolio →</span></a>
+      <a class="btn ghost" href="https://afortunadofu-bot.github.io/celinefubrandpage/">小數據所 →</a>
+    </div>
   </section>
 
   <section class="blk" id="rest">
@@ -476,16 +503,6 @@ def home(d, orgs, caps, featured, rest, now):
   <section class="blk" id="think">
     <div class="bh"><h2><span class="zh">怎麼想事情</span><span class="en">How I think</span></h2></div>
     <div class="aps">{ap}</div>
-  </section>
-
-  <section class="blk cta-blk">
-    <div><h2><span class="zh">自己做的產品與分析</span><span class="en">Own products &amp; analysis</span></h2>
-      <p><span class="zh">三個上架的產品，加五份把它們算清楚的分析。數字是即時的。</span>
-         <span class="en">Three shipped products and five analyses. The numbers are live.</span></p></div>
-    <div class="btns">
-      <a class="btn" href="work/"><span class="zh">分析作品集 →</span><span class="en">Portfolio →</span></a>
-      <a class="btn ghost" href="https://afortunadofu-bot.github.io/celinefubrandpage/">小數據所 →</a>
-    </div>
   </section>
 
   <section class="blk" id="contact">
@@ -616,13 +633,18 @@ h1,h2,h3{font-family:var(--serif);font-weight:700;letter-spacing:-.01em}
 .aps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:26px}
 .ap h3{font-size:16px;margin:0 0 7px}
 .ap p{margin:0;color:var(--ink-2);font-size:14.5px}
+.tl-a{color:inherit;text-decoration:none;border-bottom:1px solid var(--line)}
+.tl-a:hover{border-bottom-color:var(--accent)}
 .cta-blk{display:flex;justify-content:space-between;gap:26px;flex-wrap:wrap;align-items:flex-end}
 .cta-blk h2{font-size:25px;margin:0 0 8px}
 .cta-blk p{margin:0;color:var(--ink-2);max-width:33em}
-.btns{display:flex;gap:10px;flex-wrap:wrap}
-.btn{display:inline-block;padding:10px 20px;background:var(--ink);color:var(--page);
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0 0}
+.hero .btns{margin:26px 0 30px}
+.btn{display:inline-block;padding:13px 26px;background:var(--ink);color:var(--page);
   text-decoration:none;font-size:14px;border-radius:2px}
 .btn.ghost{background:none;color:var(--ink-2);border:1px solid var(--line)}
+.cta-blk{padding:26px;border:1px solid var(--line);border-radius:3px;background:var(--card)}
+.cta-blk .btns{margin:18px 0 0}
 .cl{display:grid;grid-template-columns:auto 1fr;gap:9px 24px;margin:0;font-size:15.5px}
 .cl dt{color:var(--muted);font-size:13px;padding-top:3px}
 .cl dd{margin:0}
@@ -638,9 +660,9 @@ h1,h2,h3{font-family:var(--serif);font-weight:700;letter-spacing:-.01em}
 .bn-v{font-family:var(--serif);font-size:clamp(34px,6vw,54px);line-height:1;letter-spacing:-.03em}
 .bn-l{color:var(--muted);font-size:14px}
 .shots{display:grid;gap:14px;margin:0 0 38px;justify-items:start}
-.shots-1{grid-template-columns:minmax(0,420px)}
-.shots-2{grid-template-columns:repeat(2,minmax(0,370px))}
-.shots-3{grid-template-columns:repeat(3,1fr)}
+.shots-1{grid-template-columns:minmax(0,620px)}
+.shots-2{grid-template-columns:repeat(2,minmax(0,480px))}
+.shots-3{grid-template-columns:repeat(2,minmax(0,480px))}
 .shots figure{margin:0}
 .shots img{width:100%;max-width:100%;border:1px solid var(--line);border-radius:2px;display:block}
 .shots figcaption{font-size:12px;color:var(--muted);margin-top:7px}
@@ -654,6 +676,18 @@ h1,h2,h3{font-family:var(--serif);font-weight:700;letter-spacing:-.01em}
   white-space:nowrap}
 .doc-t td:nth-last-child(-n+2){color:var(--rule);letter-spacing:.14em;width:1%;white-space:nowrap}
 .doc figcaption{font-size:12px;color:var(--muted);margin-top:9px;line-height:1.7}
+.tools-b{margin:0 0 38px}
+.tools-h{font-size:11.5px;letter-spacing:.1em;color:var(--muted);margin:0 0 10px;font-weight:600}
+.tools-t{width:100%;border-collapse:collapse;font-size:14px;background:var(--card);
+  border:1px solid var(--line)}
+.tools-t th,.tools-t td{padding:10px 14px;border-bottom:1px solid var(--line);
+  text-align:left;vertical-align:top}
+.tools-t tr:last-child th,.tools-t tr:last-child td{border-bottom:0}
+.tools-t th{width:118px;white-space:nowrap;font-weight:600;color:var(--accent-ink,var(--ink));
+  font-size:13px}
+.tools-t td{color:var(--ink-2);line-height:1.75}
+@media(max-width:600px){.tools-t th,.tools-t td{display:block;width:auto}
+  .tools-t th{border-bottom:0;padding-bottom:2px}}
 .figwrap{margin:0 0 38px;padding:20px;border:1px solid var(--line);border-radius:2px;background:var(--card)}
 .fig{width:100%;height:auto;display:block}
 .fig text{font:13px var(--sans);fill:var(--ink)}
@@ -719,8 +753,7 @@ h1,h2,h3{font-family:var(--serif);font-weight:700;letter-spacing:-.01em}
   .fc{grid-template-columns:1fr;gap:18px}
   .fc-flip .fc-img{order:0}
   .fc-img img{height:150px}
-  .shots-3,.shots-1{grid-template-columns:minmax(0,420px)}
-.shots-2{grid-template-columns:repeat(2,minmax(0,370px))}
+  .shots-3,.shots-2,.shots-1{grid-template-columns:minmax(0,100%)}
   .tl li{grid-template-columns:1fr}
   .tl-r,.tl-n{grid-column:1}
   .hero{padding:56px 0 16px}
