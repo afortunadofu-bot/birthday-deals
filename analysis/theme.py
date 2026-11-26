@@ -101,6 +101,7 @@ def page(*, filename, title, lead, meta, body, desc=""):
 <header class="top">
   <div class="wrap">
     <a class="brand" href="../">← 傅聖嵐 Fu Sheng-Lan</a>
+    <p class="eyebrow"><span>分析案例</span><span class="eyebrow-dot">·</span>傅聖嵐的作品集</p>
     <h1>{esc(title)}</h1>
     <p class="sub">{lead}</p>
     <p class="byline">{meta}</p>

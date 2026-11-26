@@ -368,7 +368,7 @@ def birthday_deals(con, f):
         title="壽星日 Birthday Deals",
         lead="台灣各品牌的生日優惠，可以篩選、收藏、記錄自己省下多少。",
         desc="壽星日的產品分析案例：指標框架、供給面分析、資料治理、成本分析與決策紀錄。",
-        meta=f'線上：<a href="{SITE_URL}">birthdaydeals</a>　·　'
+        meta=f'<a class="live-btn" href="{SITE_URL}">開啟線上產品 ↗</a>　'
              f"2026-08 開站，154 個版本　·　角色：企劃／開發／分析　·　更新 {STAMP}",
         body=body,
     )

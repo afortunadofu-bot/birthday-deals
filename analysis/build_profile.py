@@ -300,6 +300,13 @@ def case_page(w, d, orgs, caps, prev_next, now, featured_all=()):
         f'<section class="step{" todo" if c.get("todo") else ""}">'
         f'<h2>{bi(c["k"])}</h2><p>{bi(c["v"])}</p></section>' for c in w.get("chain", []))
 
+    skills = ""
+    if w.get("skills"):
+        chips = "".join(f'<span class="sk">{esc(s)}</span>' for s in w["skills"])
+        skills = ('<div class="skills"><span class="skills-h">'
+                  '<span class="zh">用到的技能</span><span class="en">Skills</span></span>'
+                  f'{chips}</div>')
+
     links = ""
     if w.get("links"):
         items = "".join(
@@ -328,6 +335,7 @@ def case_page(w, d, orgs, caps, prev_next, now, featured_all=()):
   <p class="kicker">{bi(w["kicker"])}<span class="kdot">·</span>{esc(org["period"])}</p>
   <h1>{bi(w["title"])}</h1>
   <p class="lead">{bi(w["result"])}</p>
+  {skills}
   <div class="bignum"><span class="bn-v"{live_big}>{esc(w["big"]["v"])}</span>{bi(w["big"], cls="bn-l")}</div>
   {imgs}
   <div class="sts">{stats}</div>
@@ -363,6 +371,7 @@ def home(d, orgs, caps, featured, rest, now):
           <h3>{bi(w["title"])}</h3>
           <p class="fc-big"><b>{esc(w["big"]["v"])}</b>{bi(w["big"], cls="fc-big-l")}</p>
           <p class="fc-r">{bi(w["result"])}</p>
+          <p class="fc-sk">{" · ".join(esc(s) for s in w.get("skills", [])[:4])}</p>
           <span class="fc-go"><span class="zh">看這個案例 →</span><span class="en">Read the case →</span></span>
         </div>
       </a>""")
@@ -379,6 +388,8 @@ def home(d, orgs, caps, featured, rest, now):
         f'<div class="row-m">{bi(w["title"], cls="row-t")}'
         f'<span class="row-o">{bi(orgs[w["org"]])}</span></div>'
         f'<p class="row-r">{bi(w["result"])}</p>'
+        + (('<p class="row-sk">' + " · ".join(esc(s) for s in w["skills"]) + "</p>")
+           if w.get("skills") else "")
         + (('<p class="row-l">' + " · ".join(
             f'<a href="{esc(k["href"].replace("../", ""))}">{t(k, "zh")}</a>'
             for k in w["links"]) + "</p>") if w.get("links") else "")
@@ -613,6 +624,12 @@ h1,h2,h3{font-family:var(--serif);font-weight:700;letter-spacing:-.01em}
   color:var(--rule);font-variant-numeric:tabular-nums}
 .step p{margin:0;font-size:16.5px;line-height:1.95;color:var(--ink-2);max-width:38em}
 .step.todo p{color:var(--muted);border-left:2px solid var(--rule);padding-left:14px}
+.skills{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:0 0 34px}
+.skills-h{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  margin-right:6px;font-weight:600}
+.sk{font-size:12.5px;padding:3px 11px;border:1px solid var(--rule);border-radius:2px;
+  color:var(--ink);background:var(--card)}
+.fc-sk{margin:0 0 12px;font-size:12px;color:var(--muted);letter-spacing:.02em}
 .links{margin:0 0 30px;padding:20px 0 0;border-top:1px solid var(--line)}
 .links-h{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
   margin:0 0 10px;font-weight:600}
@@ -620,6 +637,7 @@ h1,h2,h3{font-family:var(--serif);font-weight:700;letter-spacing:-.01em}
 .links a{font-size:14px;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--rule)}
 .links a:hover{border-color:var(--accent);color:var(--accent)}
 .links a::after{content:" ↗";color:var(--muted);font-size:11px}
+.row-sk{margin:7px 0 0;font-size:12px;color:var(--muted);letter-spacing:.02em}
 .row-l{margin:6px 0 0;font-size:13px}
 .row-l a{color:var(--accent);text-decoration:none;border-bottom:1px solid transparent}
 .row-l a:hover{border-color:var(--accent)}
