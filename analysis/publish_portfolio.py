@@ -56,7 +56,10 @@ def push(repo, paths, message):
         return False
     print(f"   {repo.name}：{len(changed)} 個檔案")
     run(["git", "add"] + paths, repo)
-    run(["git", "commit", "-q", "-m", message], repo)
+    run(["git", "commit", "-q", "-m",
+         message + "
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"], repo)
     run(["git", "push", "-q", "origin", "HEAD"], repo)
     head = run(["git", "log", "--oneline", "-1"], repo, quiet=True).stdout.strip()
     print(f"   推上去了：{head}")
