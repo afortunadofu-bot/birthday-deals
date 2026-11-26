@@ -190,7 +190,7 @@ def build():
                                extra=[("median_value", "面額中位數"), ("same_day_ok", "當天可辦")])
                + '<p class="note">「當天可辦」那欄要小心讀：'
                  '「不用會員」這組有 22 筆的 advance_days 是 null（品牌沒明訂），'
-                 '所以它顯示 0，不是真的來不及。這就是 Q3 把「未明訂」單獨一組的原因。</p>')
+                 '所以它顯示 0，實際上來得及。這就是 Q3 把「未明訂」單獨一組的原因。</p>')
     q4_tbl = ""
 
     # ---------- Q5 來源 ----------
@@ -283,7 +283,7 @@ def build():
               f'{len(expired)} 筆已經過期還掛在上面，{len(noend)} 筆連迄日都沒寫——'
               f'沒有迄日，程式就不知道什麼時候該收。'
               f'檔期會自己走，靠人記得下架一定會漏，所以這一欄是必填。'
-              f'這一節列的是要處理的清單，不是分析結論。')
+              f'這一節列的是要處理的清單。')
     pill = {"已過期": ("critical", "✕"), "沒寫迄日": ("warning", "！"),
             "14 天內到期": ("warning", "！"), "還沒開始": ("muted", "·"),
             "進行中": ("good", "✓")}
@@ -319,7 +319,7 @@ def build():
                    f'它只佔 {best["supply_share"]}% 的優惠數，卻吃掉 {best["wish_share"]}% 的收藏；'
                    f'{esc(worst["category"])}剛好相反，供給 {worst["supply_share"]}%、'
                    f'收藏只有 {worst["wish_share"]}%。'
-                   f'用占比相減而不是直接比數量，是為了不讓「本來就比較多」的類別自動贏。')
+                   f'用占比相減，是為了不讓「本來就比較多」的類別自動贏。')
         q10_body = ('<p class="caption">需求占比（收藏）減供給占比（優惠數），單位是百分點</p>'
                     + ch.diverging_hbar(q10, label="category", value="gap", unit=" pp",
                                         label_w=84, pos_note="供給不足（該補）",
@@ -333,7 +333,7 @@ def build():
         q11_ans = (f'<b>{len(q11)} 筆要排進下一輪複查。</b>'
                    f'條件是回報三次以上、成功率低於 80%——回報太少不能下結論，'
                    f'一個人說失敗可能只是他那天運氣不好。'
-                   f'整體成功率 {avg_ok}%，所以這張清單短是正常的，不是查詢壞了。')
+                   f'整體成功率 {avg_ok}%，所以這張清單短是正常的。')
         q11_body = ('<p class="caption">回報三次以上、成功率低於 80% 的優惠</p>'
                     + ch.table(q11, [("brand", "品牌"), ("category", "類別"),
                                      ("report_count", "回報數"), ("success_rate", "成功率 %"),
@@ -382,7 +382,7 @@ def build():
       {n_brand_stores} 個品牌抓得到門市，其中 {q8[0]["corr_n"]} 個同時估得出面額，
       Q7 的散佈圖就是這 {q8[0]["corr_n"]} 個點。品牌名對不上的（聯名卡、改名、小店）
       沒有門市數，所以這一題天生偏向連鎖品牌。</li>
-    <li><b>縣市覆蓋看的是「有沒有」，不是「多好拿」。</b>Q6 算的是這個縣市有幾筆優惠，
+    <li><b>縣市覆蓋只看「有沒有」。</b>Q6 算的是這個縣市有幾筆優惠，
       沒有按人口或店數標準化：手上沒有可引用的人口資料，所以不換算。</li>
     <li><b>沒有使用者行為資料。</b>這份分析完全是優惠與門市的靜態結構，
       沒有碰任何人的瀏覽或兌換紀錄。</li>
@@ -392,7 +392,7 @@ def build():
     method = f"""
 <section class="card" id="method">
   <h2>怎麼做的</h2>
-  <p>九個問題、九個 <code>.sql</code> 檔，全部跑在 SQLite。統計量刻意全部寫在 SQL 裡：
+  <p>十一個問題、十一支 <code>.sql</code> 檔，全部跑在 SQLite。統計量全部寫在 SQL 裡：
     中位數與四分位用 <code>row_number() over (partition by …)</code> 自己做
     （SQLite 沒有 <code>percentile_cont</code>）、累積比例用
     <code>sum() over (order by …)</code>、分組用 <code>ntile(4)</code>、

@@ -8,12 +8,13 @@
 
 它會做四件事：
 
-  1. `redact_billing.py`（有原稿才跑）→ 產出去識別化的請款預估頁
-  2. `build_site.py`（內含 report.py）→ 產出整個作品集到 ../../../celine.fu/work/
-  3. celine.fu：commit + push（作品集跟個人網頁同一個 repo、同一個站）
-  4. birthday-deals：commit + push，但**只加自己的那幾個路徑**
+  1. `redact_billing.py`、`host_staffing.py`（有原稿才跑）→ 產出兩頁外部文件
+  2. `build_site.py`（內含 report.py）→ 作品集產到 ../../../celine.fu/work/
+  3. `build_profile.py --live` → 個人網頁首頁與案例頁產到 celine.fu/
+  4. celine.fu：commit + push（個人網頁跟作品集同一個 repo、同一個站）
+  5. birthday-deals：commit + push，但**只加自己的那幾個路徑**
 
-第 4 點的限制是故意的：這個 repo 常常有別的工作同時在改（爬門市的那些
+第 5 點的限制是故意的：這個 repo 常常有別的工作同時在改（爬門市的那些
 stores_import_*.sql 就是），`git add -A` 會把別人做到一半的東西一起推出去。
 所以這裡只 add 我自己產出的路徑，其他一律不碰。
 """
@@ -71,24 +72,30 @@ def main():
     stamp = f"{datetime.now(TPE):%Y-%m-%d}"
     msg = args.message or f"作品集重建（{stamp}）"
 
-    print("1／3 請款預估頁")
-    if (REPO / "redact" / "source" / "billing.html").exists():
-        run([sys.executable, "-X", "utf8", "redact_billing.py"], REPO / "redact")
-    else:
-        print("   沒有原稿，跳過（線上那一頁維持上次的）")
+    print("1／4 外部文件兩頁")
+    for script, src, what in [("redact_billing.py", "billing.html", "請款預估"),
+                              ("host_staffing.py", "staffing.html", "人力編制")]:
+        if (REPO / "redact" / "source" / src).exists():
+            run([sys.executable, "-X", "utf8", script], REPO / "redact")
+        else:
+            print(f"   {what}：沒有原稿，跳過（線上那一頁維持上次的）")
 
-    print("2／3 作品集")
+    print("2／4 作品集")
     run([sys.executable, "-X", "utf8", "build_site.py"], HERE)
 
+    print("3／4 個人網頁")
+    run([sys.executable, "-X", "utf8", "build_profile.py", "--live"], HERE)
+
     if args.dry:
-        print("3／3 --dry：不碰 git")
+        print("4／4 --dry：不碰 git")
         return
 
-    print("3／3 推上線")
-    a = push(SITE, ["work", "index.html", "README.md"], msg)
+    print("4／4 推上線")
+    a = push(SITE, ["work", "case", "data", "img", "index.html", "README.md"], msg)
     b = push(REPO, MINE, msg)
     if a:
-        print("   作品集：https://afortunadofu-bot.github.io/celine.fu/work/")
+        print("   個人網頁：https://afortunadofu-bot.github.io/celine.fu/")
+        print("   作品集：  https://afortunadofu-bot.github.io/celine.fu/work/")
     if not (a or b):
         print("   兩邊都沒有異動，什麼都沒推。")
 

@@ -189,6 +189,7 @@ def shell(*, title, desc, body, depth=0, now=None, cases=()):
         <li><a href="{up}index.html"><span class="zh">首頁</span><span class="en">Home</span></a></li>
         <li><a href="{up}index.html#rest"><span class="zh">其他做過的事</span><span class="en">Everything else</span></a></li>
         <li><a href="{up}index.html#where"><span class="zh">待過的地方</span><span class="en">Where</span></a></li>
+        <li><a href="{up}index.html#skills"><span class="zh">技能</span><span class="en">Skills</span></a></li>
         <li><a href="{up}index.html#think"><span class="zh">怎麼想事情</span><span class="en">How I think</span></a></li>
         <li><a href="{up}work/"><span class="zh">分析作品集</span><span class="en">Analysis portfolio</span></a></li>
         <li><a href="https://afortunadofu-bot.github.io/celinefubrandpage/">小數據所</a></li>
@@ -290,6 +291,16 @@ def case_page(w, d, orgs, caps, prev_next, now, featured_all=()):
         imgs = f'<div class="figwrap">{FIGURES[w["figure"]["kind"]]()}</div>'
 
     live_big = f' data-live="{w["big"]["live"]}"' if w.get("big", {}).get("live") else ""
+    table = ""
+    if w.get("table"):
+        tb = w["table"]
+        head = "".join(f"<th>{esc(h)}</th>" for h in tb["head"])
+        body = "".join("<tr>" + "".join(f"<td>{esc(c)}</td>" for c in row) + "</tr>"
+                       for row in tb["rows"])
+        table = (f'<figure class="doc"><table class="doc-t"><thead><tr>{head}</tr></thead>'
+                 f'<tbody>{body}</tbody></table>'
+                 f'<figcaption>{bi(tb["caption"])}</figcaption></figure>')
+
     stats = "".join(
         f'<div class="st"><div class="st-v"'
         + (f' data-live="{s["live"]}"' if s.get("live") else "")
@@ -338,6 +349,7 @@ def case_page(w, d, orgs, caps, prev_next, now, featured_all=()):
   {skills}
   <div class="bignum"><span class="bn-v"{live_big}>{esc(w["big"]["v"])}</span>{bi(w["big"], cls="bn-l")}</div>
   {imgs}
+  {table}
   <div class="sts">{stats}</div>
   <div class="chain">{chain}</div>
   {cta}
@@ -403,6 +415,27 @@ def home(d, orgs, caps, featured, rest, now):
 
     ap = "".join(f'<div class="ap"><h3>{bi(a)}</h3><p>{bi(a["body"])}</p></div>'
                  for a in d["approach"])
+
+    # 技能總覽：把每件作品的 skills 收攏去重，照出現次數排。
+    # 不另外維護一份清單，才不會跟案例頁對不起來。
+    tally = {}
+    for x in d["work"]:
+        for s in x.get("skills", []):
+            tally[s] = tally.get(s, 0) + 1
+    rows_sk = []
+    for zh, en, items in SKILL_GROUPS:
+        have = sorted((s for s in items if s in tally), key=lambda s: (-tally[s], s))
+        if not have:
+            continue
+        chips_sk = "".join(
+            f'<span class="sk2">{esc(s)}'
+            + (f'<i>{tally[s]}</i>' if tally[s] > 1 else "") + "</span>" for s in have)
+        rows_sk.append(f'<div class="skg"><h3><span class="zh">{zh}</span>'
+                       f'<span class="en">{en}</span></h3>'
+                       f'<div class="sks">{chips_sk}</div></div>')
+    skill_all = "".join(rows_sk)
+    missing = sorted(set(tally) - {s for _, _, xs in SKILL_GROUPS for s in xs})
+    assert not missing, f"技能沒分組：{missing}"
     c = d["contact"]
 
     body = f"""
@@ -431,6 +464,13 @@ def home(d, orgs, caps, featured, rest, now):
   <section class="blk" id="where">
     <div class="bh"><h2><span class="zh">待過的地方</span><span class="en">Where</span></h2></div>
     <ol class="tl">{tl}</ol>
+  </section>
+
+  <section class="blk" id="skills">
+    <div class="bh"><h2><span class="zh">技能</span><span class="en">Skills</span></h2>
+      <p class="bn"><span class="zh">全部來自上面那些作品，數字是出現在幾件裡。沒做過的不寫。</span>
+        <span class="en">All of these come from the work above; the number is how many pieces it appears in.</span></p></div>
+    {skill_all}
   </section>
 
   <section class="blk" id="think">
@@ -604,6 +644,16 @@ h1,h2,h3{font-family:var(--serif);font-weight:700;letter-spacing:-.01em}
 .shots figure{margin:0}
 .shots img{width:100%;max-width:100%;border:1px solid var(--line);border-radius:2px;display:block}
 .shots figcaption{font-size:12px;color:var(--muted);margin-top:7px}
+.doc{margin:0 0 38px;padding:0;overflow-x:auto}
+.doc-t{width:100%;border-collapse:collapse;font-size:13.5px;
+  font-variant-numeric:tabular-nums;background:var(--card);border:1px solid var(--line)}
+.doc-t th,.doc-t td{padding:7px 12px;border-bottom:1px solid var(--line);text-align:left}
+.doc-t thead th{font-size:11.5px;letter-spacing:.06em;color:var(--muted);font-weight:600;
+  background:var(--page)}
+.doc-t td:first-child,.doc-t td:nth-child(3),.doc-t td:nth-child(4){color:var(--muted);width:1%;
+  white-space:nowrap}
+.doc-t td:nth-last-child(-n+2){color:var(--rule);letter-spacing:.14em;width:1%;white-space:nowrap}
+.doc figcaption{font-size:12px;color:var(--muted);margin-top:9px;line-height:1.7}
 .figwrap{margin:0 0 38px;padding:20px;border:1px solid var(--line);border-radius:2px;background:var(--card)}
 .fig{width:100%;height:auto;display:block}
 .fig text{font:13px var(--sans);fill:var(--ink)}
@@ -629,6 +679,15 @@ h1,h2,h3{font-family:var(--serif);font-weight:700;letter-spacing:-.01em}
   margin-right:6px;font-weight:600}
 .sk{font-size:12.5px;padding:3px 11px;border:1px solid var(--rule);border-radius:2px;
   color:var(--ink);background:var(--card)}
+.skg{display:grid;grid-template-columns:168px 1fr;gap:18px;padding:16px 0;
+  border-top:1px solid var(--line)}
+.skg:first-child{border-top:0;padding-top:4px}
+.skg h3{margin:2px 0 0;font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.02em}
+.sks{display:flex;flex-wrap:wrap;gap:8px}
+@media(max-width:640px){.skg{grid-template-columns:1fr;gap:10px}}
+.sk2{font-size:13px;padding:4px 12px;border:1px solid var(--line);border-radius:2px;
+  color:var(--ink);background:var(--card);display:inline-flex;gap:7px;align-items:center}
+.sk2 i{font-style:normal;font-size:11px;color:var(--accent);font-variant-numeric:tabular-nums}
 .fc-sk{margin:0 0 12px;font-size:12px;color:var(--muted);letter-spacing:.02em}
 .links{margin:0 0 30px;padding:20px 0 0;border-top:1px solid var(--line)}
 .links-h{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
@@ -668,6 +727,15 @@ h1,h2,h3{font-family:var(--serif);font-weight:700;letter-spacing:-.01em}
   .hns{gap:26px 36px}
 }
 """
+
+
+SKILL_GROUPS = [('資料與分析', 'Data & analytics', ['SQL', 'Python', 'scikit-learn', 'ETL', '資料分析', '資料庫設計', '資料視覺化', 'API 串接', '指標設計 (KPI)', '機器學習', '自然語言處理 (NLP)', '特徵工程', '模型評估', '分群分析 (Clustering)', '空間資料分析', '演算法效能優化', '自動化流程', '資料去識別化', '商業分析 (BA)']),
+                ('專案與交付', 'Delivery', ['專案管理', '風險管理', '利害關係人管理', '跨部門協作', '系統整合', '時程管控', '人力資源規劃', '工時分析', '試算模型', '跨國協作']),
+                ('採購、成本與財務', 'Sourcing & finance', ['採購發包', '供應商管理', '議價談判', '合約管理', '標單審查', '專案成本控管', '成本分析', '成本談判', '現金流管理', '財務分析', '財務模型', '管理報表', '情境模擬', 'Excel 建模']),
+                ('商業與產品', 'Business & product', ['商業開發', '市場進入策略 (GTM)', '投資人關係 (IR)', '募資簡報', '客戶關係管理', 'CRM 系統設計', '銷售漏斗分析', '轉換率分析', '市場區隔分析', '受眾分析', '競品與市場研究', '使用者研究', '問卷設計', '產品定位', '產品需求管理', '展會行銷', '活動企劃', '贊助提案']),
+                ('法規與公部門', 'Compliance & public sector', ['法規遵循', '公部門標案', '投標文件撰寫 (RFP)', '政府機關溝通', '技術文件審查', '跨境法規研究', '個資合規']),
+                ('文件與溝通', 'Writing & communication', ['技術文件撰寫', '商業簡報', '簡報設計', '財務敘事', '決策支援報告', '英文溝通']),
+                ('工具與軟體', 'Tools', ['Excel', 'Android 開發', 'Kotlin', 'Jetpack Compose', 'Firebase', '產品上架'])]
 
 
 def main():
