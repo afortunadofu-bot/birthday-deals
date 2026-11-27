@@ -847,13 +847,14 @@ h1,h2,h3{font-family:var(--serif);font-weight:700;letter-spacing:-.01em}
 """
 
 
-SKILL_GROUPS = [('資料與分析', 'Data & analytics', ['SQL', 'Python', 'scikit-learn', 'ETL', '資料分析', '資料庫設計', '資料視覺化', 'API 串接', '指標設計 (KPI)', '機器學習', '自然語言處理 (NLP)', '特徵工程', '模型評估', '分群分析 (Clustering)', '空間資料分析', '演算法效能優化', '自動化流程', '資料去識別化', '商業分析 (BA)']),
-                ('專案與交付', 'Delivery', ['專案管理', '風險管理', '利害關係人管理', '跨部門協作', '系統整合', '時程管控', '人力資源規劃', '工時分析', '試算模型', '跨國協作']),
+SKILL_GROUPS = [('資料與分析', 'Data & analytics', ['SQL', 'Python', 'scikit-learn', 'ETL', '資料分析', '資料庫設計', '資料視覺化', 'API 串接 (REST)', '指標設計 (KPI)', '機器學習', '自然語言處理 (NLP)', '特徵工程', '模型評估', '分群分析 (Clustering)', '空間資料分析', '演算法效能優化', '自動化流程', '資料去識別化', '商業分析 (BA)', 'PostgreSQL', '網路爬蟲', '地理編碼 (Geocoding)', 'Google Analytics (GA4)']),
+                ('專案與交付', 'Delivery', ['專案管理', '風險管理', '利害關係人管理', '跨部門協作', '系統整合', '時程管控', '人力資源規劃', '工時分析', '試算模型']),
                 ('採購、成本與財務', 'Sourcing & finance', ['採購發包', '供應商管理', '議價談判', '合約管理', '標單審查', '專案成本控管', '成本分析', '成本談判', '現金流管理', '財務分析', '財務模型', '管理報表', '情境模擬', 'Excel 建模']),
-                ('商業與產品', 'Business & product', ['商業開發', '市場進入策略 (GTM)', '投資人關係 (IR)', '募資簡報', '客戶關係管理', 'CRM 系統設計', '銷售漏斗分析', '轉換率分析', '市場區隔分析', '受眾分析', '競品與市場研究', '使用者研究', '問卷設計', '產品定位', '產品需求管理', '展會行銷', '活動企劃', '贊助提案']),
+                ('商業與產品', 'Business & product', ['商業開發', '市場進入策略 (GTM)', '投資人關係 (IR)', '募資簡報', 'CRM 系統設計', '銷售漏斗分析', '轉換率分析', '市場區隔分析', '受眾分析', '競品與市場研究', '使用者研究', '問卷設計', '產品定位', '活動企劃', '贊助提案', 'SEO']),
                 ('法規與公部門', 'Compliance & public sector', ['法規遵循', '公部門標案', '投標文件撰寫 (RFP)', '政府機關溝通', '技術文件審查', '跨境法規研究', '個資合規']),
-                ('文件與溝通', 'Writing & communication', ['技術文件撰寫', '商業簡報', '簡報設計', '財務敘事', '決策支援報告', '英文溝通']),
-                ('工具與軟體', 'Tools', ['Excel', 'Android 開發', 'Kotlin', 'Jetpack Compose', 'Firebase', '產品上架'])]
+                ('文件與溝通', 'Writing & communication', ['技術文件撰寫', '商業簡報', '簡報設計', '財務敘事', '決策支援報告']),
+                ('工具與軟體', 'Tools', ['Excel', 'Android 開發', 'Kotlin', 'Jetpack Compose', 'Firebase', '產品上架', 'Capacitor', 'Google Play Console', 'JavaScript', 'OpenStreetMap', '生成式 AI 工具應用']),
+                ('後端與雲端', 'Backend & cloud', ['Supabase', 'Cloudflare Workers', 'Cloudflare D1', '資料權限設計 (RLS)', 'CI/CD', '自動化測試'])]
 
 
 def main():
