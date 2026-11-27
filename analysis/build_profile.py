@@ -128,14 +128,93 @@ def figure_cash():
         out.append(f'<text x="{x}" y="100" class="f-h{" f-on" if on else ""}">{name}</text>')
         out.append(f'<text x="{x}" y="118" class="f-n">卡住 → 找{who}</text>')
     out.append('<text x="24" y="156" class="f-n">分開記之後，每一筆延遲都有歸屬；'
-               '20+ 個專案共用一張甘特主排程，</text>')
+               '20+ 個專案共用一組專案編號，</text>')
     out.append('<text x="24" y="173" class="f-n">內部期限固定壓在契約里程碑前一週</text>')
     return ('<svg viewBox="0 0 720 186" class="fig" role="img" '
             'aria-label="金流拆成已發包、已計價、已收款三段">' + "".join(out) + "</svg>")
 
 
+def figure_risk():
+    """20 件案子的節點分兩類：自己排得動的，跟等別人決定的。"""
+    out = ['<text x="24" y="30" class="f-h">20+ 件案子</text>',
+           '<text x="24" y="47" class="f-n">每件 5–20 家下包，加上公家審查單位</text>']
+    for i in range(21):
+        x = 24 + (i % 7) * 26
+        y = 62 + (i // 7) * 26
+        out.append(f'<rect x="{x}" y="{y}" width="18" height="18" rx="2" class="f-bar"/>')
+    out.append('<line x1="236" y1="56" x2="236" y2="196" class="f-rule"/>')
+    out.append('<text x="262" y="78" class="f-h">我方可控</text>')
+    out.append('<text x="262" y="95" class="f-n">自己排進度：設計、採購、施工、驗收</text>')
+    out.append('<text x="262" y="126" class="f-h f-on">他方決定</text>')
+    out.append('<text x="262" y="143" class="f-n">送審核准、業主決標、廠商交期</text>')
+    out.append('<text x="262" y="160" class="f-n">排不動，只能盯</text>')
+    out.append('<line x1="520" y1="56" x2="520" y2="196" class="f-rule"/>')
+    out.append('<text x="546" y="78" class="f-h f-on">十幾個風險點</text>')
+    for i in range(12):
+        y = 92 + i * 9
+        out.append(f'<rect x="546" y="{y}" width="{104 - (i % 4) * 14}" height="4" rx="1" '
+                   f'class="f-bar-on"/>')
+    out.append('<text x="546" y="212" class="f-n">二十件案子的「他方決定」加起來只有這些，</text>')
+    out.append('<text x="546" y="229" class="f-n">那才是真正要盯的清單</text>')
+    return ('<svg viewBox="0 0 720 244" class="fig" role="img" '
+            'aria-label="二十多件案子的節點分成我方可控與他方決定，他方決定的收斂成十幾個風險點">'
+            + "".join(out) + "</svg>")
+
+
+def figure_score():
+    """同一套工項、不同廠商有沒有報。空格比數字更會說話。"""
+    items = ["配電盤", "管線與配線", "弱電整合", "測試與試車", "輔料", "介面施工",
+             "保固與教育訓練"]
+    have = [[1, 1, 1], [1, 1, 1], [1, 0, 1], [1, 1, 0], [0, 1, 0], [0, 0, 1], [1, 0, 0]]
+    out = ['<text x="24" y="30" class="f-h">同一套工項，逐欄對照誰有報</text>',
+           '<text x="24" y="47" class="f-n">拆完才看得出來，價差大部分來自範圍認定，不是單價</text>']
+    for j, name in enumerate(["廠商 A", "廠商 B", "廠商 C"]):
+        out.append(f'<text x="{272 + j * 96}" y="78" class="f-n">{name}</text>')
+    for i, label in enumerate(items):
+        y = 98 + i * 22
+        out.append(f'<text x="24" y="{y}" class="f-n">{label}</text>')
+        for j in range(3):
+            x = 272 + j * 96
+            if have[i][j]:
+                out.append(f'<rect x="{x}" y="{y - 10}" width="56" height="12" rx="2" '
+                           f'class="f-bar"/>')
+            else:
+                out.append(f'<line x1="{x}" y1="{y - 4}" x2="{x + 56}" y2="{y - 4}" '
+                           f'class="f-rule"/>')
+    out.append('<text x="24" y="276" class="f-n f-on">橫線＝這家沒報。</text>')
+    out.append('<text x="128" y="276" class="f-n">最低價那家常常是漏得最多那家，'
+               '所以評分要先把範圍補齊再比</text>')
+    return ('<svg viewBox="0 0 720 290" class="fig" role="img" '
+            'aria-label="同一套工項對照三家廠商有沒有報價，空缺用橫線表示">'
+            + "".join(out) + "</svg>")
+
+
+def figure_funnel():
+    """三個階段，每一段都會掉人。寬度照剩下多少畫。"""
+    rows = [("接觸", "名單來自產業活動與引薦", 560),
+            ("第一次會議", "白皮書先寄，會議只談假設", 320),
+            ("盡職調查", "模型細節與附錄這時候才用得到", 150)]
+    out = ['<text x="24" y="30" class="f-h">三個階段，每一段都會掉人</text>',
+           '<text x="24" y="47" class="f-n">寬度＝還留著多少，不是等寬的漏斗圖</text>']
+    y = 72
+    for i, (name, note, w) in enumerate(rows):
+        on = i == len(rows) - 1
+        out.append(f'<rect x="24" y="{y}" width="{w}" height="26" rx="2" '
+                   f'class="{"f-bar-on" if on else "f-bar"}"/>')
+        out.append(f'<text x="24" y="{y + 46}" class="f-h{" f-on" if on else ""}">{name}</text>')
+        out.append(f'<text x="{24 + 96}" y="{y + 46}" class="f-n">{note}</text>')
+        y += 66
+    out.append('<text x="24" y="272" class="f-n">每一次拒絕都記下理由與階段，'
+               '下一輪才知道要先補哪一塊；</text>')
+    out.append('<text x="24" y="289" class="f-n">轉換機率分數就是這樣長出來的</text>')
+    return ('<svg viewBox="0 0 720 302" class="fig" role="img" '
+            'aria-label="募資三個階段的漏斗，寬度代表還留著多少投資人">'
+            + "".join(out) + "</svg>")
+
+
 FIGURES = {"flow": figure_flow, "timeline": figure_timeline,
-           "tiers": figure_tiers, "cash": figure_cash}
+           "tiers": figure_tiers, "cash": figure_cash,
+           "risk": figure_risk, "score": figure_score, "funnel": figure_funnel}
 
 
 # ── 版面 ──────────────────────────────────────────────────────
@@ -287,8 +366,13 @@ def case_page(w, d, orgs, caps, prev_next, now, featured_all=()):
             f'<figure><img src="{esc(im["src"])}" alt="{esc(t(im, "zh"))}" loading="lazy">'
             f'<figcaption>{bi(im)}</figcaption></figure>' for im in w["images"])
         imgs = f'<div class="shots shots-{min(len(w["images"]), 3)}">{figs}</div>'
-    elif w.get("figure"):
-        imgs = f'<div class="figwrap">{FIGURES[w["figure"]["kind"]]()}</div>'
+    # 示意圖可以跟截圖並存：截圖給畫面，示意圖給方法
+    kinds = [f["kind"] for f in w.get("figures", [])] or (
+        [w["figure"]["kind"]] if w.get("figure") else [])
+    caps_f = [f.get("cap") for f in w.get("figures", [])] or [None] * len(kinds)
+    for kind, cap in zip(kinds, caps_f):
+        imgs += (f'<div class="figwrap">{FIGURES[kind]()}'
+                 + (f'<p class="figcap">{esc(cap)}</p>' if cap else "") + "</div>")
 
     live_big = f' data-live="{w["big"]["live"]}"' if w.get("big", {}).get("live") else ""
     table = ""
@@ -688,6 +772,7 @@ h1,h2,h3{font-family:var(--serif);font-weight:700;letter-spacing:-.01em}
 .tools-t td{color:var(--ink-2);line-height:1.75}
 @media(max-width:600px){.tools-t th,.tools-t td{display:block;width:auto}
   .tools-t th{border-bottom:0;padding-bottom:2px}}
+.figcap{font-size:12px;color:var(--muted);margin:14px 0 0;line-height:1.7}
 .figwrap{margin:0 0 38px;padding:20px;border:1px solid var(--line);border-radius:2px;background:var(--card)}
 .fig{width:100%;height:auto;display:block}
 .fig text{font:13px var(--sans);fill:var(--ink)}
