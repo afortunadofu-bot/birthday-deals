@@ -9,7 +9,7 @@
 沒有主次、沒有畫面、點進去也沒有東西。這一版的作法：
 
   * **主次分明**：六件精選案例各自一頁，其餘收成一份緊湊的索引
-  * **有畫面**：真實截圖；沒有截圖的案子自己畫一張說明圖，不放佔位圖
+  * **有畫面**：真實截圖；沒有截圖的案子自己畫一張說明圖
   * **邏輯跑得完**：背景 → 業主要求 → 問題 → 怎麼分析 → 解法 → 結果，
     一頁讀完知道這個人怎麼想事情，而不是只知道他做過什麼
   * **版面不對稱**：圖左文右交錯，標題用襯線體，數字大而安靜
@@ -495,8 +495,8 @@ def home(d, orgs, caps, featured, rest, now):
 
   <section class="blk" id="skills">
     <div class="bh"><h2><span class="zh">技能</span><span class="en">Skills</span></h2>
-      <p class="bn"><span class="zh">全部來自上面那些作品，數字是出現在幾件裡。沒做過的不寫。</span>
-        <span class="en">All of these come from the work above; the number is how many pieces it appears in.</span></p></div>
+      <p class="bn"><span class="zh">數字是這個詞出現在幾件作品裡。</span>
+        <span class="en">The number is how many pieces each one appears in.</span></p></div>
     {skill_all}
   </section>
 
